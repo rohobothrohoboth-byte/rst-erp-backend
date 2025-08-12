@@ -1,0 +1,60 @@
+services:
+  cor.api:
+    image: ${DOCKER_REGISTRY-}corapi
+    build:
+      context: .
+      dockerfile: SvcCore/Cor.API/Dockerfile
+    ports:
+    - "1214:1214"
+    # - "1215:1215"
+    depends_on:
+      - cor.db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=cor.db;Port=5432;Database=CoreDb;Username=postgres;Password=AmFox@2013
+  
+  cor.db:
+    image: postgres:latest
+    container_name: cor.db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: AmFox@2013
+      POSTGRES_DB: CoreDb
+    volumes:
+    - cor_api_data:/var/lib/postgresql/data
+    ports:
+    - "5433:5432"
+  
+  auth.api:
+    image: ${DOCKER_REGISTRY-}rstauthapi
+    build:
+      context: .
+      dockerfile: SvcAuth/RST.Auth.API/Dockerfile
+    depends_on:
+      - authdb
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=authdb;Port=5432;Database=Authdb;Username=postgres;Password=postgres
+      - Jwt__Key=fa85f64-5717-4562-b3fc-2c963f66afa6
+      - Jwt__Issuer=AuthAPI
+      - Jwt__Audience=AuthAPIUsers
+    ports:
+      - "1213:1213"
+
+  authdb:
+    image: postgres:latest
+    container_name: authdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: AmFox@2013
+      POSTGRES_DB: Authdb
+    volumes:
+    - auth_api_data:/var/lib/postgresql/data
+    ports:
+    - "5434:5432"
+
+
+
+volumes:
+  cor_api_data:
+  auth_api_data:
