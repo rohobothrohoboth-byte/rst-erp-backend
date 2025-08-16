@@ -9,34 +9,21 @@ namespace RST.Auth.API.Data
     {
         public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
 
-        public DbSet<Permission> Permissions { get; set; } = null!;
-        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
-        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<Permission> Permissions => Set<Permission>();
+        public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<RevokedAccessToken> RevokedAccessTokens => Set<RevokedAccessToken>();
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder b)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(b);
 
-            builder.Entity<RolePermission>().HasKey(rp => new { rp.RoleId, rp.PermissionId });
-
-            builder.Entity<RolePermission>()
-                .HasOne(rp => rp.Role)
-                .WithMany()
-                .HasForeignKey(rp => rp.RoleId);
-
-            builder.Entity<RolePermission>()
-                .HasOne(rp => rp.Permission)
-                .WithMany()
-                .HasForeignKey(rp => rp.PermissionId);
-
-            builder.Entity<Permission>()
-                .HasIndex(p => p.Name)
-                .IsUnique();
-
-            builder.Entity<RefreshToken>()
-                .HasOne(rt => rt.User)
-                .WithMany(u => u.RefreshTokens)
-                .HasForeignKey(rt => rt.UserId);
+            b.Entity<RolePermission>().HasKey(x => new { x.RoleId, x.PermissionId });
+            b.Entity<RolePermission>().HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId);
+            b.Entity<RolePermission>().HasOne(x => x.Permission).WithMany().HasForeignKey(x => x.PermissionId);
+            b.Entity<Permission>().HasIndex(x => x.Name).IsUnique();
+            b.Entity<RefreshToken>().HasOne(x => x.User).WithMany(u => u.RefreshTokens).HasForeignKey(x => x.UserId);
+            b.Entity<RevokedAccessToken>().HasIndex(x => x.Jti).IsUnique();
         }
     }
 }

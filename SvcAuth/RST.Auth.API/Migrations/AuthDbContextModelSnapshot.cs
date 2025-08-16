@@ -272,6 +272,34 @@ namespace RST.Auth.API.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("RST.Auth.API.Models.RevokedAccessToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Jti")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Jti")
+                        .IsUnique();
+
+                    b.ToTable("RevokedAccessTokens");
+                });
+
             modelBuilder.Entity("RST.Auth.API.Models.RolePermission", b =>
                 {
                     b.Property<string>("RoleId")

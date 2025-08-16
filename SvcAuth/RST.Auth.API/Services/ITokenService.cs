@@ -4,7 +4,7 @@ namespace RST.Auth.API.Services
 {
     public interface ITokenService
     {
-        Task<(string AccessToken, string RefreshToken)> GenerateTokensAsync(ApplicationUser user);
+        Task<(string AccessToken, string RefreshToken, string Jti)> GenerateTokensAsync(ApplicationUser user);
         Task<string?> RefreshAccessTokenAsync(string refreshToken);
         Task<bool> RevokeRefreshTokenAsync(string refreshToken);
     }

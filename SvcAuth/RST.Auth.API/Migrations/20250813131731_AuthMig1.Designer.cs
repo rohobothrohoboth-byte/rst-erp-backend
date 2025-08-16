@@ -12,7 +12,7 @@ using RST.Auth.API.Data;
 namespace RST.Auth.API.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20250812133947_AuthMig1")]
+    [Migration("20250813131731_AuthMig1")]
     partial class AuthMig1
     {
         /// <inheritdoc />
@@ -273,6 +273,34 @@ namespace RST.Auth.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("RST.Auth.API.Models.RevokedAccessToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Jti")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Jti")
+                        .IsUnique();
+
+                    b.ToTable("RevokedAccessTokens");
                 });
 
             modelBuilder.Entity("RST.Auth.API.Models.RolePermission", b =>

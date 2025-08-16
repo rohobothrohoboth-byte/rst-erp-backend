@@ -66,6 +66,21 @@ namespace RST.Auth.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RevokedAccessTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Jti = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RevokedAccessTokens", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -266,6 +281,12 @@ namespace RST.Auth.API.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RevokedAccessTokens_Jti",
+                table: "RevokedAccessTokens",
+                column: "Jti",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RolePermissions_PermissionId",
                 table: "RolePermissions",
                 column: "PermissionId");
@@ -291,6 +312,9 @@ namespace RST.Auth.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
+
+            migrationBuilder.DropTable(
+                name: "RevokedAccessTokens");
 
             migrationBuilder.DropTable(
                 name: "RolePermissions");

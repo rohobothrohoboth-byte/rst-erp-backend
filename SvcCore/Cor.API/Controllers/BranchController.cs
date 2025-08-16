@@ -4,6 +4,7 @@ using Cor.Domain.Entities;
 using ERP.Shared.API.Core.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cor.API.Controllers
 {
@@ -13,6 +14,7 @@ namespace Cor.API.Controllers
     public class BranchController(IUnitOfWork uoW) : ControllerBase
     {
         [HttpGet(Name = "AllBranches")]
+        //[Authorize(Policy = "perm:branch.read")]
         public async Task<ActionResult<IEnumerable<Branch>>> GetAll()
         {
             var bras = await uoW.Repository<Branch>().GetAll();
@@ -33,6 +35,7 @@ namespace Cor.API.Controllers
         }
 
         [HttpPost(Name = "AddBranch")]
+        //[Authorize(Policy = "perm:branch.write")]
         public async Task<ActionResult<Branch>> Create(AddBranchDto dto)
         {
             if (!ModelState.IsValid) { return BadRequest(ModelState); }

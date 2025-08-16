@@ -4,7 +4,7 @@ namespace RST.Auth.API.Auth
 {
     public class PermissionRequirement : IAuthorizationRequirement
     {
-        public string PermissionName { get; }
-        public PermissionRequirement(string permissionName) => PermissionName = permissionName;
+        public string Permission { get; }
+        public PermissionRequirement(string permission) => Permission = permission;
     }
 }

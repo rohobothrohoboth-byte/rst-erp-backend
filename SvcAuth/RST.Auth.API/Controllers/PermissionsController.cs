@@ -12,48 +12,28 @@ namespace RST.Auth.API.Controllers
     public class PermissionsController : ControllerBase
     {
         private readonly AuthDbContext _db;
+        public PermissionsController(AuthDbContext db) => _db = db;
 
-        public PermissionsController(AuthDbContext db)
-        {
-            _db = db;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var permissions = await _db.Permissions.ToListAsync();
-            return Ok(permissions);
-        }
+        [HttpGet] public async Task<IActionResult> GetAll() => Ok(await _db.Permissions.ToListAsync());
 
         [HttpPost]
-        public async Task<IActionResult> Create(Permission permission)
+        public async Task<IActionResult> Create(Permission p)
         {
-            if (await _db.Permissions.AnyAsync(p => p.Name == permission.Name))
-                return Conflict("Permission with that name already exists.");
-
-            _db.Permissions.Add(permission);
-            await _db.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = permission.Id }, permission);
+            if (await _db.Permissions.AnyAsync(x => x.Name == p.Name)) return Conflict("Exists");
+            _db.Permissions.Add(p); await _db.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetById), new { id = p.Id }, p);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
-        {
-            var perm = await _db.Permissions.FindAsync(id);
-            if (perm == null) return NotFound();
-            return Ok(perm);
-        }
+            => (await _db.Permissions.FindAsync(id)) is { } p ? Ok(p) : NotFound();
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var perm = await _db.Permissions.FindAsync(id);
-            if (perm == null) return NotFound();
-
-            _db.Permissions.Remove(perm);
-            await _db.SaveChangesAsync();
-            return NoContent();
+            var p = await _db.Permissions.FindAsync(id);
+            if (p == null) return NotFound();
+            _db.Remove(p); await _db.SaveChangesAsync(); return NoContent();
         }
     }
 }

@@ -4,12 +4,10 @@ namespace RST.Auth.API.Auth
 {
     public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement req)
         {
-            if (context.User.HasClaim(c => c.Type == "permission" && c.Value == requirement.PermissionName))
-            {
-                context.Succeed(requirement);
-            }
+            if (context.User.HasClaim("permission", req.Permission))
+                context.Succeed(req);
             return Task.CompletedTask;
         }
     }

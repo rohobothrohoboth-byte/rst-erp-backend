@@ -1,97 +1,111 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RST.Auth.API.Auth;
+using Microsoft.OpenApi.Models;
 using RST.Auth.API.Data;
 using RST.Auth.API.Models;
-using RST.Auth.API.Services;
 using System.Text;
-using Microsoft.OpenApi.Models;
-using RST.Auth.API.Middlewares;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.AspNetCore.Identity;
+using RST.Auth.API.Auth;
+using RST.Auth.API.Services;
 
-// Create builder
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddCors(options =>
+// ------------------------
+// Configuration
+// ------------------------
+var configuration = builder.Configuration;
+
+// EF Core
+builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("AuthConnection")));
+
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<AuthDbContext>()
+    .AddDefaultTokenProviders();
+
+// JWT Authentication
+var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"]);
+builder.Services.AddAuthentication(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // for dev
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-        //policy.WithOrigins("http://localhost:5173/").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = configuration["Jwt:Issuer"],
+        ValidAudience = configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("permissions.manage", p => p.Requirements.Add(new PermissionRequirement("permissions.manage")));
+    opts.AddPolicy("roles.manage", p => p.Requirements.Add(new PermissionRequirement("roles.manage")));
+    opts.AddPolicy("introspect.access", p => p.Requirements.Add(new PermissionRequirement("introspect.access")));
+    opts.AddPolicy("keys.rotate", p => p.Requirements.Add(new PermissionRequirement("keys.rotate")));
 });
 
-builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("AuthConnection")));
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    options.Password.RequiredLength = 8;
-    options.Password.RequireDigit = true;
-    options.Password.RequireNonAlphanumeric = false;
-}).AddEntityFrameworkStores<AuthDbContext>().AddDefaultTokenProviders();
-
-var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true
-        };
-    });
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("permissions.manage", policy => policy.Requirements.Add(new PermissionRequirement("permissions.manage")));
-    options.AddPolicy("roles.manage", policy => policy.Requirements.Add(new PermissionRequirement("roles.manage")));
-    options.AddPolicy("introspect.access", policy => policy.Requirements.Add(new PermissionRequirement("introspect.access")));
-});
-
-builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
-
-builder.Services.AddScoped<ITokenService, TokenService>();
-
+// Controllers
 builder.Services.AddControllers();
-// --- Swagger ---
-builder.Services.AddEndpointsApiExplorer();
+
+// Swagger + JWT
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth API", Version = "v1" });
-    c.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => type.FullName };
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "RST Auth API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter JWT with Bearer prefix",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            }, new string[]{}
+        }
+    });
 });
+
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// ------------------------
+// Middleware
+// ------------------------
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Auth API v1"); });
-    app.ApplyMigration();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "RST Auth API V1");
+    c.RoutePrefix = string.Empty;
+});
 
-app.UseCors("AllowAll");
-
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
+
+// ------------------------
+// Seed initial data
+// ------------------------
 using (var scope = app.Services.CreateScope())
 {
-    //var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    //db.Database.Migrate();
-    await SeedData.EnsureSeedAsync(scope.ServiceProvider);
+    var services = scope.ServiceProvider;
+    await SeedData.EnsureAsync(services);
 }
-
-app.MapControllers();
 
 app.Run();

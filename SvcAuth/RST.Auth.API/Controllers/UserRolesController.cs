@@ -10,53 +10,32 @@ namespace RST.Auth.API.Controllers
     [Authorize(Policy = "roles.manage")]
     public class UserRolesController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-
-        public UserRolesController(UserManager<ApplicationUser> userManager)
-        {
-            _userManager = userManager;
-        }
+        private readonly UserManager<ApplicationUser> _um;
+        public UserRolesController(UserManager<ApplicationUser> um) => _um = um;
 
         [HttpGet]
-        public async Task<IActionResult> GetRoles(string userId)
+        public async Task<IActionResult> Get(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
-            return Ok(roles);
+            var u = await _um.FindByIdAsync(userId); if (u == null) return NotFound();
+            return Ok(await _um.GetRolesAsync(u));
         }
 
         [HttpPost("{roleName}")]
-        public async Task<IActionResult> AddRole(string userId, string roleName)
+        public async Task<IActionResult> Add(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            if (await _userManager.IsInRoleAsync(user, roleName))
-                return Conflict("User already in role.");
-
-            var result = await _userManager.AddToRoleAsync(user, roleName);
-            if (result.Succeeded)
-                return Ok();
-            else
-                return BadRequest(result.Errors);
+            var u = await _um.FindByIdAsync(userId); if (u == null) return NotFound();
+            if (await _um.IsInRoleAsync(u, roleName)) return Conflict("Already");
+            var res = await _um.AddToRoleAsync(u, roleName);
+            return res.Succeeded ? Ok() : BadRequest(res.Errors);
         }
 
         [HttpDelete("{roleName}")]
-        public async Task<IActionResult> RemoveRole(string userId, string roleName)
+        public async Task<IActionResult> Remove(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
-            if (!await _userManager.IsInRoleAsync(user, roleName))
-                return Conflict("User is not in role.");
-
-            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
-            if (result.Succeeded)
-                return NoContent();
-            else
-                return BadRequest(result.Errors);
+            var u = await _um.FindByIdAsync(userId); if (u == null) return NotFound();
+            if (!await _um.IsInRoleAsync(u, roleName)) return Conflict("NotInRole");
+            var res = await _um.RemoveFromRoleAsync(u, roleName);
+            return res.Succeeded ? NoContent() : BadRequest(res.Errors);
         }
     }
 }
