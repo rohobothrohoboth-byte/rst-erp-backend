@@ -26,6 +26,10 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.3" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Shared\ERP.Shared.API\ERP.Shared.API.csproj" />
+	</ItemGroup>
+
 	<!--<ItemGroup>
 		<EmbeddedResource Include="Swagger\index.html" />
 	</ItemGroup>-->

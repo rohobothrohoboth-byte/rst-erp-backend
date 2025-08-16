@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using ERP.Shared.API.Auth.DTOs;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RST.Auth.API.Data;
-using RST.Auth.API.DTOs;
 using RST.Auth.API.Models;
 using RST.Auth.API.Services;
 
