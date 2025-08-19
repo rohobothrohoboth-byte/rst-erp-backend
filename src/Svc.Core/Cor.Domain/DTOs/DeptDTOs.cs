@@ -1,4 +1,6 @@
-﻿namespace Shared.Api.Cor.DTOs;
+﻿using Cor.Domain.Enums;
+
+namespace Cor.Domain.DTOs;
 public class DeptListDto
 {
     public Guid Id { get; set; }

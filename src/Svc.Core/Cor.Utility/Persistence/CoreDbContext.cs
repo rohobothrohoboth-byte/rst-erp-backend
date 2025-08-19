@@ -1,5 +1,6 @@
 ﻿using Cor.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
 
 namespace Cor.Utility.Persistence;
 
@@ -12,6 +13,10 @@ public class CoreDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
+
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
 
         modelBuilder.Entity<Company>(entity =>
         {

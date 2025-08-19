@@ -1,123 +1,109 @@
 ﻿using Asp.Versioning;
-using Cor.App.Interfaces;
-using Cor.Domain.Entities;
+using Cor.App.Commands.Comp;
+using Cor.App.Queries;
+using Cor.Domain.DTOs;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Api.Cor.DTOs;
 using System.Data;
 
-namespace Cor.API.Controllers
+namespace Cor.API.Controllers;
+
+[ApiController]
+[Route("core/api/v{version:apiVersion}/company")]
+[ApiVersion("1.0")]
+public class CompanyController(IMediator med) : ControllerBase
 {
-    [ApiController]
-    [Route("api/v{version:apiVersion}/company")]
-    [ApiVersion("1.0")]
-    public class CompanyController(IUnitOfWork uoW) : ControllerBase
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] AddCompDto branchDto)
     {
-        [HttpGet(Name = "AllCompanies")]
-        public async Task<ActionResult<IEnumerable<Company>>> GetAll()
+        if (!ModelState.IsValid)
         {
-            var comps = await uoW.Repository<Company>().GetAll();
-            var allComps = comps.Select(com => MapToDto(com, true)).ToList();
-            return Ok(allComps);
+            return BadRequest(ModelState);
         }
 
-        [HttpGet("{id:guid}", Name = "GetCompany")]
-        public async Task<ActionResult<Company>> GetById(Guid id)
+        try
         {
-            var comp = await uoW.Repository<Company>().GetById(id);
-            if (comp == null) return NotFound();
-            return Ok(MapToDto(comp, true));
+            var command = new AddCompCmd { AddCompDto = branchDto };
+            var branchId = await med.Send(command);
+            return CreatedAtAction(nameof(GetComp), new { id = branchId }, new { Id = branchId });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = "Failed to create COMPANY", Details = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetComps()
+    {
+        var branches = await med.Send(new GetCompsQry());
+        return Ok(branches);
+    }
+
+    [HttpGet("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetComp(Guid id)
+    {
+        var branch = await med.Send(new GetCompByIdQry { Id = id });
+        if (branch == null)
+        {
+            return NotFound(new { Error = $"COMPANY with Id {id} not found" });
+        }
+        return Ok(branch);
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] EditCompDto branchDto)
+    {
+        if (!ModelState.IsValid || branchDto.Id != id)
+        {
+            return BadRequest(ModelState);
         }
 
-        [HttpPost(Name = "AddCompany")]
-        public async Task<ActionResult<Company>> Create(AddCompDto dto)
+        try
         {
-            if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-            var comp = new Company
-            {
-                Name = dto.Name,
-                NameAm = dto.NameAm
-            };
-
-            await uoW.Repository<Company>().Add(comp);
-            return CreatedAtAction(nameof(GetById), new { id = comp.Id }, MapToDto(comp, false));
+            var updatedBranch = await med.Send(new UpdateCompCmd { EditCompDto = branchDto });
+            return Ok(updatedBranch);
         }
-
-        [HttpPut("{id:guid}", Name = "EditCompany")]
-        public async Task<ActionResult<Company>> Update(Guid id, EditCompDto dto)
+        catch (DBConcurrencyException ex)
         {
-            if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-            var repo = uoW.Repository<Company>();
-            var oldComp = await repo.GetById(id);
-
-            if (oldComp == null) { return NotFound(); }
-
-            oldComp.Name = dto.Name;
-            oldComp.NameAm = dto.NameAm;
-
-            try
-            {
-                oldComp.RowVersion = Convert.FromBase64String(dto.RowVersion);
-            }
-            catch (FormatException)
-            {
-                return BadRequest("Invalid RowVersion format.");
-            }
-
-            uoW.Begin();
-            try
-            {
-                var updated = await repo.Update(oldComp);
-                uoW.Commit();
-                return Ok(MapToDto(updated, false));
-            }
-            catch (DBConcurrencyException)
-            {
-                uoW.Rollback();
-                return Conflict("Concurrency conflict: entity has been modified by another user.");
-            }
-            catch (Exception ex)
-            {
-                uoW.Rollback();
-                return StatusCode(500, $"Internal error: {ex.Message}");
-            }
+            return Conflict(new { Error = "Concurrency conflict: the COMPANY was modified by another user", Details = ex.Message });
         }
-
-        [HttpDelete("{id:guid}", Name = "RemoveCompany")]
-        public async Task<ActionResult> Delete(Guid id)
+        catch (KeyNotFoundException)
         {
-            var repo = uoW.Repository<Company>();
-            var existing = await repo.GetById(id);
-            if (existing == null) { return NotFound(); }
-
-            uoW.Begin();
-            try
-            {
-                await repo.Delete(id);
-                uoW.Commit();
-                return Content("Company Deleted!");
-            }
-            catch (Exception ex)
-            {
-                uoW.Rollback();
-                return StatusCode(500, $"Internal error: {ex.Message}");
-            }
+            return NotFound(new { Error = $"COMPANY with Id {id} not found" });
         }
-
-        private static CompListDto MapToDto(Company b, bool e)
+        catch (Exception ex)
         {
-            return new CompListDto
-            {
-                Id = b.Id,
-                Name = b.Name,
-                NameAm = b.NameAm,
-                CreatedAt = b.CreatedAt,
-                CreatedAtAm = b.CreatedAtAm,
-                ModifiedAt = b.ModifiedAt,
-                ModifiedAtAm = b.ModifiedAtAm,
-                RowVersion = e ? Convert.ToBase64String(b.RowVersion) : ""
-            };
+            return BadRequest(new { Error = "Failed to update COMPANY", Details = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await med.Send(new DeleteCompCmd { Id = id });
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { Error = $"COMPANY with Id {id} not found" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = "Failed to delete COMPANY", Details = ex.Message });
         }
     }
 }

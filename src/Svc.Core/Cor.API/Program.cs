@@ -1,11 +1,9 @@
-using System.Data;
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Cor.API.Middlewares;
-using Cor.App.Interfaces;
 using Cor.Utility.Extensions;
 using Cor.Utility.Persistence;
-using Cor.Utility.Repositories;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -24,7 +22,7 @@ builder.Host.UseSerilog();
 
 // --- CORS ---
 builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }); });
-builder.Services.AddDbContext<CoreDbContext>(opt => { opt.UseNpgsql(builder.Configuration.GetConnectionString("CoreDbCon")); });
+//builder.Services.AddDbContext<CoreDbContext>(opt => { opt.UseNpgsql(builder.Configuration.GetConnectionString("CoreDbCon")); });
 
 // --- Add controllers + API versioning + problem details ---
 builder.Services.AddControllers();
@@ -41,6 +39,28 @@ builder.Services.AddApiVersioning(option =>
 });
 builder.Services.AddProblemDetails();
 
+// MassTransit
+builder.Services.AddMassTransit(x =>
+{
+    x.AddEntityFrameworkOutbox<CoreDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+        cfg.Host(Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+    });
+});
+
+
 // --- Swagger ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -49,21 +69,15 @@ builder.Services.AddSwaggerGen(c =>
     c.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => type.FullName };
 });
 
-// --- Dapper Context + UnitOfWork (preserve your existing wiring) ---
-builder.Services.AddSingleton<DapperContext>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IDbConnection>(sp =>
-{
-    var context = sp.GetRequiredService<DapperContext>();
-    return context.CreateConnection();
-});
 builder.Services.AddUtilitySvc(builder.Configuration);
-
 
 var app = builder.Build();
 
 // --- global exception middleware ---
 app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseSerilogRequestLogging();
+app.UseHttpsRedirection(); // Must be before Swagger
 
 // Development-only: Swagger + detailed errors
 if (app.Environment.IsDevelopment())
@@ -75,9 +89,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

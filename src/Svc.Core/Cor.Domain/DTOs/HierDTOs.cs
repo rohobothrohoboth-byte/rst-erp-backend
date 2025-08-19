@@ -1,4 +1,4 @@
-﻿namespace Shared.Api.Cor.DTOs;
+﻿namespace Cor.Domain.DTOs;
 public class HierListDto
 {
     public Guid Id { get; set; }

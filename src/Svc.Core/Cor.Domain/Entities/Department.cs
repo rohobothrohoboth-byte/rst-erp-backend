@@ -1,4 +1,6 @@
-﻿namespace Cor.Domain.Entities;
+﻿using Cor.Domain.Enums;
+
+namespace Cor.Domain.Entities;
 public class Department : BaseEntity
 {
     public string Name { get; set; } = default!;

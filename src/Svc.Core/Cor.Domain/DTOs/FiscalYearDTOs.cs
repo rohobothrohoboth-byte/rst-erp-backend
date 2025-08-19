@@ -1,4 +1,7 @@
-﻿namespace Shared.Api.Cor.DTOs;
+﻿using Cor.Domain.Enums;
+
+namespace Cor.Domain.DTOs;
+
 public class FiscYearListDto
 {
     public Guid Id { get; set; }
@@ -13,6 +16,11 @@ public class FiscYearListDto
     public string ModifiedAt { get; set; } = default!;
     public string ModifiedAtAm { get; set; } = default!;
     public string RowVersion { get; set; } = default!;
+    //public string StartDate => $"{DateStart:MMMM dd, yyyy}";
+    //public string EndDate => $"{DateEnd:MMMM dd, yyyy}";
+
+    //public string StartDateAm => DateStart.ToEthiopianDateString("MMMM dd, yyyy");
+    //public string EndDateAm => DateEnd.ToEthiopianDateString("MMMM dd, yyyy");
 }
 
 public class AddFiscYearDto

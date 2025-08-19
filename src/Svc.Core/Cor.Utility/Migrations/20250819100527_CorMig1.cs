@@ -59,7 +59,7 @@ namespace Cor.Utility.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    DateOpened = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpenDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CompId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),

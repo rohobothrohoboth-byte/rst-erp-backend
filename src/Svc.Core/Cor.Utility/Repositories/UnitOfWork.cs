@@ -2,72 +2,119 @@
 using Cor.Domain.Entities;
 using Cor.Utility.Extensions;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using System.Collections.Concurrent;
 using System.Data;
 
-namespace Cor.Utility.Repositories
+namespace Cor.Utility.Repositories;
+
+public class UnitOfWork : IUnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly DapperContext _context;
+    private readonly ILogger<UnitOfWork> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ConcurrentDictionary<Type, object> _repositories = new();
+    private NpgsqlTransaction? _transaction;
+    private bool _disposed;
+
+    public UnitOfWork(DapperContext context, ILogger<UnitOfWork> logger, ILoggerFactory loggerFactory)
     {
-        private readonly DapperContext _context;
-        private readonly ILoggerFactory _loggerFactory;
-        private readonly ConcurrentDictionary<Type, object> _repositories;
-        private IDbTransaction? _transaction;
-        private bool _disposed;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
 
-        public UnitOfWork(DapperContext context, ILoggerFactory loggerFactory)
+    public ICoreRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
+    {
+        return (ICoreRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
         {
-            _context = context;
-            _loggerFactory = loggerFactory;
-            _repositories = new ConcurrentDictionary<Type, object>();
+            _logger.LogInformation("Creating new CoreRepository<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
+            var repoLogger = _loggerFactory.CreateLogger<CoreRepository<TEntity>>();
+            return new CoreRepository<TEntity>(_context, repoLogger);
+        });
+    }
+
+    public async Task Begin()
+    {
+        if (_transaction != null)
+        {
+            _logger.LogError("Transaction already started.");
+            throw new InvalidOperationException("Transaction already started.");
         }
 
-        public ICoreRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
+        var connection = _context.CreateConnection() as NpgsqlConnection;
+        if (connection?.State != ConnectionState.Open)
         {
-            return (ICoreRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity), (type) =>
-            {
-                var logger = _loggerFactory.CreateLogger<CoreRepository<TEntity>>();
-                return new CoreRepository<TEntity>(_context, logger);
-            });
+            _logger.LogInformation("Opening database connection for transaction.");
+            await connection!.OpenAsync();
         }
-        
-        public void Begin()
-        {
-            if (_transaction != null)
-            {
-                throw new InvalidOperationException("Transaction already started.");
-            }
+        _transaction = await connection.BeginTransactionAsync();
+        _logger.LogInformation("Started new database transaction.");
+    }
 
-            var connection = _context.CreateConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                connection.Open();
-            }
-            _transaction = connection.BeginTransaction();
+    public async Task Commit()
+    {
+        if (_transaction == null)
+        {
+            _logger.LogWarning("No transaction to commit.");
+            return;
         }
-
-        public void Commit()
+        try
         {
-            _transaction?.Commit();
-            _transaction?.Dispose();
+            _logger.LogInformation("Committing transaction.");
+            await _transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error committing transaction.");
+            throw;
+        }
+        finally
+        {
+            await DisposeTransaction();
+        }
+    }
+
+    public async Task Rollback()
+    {
+        if (_transaction == null)
+        {
+            _logger.LogWarning("No transaction to rollback.");
+            return;
+        }
+        try
+        {
+            _logger.LogInformation("Rolling back transaction.");
+            await _transaction.RollbackAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rolling back transaction.");
+            throw;
+        }
+        finally
+        {
+            await DisposeTransaction();
+        }
+    }
+
+    private async Task DisposeTransaction()
+    {
+        if (_transaction != null)
+        {
+            _logger.LogInformation("Disposing transaction.");
+            await _transaction.DisposeAsync();
             _transaction = null;
         }
+    }
 
-        public void Rollback()
-        {
-            _transaction?.Rollback();
-            _transaction?.Dispose();
-            _transaction = null;
-        }
-        
-        public void Dispose()
-        {
-            if (_disposed) return;
-
-            _transaction?.Dispose();
-            _context.Dispose();
-            _disposed = true;
-            GC.SuppressFinalize(this);
-        }
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _logger.LogInformation("Disposing UnitOfWork and DapperContext.");
+        _transaction?.Dispose();
+        _context.Dispose();
+        _disposed = true;
+        GC.SuppressFinalize(this);
     }
 }

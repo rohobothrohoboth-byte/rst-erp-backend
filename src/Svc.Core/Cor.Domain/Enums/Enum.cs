@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Cor.Domain.Entities;
+namespace Cor.Domain.Enums;
 
 public enum YesNoAm
 {

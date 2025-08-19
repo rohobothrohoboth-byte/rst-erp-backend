@@ -7,12 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.2" />
     <PackageReference Include="MediatR" Version="13.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Contracts\RST.Cont\RST.Cont.csproj" />
     <ProjectReference Include="..\Cor.Domain\Cor.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Commands\Branch\" />
+    <Folder Include="Commands\Dept\" />
+    <Folder Include="Commands\FiscalYear\" />
+    <Folder Include="Commands\Hier\" />
   </ItemGroup>
 
 </Project>
