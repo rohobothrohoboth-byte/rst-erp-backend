@@ -1,0 +1,45 @@
+﻿using Cor.App.Interfaces;
+using Cor.Domain.DTOs;
+using Cor.Domain.Entities;
+using MediatR;
+
+namespace Cor.App.Queries;
+public class AllBranchesQry : IRequest<List<BranchListDto>> { }
+
+public class AllBranchesQryHandler : IRequestHandler<AllBranchesQry, List<BranchListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AllBranchesQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<BranchListDto>> Handle(AllBranchesQry request, CancellationToken cancellationToken)
+    {
+        var bras = await _unitOfWork.Repository<Branch>().GetAll();
+        var braL = new List<BranchListDto>();
+        foreach (var nBra in bras)
+        {
+            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
+            if (comp == null) continue;
+            var c = new BranchListDto
+            {
+                Id = nBra.Id,
+                Name = nBra.Name,
+                NameAm = nBra.NameAm,
+                Code = nBra.Code,
+                Location = nBra.Location,
+                BranchType = nBra.BranchType.ToString(),
+                BranchStat = nBra.BranchStat.ToString(),
+                Comp = comp.Name,
+                CompAm = comp.Name,
+                OpenDate = nBra.OpenDate,
+                IsDeleted = nBra.IsDeleted,
+                DateAdd = nBra.DateAdd,
+                DateMod = nBra.DateMod,
+                RowVersion = Convert.ToBase64String(nBra.RowVersion)
+            };
+            braL.Add(c);
+        }
+
+        return braL;
+    }
+}

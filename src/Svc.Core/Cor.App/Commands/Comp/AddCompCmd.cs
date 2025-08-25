@@ -1,9 +1,7 @@
 ﻿using Cor.App.Interfaces;
 using Cor.Domain.DTOs;
 using Cor.Domain.Entities;
-using MassTransit;
 using MediatR;
-using RST.Cont;
 
 namespace Cor.App.Commands.Comp;
 
@@ -15,13 +13,7 @@ public class AddCompCmd : IRequest<CompListDto>
 public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IPublishEndpoint _iPubEndpoint;
-
-    public AddCompCmdHandler(IUnitOfWork unitOfWork, IPublishEndpoint iPubEndpoint)
-    {
-        _unitOfWork = unitOfWork;
-        _iPubEndpoint = iPubEndpoint;
-    }
+    public AddCompCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<CompListDto> Handle(AddCompCmd request, CancellationToken cancellationToken)
     {
@@ -35,31 +27,19 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
         try
         {
             await _unitOfWork.Repository<Company>().Add(com);
-            var puComp = new CompAdded
-            {
-                Id = com.Id,
-                Name = com.Name,
-                NameAm = com.NameAm,
-                IsDeleted = com.IsDeleted,
-                BranchCount = 0,
-                DateAdd = com.DateAdd,
-                DateMod = com.DateMod,
-                RowVersion = Convert.ToBase64String(com.RowVersion)
-            };
-            await _iPubEndpoint.Publish(puComp, cancellationToken);
             await _unitOfWork.Commit();
 
             var comp = await _unitOfWork.Repository<Company>().GetById(com.Id);
             var res = new CompListDto();
             if (comp == null) return res;
-            res.Id = puComp.Id;
-            res.Name = puComp.Name;
-            res.NameAm = puComp.NameAm;
-            res.IsDeleted = puComp.IsDeleted;
+            res.Id = comp.Id;
+            res.Name = comp.Name;
+            res.NameAm = comp.NameAm;
+            res.IsDeleted = comp.IsDeleted;
             res.BranchCount = 0;
-            res.DateAdd = puComp.DateAdd;
-            res.DateMod = puComp.DateMod;
-            res.RowVersion = puComp.RowVersion;
+            res.DateAdd = comp.DateAdd;
+            res.DateMod = comp.DateMod;
+            res.RowVersion = Convert.ToBase64String(comp.RowVersion);
             return res;
         }
         catch

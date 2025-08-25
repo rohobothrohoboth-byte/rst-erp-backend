@@ -41,7 +41,7 @@ services:
       RABBITMQ_HOST: rabbitmq
       # ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
       # ASPNETCORE_Kestrel__Certificates__Default__Password: AmFox@2013
-      ConnectionStrings__CoreDbCon: Host=cor.db;Port=5432;Database=coredb;Username=postgres;Password=AmFox@2013;Include Error Detail=true
+      ConnectionStrings__CoreDbCon: Host=cor.db;Port=5432;Database=CoreDb;Username=postgres;Password=AmFox@2013;Include Error Detail=true
     ports:
       - "1214:1214"
     networks:

@@ -2,32 +2,31 @@
 using Cor.App.Commands.Comp;
 using Cor.App.Queries;
 using Cor.Domain.DTOs;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cor.API.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("core/api/v{version:apiVersion}/company")]
+[Route("api/core/v{version:apiVersion}/company")]
 [ApiVersion("1.0")]
 public class CompanyController(IMediator med) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] AddCompDto branchDto)
+    public async Task<IActionResult> Create([FromBody] AddCompDto addDto)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
         try
         {
-            var command = new AddCompCmd { AddCompDto = branchDto };
-            var branchId = await med.Send(command);
-            return CreatedAtAction(nameof(GetComp), new { id = branchId }, new { Id = branchId });
+            var command = new AddCompCmd { AddCompDto = addDto };
+            var compId = await med.Send(command);
+            return CreatedAtAction(nameof(GetCompany), new { id = compId }, new { Id = compId });
         }
         catch (Exception ex)
         {
@@ -37,23 +36,23 @@ public class CompanyController(IMediator med) : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetComps()
+    public async Task<IActionResult> AllCompanies()
     {
-        var branches = await med.Send(new GetCompsQry());
-        return Ok(branches);
+        var comps = await med.Send(new AllCompsQry());
+        return Ok(comps);
     }
 
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetComp(Guid id)
+    public async Task<IActionResult> GetCompany(Guid id)
     {
-        var branch = await med.Send(new GetCompByIdQry { Id = id });
-        if (branch == null)
+        var comp = await med.Send(new CompByIdQry { Id = id });
+        if (comp == null)
         {
             return NotFound(new { Error = $"COMPANY with Id {id} not found" });
         }
-        return Ok(branch);
+        return Ok(comp);
     }
 
     [HttpPut("{id}")]
@@ -61,17 +60,17 @@ public class CompanyController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] EditCompDto branchDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] EditCompDto modDto)
     {
-        if (!ModelState.IsValid || branchDto.Id != id)
+        if (!ModelState.IsValid || modDto.Id != id)
         {
             return BadRequest(ModelState);
         }
 
         try
         {
-            var updatedBranch = await med.Send(new UpdateCompCmd { EditCompDto = branchDto });
-            return Ok(updatedBranch);
+            var modComp = await med.Send(new ModCompCmd { EditCompDto = modDto });
+            return Ok(modComp);
         }
         catch (DBConcurrencyException ex)
         {
@@ -94,7 +93,7 @@ public class CompanyController(IMediator med) : ControllerBase
     {
         try
         {
-            await med.Send(new DeleteCompCmd { Id = id });
+            await med.Send(new DelCompCmd { Id = id });
             return NoContent();
         }
         catch (KeyNotFoundException)

@@ -1,4 +1,8 @@
-﻿using Cor.App.Commands.Comp;
+﻿using Cor.App.Commands.BranchOff;
+using Cor.App.Commands.Comp;
+using Cor.App.Commands.Dept;
+using Cor.App.Commands.FiscYear;
+using Cor.App.Commands.Hier;
 using Cor.App.Interfaces;
 using Cor.Utility.Persistence;
 using Cor.Utility.Repositories;
@@ -26,6 +30,10 @@ public static class SvcCollExt
         services.AddScoped<ILogService, LogService>();
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddCompCmd).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddBranchCmd).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddDeptCmd).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddFiscalYearCmd).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddHierCmd).Assembly));
 
         return services;
     }

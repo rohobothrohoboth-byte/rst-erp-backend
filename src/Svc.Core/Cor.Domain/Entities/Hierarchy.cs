@@ -6,6 +6,6 @@ public class Hierarchy : BaseEntity
 
     //******************************************//
 
-    public Company Parent { get; set; } = default!;
-    public Company Child { get; set; } = default!;
+    public Company Parent { get; set; } = null!;
+    public Company Child { get; set; } = null!;
 }

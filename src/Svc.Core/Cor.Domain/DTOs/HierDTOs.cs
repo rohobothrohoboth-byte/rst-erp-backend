@@ -1,16 +1,10 @@
 ﻿namespace Cor.Domain.DTOs;
-public class HierListDto
+public class HierListDto: BaseDto
 {
-    public Guid Id { get; set; }
-    public Guid ParentId { get; set; }
-    public Guid ChildId { get; set; }
     public string Parent { get; set; } = default!;
     public string Child { get; set; } = default!;
-    public string CreatedAt { get; set; } = default!;
-    public string CreatedAtAm { get; set; } = default!;
-    public string ModifiedAt { get; set; } = default!;
-    public string ModifiedAtAm { get; set; } = default!;
-    public string RowVersion { get; set; } = default!;
+    public string ParentAm { get; set; } = default!;
+    public string ChildAm { get; set; } = default!;
 }
 
 public class AddHierDto
@@ -21,6 +15,7 @@ public class AddHierDto
 
 public class EditHierDto
 {
+    public Guid Id { get; set; }
     public Guid ParentId { get; set; }
     public Guid ChildId { get; set; }
     public string RowVersion { get; set; } = default!;

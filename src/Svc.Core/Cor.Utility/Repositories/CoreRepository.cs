@@ -135,7 +135,7 @@ public class CoreRepository<T> : ICoreRepository<T> where T : BaseEntity
     private bool IsSupportedDapperType(Type type)
     {
         var t = Nullable.GetUnderlyingType(type) ?? type;
-        return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(DateTime) || t == typeof(byte[]);
+        return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(Enum) || t == typeof(int) || t == typeof(DateTime) || t == typeof(byte[]);
     }
 
     private bool IsIgnoredProperty(PropertyInfo p)

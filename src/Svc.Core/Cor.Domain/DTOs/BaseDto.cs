@@ -1,5 +1,5 @@
-﻿using EthiopianCalendar;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using EthiopianCalendar;
 
 namespace Cor.Domain.DTOs;
 

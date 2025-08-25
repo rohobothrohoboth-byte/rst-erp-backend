@@ -1,14 +1,13 @@
-﻿using Cor.Domain.Enums;
+﻿namespace Cor.Domain.Entities;
 
-namespace Cor.Domain.Entities;
 public class Department : BaseEntity
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
-    public DeptStat Status { get; set; } = DeptStat.Active;
+    public string DeptStat { get; set; } = default!;
     public Guid BranchId { get; set; }
 
     //******************************************//
 
-    public Branch Branch { get; set; } = default!;
+    public Branch Branch { get; set; } = null!;
 }

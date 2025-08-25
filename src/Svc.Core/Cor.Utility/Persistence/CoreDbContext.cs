@@ -1,6 +1,5 @@
 ﻿using Cor.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using MassTransit;
 
 namespace Cor.Utility.Persistence;
 
@@ -14,10 +13,11 @@ public class CoreDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
-        modelBuilder.AddInboxStateEntity();
-        modelBuilder.AddOutboxMessageEntity();
-        modelBuilder.AddOutboxStateEntity();
-
+        //modelBuilder.AddInboxStateEntity();
+        //modelBuilder.AddOutboxMessageEntity();
+        //modelBuilder.AddOutboxStateEntity();
+        modelBuilder.HasPostgresExtension("pgcrypto");
+        
         modelBuilder.Entity<Company>(entity =>
         {
             entity.ToTable("Companys");
@@ -41,7 +41,7 @@ public class CoreDbContext : DbContext
             entity.Property(e => e.Id).HasColumnType("uuid").ValueGeneratedNever();
             entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
         });
-        
+
         modelBuilder.Entity<Hierarchy>(entity =>
         {
             entity.ToTable("Hierarchys");
