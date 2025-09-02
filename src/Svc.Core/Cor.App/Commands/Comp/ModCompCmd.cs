@@ -42,7 +42,7 @@ public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
                 Name = comp.Name,
                 NameAm = comp.NameAm,
                 IsDeleted = comp.IsDeleted,
-                BranchCount = bra.Count(),
+                BranchCount = $"{bra.Count()}",
                 DateAdd = comp.DateAdd,
                 DateMod = comp.DateMod,
                 RowVersion = Convert.ToBase64String(comp.RowVersion),

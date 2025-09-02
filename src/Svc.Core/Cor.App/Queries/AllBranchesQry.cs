@@ -1,6 +1,7 @@
 ﻿using Cor.App.Interfaces;
 using Cor.Domain.DTOs;
 using Cor.Domain.Entities;
+using Cor.Domain.Enums;
 using MediatR;
 
 namespace Cor.App.Queries;
@@ -27,10 +28,10 @@ public class AllBranchesQryHandler : IRequestHandler<AllBranchesQry, List<Branch
                 NameAm = nBra.NameAm,
                 Code = nBra.Code,
                 Location = nBra.Location,
-                BranchType = nBra.BranchType.ToString(),
-                BranchStat = nBra.BranchStat.ToString(),
+                BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
+                BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
                 Comp = comp.Name,
-                CompAm = comp.Name,
+                CompAm = comp.NameAm,
                 OpenDate = nBra.OpenDate,
                 IsDeleted = nBra.IsDeleted,
                 DateAdd = nBra.DateAdd,

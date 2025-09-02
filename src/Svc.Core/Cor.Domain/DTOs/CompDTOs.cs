@@ -4,7 +4,7 @@ public class CompListDto : BaseDto
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
-    public int BranchCount { get; set; }
+    public string BranchCount { get; set; } = default!;
 }
 
 public class AddCompDto

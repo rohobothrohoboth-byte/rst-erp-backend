@@ -36,7 +36,7 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
             res.Name = comp.Name;
             res.NameAm = comp.NameAm;
             res.IsDeleted = comp.IsDeleted;
-            res.BranchCount = 0;
+            res.BranchCount = "0";
             res.DateAdd = comp.DateAdd;
             res.DateMod = comp.DateMod;
             res.RowVersion = Convert.ToBase64String(comp.RowVersion);

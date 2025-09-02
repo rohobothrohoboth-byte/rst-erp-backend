@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Cor.API.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/core/v{version:apiVersion}/company")]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class CompanyController(IMediator med) : ControllerBase
         {
             var command = new AddCompCmd { AddCompDto = addDto };
             var compId = await med.Send(command);
-            return CreatedAtAction(nameof(GetCompany), new { id = compId }, new { Id = compId });
+            return CreatedAtAction(nameof(GetCompany), new { id = compId }, compId);
         }
         catch (Exception ex)
         {

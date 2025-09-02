@@ -1,4 +1,5 @@
-﻿using EthiopianCalendar;
+﻿using System.Text.Json.Serialization;
+using EthiopianCalendar;
 
 namespace Cor.Domain.DTOs;
 
@@ -12,6 +13,7 @@ public class BranchListDto : BaseDto
     public string BranchStat { get; set; } = default!;
     public string Comp { get; set; } = default!;
     public string CompAm { get; set; } = default!;
+    [JsonIgnore]
     public DateTime OpenDate { get; set; }
     public string DateOpenedAm => OpenDate.ToEthiopianDateString("MMMM dd, yyyy");
     public string DateOpened => $"{OpenDate:MMMM dd, yyyy}";

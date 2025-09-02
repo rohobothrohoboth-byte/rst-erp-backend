@@ -9,7 +9,7 @@ using System.Data;
 
 namespace Cor.API.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/core/v{version:apiVersion}/department")]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         {
             var command = new AddDeptCmd { AddDeptDto = addDto };
             var deptId = await med.Send(command);
-            return CreatedAtAction(nameof(GetDept), new { id = deptId }, new { Id = deptId });
+            return CreatedAtAction(nameof(GetDept), new { id = deptId }, deptId);
         }
         catch (Exception ex)
         {

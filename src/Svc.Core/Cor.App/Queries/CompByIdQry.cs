@@ -14,10 +14,7 @@ public class GetCompByIdQryHandler : IRequestHandler<CompByIdQry, CompListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public GetCompByIdQryHandler(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-    }
+    public GetCompByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<CompListDto?> Handle(CompByIdQry request, CancellationToken cancellationToken)
     {
@@ -34,7 +31,7 @@ public class GetCompByIdQryHandler : IRequestHandler<CompByIdQry, CompListDto?>
             Name = comp.Name,
             NameAm = comp.NameAm,
             IsDeleted = comp.IsDeleted,
-            BranchCount = bra.Count(),
+            BranchCount = $"{bra.Count()}",
             DateAdd = comp.DateAdd,
             DateMod = comp.DateMod,
             RowVersion = Convert.ToBase64String(comp.RowVersion),

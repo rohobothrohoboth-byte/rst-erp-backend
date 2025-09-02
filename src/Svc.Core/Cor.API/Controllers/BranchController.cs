@@ -9,7 +9,7 @@ using System.Data;
 
 namespace Cor.API.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/core/v{version:apiVersion}/branch")]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class BranchController(IMediator med) : ControllerBase
         {
             var command = new AddBranchCmd{ AddBranchDto = addDto };
             var braId = await med.Send(command);
-            return CreatedAtAction(nameof(GetBranch), new { id = braId }, new { Id = braId });
+            return CreatedAtAction(nameof(GetBranch), new { id = braId }, braId);
         }
         catch (Exception ex)
         {

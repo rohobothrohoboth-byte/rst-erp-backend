@@ -9,7 +9,7 @@ using System.Data;
 
 namespace Cor.API.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/core/v{version:apiVersion}/hierarchy")]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class HierarchyController(IMediator med) : ControllerBase
         {
             var command = new AddHierCmd { AddHierDto = addDto };
             var hierId = await med.Send(command);
-            return CreatedAtAction(nameof(GetHierarchy), new { id = hierId }, new { Id = hierId });
+            return CreatedAtAction(nameof(GetHierarchy), new { id = hierId }, hierId);
         }
         catch (Exception ex)
         {

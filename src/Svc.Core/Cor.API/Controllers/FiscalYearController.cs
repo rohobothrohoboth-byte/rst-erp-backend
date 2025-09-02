@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Cor.API.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/core/v{version:apiVersion}/fiscalyear")]
 [ApiVersion("1.0")]
@@ -26,7 +26,7 @@ public class FiscalYearController(IMediator med) : ControllerBase
         {
             var command = new AddFiscalYearCmd { AddFiscYearDto = addDto };
             var fYearId = await med.Send(command);
-            return CreatedAtAction(nameof(GetFiscalYear), new { id = fYearId }, new { Id = fYearId });
+            return CreatedAtAction(nameof(GetFiscalYear), new { id = fYearId }, fYearId);
         }
         catch (Exception ex)
         {
