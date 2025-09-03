@@ -15,7 +15,7 @@ namespace Cor.API.Controllers;
 [ApiVersion("1.0")]
 public class CompanyController(IMediator med) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("AddCompany")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddCompDto addDto)
@@ -33,16 +33,16 @@ public class CompanyController(IMediator med) : ControllerBase
             return BadRequest(new { Error = "Failed to create COMPANY", Details = ex.Message });
         }
     }
-
-    [HttpGet]
+    
+    [HttpGet("AllCompany")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllCompanies()
     {
         var comps = await med.Send(new AllCompsQry());
         return Ok(comps);
     }
-
-    [HttpGet("{id}")]
+    
+    [HttpGet("GetCompany/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCompany(Guid id)
@@ -55,7 +55,7 @@ public class CompanyController(IMediator med) : ControllerBase
         return Ok(comp);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("ModCompany/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -85,8 +85,8 @@ public class CompanyController(IMediator med) : ControllerBase
             return BadRequest(new { Error = "Failed to update COMPANY", Details = ex.Message });
         }
     }
-
-    [HttpDelete("{id}")]
+    
+    [HttpDelete("DelCompany/id")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

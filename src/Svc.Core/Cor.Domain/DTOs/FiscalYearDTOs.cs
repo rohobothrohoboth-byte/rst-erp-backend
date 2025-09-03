@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Cor.Domain.DTOs;
 
-public class FiscYearListDto : BaseDto
+public class FiscYearListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
     public string IsActive { get; set; } = default!;

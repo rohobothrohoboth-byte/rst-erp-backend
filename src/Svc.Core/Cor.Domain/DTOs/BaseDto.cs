@@ -3,7 +3,7 @@ using EthiopianCalendar;
 
 namespace Cor.Domain.DTOs;
 
-public abstract class BaseDto
+public abstract class BaseDTO
 {
     public Guid Id { get; set; }
     [JsonIgnore]

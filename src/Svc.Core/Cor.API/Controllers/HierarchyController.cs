@@ -15,7 +15,7 @@ namespace Cor.API.Controllers;
 [ApiVersion("1.0")]
 public class HierarchyController(IMediator med) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("AddHierarchy")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddHierDto addDto)
@@ -34,7 +34,7 @@ public class HierarchyController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpGet]
+    [HttpGet("AllHierarchy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllHierarchies()
     {
@@ -42,7 +42,7 @@ public class HierarchyController(IMediator med) : ControllerBase
         return Ok(comps);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("GetHierarchy/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetHierarchy(Guid id)
@@ -55,7 +55,7 @@ public class HierarchyController(IMediator med) : ControllerBase
         return Ok(hier);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("ModHierarchy/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -86,7 +86,7 @@ public class HierarchyController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("DelHierarchy/id")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

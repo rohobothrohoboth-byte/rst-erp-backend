@@ -3,7 +3,7 @@ using EthiopianCalendar;
 
 namespace Cor.Domain.DTOs;
 
-public class BranchListDto : BaseDto
+public class BranchListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;

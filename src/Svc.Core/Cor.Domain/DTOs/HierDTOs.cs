@@ -1,5 +1,5 @@
 ﻿namespace Cor.Domain.DTOs;
-public class HierListDto: BaseDto
+public class HierListDto: BaseDTO
 {
     public string Parent { get; set; } = default!;
     public string Child { get; set; } = default!;

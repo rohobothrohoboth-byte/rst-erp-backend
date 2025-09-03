@@ -1,6 +1,6 @@
 ﻿namespace Cor.Domain.DTOs;
 
-public class CompListDto : BaseDto
+public class CompListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;

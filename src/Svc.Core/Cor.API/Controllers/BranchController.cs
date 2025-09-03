@@ -15,7 +15,7 @@ namespace Cor.API.Controllers;
 [ApiVersion("1.0")]
 public class BranchController(IMediator med) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("AddBranch")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddBranchDto addDto)
@@ -34,15 +34,23 @@ public class BranchController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpGet]
+    [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranches()
     {
         var branches = await med.Send(new AllBranchesQry());
         return Ok(branches);
     }
+    
+    [HttpGet("BranchComp/id")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> CompBranches(Guid id)
+    {
+        var branches = await med.Send(new BranchByCompQry { Id = id });
+        return Ok(branches);
+    }
 
-    [HttpGet("{id}")]
+    [HttpGet("GetBranch/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBranch(Guid id)
@@ -55,7 +63,7 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(bra);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("ModBranch/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -86,7 +94,7 @@ public class BranchController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("DelBranch/id")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

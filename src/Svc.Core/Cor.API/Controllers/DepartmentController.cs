@@ -15,7 +15,7 @@ namespace Cor.API.Controllers;
 [ApiVersion("1.0")]
 public class DepartmentController(IMediator med) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("AddDept")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddDeptDto addDto)
@@ -34,7 +34,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpGet]
+    [HttpGet("AllDept")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllDepts()
     {
@@ -42,7 +42,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(depts);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("GetDept/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDept(Guid id)
@@ -55,7 +55,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(dept);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("ModDept/id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -86,7 +86,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("DelDept/id")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

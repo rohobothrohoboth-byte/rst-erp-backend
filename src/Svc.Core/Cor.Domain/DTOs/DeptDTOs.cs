@@ -1,8 +1,7 @@
 ﻿namespace Cor.Domain.DTOs;
 
-public class DeptListDto : BaseDto
+public class DeptListDto : BaseDTO
 {
-    public Guid BranchId { get; set; }
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
     public string DeptStat { get; set; } = default!;
