@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Npgsql;
 
-namespace Svc.Lup.Extensions;
+namespace Cor.HRMM.Extensions;
 
 public class DapperContext : IDisposable
 {
@@ -10,7 +10,7 @@ public class DapperContext : IDisposable
 
     public DapperContext(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("lupDbCon") ?? throw new InvalidOperationException("Connection string 'lupDbCon' is not configured.");
+        _connectionString = configuration.GetConnectionString("coreHRMMDbCon") ?? throw new InvalidOperationException("Connection string 'coreHRMMDbCon' is not configured.");
     }
 
     public IDbConnection CreateConnection()
