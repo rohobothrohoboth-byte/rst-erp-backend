@@ -6,8 +6,6 @@ using Cor.HRMM.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using Serilog;
-//using Svc.Lup.Extensions;
-//using Svc.Lup.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +27,7 @@ builder.Services.AddControllers();
 var gatewayUrl = builder.Configuration["Services:GatewayService"];
 var lupUrl = builder.Configuration["Services:LupService"];
 
-builder.Services.AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); });
+builder.Services.AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddApiVersioning(option =>
     {
