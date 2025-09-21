@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Module.App.Commands.Hier;
+using Module.App.Commands;
 using Module.App.Queries;
 using Module.Domain.DTOs;
 using MediatR;
@@ -15,6 +15,27 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class HierarchyController(IMediator med) : ControllerBase
 {
+    [HttpGet("AllHierarchy")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllHierarchy()
+    {
+        var comps = await med.Send(new AllCompsQry());
+        return Ok(comps);
+    }
+
+    [HttpGet("GetHierarchy/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetHierarchy(Guid id)
+    {
+        var hier = await med.Send(new HierByIdQry { Id = id });
+        if (hier == null)
+        {
+            return NotFound(new { Error = $"HIERARCHY with Id {id} not found" });
+        }
+        return Ok(hier);
+    }
+
     [HttpPost("AddHierarchy")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -32,27 +53,6 @@ public class HierarchyController(IMediator med) : ControllerBase
         {
             return BadRequest(new { Error = "Failed to create HIERARCHY", Details = ex.Message });
         }
-    }
-
-    [HttpGet("AllHierarchy")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllHierarchies()
-    {
-        var comps = await med.Send(new AllCompsQry());
-        return Ok(comps);
-    }
-
-    [HttpGet("GetHierarchy/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetHierarchy(Guid id)
-    {
-        var hier = await med.Send(new HierByIdQry { Id = id });
-        if (hier == null)
-        {
-            return NotFound(new { Error = $"HIERARCHY with Id {id} not found" });
-        }
-        return Ok(hier);
     }
 
     [HttpPut("ModHierarchy/{id:guid}")]

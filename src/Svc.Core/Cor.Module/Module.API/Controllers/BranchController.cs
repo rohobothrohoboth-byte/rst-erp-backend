@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Module.App.Commands.BranchOff;
+using Module.App.Commands;
 using Module.App.Queries;
 using Module.Domain.DTOs;
 using MediatR;
@@ -15,38 +15,11 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class BranchController(IMediator med) : ControllerBase
 {
-    [HttpPost("AddBranch")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] AddBranchDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new AddBranchCmd{ AddBranchDto = addDto };
-            var braId = await med.Send(command);
-            return CreatedAtAction(nameof(GetBranch), new { id = braId.Id }, braId);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create BRANCH", Details = ex.Message });
-        }
-    }
-
     [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllBranches()
+    public async Task<IActionResult> AllBranch()
     {
         var branches = await med.Send(new AllBranchesQry());
-        return Ok(branches);
-    }
-    
-    [HttpGet("BranchComp/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> CompBranches(Guid id)
-    {
-        var branches = await med.Send(new BranchByCompQry { Id = id });
         return Ok(branches);
     }
 
@@ -63,6 +36,33 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(bra);
     }
 
+    [HttpGet("BranchComp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> CompBranches(Guid id)
+    {
+        var branches = await med.Send(new BranchByCompQry { Id = id });
+        return Ok(branches);
+    }
+
+    [HttpPost("AddBranch")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] AddBranchDto addDto)
+    {
+        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+        try
+        {
+            var command = new AddBranchCmd { AddBranchDto = addDto };
+            var braId = await med.Send(command);
+            return CreatedAtAction(nameof(GetBranch), new { id = braId.Id }, braId);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = "Failed to create BRANCH", Details = ex.Message });
+        }
+    }
+    
     [HttpPut("ModBranch/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

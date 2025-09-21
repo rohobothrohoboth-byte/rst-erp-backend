@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Module.App.Commands.Comp;
+using Module.App.Commands;
 using Module.App.Interfaces;
 using Module.Utility.Persistence;
 using Module.Utility.Repositories;

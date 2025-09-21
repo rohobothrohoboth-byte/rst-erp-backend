@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Module.App.Commands.Comp;
+using Module.App.Commands;
 using Module.App.Queries;
 using Module.Domain.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -15,28 +15,9 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class CompanyController(IMediator med) : ControllerBase
 {
-    [HttpPost("AddCompany")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] AddCompDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new AddCompCmd { AddCompDto = addDto };
-            var compId = await med.Send(command);
-            return CreatedAtAction(nameof(GetCompany), new { id = compId.Id}, compId);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create COMPANY", Details = ex.Message });
-        }
-    }
-    
     [HttpGet("AllCompany")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllCompanies()
+    public async Task<IActionResult> AllCompany()
     {
         var comps = await med.Send(new AllCompsQry());
         return Ok(comps);
@@ -53,6 +34,25 @@ public class CompanyController(IMediator med) : ControllerBase
             return NotFound(new { Error = $"COMPANY with Id {id} not found" });
         }
         return Ok(comp);
+    }
+    
+    [HttpPost("AddCompany")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] AddCompDto addDto)
+    {
+        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
+        try
+        {
+            var command = new AddCompCmd { AddCompDto = addDto };
+            var compId = await med.Send(command);
+            return CreatedAtAction(nameof(GetCompany), new { id = compId.Id }, compId);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = "Failed to create COMPANY", Details = ex.Message });
+        }
     }
 
     [HttpPut("ModCompany/{id:guid}")]

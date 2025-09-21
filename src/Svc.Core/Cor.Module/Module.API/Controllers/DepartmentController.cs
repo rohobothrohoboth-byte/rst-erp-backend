@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Module.App.Commands.Dept;
+using Module.App.Commands;
 using Module.App.Queries;
 using Module.Domain.DTOs;
 using MediatR;
@@ -15,6 +15,27 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class DepartmentController(IMediator med) : ControllerBase
 {
+    [HttpGet("AllDept")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllDept()
+    {
+        var depts = await med.Send(new AllDeptsQry());
+        return Ok(depts);
+    }
+
+    [HttpGet("GetDept/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetDept(Guid id)
+    {
+        var dept = await med.Send(new DeptByIdQry { Id = id });
+        if (dept == null)
+        {
+            return NotFound(new { Error = $"DEPARTMENT with Id {id} not found" });
+        }
+        return Ok(dept);
+    }
+    
     [HttpPost("AddDept")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -33,28 +54,7 @@ public class DepartmentController(IMediator med) : ControllerBase
             return BadRequest(new { Error = "Failed to create DEPARTMENT", Details = ex.Message });
         }
     }
-
-    [HttpGet("AllDept")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllDepts()
-    {
-        var depts = await med.Send(new AllDeptsQry());
-        return Ok(depts);
-    }
-
-    [HttpGet("GetDept/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetDept(Guid id)
-    {
-        var dept = await med.Send(new DeptByIdQry { Id = id });
-        if (dept == null)
-        {
-            return NotFound(new { Error = $"DEPARTMENT with Id {id} not found" });
-        }
-        return Ok(dept);
-    }
-
+    
     [HttpPut("ModDept/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

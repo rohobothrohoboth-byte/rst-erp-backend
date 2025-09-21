@@ -2,7 +2,7 @@
 using Polly.Extensions.Http;
 using Serilog;
 
-namespace Cor.HRMM.Middlewares;
+namespace Svc.Lup.Extensions;
 
 public static class ResiliencePolicies
 {

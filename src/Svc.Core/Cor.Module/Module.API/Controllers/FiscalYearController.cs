@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Module.App.Commands.FiscYear;
+using Module.App.Commands;
 using Module.App.Queries;
 using Module.Domain.DTOs;
 using MediatR;
@@ -15,6 +15,27 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class FiscalYearController(IMediator med) : ControllerBase
 {
+    [HttpGet("AllFiscalYear")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllFiscalYear()
+    {
+        var comps = await med.Send(new AllCompsQry());
+        return Ok(comps);
+    }
+
+    [HttpGet("GetFiscalYear/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFiscalYear(Guid id)
+    {
+        var fiscYear = await med.Send(new FiscalYearByIdQry { Id = id });
+        if (fiscYear == null)
+        {
+            return NotFound(new { Error = $"FISCAL YEAR with Id {id} not found" });
+        }
+        return Ok(fiscYear);
+    }
+
     [HttpPost("AddFiscalYear")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -32,27 +53,6 @@ public class FiscalYearController(IMediator med) : ControllerBase
         {
             return BadRequest(new { Error = "Failed to create FISCAL YEAR", Details = ex.Message });
         }
-    }
-
-    [HttpGet("AllFiscalYear")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllFiscalYears()
-    {
-        var comps = await med.Send(new AllCompsQry());
-        return Ok(comps);
-    }
-
-    [HttpGet("GetFiscalYear/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetFiscalYear(Guid id)
-    {
-        var fiscYear = await med.Send(new FiscalYearByIdQry { Id = id });
-        if (fiscYear == null)
-        {
-            return NotFound(new { Error = $"FISCAL YEAR with Id {id} not found" });
-        }
-        return Ok(fiscYear);
     }
 
     [HttpPut("ModFiscalYear/{id:guid}")]
