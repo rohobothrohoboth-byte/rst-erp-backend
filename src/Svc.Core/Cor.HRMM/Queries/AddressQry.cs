@@ -60,22 +60,26 @@ public class AllAddressQryHandler : IRequestHandler<AllAddressQry, List<AddressL
 public class AddressByIdQryHandler : IRequestHandler<AddressByIdQry, AddressListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILupClient _lupClient;
 
-    public AddressByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public AddressByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    {
+        _unitOfWork = unitOfWork;
+        _lupClient = lupClient;
+    }
 
     public async Task<AddressListDto?> Handle(AddressByIdQry request, CancellationToken cancellationToken)
     {
         var nData = await _unitOfWork.Repository<Address>().GetById(request.Id);
-        if (nData == null)
-        {
-            return null;
-        }
+        if (nData == null) { return null; }
+        var region = await _lupClient.GetRegion(nData.RegionId);
+        var aType = await _lupClient.GetAddressType(nData.AddressTypeId);
         
         var c = new AddressListDto
         {
             Id = nData.Id,
-            Region = "",
-            AddressType = "",
+            Region = region!.Name,
+            AddressType = aType!.Name,
             Country = nData.Country,
             Subcity = nData.Subcity,
             Zone = nData.Zone,

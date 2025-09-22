@@ -18,20 +18,12 @@ public class CoreModuleDbContext : DbContext
         //modelBuilder.AddOutboxStateEntity();
         modelBuilder.HasPostgresExtension("pgcrypto");
         
-        modelBuilder.Entity<Company>(entity =>
-        {
-            //entity.HasKey(e => e.Id);
-            //entity.Property(e => e.Id).HasColumnType("uuid").ValueGeneratedNever();
-            entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        });
-
+        modelBuilder.Entity<Company>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<Branch>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-
         modelBuilder.Entity<Department>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-
-        modelBuilder.Entity<Hierarchy>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-
         modelBuilder.Entity<FiscalYear>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.Entity<Period>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.Entity<Hierarchy>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
 
     }
 
@@ -39,5 +31,6 @@ public class CoreModuleDbContext : DbContext
     public DbSet<Branch> Branch { get; set; }
     public DbSet<Department> Department { get; set; }
     public DbSet<FiscalYear> FiscalYear { get; set; }
+    public DbSet<Period> Period { get; set; }
     public DbSet<Hierarchy> Hierarchy { get; set; }
 }

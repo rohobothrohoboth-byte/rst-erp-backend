@@ -11,6 +11,7 @@ public class AwardTypeQry : IRequest<List<LupListDto>> { }
 public class CommitteeRoleQry : IRequest<List<LupListDto>> { }
 public class CriterionTypeQry : IRequest<List<LupListDto>> { }
 public class EmploymentNatureQry : IRequest<List<LupListDto>> { }
+public class EducationLevelQry : IRequest<List<LupListDto>> { }
 public class HolidayConditionQry : IRequest<List<LupListDto>> { }
 public class LanguageSkillQry : IRequest<List<LupListDto>> { }
 public class LeaveConditionQry : IRequest<List<LupListDto>> { }

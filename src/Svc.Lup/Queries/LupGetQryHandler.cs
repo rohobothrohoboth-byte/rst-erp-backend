@@ -108,6 +108,19 @@ public class EmploymentNatureGetQryHandler : IRequestHandler<EmploymentNatureGet
     }
 }
 
+public class EducationLevelGetQryHandler : IRequestHandler<EducationLevelGetQry, LupListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public EducationLevelGetQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public async Task<LupListDto?> Handle(EducationLevelGetQry request, CancellationToken cancellationToken)
+    {
+        var lup = await _unitOfWork.Repository<EducationLevel>().GetById(request.Id);
+        if (lup == null) { return null; }
+        var l = new LupListDto { Id = lup.Id, Name = lup.Name };
+        return l;
+    }
+}
+
 public class HolidayConditionGetQryHandler : IRequestHandler<HolidayConditionGetQry, LupListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;

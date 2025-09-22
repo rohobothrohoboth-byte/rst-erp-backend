@@ -28,6 +28,7 @@ public class LupDbContext : DbContext
     public DbSet<CommitteeRole> CommitteeRole { get; set; }
     public DbSet<CriterionType> CriterionType { get; set; }
     public DbSet<EmploymentNature> EmploymentNature { get; set; }
+    public DbSet<EducationLevel> EducationLevel { get; set; }
     public DbSet<HolidayCondition> HolidayCondition { get; set; }
     public DbSet<LanguageSkill> LanguageSkill { get; set; }
     public DbSet<LeaveCondition> LeaveCondition { get; set; }

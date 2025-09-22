@@ -4,6 +4,7 @@ using Module.API.Middlewares;
 using Module.Utility.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Module.App.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,11 @@ builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { 
 
 // --- Add controllers + API versioning + problem details ---
 builder.Services.AddControllers();
+
+var gatewayUrl = builder.Configuration["Services:GatewayService"];
+var lupUrl = builder.Configuration["Services:LupService"];
+
+builder.Services.AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 builder.Services.AddApiVersioning(option =>
     {
         option.AssumeDefaultVersionWhenUnspecified = true;

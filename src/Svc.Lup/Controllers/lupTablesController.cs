@@ -131,6 +131,21 @@ public class lupTablesController(IMediator med) : ControllerBase
         return Ok(lup);
     }
 
+    [HttpGet("EducationLevel")]
+    public async Task<IActionResult> EducationLevel()
+    {
+        var lups = await med.Send(new EducationLevelQry());
+        return Ok(lups);
+    }
+
+    [HttpGet("EducationLevel/{id:guid}")]
+    public async Task<IActionResult> EducationLevel(Guid id)
+    {
+        var lup = await med.Send(new EducationLevelGetQry { Id = id });
+        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
+        return Ok(lup);
+    }
+
     [HttpGet("HolidayCondition")]
     public async Task<IActionResult> HolidayCondition()
     {

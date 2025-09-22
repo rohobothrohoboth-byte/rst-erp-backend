@@ -94,6 +94,20 @@ public static class LupSeeder
             await context.SaveChangesAsync();
         }
 
+        if (!context.EducationLevel.Any())
+        {
+            await context.EducationLevel.AddRangeAsync(
+                new EducationLevel { Id = Guid.NewGuid(), Name = "Preparatory" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "Collage" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "TVT" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "University" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "Elementary" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "None" },
+                new EducationLevel { Id = Guid.NewGuid(), Name = "High School" }
+            );
+            await context.SaveChangesAsync();
+        }
+
         if (!context.HolidayCondition.Any())
         {
             await context.HolidayCondition.AddRangeAsync(
@@ -276,9 +290,11 @@ public static class LupSeeder
         if (!context.ReportType.Any())
         {
             await context.ReportType.AddRangeAsync(
-                new ReportType { Id = Guid.NewGuid(), Name = "Daily" },
+                new ReportType { Id = Guid.NewGuid(), Name = "Weekly" },
                 new ReportType { Id = Guid.NewGuid(), Name = "Monthly" },
-                new ReportType { Id = Guid.NewGuid(), Name = "Quarterly" },
+                new ReportType { Id = Guid.NewGuid(), Name = "3 Months" },
+                new ReportType { Id = Guid.NewGuid(), Name = "6 Months" },
+                new ReportType { Id = Guid.NewGuid(), Name = "9 Months" },
                 new ReportType { Id = Guid.NewGuid(), Name = "Yearly" }
             );
             await context.SaveChangesAsync();
