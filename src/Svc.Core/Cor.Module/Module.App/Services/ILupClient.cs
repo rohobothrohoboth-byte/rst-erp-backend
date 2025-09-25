@@ -2,6 +2,7 @@
 
 public interface ILupClient
 {
-    Task<LupListDto?> GetQuarter(Guid id);
+    Task<LupListDto?> Quarter(Guid id, CancellationToken ct = default);
+    Task<List<LupListDto>?> QuarterList(CancellationToken ct = default);
 
 }

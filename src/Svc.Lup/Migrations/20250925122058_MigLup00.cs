@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Svc.Lup.Migrations
 {
     /// <inheritdoc />
-    public partial class Shared1 : Migration
+    public partial class MigLup00 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -94,6 +94,18 @@ namespace Svc.Lup.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CriterionType", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EducationLevel",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EducationLevel", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -229,7 +241,7 @@ namespace Svc.Lup.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PositionClassType",
+                name: "ProfessionType",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -237,7 +249,7 @@ namespace Svc.Lup.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PositionClassType", x => x.Id);
+                    table.PrimaryKey("PK_ProfessionType", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -422,6 +434,9 @@ namespace Svc.Lup.Migrations
                 name: "CriterionType");
 
             migrationBuilder.DropTable(
+                name: "EducationLevel");
+
+            migrationBuilder.DropTable(
                 name: "EmploymentNature");
 
             migrationBuilder.DropTable(
@@ -455,7 +470,7 @@ namespace Svc.Lup.Migrations
                 name: "PositionChangeReason");
 
             migrationBuilder.DropTable(
-                name: "PositionClassType");
+                name: "ProfessionType");
 
             migrationBuilder.DropTable(
                 name: "Quarter");

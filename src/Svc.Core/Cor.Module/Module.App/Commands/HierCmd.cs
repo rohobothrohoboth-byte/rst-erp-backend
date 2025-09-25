@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Module.App.Interfaces;
+using Module.App.Queries;
 using Module.Domain.DTOs;
 using Module.Domain.Entities;
 
@@ -14,8 +15,9 @@ public class DelHierCmd : IRequest { public Guid Id { get; set; } }
 public class AddHierCmdHandler : IRequestHandler<AddHierCmd, HierListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
 
-    public AddHierCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public AddHierCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<HierListDto> Handle(AddHierCmd request, CancellationToken cancellationToken)
     {
@@ -32,21 +34,9 @@ public class AddHierCmdHandler : IRequestHandler<AddHierCmd, HierListDto>
             await _unitOfWork.Commit();
 
             var res = new HierListDto();
-            var nHier = await _unitOfWork.Repository<Hierarchy>().GetById(hier.Id);
-            if (nHier == null) { return res; }
-
-            var par = await _unitOfWork.Repository<Company>().GetById(nHier.ParentId);
-            var chi = await _unitOfWork.Repository<Company>().GetById(nHier.ChildId);
-            if (par == null || chi == null) return res;
-            res.Id = nHier.Id;
-            res.Parent = par.Name;
-            res.ParentAm = par.NameAm;
-            res.Child = chi.Name;
-            res.ChildAm = chi.NameAm;
-            res.IsDeleted = nHier.IsDeleted;
-            res.DateAdd = nHier.DateAdd;
-            res.DateMod = nHier.DateMod;
-            res.RowVersion = Convert.ToBase64String(nHier.RowVersion);
+            var response = await _med.Send(new HierByIdQry { Id = hier.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch
@@ -60,8 +50,9 @@ public class AddHierCmdHandler : IRequestHandler<AddHierCmd, HierListDto>
 public class ModHierCmdHandler : IRequestHandler<ModHierCmd, HierListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
 
-    public ModHierCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public ModHierCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<HierListDto> Handle(ModHierCmd request, CancellationToken cancellationToken)
     {
@@ -82,21 +73,9 @@ public class ModHierCmdHandler : IRequestHandler<ModHierCmd, HierListDto>
             await _unitOfWork.Commit();
 
             var res = new HierListDto();
-            var nHier = await _unitOfWork.Repository<Hierarchy>().GetById(hier.Id);
-            if (nHier == null) { return res; }
-
-            var par = await _unitOfWork.Repository<Company>().GetById(nHier.ParentId);
-            var chi = await _unitOfWork.Repository<Company>().GetById(nHier.ChildId);
-            if (par == null || chi == null) return res;
-            res.Id = nHier.Id;
-            res.Parent = par.Name;
-            res.ParentAm = par.NameAm;
-            res.Child = chi.Name;
-            res.ChildAm = chi.NameAm;
-            res.IsDeleted = nHier.IsDeleted;
-            res.DateAdd = nHier.DateAdd;
-            res.DateMod = nHier.DateMod;
-            res.RowVersion = Convert.ToBase64String(nHier.RowVersion);
+            var response = await _med.Send(new HierByIdQry { Id = hier.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch

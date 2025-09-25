@@ -222,12 +222,12 @@ public static class LupSeeder
             await context.SaveChangesAsync();
         }
 
-        if (!context.PositionClassType.Any())
+        if (!context.ProfessionType.Any())
         {
-            await context.PositionClassType.AddRangeAsync(
-                new PositionClassType { Id = Guid.NewGuid(), Name = "Professional" },
-                new PositionClassType { Id = Guid.NewGuid(), Name = "Semi-Professional," },
-                new PositionClassType { Id = Guid.NewGuid(), Name = "Non-Professional" }
+            await context.ProfessionType.AddRangeAsync(
+                new ProfessionType { Id = Guid.NewGuid(), Name = "Professional" },
+                new ProfessionType { Id = Guid.NewGuid(), Name = "Semi-Professional," },
+                new ProfessionType { Id = Guid.NewGuid(), Name = "Non-Professional" }
             );
             await context.SaveChangesAsync();
         }

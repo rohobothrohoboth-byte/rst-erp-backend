@@ -39,7 +39,7 @@ public class LupDbContext : DbContext
     public DbSet<MeasureType> MeasureType { get; set; }
     public DbSet<PerformanceEvaluation> PerformanceEvaluation { get; set; }
     public DbSet<PositionChangeReason> PositionChangeReason { get; set; }
-    public DbSet<PositionClassType> PositionClassType { get; set; }
+    public DbSet<ProfessionType> ProfessionType { get; set; }
     public DbSet<Quarter> Quarter { get; set; }
     public DbSet<Rating> Rating { get; set; }
     public DbSet<Region> Region { get; set; }

@@ -16,18 +16,20 @@ public class AllPeriodQryHandler : IRequestHandler<AllPeriodQry, List<PeriodList
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILupClient _lupClient;
 
-    public AllPeriodQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient;}
+    public AllPeriodQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient; }
 
     public async Task<List<PeriodListDto>> Handle(AllPeriodQry request, CancellationToken cancellationToken)
     {
         var dataList = await _unitOfWork.Repository<Period>().GetAll();
         var dataL = new List<PeriodListDto>();
-        
+
+        var quarterL = await _lupClient.QuarterList(cancellationToken);
+
         foreach (var data in dataList)
         {
             var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
             if (fYear == null) continue;
-            var quarter = await _lupClient.GetQuarter(data.QuarterId);
+            var quarter = quarterL!.FirstOrDefault(q => q.Id == data.QuarterId);
             var c = new PeriodListDto
             {
                 Id = data.Id,
@@ -54,7 +56,7 @@ public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILupClient _lupClient;
 
-    public PeriodByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient;}
+    public PeriodByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient; }
 
     public async Task<PeriodListDto?> Handle(PeriodByIdQry request, CancellationToken cancellationToken)
     {
@@ -63,7 +65,7 @@ public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto
 
         var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
         if (fYear == null) { return null; }
-        var quarter = await _lupClient.GetQuarter(data.QuarterId);
+        var quarter = await _lupClient.Quarter(data.QuarterId, cancellationToken);
 
         var c = new PeriodListDto
         {

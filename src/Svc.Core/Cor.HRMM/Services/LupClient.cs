@@ -1,18 +1,58 @@
-﻿namespace Cor.HRMM.Services;
+﻿using System.Text.Json;
+
+namespace Cor.HRMM.Services;
 
 public class LupClient(HttpClient http) : ILupClient
 {
-    public async Task<LupListDto?> GetAddressType(Guid id)
+    public async Task<LupListDto?> AddressType(Guid id, CancellationToken ct = default)
     {
-        var res = await http.GetAsync($"AddressType/{id}");
-        if (!res.IsSuccessStatusCode) return null;
-        return await res.Content.ReadFromJsonAsync<LupListDto>();
+        try
+        {
+            using var res = await http.GetAsync($"AddressType/{id}", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<LupListDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }   // network errors
+        catch (NotSupportedException) { return null; } // invalid content type
+        catch (JsonException) { return null; }        // bad JSON
     }
 
-    public async Task<LupListDto?> GetRegion(Guid id)
+    public async Task<List<LupListDto>?> AddressTypeList(CancellationToken ct = default)
     {
-        var res = await http.GetAsync($"Region/{id}");
-        if (!res.IsSuccessStatusCode) return null;
-        return await res.Content.ReadFromJsonAsync<LupListDto>();
+        try
+        {
+            using var res = await http.GetAsync("AddressType", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<List<LupListDto>>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (JsonException) { return null; }
+    }
+
+    public async Task<LupListDto?> Region(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync($"Region/{id}", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<LupListDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (JsonException) { return null; }
+    }
+
+    public async Task<List<LupListDto>?> RegionList(CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync("Region", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<List<LupListDto>>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (JsonException) { return null; }
     }
 }

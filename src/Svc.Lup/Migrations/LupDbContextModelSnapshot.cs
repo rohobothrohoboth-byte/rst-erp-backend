@@ -131,6 +131,21 @@ namespace Svc.Lup.Migrations
                     b.ToTable("CriterionType");
                 });
 
+            modelBuilder.Entity("Svc.Lup.Models.EducationLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EducationLevel");
+                });
+
             modelBuilder.Entity("Svc.Lup.Models.EmploymentNature", b =>
                 {
                     b.Property<Guid>("Id")
@@ -296,7 +311,7 @@ namespace Svc.Lup.Migrations
                     b.ToTable("PositionChangeReason");
                 });
 
-            modelBuilder.Entity("Svc.Lup.Models.PositionClassType", b =>
+            modelBuilder.Entity("Svc.Lup.Models.ProfessionType", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -308,7 +323,7 @@ namespace Svc.Lup.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PositionClassType");
+                    b.ToTable("ProfessionType");
                 });
 
             modelBuilder.Entity("Svc.Lup.Models.Quarter", b =>

@@ -23,7 +23,7 @@ public class AddFiscYearDto
     public required string Name { get; set; }
     public DateTime DateStart { get; set; } = DateTime.UtcNow;
     public DateTime DateEnd { get; set; } = DateTime.UtcNow.AddDays(365);
-    public string IsActive { get; set; } = default!;
+    public string IsActive { get; set; } = default!;// Enum.YesNo
 }
 
 public class EditFiscYearDto
@@ -32,6 +32,6 @@ public class EditFiscYearDto
     public required string Name { get; set; }
     public DateTime DateStart { get; set; }
     public DateTime DateEnd { get; set; }
-    public string IsActive { get; set; } = default!;
+    public string IsActive { get; set; } = default!;// Enum.YesNo
     public string RowVersion { get; set; } = default!;
 }

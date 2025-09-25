@@ -12,8 +12,8 @@ using Svc.Lup.Persistence;
 namespace Svc.Lup.Migrations
 {
     [DbContext(typeof(LupDbContext))]
-    [Migration("20250917124924_Shared1")]
-    partial class Shared1
+    [Migration("20250925122058_MigLup00")]
+    partial class MigLup00
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,6 +132,21 @@ namespace Svc.Lup.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CriterionType");
+                });
+
+            modelBuilder.Entity("Svc.Lup.Models.EducationLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EducationLevel");
                 });
 
             modelBuilder.Entity("Svc.Lup.Models.EmploymentNature", b =>
@@ -299,7 +314,7 @@ namespace Svc.Lup.Migrations
                     b.ToTable("PositionChangeReason");
                 });
 
-            modelBuilder.Entity("Svc.Lup.Models.PositionClassType", b =>
+            modelBuilder.Entity("Svc.Lup.Models.ProfessionType", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -311,7 +326,7 @@ namespace Svc.Lup.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PositionClassType");
+                    b.ToTable("ProfessionType");
                 });
 
             modelBuilder.Entity("Svc.Lup.Models.Quarter", b =>

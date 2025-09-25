@@ -1,8 +1,8 @@
 ﻿using MediatR;
 using Module.App.Interfaces;
+using Module.App.Queries;
 using Module.Domain.DTOs;
 using Module.Domain.Entities;
-using Module.Domain.Enums;
 
 namespace Module.App.Commands;
 
@@ -15,7 +15,9 @@ public class DelFiscalYearCmd : IRequest { public Guid Id { get; set; } }
 public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYearListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public AddFiscalYearCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public AddFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<FiscYearListDto> Handle(AddFiscalYearCmd request, CancellationToken cancellationToken)
     {
@@ -33,18 +35,10 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
             await _unitOfWork.Repository<FiscalYear>().Add(fYear);
             await _unitOfWork.Commit();
 
-            var yearFisc = await _unitOfWork.Repository<FiscalYear>().GetById(fYear.Id);
             var res = new FiscYearListDto();
-            if (yearFisc == null) return res;
-            res.Id = yearFisc.Id;
-            res.Name = yearFisc.Name;
-            res.DateStart = yearFisc.DateStart;
-            res.DateEnd = yearFisc.DateEnd;
-            res.IsActive = ((YesNo)Enum.Parse(typeof(YesNo), yearFisc.IsActive)).ToDisplayName();
-            res.IsDeleted = yearFisc.IsDeleted;
-            res.DateAdd = yearFisc.DateAdd;
-            res.DateMod = yearFisc.DateMod;
-            res.RowVersion = Convert.ToBase64String(yearFisc.RowVersion);
+            var response = await _med.Send(new FiscalYearByIdQry { Id = fYear.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch
@@ -58,8 +52,9 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
 public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYearListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
 
-    public ModFiscalYearCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public ModFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<FiscYearListDto> Handle(ModFiscalYearCmd request, CancellationToken cancellationToken)
     {
@@ -81,18 +76,10 @@ public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYea
             var fYear = await _unitOfWork.Repository<FiscalYear>().Update(oldYear);
             await _unitOfWork.Commit();
 
-            var yearFisc = await _unitOfWork.Repository<FiscalYear>().GetById(fYear.Id);
             var res = new FiscYearListDto();
-            if (yearFisc == null) return res;
-            res.Id = yearFisc.Id;
-            res.Name = yearFisc.Name;
-            res.DateStart = yearFisc.DateStart;
-            res.DateEnd = yearFisc.DateEnd;
-            res.IsActive = ((YesNo)Enum.Parse(typeof(YesNo), yearFisc.IsActive)).ToDisplayName();
-            res.IsDeleted = yearFisc.IsDeleted;
-            res.DateAdd = yearFisc.DateAdd;
-            res.DateMod = yearFisc.DateMod;
-            res.RowVersion = Convert.ToBase64String(yearFisc.RowVersion);
+            var response = await _med.Send(new FiscalYearByIdQry { Id = fYear.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch

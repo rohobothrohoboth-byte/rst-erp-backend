@@ -27,7 +27,6 @@ public class AddBranchDto
     public string Location { get; set; } = default!;
     public DateTime DateOpened { get; set; } = DateTime.UtcNow;
     public string BranchType { get; set; } = default!;
-    public string BranchStat { get; set; } = default!;
     public Guid CompId { get; set; }
 }
 

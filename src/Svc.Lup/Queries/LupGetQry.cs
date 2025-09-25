@@ -22,7 +22,7 @@ public class MeasureTakenGetQry : IRequest<LupListDto?> { public Guid Id { get; 
 public class MeasureTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class PerformanceEvaluationGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class PositionChangeReasonGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
-public class PositionClassTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
+public class ProfessionTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class QuarterGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class RatingGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class RegionGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }

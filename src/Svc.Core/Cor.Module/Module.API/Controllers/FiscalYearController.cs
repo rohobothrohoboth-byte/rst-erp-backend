@@ -19,7 +19,7 @@ public class FiscalYearController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllFiscalYear()
     {
-        var comps = await med.Send(new AllCompsQry());
+        var comps = await med.Send(new AllFiscalYearsQry());
         return Ok(comps);
     }
 

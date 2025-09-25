@@ -25,10 +25,13 @@ public class AllAddressQryHandler : IRequestHandler<AllAddressQry, List<AddressL
     {
         var dbData = await _unitOfWork.Repository<Address>().GetAll();
         var dataL = new List<AddressListDto>();
+        var regionL = await _lupClient.RegionList(cancellationToken);
+        var aTypeL = await _lupClient.AddressTypeList(cancellationToken);
+
         foreach (var data in dbData)
         {
-            var region = await _lupClient.GetRegion(data.RegionId);
-            var aType = await _lupClient.GetAddressType(data.AddressTypeId);
+            var region = regionL!.FirstOrDefault(t => t.Id == data.RegionId);
+            var aType = aTypeL!.FirstOrDefault(t => t.Id == data.AddressTypeId);
             var c = new AddressListDto
             {
                 Id = data.Id,
@@ -72,8 +75,8 @@ public class AddressByIdQryHandler : IRequestHandler<AddressByIdQry, AddressList
     {
         var nData = await _unitOfWork.Repository<Address>().GetById(request.Id);
         if (nData == null) { return null; }
-        var region = await _lupClient.GetRegion(nData.RegionId);
-        var aType = await _lupClient.GetAddressType(nData.AddressTypeId);
+        var region = await _lupClient.Region(nData.RegionId, cancellationToken);
+        var aType = await _lupClient.AddressType(nData.AddressTypeId, cancellationToken);
         
         var c = new AddressListDto
         {

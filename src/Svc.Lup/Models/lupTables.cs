@@ -35,7 +35,7 @@ public class MeasureTaken : BaseName { }
 public class MeasureType : BaseName { }
 public class PerformanceEvaluation : BaseName { }
 public class PositionChangeReason : BaseName { }
-public class PositionClassType : BaseName { }
+public class ProfessionType : BaseName { }
 public class Quarter : BaseName { }
 public class Rating : BaseName { }
 public class Region : BaseName { }

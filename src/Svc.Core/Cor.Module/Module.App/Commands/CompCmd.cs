@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Module.App.Interfaces;
+using Module.App.Queries;
 using Module.Domain.DTOs;
 using Module.Domain.Entities;
 
@@ -14,7 +15,9 @@ public class DelCompCmd : IRequest { public Guid Id { get; set; } }
 public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public AddCompCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public AddCompCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<CompListDto> Handle(AddCompCmd request, CancellationToken cancellationToken)
     {
@@ -30,17 +33,10 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
             await _unitOfWork.Repository<Company>().Add(com);
             await _unitOfWork.Commit();
 
-            var comp = await _unitOfWork.Repository<Company>().GetById(com.Id);
             var res = new CompListDto();
-            if (comp == null) return res;
-            res.Id = comp.Id;
-            res.Name = comp.Name;
-            res.NameAm = comp.NameAm;
-            res.IsDeleted = comp.IsDeleted;
-            res.BranchCount = "0";
-            res.DateAdd = comp.DateAdd;
-            res.DateMod = comp.DateMod;
-            res.RowVersion = Convert.ToBase64String(comp.RowVersion);
+            var response = await _med.Send(new CompByIdQry { Id = com.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch
@@ -54,8 +50,9 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
 public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-
-    public ModCompCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+    
+    public ModCompCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<CompListDto> Handle(ModCompCmd request, CancellationToken cancellationToken)
     {
@@ -63,7 +60,7 @@ public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
 
         if (oldComp == null)
         {
-            throw new KeyNotFoundException($"Company with Id {request.EditCompDto.Id} not found.");
+            throw new KeyNotFoundException($"COMPANY with Id {request.EditCompDto.Id} not found.");
         }
 
         oldComp.Name = request.EditCompDto.Name;
@@ -76,20 +73,11 @@ public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
             var comp = await _unitOfWork.Repository<Company>().Update(oldComp);
             await _unitOfWork.Commit();
 
-            var bra = await _unitOfWork.Repository<Branch>().Find(b => b.CompId == comp.Id);
-            var result = new CompListDto
-            {
-                Id = comp.Id,
-                Name = comp.Name,
-                NameAm = comp.NameAm,
-                IsDeleted = comp.IsDeleted,
-                BranchCount = $"{bra.Count()}",
-                DateAdd = comp.DateAdd,
-                DateMod = comp.DateMod,
-                RowVersion = Convert.ToBase64String(comp.RowVersion),
-            };
-
-            return result;
+            var res = new CompListDto();
+            var response = await _med.Send(new CompByIdQry { Id = comp.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
         }
         catch
         {

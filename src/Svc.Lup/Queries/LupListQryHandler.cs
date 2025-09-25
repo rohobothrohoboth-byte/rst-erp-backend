@@ -213,13 +213,13 @@ public class PositionChangeReasonQryHandler : IRequestHandler<PositionChangeReas
     }
 }
 
-public class PositionClassTypeQryHandler : IRequestHandler<PositionClassTypeQry, List<LupListDto>>
+public class ProfessionTypeQryHandler : IRequestHandler<ProfessionTypeQry, List<LupListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public PositionClassTypeQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(PositionClassTypeQry request, CancellationToken cancellationToken)
+    public ProfessionTypeQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public async Task<List<LupListDto>> Handle(ProfessionTypeQry request, CancellationToken cancellationToken)
     {
-        var lups = await _unitOfWork.Repository<PositionClassType>().GetAll();
+        var lups = await _unitOfWork.Repository<ProfessionType>().GetAll();
         return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
     }
 }

@@ -296,17 +296,17 @@ public class lupTablesController(IMediator med) : ControllerBase
         return Ok(lup);
     }
 
-    [HttpGet("PositionClassType")]
-    public async Task<IActionResult> PositionClassType()
+    [HttpGet("ProfessionType")]
+    public async Task<IActionResult> ProfessionType()
     {
-        var lups = await med.Send(new PositionClassTypeQry());
+        var lups = await med.Send(new ProfessionTypeQry());
         return Ok(lups);
     }
 
-    [HttpGet("PositionClassType/{id:guid}")]
-    public async Task<IActionResult> PositionClassType(Guid id)
+    [HttpGet("ProfessionType/{id:guid}")]
+    public async Task<IActionResult> ProfessionType(Guid id)
     {
-        var lup = await med.Send(new PositionClassTypeGetQry { Id = id });
+        var lup = await med.Send(new ProfessionTypeGetQry { Id = id });
         if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
         return Ok(lup);
     }

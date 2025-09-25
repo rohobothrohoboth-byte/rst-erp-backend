@@ -1,8 +1,8 @@
 ﻿using MediatR;
 using Module.App.Interfaces;
+using Module.App.Queries;
 using Module.Domain.DTOs;
 using Module.Domain.Entities;
-using Module.Domain.Enums;
 
 namespace Module.App.Commands;
 
@@ -15,7 +15,9 @@ public class DelBranchCmd : IRequest { public Guid Id { get; set; } }
 public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public AddBranchCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public AddBranchCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<BranchListDto> Handle(AddBranchCmd request, CancellationToken cancellationToken)
     {
@@ -26,7 +28,7 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
             Code = request.AddBranchDto.Code,
             Location = request.AddBranchDto.Location,
             BranchType = request.AddBranchDto.BranchType,
-            BranchStat = request.AddBranchDto.BranchStat,
+            BranchStat = "0",
             OpenDate = request.AddBranchDto.DateOpened,
             CompId = request.AddBranchDto.CompId
         };
@@ -37,26 +39,10 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
             await _unitOfWork.Repository<Branch>().Add(bra);
             await _unitOfWork.Commit();
 
-            var nBra = await _unitOfWork.Repository<Branch>().GetById(bra.Id);
             var res = new BranchListDto();
-            if (nBra == null) return res;
-
-            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
-            if (comp == null) { return res; }
-            res.Id = nBra.Id;
-            res.Name = nBra.Name;
-            res.NameAm = nBra.NameAm;
-            res.Code = nBra.Code;
-            res.Location = nBra.Location;
-            res.BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName();
-            res.BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName();
-            res.Comp = comp.Name;
-            res.CompAm = comp.Name;
-            res.OpenDate = nBra.OpenDate;
-            res.IsDeleted = nBra.IsDeleted;
-            res.DateAdd = nBra.DateAdd;
-            res.DateMod = nBra.DateMod;
-            res.RowVersion = Convert.ToBase64String(nBra.RowVersion);
+            var response = await _med.Send(new BranchByIdQry { Id = bra.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch
@@ -70,8 +56,9 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
 public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
 
-    public ModBranchCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public ModBranchCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<BranchListDto> Handle(ModBranchCmd request, CancellationToken cancellationToken)
     {
@@ -98,22 +85,9 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
             await _unitOfWork.Commit();
 
             var res = new BranchListDto();
-            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
-            if (comp == null) { return res; }
-            res.Id = nBra.Id;
-            res.Name = nBra.Name;
-            res.NameAm = nBra.NameAm;
-            res.Code = nBra.Code;
-            res.Location = nBra.Location;
-            res.BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName();
-            res.BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName();
-            res.Comp = comp.Name;
-            res.CompAm = comp.Name;
-            res.OpenDate = nBra.OpenDate;
-            res.IsDeleted = nBra.IsDeleted;
-            res.DateAdd = nBra.DateAdd;
-            res.DateMod = nBra.DateMod;
-            res.RowVersion = Convert.ToBase64String(nBra.RowVersion);
+            var response = await _med.Send(new BranchByIdQry { Id = nBra.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch

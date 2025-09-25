@@ -22,7 +22,7 @@ public class MeasureTakenQry : IRequest<List<LupListDto>> { }
 public class MeasureTypeQry : IRequest<List<LupListDto>> { }
 public class PerformanceEvaluationQry : IRequest<List<LupListDto>> { }
 public class PositionChangeReasonQry : IRequest<List<LupListDto>> { }
-public class PositionClassTypeQry : IRequest<List<LupListDto>> { }
+public class ProfessionTypeQry : IRequest<List<LupListDto>> { }
 public class QuarterQry : IRequest<List<LupListDto>> { }
 public class RatingQry : IRequest<List<LupListDto>> { }
 public class RegionQry : IRequest<List<LupListDto>> { }
