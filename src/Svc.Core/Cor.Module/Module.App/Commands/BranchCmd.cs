@@ -63,10 +63,7 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
     public async Task<BranchListDto> Handle(ModBranchCmd request, CancellationToken cancellationToken)
     {
         var oldBra = await _unitOfWork.Repository<Branch>().GetById(request.EditBranchDto.Id);
-        if (oldBra == null)
-        {
-            throw new KeyNotFoundException($"BRANCH with Id {request.EditBranchDto.Id} NOT FOUND.");
-        }
+        if (oldBra == null) { throw new KeyNotFoundException($"BRANCH with Id {request.EditBranchDto.Id} NOT FOUND."); }
 
         oldBra.Name = request.EditBranchDto.Name;
         oldBra.NameAm = request.EditBranchDto.NameAm;

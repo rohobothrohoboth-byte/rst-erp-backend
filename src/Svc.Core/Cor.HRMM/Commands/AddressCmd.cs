@@ -1,38 +1,41 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Cor.HRMM.Queries;
 using MediatR;
 
 namespace Cor.HRMM.Commands;
 
-public class AddAddressCmd : IRequest<AddressListDto> { public AddAddressDto AddAddressDto { get; set; } = default!; }
+public class AddressAddCmd : IRequest<AddressListDto> { public AddressAddDto AddDto { get; set; } = default!; }
 
-public class ModAddressCmd : IRequest<AddressListDto> { public EditAddressDto EditAddressDto { get; set; } = default!; }
+public class AddressModCmd : IRequest<AddressListDto> { public AddressModDto ModDto { get; set; } = default!; }
 
-public class DelAddressCmd : IRequest { public Guid Id { get; set; } }
+public class AddressDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class AddAddressCmdHandler : IRequestHandler<AddAddressCmd, AddressListDto>
+public class AddressAddCmdHandler : IRequestHandler<AddressAddCmd, AddressListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public AddAddressCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
 
-    public async Task<AddressListDto> Handle(AddAddressCmd request, CancellationToken cancellationToken)
+    public AddressAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<AddressListDto> Handle(AddressAddCmd request, CancellationToken cancellationToken)
     {
         var data = new Address
         {
-            RegionId = request.AddAddressDto.RegionId,
-            AddressTypeId = request.AddAddressDto.AddressTypeId,
-            Country = request.AddAddressDto.Country,
-            Subcity = request.AddAddressDto.Subcity,
-            Zone = request.AddAddressDto.Zone,
-            Woreda = request.AddAddressDto.Woreda,
-            Kebele = request.AddAddressDto.Kebele,
-            HouseNo = request.AddAddressDto.HouseNo,
-            Telephone = request.AddAddressDto.Telephone,
-            PoBox = request.AddAddressDto.PoBox,
-            Fax = request.AddAddressDto.Fax,
-            Email = request.AddAddressDto.Email,
-            Website = request.AddAddressDto.Website
+            RegionId = request.AddDto.RegionId,
+            AddressTypeId = request.AddDto.AddressTypeId,
+            Country = request.AddDto.Country,
+            Subcity = request.AddDto.Subcity,
+            Zone = request.AddDto.Zone,
+            Woreda = request.AddDto.Woreda,
+            Kebele = request.AddDto.Kebele,
+            HouseNo = request.AddDto.HouseNo,
+            Telephone = request.AddDto.Telephone,
+            PoBox = request.AddDto.PoBox,
+            Fax = request.AddDto.Fax,
+            Email = request.AddDto.Email,
+            Website = request.AddDto.Website
         };
 
         await _unitOfWork.Begin();
@@ -41,28 +44,10 @@ public class AddAddressCmdHandler : IRequestHandler<AddAddressCmd, AddressListDt
             await _unitOfWork.Repository<Address>().Add(data);
             await _unitOfWork.Commit();
 
-            var nData = await _unitOfWork.Repository<Address>().GetById(data.Id);
             var res = new AddressListDto();
-            if (nData == null) return res;
-
-            res.Id = nData.Id;
-            res.Region = "";
-            res.AddressType = "";
-            res.Country = nData.Country;
-            res.Subcity = nData.Subcity;
-            res.Zone = nData.Zone;
-            res.Woreda = nData.Woreda;
-            res.Kebele = nData.Kebele;
-            res.HouseNo = nData.HouseNo;
-            res.Telephone = nData.Telephone;
-            res.PoBox = nData.PoBox;
-            res.Fax = nData.Fax;
-            res.Email = nData.Email;
-            res.Website = nData.Website;
-            res.IsDeleted = nData.IsDeleted;
-            res.DateAdd = nData.DateAdd;
-            res.DateMod = nData.DateMod;
-            res.RowVersion = Convert.ToBase64String(nData.RowVersion);
+            var response = await _med.Send(new AddressByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
             return res;
         }
         catch
@@ -73,34 +58,30 @@ public class AddAddressCmdHandler : IRequestHandler<AddAddressCmd, AddressListDt
     }
 }
 
-public class ModAddressCmdHandler : IRequestHandler<ModAddressCmd, AddressListDto>
+public class AddressModCmdHandler : IRequestHandler<AddressModCmd, AddressListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
 
-    public ModAddressCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public AddressModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
-    public async Task<AddressListDto> Handle(ModAddressCmd request, CancellationToken cancellationToken)
+    public async Task<AddressListDto> Handle(AddressModCmd request, CancellationToken cancellationToken)
     {
-        var oldData = await _unitOfWork.Repository<Address>().GetById(request.EditAddressDto.Id);
+        var oldData = await _unitOfWork.Repository<Address>().GetById(request.ModDto.Id);
+        if (oldData == null) { throw new KeyNotFoundException($"ADDRESS with Id {request.ModDto.Id} NOT FOUND."); }
 
-        if (oldData == null)
-        {
-            throw new KeyNotFoundException($"ADDRESS with Id {request.EditAddressDto.Id} not found.");
-        }
-
-        oldData.RegionId = request.EditAddressDto.RegionId;
-        oldData.AddressTypeId = request.EditAddressDto.AddressTypeId;
-        oldData.Country = request.EditAddressDto.Country;
-        oldData.Zone = request.EditAddressDto.Zone;
-        oldData.Woreda = request.EditAddressDto.Woreda;
-        oldData.Kebele = request.EditAddressDto.Kebele;
-        oldData.HouseNo = request.EditAddressDto.HouseNo;
-        oldData.Telephone = request.EditAddressDto.Telephone;
-        oldData.PoBox = request.EditAddressDto.PoBox;
-        oldData.Fax = request.EditAddressDto.Fax;
-        oldData.Email = request.EditAddressDto.Email;
-        oldData.Website = request.EditAddressDto.Website;
-
+        oldData.RegionId = request.ModDto.RegionId;
+        oldData.AddressTypeId = request.ModDto.AddressTypeId;
+        oldData.Country = request.ModDto.Country;
+        oldData.Zone = request.ModDto.Zone;
+        oldData.Woreda = request.ModDto.Woreda;
+        oldData.Kebele = request.ModDto.Kebele;
+        oldData.HouseNo = request.ModDto.HouseNo;
+        oldData.Telephone = request.ModDto.Telephone;
+        oldData.PoBox = request.ModDto.PoBox;
+        oldData.Fax = request.ModDto.Fax;
+        oldData.Email = request.ModDto.Email;
+        oldData.Website = request.ModDto.Website;
         await _unitOfWork.Begin();
 
         try
@@ -108,29 +89,11 @@ public class ModAddressCmdHandler : IRequestHandler<ModAddressCmd, AddressListDt
             var data = await _unitOfWork.Repository<Address>().Update(oldData);
             await _unitOfWork.Commit();
 
-            var result = new AddressListDto
-            {
-                Id = data.Id,
-                Region = "",
-                AddressType = "",
-                Country = data.Country,
-                Subcity = data.Subcity,
-                Zone = data.Zone,
-                Woreda = data.Woreda,
-                Kebele = data.Kebele,
-                HouseNo = data.HouseNo,
-                Telephone = data.Telephone,
-                PoBox = data.PoBox,
-                Fax = data.Fax,
-                Email = data.Email,
-                Website = data.Website,
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion),
-            };
-
-            return result;
+            var res = new AddressListDto();
+            var response = await _med.Send(new AddressByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
         }
         catch
         {
@@ -140,12 +103,12 @@ public class ModAddressCmdHandler : IRequestHandler<ModAddressCmd, AddressListDt
     }
 }
 
-public class DelAddressCmdHandler : IRequestHandler<DelAddressCmd>
+public class AddressDelCmdHandler : IRequestHandler<AddressDelCmd>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public DelAddressCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public AddressDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task Handle(DelAddressCmd request, CancellationToken cancellationToken)
+    public async Task Handle(AddressDelCmd request, CancellationToken cancellationToken)
     {
         await _unitOfWork.Begin();
         try

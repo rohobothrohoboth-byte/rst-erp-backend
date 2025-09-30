@@ -9,9 +9,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Module.API.Controllers;
 
+/// <summary>
+/// Company management end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/module/v{version:apiVersion}/company")]
+[Route("api/core/module/v{version:apiVersion}/Company")]
 [ApiVersion("1.0")]
 public class CompanyController(IMediator med) : ControllerBase
 {

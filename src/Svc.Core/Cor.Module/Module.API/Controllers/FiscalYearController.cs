@@ -9,9 +9,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Module.API.Controllers;
 
+/// <summary>
+/// FiscalYear management end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/module/v{version:apiVersion}/fiscalyear")]
+[Route("api/core/module/v{version:apiVersion}/FiscalYear")]
 [ApiVersion("1.0")]
 public class FiscalYearController(IMediator med) : ControllerBase
 {

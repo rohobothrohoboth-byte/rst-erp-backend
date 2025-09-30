@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-
-namespace Cor.HRMM.Models;
+﻿namespace Cor.HRMM.Models.Enums;
 
 public enum Gender
 {

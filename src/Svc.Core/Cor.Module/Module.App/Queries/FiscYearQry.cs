@@ -50,10 +50,7 @@ public class FiscalYearByIdQryHandler : IRequestHandler<FiscalYearByIdQry, FiscY
     public async Task<FiscYearListDto?> Handle(FiscalYearByIdQry request, CancellationToken cancellationToken)
     {
         var yearFisc = await _unitOfWork.Repository<FiscalYear>().GetById(request.Id);
-        if (yearFisc == null)
-        {
-            return null;
-        }
+        if (yearFisc == null) { return null; }
 
         var c = new FiscYearListDto
         {

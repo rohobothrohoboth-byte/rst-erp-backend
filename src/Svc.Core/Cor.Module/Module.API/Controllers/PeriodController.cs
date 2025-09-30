@@ -8,9 +8,13 @@ using Module.Domain.DTOs;
 
 namespace Module.API.Controllers;
 
+/// <summary>
+/// Period management end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/module/v{version:apiVersion}/period")]
+[Route("api/core/module/v{version:apiVersion}/Period")]
 [ApiVersion("1.0")]
 public class PeriodController(IMediator med) : ControllerBase
 {

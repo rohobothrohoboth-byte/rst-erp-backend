@@ -4,7 +4,9 @@ namespace Module.Domain.Enums;
 
 public enum YesNo
 {
+    [Display(Name = "Yes")]
     Yes,
+    [Display(Name = "No")]
     No
 }
 

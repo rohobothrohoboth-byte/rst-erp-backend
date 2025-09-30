@@ -26,7 +26,7 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
             Name = request.AddFiscYearDto.Name,
             DateStart = request.AddFiscYearDto.DateStart,
             DateEnd = request.AddFiscYearDto.DateEnd,
-            IsActive = request.AddFiscYearDto.IsActive
+            IsActive = "0",
         };
 
         await _unitOfWork.Begin();

@@ -55,9 +55,47 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Core API", Version = "v1" });
-    //c.SchemaFilter<EnumSchemaFilter>();
-    //c.SchemaGeneratorOptions = new SchemaGeneratorOptions { SchemaIdSelector = type => type.FullName };
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Core Module API",
+        Version = "v1",
+        Description = "API documentation for Core Module API Microservice",
+        Contact = new OpenApiContact
+        {
+            Name = "Development Team",
+            Email = "natnahel.shd@gmail.com.com"
+        }
+    });
+
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    // JWT Authentication (if needed)
+    //c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    //{
+    //    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+    //    Description = "Please insert JWT token",
+    //    Name = "Authorization",
+    //    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+    //    Scheme = "bearer",
+    //    BearerFormat = "JWT"
+    //});
+
+    //c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    //{
+    //    {
+    //        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    //        {
+    //            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+    //            {
+    //                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+    //                Id = "Bearer"
+    //            }
+    //        },
+    //        Array.Empty<string>()
+    //    }
+    //});
 });
 
 builder.Services.AddUtilitySvc(builder.Configuration);
@@ -75,7 +113,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Core API v1"); });
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Core Module API v1"); c.RoutePrefix = string.Empty; });
     app.ApplyMigration();
 }
 

@@ -15,6 +15,6 @@ public static class MyEnumHelper
     public static string ToDisplayName(this Enum value)
     {
         var attribute = value.GetAttribute<DisplayAttribute>();
-        return (attribute.Name) ?? string.Empty;
+        return attribute.Name ?? value.ToString();
     }
 }

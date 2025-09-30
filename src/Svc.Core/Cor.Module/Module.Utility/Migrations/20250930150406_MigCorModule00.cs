@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Module.Utility.Migrations
 {
     /// <inheritdoc />
-    public partial class CorModule00 : Migration
+    public partial class MigCorModule00 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -80,12 +80,16 @@ namespace Module.Utility.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Hierarchy",
+                name: "Period",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ChildId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    DateStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsActive = table.Column<string>(type: "text", nullable: false),
+                    QuarterId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FiscalYearId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -93,17 +97,11 @@ namespace Module.Utility.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Hierarchy", x => x.Id);
+                    table.PrimaryKey("PK_Period", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Hierarchy_Company_ChildId",
-                        column: x => x.ChildId,
-                        principalTable: "Company",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Hierarchy_Company_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "Company",
+                        name: "FK_Period_FiscalYear_FiscalYearId",
+                        column: x => x.FiscalYearId,
+                        principalTable: "FiscalYear",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -144,14 +142,9 @@ namespace Module.Utility.Migrations
                 column: "BranchId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Hierarchy_ChildId",
-                table: "Hierarchy",
-                column: "ChildId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Hierarchy_ParentId",
-                table: "Hierarchy",
-                column: "ParentId");
+                name: "IX_Period_FiscalYearId",
+                table: "Period",
+                column: "FiscalYearId");
         }
 
         /// <inheritdoc />
@@ -161,13 +154,13 @@ namespace Module.Utility.Migrations
                 name: "Department");
 
             migrationBuilder.DropTable(
-                name: "FiscalYear");
-
-            migrationBuilder.DropTable(
-                name: "Hierarchy");
+                name: "Period");
 
             migrationBuilder.DropTable(
                 name: "Branch");
+
+            migrationBuilder.DropTable(
+                name: "FiscalYear");
 
             migrationBuilder.DropTable(
                 name: "Company");

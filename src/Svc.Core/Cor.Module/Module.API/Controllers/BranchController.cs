@@ -9,12 +9,27 @@ using System.Data;
 
 namespace Module.API.Controllers;
 
+/// <summary>
+/// Branch management end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/module/v{version:apiVersion}/branch")]
+[Route("api/core/module/v{version:apiVersion}/Branch")]
 [ApiVersion("1.0")]
 public class BranchController(IMediator med) : ControllerBase
 {
+    /// <summary>
+    /// End point to get list of branches with company, Response will be (BranchName => CompanyName) or (BranchNameAm => CompanyNameAm) including Id of Branch.
+    /// </summary>
+    [HttpGet("BranchCompList")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> BranchCompList()
+    {
+        var branches = await med.Send(new BranchCompListQry());
+        return Ok(branches);
+    }
+
     [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranch()
@@ -36,6 +51,9 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(bra);
     }
 
+    /// <summary>
+    /// End point to get list of Branches by CompanyId
+    /// </summary>
     [HttpGet("BranchComp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CompBranches(Guid id)

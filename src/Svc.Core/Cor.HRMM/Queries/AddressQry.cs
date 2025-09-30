@@ -6,22 +6,22 @@ using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class AllAddressQry : IRequest<List<AddressListDto>> { }
+public class AddressAllQry : IRequest<List<AddressListDto>> { }
 
 public class AddressByIdQry : IRequest<AddressListDto?> { public Guid Id { get; set; } }
 
-public class AllAddressQryHandler : IRequestHandler<AllAddressQry, List<AddressListDto>>
+public class AddressAllQryHandler : IRequestHandler<AddressAllQry, List<AddressListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILupClient _lupClient;
 
-    public AllAddressQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    public AddressAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
         _lupClient = lupClient;
     }
 
-    public async Task<List<AddressListDto>> Handle(AllAddressQry request, CancellationToken cancellationToken)
+    public async Task<List<AddressListDto>> Handle(AddressAllQry request, CancellationToken cancellationToken)
     {
         var dbData = await _unitOfWork.Repository<Address>().GetAll();
         var dataL = new List<AddressListDto>();

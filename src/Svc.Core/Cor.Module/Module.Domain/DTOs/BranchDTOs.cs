@@ -19,6 +19,13 @@ public class BranchListDto : BaseDTO
     public string DateOpened => $"{OpenDate:MMMM dd, yyyy}";
 }
 
+public class BranchCompListDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string NameAm { get; set; } = default!;
+}
+
 public class AddBranchDto
 {
     public string Name { get; set; } = default!;

@@ -23,7 +23,6 @@ public class CoreModuleDbContext : DbContext
         modelBuilder.Entity<Department>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<FiscalYear>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<Period>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<Hierarchy>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
 
     }
 
@@ -32,5 +31,4 @@ public class CoreModuleDbContext : DbContext
     public DbSet<Department> Department { get; set; }
     public DbSet<FiscalYear> FiscalYear { get; set; }
     public DbSet<Period> Period { get; set; }
-    public DbSet<Hierarchy> Hierarchy { get; set; }
 }

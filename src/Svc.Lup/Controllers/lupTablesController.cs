@@ -5,6 +5,11 @@ using Svc.Lup.Queries;
 
 namespace Svc.Lup.Controllers;
 
+/// <summary>
+/// LookUp Tables end points
+/// <para>Will be converted to list in UI</para>
+/// </summary>
+
 //[Authorize]
 [ApiController]
 [Route("api/lup/v{version:apiVersion}")]

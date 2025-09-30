@@ -26,8 +26,11 @@ builder.Services.AddControllers();
 
 var gatewayUrl = builder.Configuration["Services:GatewayService"];
 var lupUrl = builder.Configuration["Services:LupService"];
+var coreModuleUrl = builder.Configuration["Services:CoreModuleService"];
 
 builder.Services.AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
+
+builder.Services.AddHttpClient<ICoreModuleClient, CoreModuleClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), coreModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddApiVersioning(option =>
     {
@@ -56,16 +59,54 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "core.HRMM API", Version = "v1" });
-});
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Core HRMM API",
+        Version = "v1",
+        Description = "API documentation for Core HRMM API Microservice",
+        Contact = new OpenApiContact
+        {
+            Name = "Development Team",
+            Email = "natnahel.shd@gmail.com.com"
+        }
+    });
 
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    // JWT Authentication (if needed)
+    //c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    //{
+    //    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+    //    Description = "Please insert JWT token",
+    //    Name = "Authorization",
+    //    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+    //    Scheme = "bearer",
+    //    BearerFormat = "JWT"
+    //});
+
+    //c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    //{
+    //    {
+    //        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    //        {
+    //            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+    //            {
+    //                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+    //                Id = "Bearer"
+    //            }
+    //        },
+    //        Array.Empty<string>()
+    //    }
+    //});
+});
 builder.Services.AddUtilitySvc(builder.Configuration);
 
 var app = builder.Build();
 
 // --- global exception middleware ---
 app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection(); // Must be before Swagger
 
@@ -74,9 +115,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "core.HRMM API v1"); });
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Core HRMM API v1"); c.RoutePrefix = string.Empty; });
     app.ApplyMigration();
-    //await app.ApplySeedAsync();
 }
 
 app.UseCors("AllowAll");

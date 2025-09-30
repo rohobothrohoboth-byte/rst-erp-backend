@@ -6,11 +6,40 @@ using Module.Domain.Enums;
 
 namespace Module.App.Queries;
 
+public class BranchCompListQry : IRequest<List<BranchCompListDto>> { }
+
 public class AllBranchesQry : IRequest<List<BranchListDto>> { }
 
 public class BranchByIdQry : IRequest<BranchListDto?> { public Guid Id { get; set; } }
 
 public class BranchByCompQry : IRequest<List<BranchListDto>> { public Guid Id { get; set; } }
+
+public class BranchCompListQryHandler : IRequestHandler<BranchCompListQry, List<BranchCompListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public BranchCompListQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<BranchCompListDto>> Handle(BranchCompListQry request, CancellationToken cancellationToken)
+    {
+        var bras = await _unitOfWork.Repository<Branch>().GetAll();
+        var braL = new List<BranchCompListDto>();
+        foreach (var nBra in bras)
+        {
+            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
+            if (comp == null) continue;
+            var c = new BranchCompListDto
+            {
+                Id = nBra.Id,
+                Name = $"{nBra.Name} => {comp.Name}",
+                NameAm = $"{nBra.NameAm} => {comp.NameAm}"
+            };
+            braL.Add(c);
+        }
+
+        return braL;
+    }
+}
 
 public class AllBranchesQryHandler : IRequestHandler<AllBranchesQry, List<BranchListDto>>
 {

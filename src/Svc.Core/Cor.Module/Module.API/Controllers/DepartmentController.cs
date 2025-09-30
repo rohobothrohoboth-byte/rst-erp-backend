@@ -9,9 +9,13 @@ using System.Data;
 
 namespace Module.API.Controllers;
 
+/// <summary>
+/// Department management end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/module/v{version:apiVersion}/department")]
+[Route("api/core/module/v{version:apiVersion}/Department")]
 [ApiVersion("1.0")]
 public class DepartmentController(IMediator med) : ControllerBase
 {

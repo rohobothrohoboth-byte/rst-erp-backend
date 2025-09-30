@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Module.Utility.Migrations
 {
     [DbContext(typeof(CoreModuleDbContext))]
-    [Migration("20250923073319_CorModule01")]
-    partial class CorModule01
+    [Migration("20250930150406_MigCorModule00")]
+    partial class MigCorModule00
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -201,42 +201,6 @@ namespace Module.Utility.Migrations
                     b.ToTable("FiscalYear");
                 });
 
-            modelBuilder.Entity("Module.Domain.Entities.Hierarchy", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ChildId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChildId");
-
-                    b.HasIndex("ParentId");
-
-                    b.ToTable("Hierarchy");
-                });
-
             modelBuilder.Entity("Module.Domain.Entities.Period", b =>
                 {
                     b.Property<Guid>("Id")
@@ -305,25 +269,6 @@ namespace Module.Utility.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
-                });
-
-            modelBuilder.Entity("Module.Domain.Entities.Hierarchy", b =>
-                {
-                    b.HasOne("Module.Domain.Entities.Company", "Child")
-                        .WithMany()
-                        .HasForeignKey("ChildId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Module.Domain.Entities.Company", "Parent")
-                        .WithMany()
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Child");
-
-                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Module.Domain.Entities.Period", b =>

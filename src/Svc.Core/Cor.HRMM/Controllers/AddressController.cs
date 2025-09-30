@@ -9,9 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cor.HRMM.Controllers;
 
+/// <summary>
+/// Address end points
+/// </summary>
+
 //[Authorize]
 [ApiController]
-[Route("api/core/hrmm/v{version:apiVersion}/address")]
+[Route("api/core/hrmm/v{version:apiVersion}/Address")]
 [ApiVersion("1.0")]
 
 public class AddressController(IMediator med) : ControllerBase
@@ -20,7 +24,7 @@ public class AddressController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllAddress()
     {
-        var response = await med.Send(new AllAddressQry());
+        var response = await med.Send(new AddressAllQry());
         return Ok(response);
     }
     
@@ -40,13 +44,13 @@ public class AddressController(IMediator med) : ControllerBase
     [HttpPost("AddAddress")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] AddAddressDto addDto)
+    public async Task<IActionResult> Create([FromBody] AddressAddDto addDto)
     {
         if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
         try
         {
-            var command = new AddAddressCmd { AddAddressDto = addDto };
+            var command = new AddressAddCmd { AddDto = addDto };
             var response = await med.Send(command);
             return CreatedAtAction(nameof(GetAddress), new { id = response.Id }, response);
         }
@@ -61,7 +65,7 @@ public class AddressController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] EditAddressDto modDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] AddressModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -70,7 +74,7 @@ public class AddressController(IMediator med) : ControllerBase
 
         try
         {
-            var modComp = await med.Send(new ModAddressCmd { EditAddressDto = modDto });
+            var modComp = await med.Send(new AddressModCmd { ModDto = modDto });
             return Ok(modComp);
         }
         catch (DBConcurrencyException ex)
@@ -94,7 +98,7 @@ public class AddressController(IMediator med) : ControllerBase
     {
         try
         {
-            await med.Send(new DelAddressCmd { Id = id });
+            await med.Send(new AddressDelCmd { Id = id });
             return NoContent();
         }
         catch (KeyNotFoundException)
