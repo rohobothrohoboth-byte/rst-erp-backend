@@ -11,7 +11,7 @@ public static class SvcCollExt
     public static IServiceCollection AddUtilitySvc(this IServiceCollection services, IConfiguration configuration)
     {
         // Keep EF Core for migrations/schema
-        services.AddDbContext<LupDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("lupDbCon")));
+        services.AddDbContext<LupDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("lupTableDbCon")));
 
         // Dapper and UoW
         services.AddScoped<DapperContext>();

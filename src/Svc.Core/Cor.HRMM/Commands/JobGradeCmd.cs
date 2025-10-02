@@ -24,7 +24,8 @@ public class JobGradeAddCmdHandler : IRequestHandler<JobGradeAddCmd, JobGradeLis
         var data = new JobGrade
         {
             Name = request.AddDto.Name,
-            Code = request.AddDto.Code
+            StartSalary = request.AddDto.StartSalary,
+            MaxSalary = request.AddDto.MaxSalary
         };
 
         await _unitOfWork.Begin();
@@ -60,7 +61,8 @@ public class JobGradeModCmdHandler : IRequestHandler<JobGradeModCmd, JobGradeLis
         if (oldData == null) { throw new KeyNotFoundException($"JOB GRADE with Id {request.ModDto.Id} NOT FOUND."); }
 
         oldData.Name = request.ModDto.Name;
-        oldData.Code = request.ModDto.Code;
+        oldData.StartSalary = request.ModDto.StartSalary;
+        oldData.MaxSalary = request.ModDto.MaxSalary;
         await _unitOfWork.Begin();
 
         try

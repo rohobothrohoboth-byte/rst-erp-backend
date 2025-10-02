@@ -94,6 +94,17 @@ public static class LupSeeder
             await context.SaveChangesAsync();
         }
 
+        if (!context.EmploymentType.Any())
+        {
+            await context.EmploymentType.AddRangeAsync(
+                new EmploymentType { Id = Guid.NewGuid(), Name = "በለቀቁ ምትክ" },
+                new EmploymentType { Id = Guid.NewGuid(), Name = "አዲስ በመከፈቱ" },
+                new EmploymentType { Id = Guid.NewGuid(), Name = "ተጨማሪ በማስፈለጉ" },
+                new EmploymentType { Id = Guid.NewGuid(), Name = "Old Employee" }
+            );
+            await context.SaveChangesAsync();
+        }
+
         if (!context.EducationLevel.Any())
         {
             await context.EducationLevel.AddRangeAsync(

@@ -10,7 +10,7 @@ public class DapperContext : IDisposable
 
     public DapperContext(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("lupDbCon") ?? throw new InvalidOperationException("Connection string 'lupDbCon' is not configured.");
+        _connectionString = configuration.GetConnectionString("lupTableDbCon") ?? throw new InvalidOperationException("Connection string 'lupDbCon' is not configured.");
     }
 
     public IDbConnection CreateConnection()

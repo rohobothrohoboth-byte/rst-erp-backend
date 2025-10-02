@@ -13,9 +13,6 @@ public class CoreModuleDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
-        //modelBuilder.AddInboxStateEntity();
-        //modelBuilder.AddOutboxMessageEntity();
-        //modelBuilder.AddOutboxStateEntity();
         modelBuilder.HasPostgresExtension("pgcrypto");
         
         modelBuilder.Entity<Company>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });

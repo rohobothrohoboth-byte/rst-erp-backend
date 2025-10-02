@@ -25,7 +25,7 @@ public class AddDeptCmdHandler : IRequestHandler<AddDeptCmd, DeptListDto>
         {
             Name = request.AddDeptDto.Name,
             NameAm = request.AddDeptDto.NameAm,
-            DeptStat = request.AddDeptDto.DeptStat,
+            DeptStat = "0",
             BranchId = request.AddDeptDto.BranchId
         };
 

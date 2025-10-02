@@ -24,6 +24,7 @@ public class AwardType : BaseName { }
 public class CommitteeRole : BaseName { }
 public class CriterionType : BaseName { }
 public class EmploymentNature : BaseName { }
+public class EmploymentType : BaseName { }
 public class EducationLevel : BaseName { }
 public class HolidayCondition : BaseName { }
 public class LanguageSkill : BaseName { }

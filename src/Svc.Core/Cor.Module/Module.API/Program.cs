@@ -59,7 +59,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Core Module API",
         Version = "v1",
-        Description = "API documentation for Core Module API Microservice",
+        Description = "API documentation for Core Module Microservice",
         Contact = new OpenApiContact
         {
             Name = "Development Team",

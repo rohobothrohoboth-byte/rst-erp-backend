@@ -161,6 +161,21 @@ namespace Svc.Lup.Migrations
                     b.ToTable("EmploymentNature");
                 });
 
+            modelBuilder.Entity("Svc.Lup.Models.EmploymentType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmploymentType");
+                });
+
             modelBuilder.Entity("Svc.Lup.Models.HolidayCondition", b =>
                 {
                     b.Property<Guid>("Id")

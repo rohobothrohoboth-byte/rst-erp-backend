@@ -51,9 +51,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Lup API",
+        Title = "Lup Tables API",
         Version = "v1",
-        Description = "API documentation for Lup API Microservice",
+        Description = "API documentation for Lup Tables API Microservice",
         Contact = new OpenApiContact
         {
             Name = "Development Team",
@@ -107,7 +107,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Lup API v1"); c.RoutePrefix = string.Empty; });
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Lup Tables API v1"); c.RoutePrefix = string.Empty; });
     app.ApplyMigration();
     await app.ApplySeedAsync();
 }

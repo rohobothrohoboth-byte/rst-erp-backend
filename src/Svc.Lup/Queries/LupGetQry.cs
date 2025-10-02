@@ -11,6 +11,7 @@ public class AwardTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set
 public class CommitteeRoleGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class CriterionTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class EmploymentNatureGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
+public class EmploymentTypeGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class EducationLevelGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class HolidayConditionGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }
 public class LanguageSkillGetQry : IRequest<LupListDto?> { public Guid Id { get; set; } }

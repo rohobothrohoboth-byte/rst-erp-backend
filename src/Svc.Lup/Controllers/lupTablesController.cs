@@ -136,6 +136,21 @@ public class lupTablesController(IMediator med) : ControllerBase
         return Ok(lup);
     }
 
+    [HttpGet("EmploymentType")]
+    public async Task<IActionResult> EmploymentType()
+    {
+        var lups = await med.Send(new EmploymentTypeQry());
+        return Ok(lups);
+    }
+
+    [HttpGet("EmploymentType/{id:guid}")]
+    public async Task<IActionResult> EmploymentTypeNature(Guid id)
+    {
+        var lup = await med.Send(new EmploymentTypeGetQry { Id = id });
+        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
+        return Ok(lup);
+    }
+
     [HttpGet("EducationLevel")]
     public async Task<IActionResult> EducationLevel()
     {

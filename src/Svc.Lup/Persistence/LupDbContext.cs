@@ -12,12 +12,6 @@ public class LupDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
-
-        //modelBuilder.AddInboxStateEntity();
-        //modelBuilder.AddOutboxMessageEntity();
-        //modelBuilder.AddOutboxStateEntity();
-        
-
     }
 
     public DbSet<AbsentReason> AbsentReason { get; set; }
@@ -28,6 +22,7 @@ public class LupDbContext : DbContext
     public DbSet<CommitteeRole> CommitteeRole { get; set; }
     public DbSet<CriterionType> CriterionType { get; set; }
     public DbSet<EmploymentNature> EmploymentNature { get; set; }
+    public DbSet<EmploymentType> EmploymentType { get; set; }
     public DbSet<EducationLevel> EducationLevel { get; set; }
     public DbSet<HolidayCondition> HolidayCondition { get; set; }
     public DbSet<LanguageSkill> LanguageSkill { get; set; }

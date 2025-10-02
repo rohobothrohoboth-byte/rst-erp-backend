@@ -13,7 +13,6 @@ public class AddDeptDto
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
-    public string DeptStat { get; set; } = default!;
     public Guid BranchId { get; set; }
 }
 

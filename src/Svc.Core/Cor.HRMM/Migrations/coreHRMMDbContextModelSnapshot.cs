@@ -162,15 +162,11 @@ namespace Cor.HRMM.Migrations
                     b.ToTable("EducationQual");
                 });
 
-            modelBuilder.Entity("Cor.HRMM.Models.Entities.JobGrade", b =>
+            modelBuilder.Entity("Cor.HRMM.Models.Entities.JgStep", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -181,6 +177,9 @@ namespace Cor.HRMM.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("JobGradeId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -190,6 +189,47 @@ namespace Cor.HRMM.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
+
+                    b.Property<decimal>("Salary")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobGradeId");
+
+                    b.ToTable("JgStep");
+                });
+
+            modelBuilder.Entity("Cor.HRMM.Models.Entities.JobGrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("MaxSalary")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<decimal>("StartSalary")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -407,38 +447,15 @@ namespace Cor.HRMM.Migrations
                     b.ToTable("PositionReq");
                 });
 
-            modelBuilder.Entity("Cor.HRMM.Models.Entities.SalaryScale", b =>
+            modelBuilder.Entity("Cor.HRMM.Models.Entities.JgStep", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.HasOne("Cor.HRMM.Models.Entities.JobGrade", "JobGrade")
+                        .WithMany()
+                        .HasForeignKey("JobGradeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("JobGradeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<decimal>("Salary")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobGradeId");
-
-                    b.ToTable("SalaryScale");
+                    b.Navigation("JobGrade");
                 });
 
             modelBuilder.Entity("Cor.HRMM.Models.Entities.PositionBenefit", b =>
@@ -499,17 +516,6 @@ namespace Cor.HRMM.Migrations
                         .IsRequired();
 
                     b.Navigation("Position");
-                });
-
-            modelBuilder.Entity("Cor.HRMM.Models.Entities.SalaryScale", b =>
-                {
-                    b.HasOne("Cor.HRMM.Models.Entities.JobGrade", "JobGrade")
-                        .WithMany()
-                        .HasForeignKey("JobGradeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("JobGrade");
                 });
 #pragma warning restore 612, 618
         }

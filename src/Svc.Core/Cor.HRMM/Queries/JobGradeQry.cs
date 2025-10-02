@@ -25,7 +25,8 @@ public class JobGradeAllQryHandler : IRequestHandler<JobGradeAllQry, List<JobGra
             {
                 Id = data.Id,
                 Name = data.Name,
-                Code = data.Code,
+                StartSalary = data.StartSalary,
+                MaxSalary = data.MaxSalary,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -52,7 +53,8 @@ public class JobGradeByIdQryHandler : IRequestHandler<JobGradeByIdQry, JobGradeL
         {
             Id = nData.Id,
             Name = nData.Name,
-            Code = nData.Code,
+            StartSalary = nData.StartSalary,
+            MaxSalary = nData.MaxSalary,
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,
