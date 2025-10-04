@@ -1,13 +1,12 @@
 ﻿namespace Profile.Domain.Entities;
 
-public class EmployeeFinance
+public class EmpPhoto: BaseEntity
 {
-    public string Tin { get; set; } = default!;
-    public string BankAccountNo { get; set; } = default!;
-    public string PensionNumber { get; set; } = default!;
     public Guid EmployeeId { get; set; } = default!; //Employee
+    public Guid FileMetaDataId { get; set; } = default!; //FileMetaData
 
     //******************************************//
 
     public Employee Employee { get; set; } = null!;
+    public FileMetaData FileMetaData { get; set; } = null!;
 }

@@ -1,6 +1,6 @@
 ﻿namespace Profile.Domain.Entities;
 
-public class EmployeeState: BaseEntity
+public class EmpState: BaseEntity
 {
     public string IsTerminated { get; set; } = default!; //enum.YesNo
     public string IsApproved { get; set; } = default!; //enum.YesNo

@@ -1,4 +1,5 @@
-﻿using Profile.Domain.Entities;
+﻿using Profile.Domain.DTOs;
+using Profile.Domain.Entities;
 using System.Linq.Expressions;
 
 namespace Profile.App.Interfaces;

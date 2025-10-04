@@ -23,8 +23,7 @@ public static class SvcCollExt
 
         // Logging Service
         services.AddScoped<ILogService, LogService>();
-
-        //services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddCompCmd).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
 
         return services;
     }

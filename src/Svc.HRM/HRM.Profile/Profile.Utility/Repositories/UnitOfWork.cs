@@ -28,12 +28,12 @@ public class UnitOfWork : IUnitOfWork
     {
         return (IHrmProfileRepo<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
         {
-            _logger.LogInformation("Creating new CoreRepository<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
+            _logger.LogInformation("Creating new HrmProfileRepo<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
             var repoLogger = _loggerFactory.CreateLogger<HrmProfileRepo<TEntity>>();
             return new HrmProfileRepo<TEntity>(_context, repoLogger);
         });
     }
-
+    
     public async Task Begin()
     {
         if (_transaction != null)

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Svc.Lup.Controllers;
 using Svc.Lup.Interfaces;
 using Svc.Lup.Persistence;
 using Svc.Lup.Repositories;
@@ -22,8 +21,8 @@ public static class SvcCollExt
 
         // Logging Service
         services.AddScoped<ILogService, LogService>();
-
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(lupTablesController).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
+        //services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(lupTablesController).Assembly));
 
         return services;
     }

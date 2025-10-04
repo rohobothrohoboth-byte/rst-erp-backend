@@ -1,5 +1,4 @@
-﻿using Cor.HRMM.Controllers;
-using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Persistence;
 using Cor.HRMM.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -22,8 +21,8 @@ public static class SvcCollExt
 
         // Logging Service
         services.AddScoped<ILogService, LogService>();
-
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddressController).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
+        //services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AddressController).Assembly));
 
         return services;
     }
