@@ -7,20 +7,20 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Commands;
 
-public class EmpPhotoAddCmd : IRequest<EmpPhotoListDto> { public EmpPhotoAddDto AddDto { get; set; } = default!; }
+public class EmpPhotoAddCmd : IRequest<EmpPhotoDto> { public EmpPhotoAddDto AddDto { get; set; } = default!; }
 
-public class EmpPhotoModCmd : IRequest<EmpPhotoListDto> { public EmpPhotoModDto ModDto { get; set; } = default!; }
+public class EmpPhotoModCmd : IRequest<EmpPhotoDto> { public EmpPhotoModDto ModDto { get; set; } = default!; }
 
 public class EmpPhotoDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class EmpPhotoAddCmdHandler : IRequestHandler<EmpPhotoAddCmd, EmpPhotoListDto>
+public class EmpPhotoAddCmdHandler : IRequestHandler<EmpPhotoAddCmd, EmpPhotoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
     public EmpPhotoAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
-    public async Task<EmpPhotoListDto> Handle(EmpPhotoAddCmd request, CancellationToken cancellationToken)
+    public async Task<EmpPhotoDto> Handle(EmpPhotoAddCmd request, CancellationToken cancellationToken)
     {
         await _unitOfWork.Begin();
         try
@@ -71,7 +71,7 @@ public class EmpPhotoAddCmdHandler : IRequestHandler<EmpPhotoAddCmd, EmpPhotoLis
             await _unitOfWork.Repository<EmpPhoto>().Add(emp);
             await _unitOfWork.Commit();
 
-            var res = new EmpPhotoListDto();
+            var res = new EmpPhotoDto();
             var response = await _med.Send(new EmpPhotoByIdQry { Id = emp.Id }, cancellationToken);
             if (response == null) { return res; }
             res = response;

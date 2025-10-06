@@ -33,12 +33,15 @@ public class AllPeriodQryHandler : IRequestHandler<AllPeriodQry, List<PeriodList
             var c = new PeriodListDto
             {
                 Id = data.Id,
+                FiscalYearId = data.FiscalYearId,
+                QuarterId = data.QuarterId,
                 Name = data.Name,
                 FiscYear = fYear.Name,
                 Quarter = quarter!.Name,
                 DateStart = data.DateStart,
                 DateEnd = data.DateEnd,
-                IsActive = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
+                IsActive = data.IsActive,
+                IsActiveStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -70,12 +73,15 @@ public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto
         var c = new PeriodListDto
         {
             Id = data.Id,
+            FiscalYearId = data.FiscalYearId,
+            QuarterId = data.QuarterId,
             Name = data.Name,
             FiscYear = fYear.Name,
             Quarter = quarter!.Name,
             DateStart = data.DateStart,
             DateEnd = data.DateEnd,
-            IsActive = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
+            IsActive = data.IsActive,
+            IsActiveStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

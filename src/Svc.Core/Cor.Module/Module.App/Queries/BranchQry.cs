@@ -58,12 +58,15 @@ public class AllBranchesQryHandler : IRequestHandler<AllBranchesQry, List<Branch
             var c = new BranchListDto
             {
                 Id = nBra.Id,
+                CompId = nBra.CompId,
                 Name = nBra.Name,
                 NameAm = nBra.NameAm,
                 Code = nBra.Code,
                 Location = nBra.Location,
-                BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-                BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
+                BranchStat = nBra.BranchStat,
+                BranchType = nBra.BranchType,
+                BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
+                BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
                 Comp = comp.Name,
                 CompAm = comp.NameAm,
                 OpenDate = nBra.OpenDate,
@@ -88,22 +91,22 @@ public class BranchByIdQryHandler : IRequestHandler<BranchByIdQry, BranchListDto
     public async Task<BranchListDto?> Handle(BranchByIdQry request, CancellationToken cancellationToken)
     {
         var nBra = await _unitOfWork.Repository<Branch>().GetById(request.Id);
-        if (nBra == null)
-        {
-            return null;
-        }
+        if (nBra == null) { return null; }
 
         var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
         if (comp == null) return null;
         var c = new BranchListDto
         {
             Id = nBra.Id,
+            CompId = nBra.CompId,
             Name = nBra.Name,
             NameAm = nBra.NameAm,
             Code = nBra.Code,
             Location = nBra.Location,
-            BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-            BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
+            BranchStat = nBra.BranchStat,
+            BranchType = nBra.BranchType,
+            BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
+            BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
             Comp = nBra.Name,
             CompAm = nBra.Name,
             OpenDate = nBra.OpenDate,
@@ -135,12 +138,15 @@ public class BranchByCompQryHandler : IRequestHandler<BranchByCompQry, List<Bran
             var c = new BranchListDto
             {
                 Id = nBra.Id,
+                CompId = nBra.CompId,
                 Name = nBra.Name,
                 NameAm = nBra.NameAm,
                 Code = nBra.Code,
                 Location = nBra.Location,
-                BranchType = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-                BranchStat = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
+                BranchStat = nBra.BranchStat,
+                BranchType = nBra.BranchType,
+                BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
+                BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
                 Comp = comp.Name,
                 CompAm = comp.NameAm,
                 OpenDate = nBra.OpenDate,

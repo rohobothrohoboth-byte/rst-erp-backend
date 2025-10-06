@@ -6,14 +6,14 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Queries;
 
-public class EmpPhotoByIdQry : IRequest<EmpPhotoListDto?> { public Guid Id { get; set; } }
+public class EmpPhotoByIdQry : IRequest<EmpPhotoDto?> { public Guid Id { get; set; } }
 
-public class EmpPhotoByIdQryHandler : IRequestHandler<EmpPhotoByIdQry, EmpPhotoListDto?>
+public class EmpPhotoByIdQryHandler : IRequestHandler<EmpPhotoByIdQry, EmpPhotoDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
     public EmpPhotoByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task<EmpPhotoListDto?> Handle(EmpPhotoByIdQry request, CancellationToken cancellationToken)
+    public async Task<EmpPhotoDto?> Handle(EmpPhotoByIdQry request, CancellationToken cancellationToken)
     {
         var nData = await _unitOfWork.Repository<EmpPhoto>().GetFoD(e => e.EmployeeId == request.Id);
         if (nData == null) { return null; }
@@ -25,16 +25,18 @@ public class EmpPhotoByIdQryHandler : IRequestHandler<EmpPhotoByIdQry, EmpPhotoL
         if (tBlob == null) { return null; }
         var emp = await _unitOfWork.Repository<Employee>().GetById(nData.EmployeeId);
 
-        var c = new EmpPhotoListDto
+        var c = new EmpPhotoDto
         {
             Id = fData.Id,
-            FileName = fData.FileName,
-            ContentType = fData.ContentType,
-            FileSize = SizeFormatter.FormatBytes(fData.FileSize),
+            FileMetaDataId = nData.FileMetaDataId,
             PhotoBlobId = fBlob.Id,
             PhotoThumbnailId = tBlob.Id,
             EmployeeId = nData.Id,
-            EmpFullName = emp != null ? emp.Code : "Unknown",
+            FileName = fData.FileName,
+            ContentType = fData.ContentType,
+            FileSize = SizeFormatter.FormatBytes(fData.FileSize),
+            EmpFullName = emp != null ? emp!.Person.FullName : "EMPLOYEE NOT AVAILABLE",
+            EmpFullNameAm = emp != null ? emp!.Person.FullNameAm : "የሰራተኛው መረጃ ማግኘት አልተቻለም",
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,

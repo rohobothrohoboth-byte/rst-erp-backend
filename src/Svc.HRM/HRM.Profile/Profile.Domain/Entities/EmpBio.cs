@@ -8,7 +8,6 @@ public class EmpBio: BaseEntity
     public string HasBirthCert { get; set; } = default!; // enum.YesNo
     public string HasMarriageCert { get; set; } = default!; // enum.YesNo
     public Guid MaritalStatusId { get; set; } = default!; //lup.MaritalStatus
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid EmployeeId { get; set; } = default!; //Employee
 
     //******************************************//

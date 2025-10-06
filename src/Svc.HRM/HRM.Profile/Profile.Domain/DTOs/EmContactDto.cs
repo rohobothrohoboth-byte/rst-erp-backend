@@ -1,19 +1,23 @@
 ﻿namespace Profile.Domain.DTOs;
 
-public class EmergencyContactListDto : BaseDto
+public class EmContactListDto : BaseDto
 {
     public Guid PersonId { get; set; } = default!; //Person
     public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid RelationId { get; set; } = default!; //lup.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
-    public string ContactFullName { get; set; } = default!; //Person
-    public string Gender { get; set; } = default!; // enum.Gender
+    public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
-    public string Address { get; set; } = default!; //Cor.HRMM.Address
-    public string Relation { get; set; } = default!; //lup.Relation
-    public string EmpFullName { get; set; } = default!; //Employee
+    public string ContactName { get; set; } = default!;
+    public string ContactNameAm { get; set; } = default!;
+    public string GenderStr { get; set; } = default!;
+    public string Address { get; set; } = default!; 
+    public string Relation { get; set; } = default!;
+    public string EmpFullName { get; set; } = default!;
+    public string EmpFullNameAm { get; set; } = default!;
 }
 
-public class EmergencyContactAddDto
+public class EmContactAddDto
 {
     public string FirstName { get; set; } = default!;
     public string FirstNameA { get; set; } = default!;
@@ -28,7 +32,7 @@ public class EmergencyContactAddDto
     public Guid EmployeeId { get; set; } = default!; //Employee
 }
 
-public class EmergencyContactModDto
+public class EmContactModDto
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = default!;

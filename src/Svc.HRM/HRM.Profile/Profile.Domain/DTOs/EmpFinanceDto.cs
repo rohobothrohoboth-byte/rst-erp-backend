@@ -2,11 +2,12 @@
 
 public class EmpFinanceListDto : BaseDto
 {
+    public Guid EmployeeId { get; set; } = default!; //Employee
     public string Tin { get; set; } = default!;
     public string BankAccountNo { get; set; } = default!;
     public string PensionNumber { get; set; } = default!;
-    public Guid EmployeeId { get; set; } = default!; //Employee
-    public string EmpFullName { get; set; } = default!; //Employee
+    public string EmpFullName { get; set; } = default!;
+    public string EmpFullNameAm { get; set; } = default!;
 }
 
 public class EmpFinanceAddDto

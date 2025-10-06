@@ -29,7 +29,7 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
             Location = request.AddBranchDto.Location,
             BranchType = request.AddBranchDto.BranchType,
             BranchStat = "0",
-            OpenDate = request.AddBranchDto.DateOpened,
+            OpenDate = request.AddBranchDto.OpenDate,
             CompId = request.AddBranchDto.CompId
         };
 
@@ -67,11 +67,11 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
 
         oldBra.Name = request.EditBranchDto.Name;
         oldBra.NameAm = request.EditBranchDto.NameAm;
-        oldBra.Code = request.EditBranchDto.NameAm;
-        oldBra.Location = request.EditBranchDto.NameAm;
+        oldBra.Code = request.EditBranchDto.Code;
+        oldBra.Location = request.EditBranchDto.Location;
         oldBra.BranchType = request.EditBranchDto.BranchType;
         oldBra.BranchStat = request.EditBranchDto.BranchStat;
-        oldBra.OpenDate = request.EditBranchDto.DateOpened;
+        oldBra.OpenDate = request.EditBranchDto.OpenDate;
         oldBra.CompId = request.EditBranchDto.CompId;
 
         await _unitOfWork.Begin();

@@ -6,7 +6,7 @@ public class PositionBenefitListDto : BaseDto
     public Guid PositionId { get; set; } = default!; //Position
     public string Position { get; set; } = default!;
     public string PositionAm { get; set; } = default!;
-    public string BenefitSetting { get; set; } = default!;
+    //public string BenefitSetting { get; set; } = default!;
 }
 
 public class PositionBenefitAddDto

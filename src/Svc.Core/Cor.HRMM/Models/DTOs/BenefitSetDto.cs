@@ -3,8 +3,8 @@
 public class BenefitSetListDto : BaseDto
 {
     public string Name { get; set; } = default!;
-    public decimal BenefitValue { get; set; } = default!;
-    public string Benefit => $"{BenefitValue:#,##0.##}";
+    public decimal Benefit { get; set; } = default!;
+    public string BenefitStr => $"{Benefit:#,##0.##}";
 }
 
 public class BenefitSetAddDto

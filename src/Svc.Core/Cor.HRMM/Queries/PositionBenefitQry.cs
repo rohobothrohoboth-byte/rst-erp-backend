@@ -18,19 +18,19 @@ public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQr
     {
         var dbData = await _unitOfWork.Repository<PositionBenefit>().GetAll();
         var dataL = new List<PositionBenefitListDto>();
-        var benefitL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
+        //var benefitL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
         var posL = await _unitOfWork.Repository<Position>().GetAll();
 
         foreach (var data in dbData)
         {
-            var benefit = benefitL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
+            //var benefit = benefitL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
             var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
             var c = new PositionBenefitListDto
             {
                 Id = data.Id,
                 BenefitSettingId = data.BenefitSettingId,
                 PositionId = data.PositionId,
-                BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
+                //BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -63,7 +63,7 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
     {
         var nData = await _unitOfWork.Repository<PositionBenefit>().GetById(request.Id);
         if (nData == null) { return null; }
-        var benefit = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
+        //var benefit = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
         var pos = await _unitOfWork.Repository<Position>().GetById(nData.BenefitSettingId);
 
         var c = new PositionBenefitListDto
@@ -71,7 +71,7 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
             Id = nData.Id,
             BenefitSettingId = nData.BenefitSettingId,
             PositionId = nData.PositionId,
-            BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
+            //BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,

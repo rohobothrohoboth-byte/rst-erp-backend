@@ -21,6 +21,7 @@ public class HrmProfileDbContext : DbContext
         modelBuilder.Entity<EmpFinance>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpGuarantor>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpGuarantorFile>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.Entity<EmpGuarantorFileBlob>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<Employee>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpPensionCard>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpPhoto>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
@@ -41,6 +42,7 @@ public class HrmProfileDbContext : DbContext
     public DbSet<EmpFinance> EmpFinance { get; set; }
     public DbSet<EmpGuarantor> EmpGuarantor { get; set; }
     public DbSet<EmpGuarantorFile> EmpGuarantorFile { get; set; }
+    public DbSet<EmpGuarantorFileBlob> EmpGuarantorFileBlob { get; set; }
     public DbSet<Employee> Employee { get; set; }
     public DbSet<EmpPensionCard> EmpPensionCard { get; set; }
     public DbSet<EmpPhoto> EmpPhoto { get; set; }

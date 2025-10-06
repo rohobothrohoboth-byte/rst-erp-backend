@@ -34,10 +34,12 @@ public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<Positi
             var c = new PositionListDto
             {
                 Id = data.Id,
+                DepartmentId = data.DepartmentId,
+                IsVacant = data.IsVacant,
                 Name = data.Name,
                 NameAm = data.NameAm,
                 NoOfPosition = data.NoOfPosition,
-                IsVacant = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
+                IsVacantStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
                 Department = dept != null ? dept.Name : "DEPARTMENT NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
@@ -71,15 +73,17 @@ public class PositionByIdQryHandler : IRequestHandler<PositionByIdQry, PositionL
         var c = new PositionListDto
         {
             Id = data.Id,
+            DepartmentId = data.DepartmentId,
+            IsVacant = data.IsVacant,
             Name = data.Name,
             NameAm = data.NameAm,
             NoOfPosition = data.NoOfPosition,
-            IsVacant = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
+            IsVacantStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
             Department = dept != null ? dept.Name : "DEPARTMENT NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion),
+            RowVersion = Convert.ToBase64String(data.RowVersion)
         };
         return c;
     }

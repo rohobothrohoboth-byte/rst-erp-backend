@@ -21,7 +21,6 @@ public class PositionEduAddDto
 public class PositionEduModDto
 {
     public Guid Id { get; set; }
-
     public Guid PositionId { get; set; } = default!; // Position
     public Guid EducationQualId { get; set; } = default!; // EducationQualification
     public Guid EducationLevelId { get; set; } = default!; // lup.EducationLevel

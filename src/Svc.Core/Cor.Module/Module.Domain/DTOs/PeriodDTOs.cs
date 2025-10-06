@@ -1,23 +1,22 @@
 ﻿using EthiopianCalendar;
-using System.Text.Json.Serialization;
 
 namespace Module.Domain.DTOs;
 
 public class PeriodListDto : BaseDTO
 {
+    public Guid QuarterId { get; set; }  // lub.Quarter
+    public Guid FiscalYearId { get; set; }  // FiscalYear
     public string Name { get; set; } = default!;
     public string Quarter { get; set; } = default!;
     public string FiscYear { get; set; } = default!;
-    public string IsActive { get; set; } = default!;
-    [JsonIgnore]
+    public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
     public DateTime DateStart { get; set; }
-    [JsonIgnore]
     public DateTime DateEnd { get; set; }
-
-    public string StartDate => $"{DateStart:MMMM dd, yyyy}";
-    public string StartDateAm => DateStart.ToEthiopianDateString("MMMM dd, yyyy");
-    public string EndDate => $"{DateEnd:MMMM dd, yyyy}";
-    public string EndDateAm => DateEnd.ToEthiopianDateString("MMMM dd, yyyy");
+    public string IsActiveStr { get; set; } = default!;
+    public string DateStartStr => $"{DateStart:MMMM dd, yyyy}";
+    public string DateStartStrAm => DateStart.ToEthiopianDateString("MMMM dd, yyyy");
+    public string DateEndStr => $"{DateEnd:MMMM dd, yyyy}";
+    public string DateEndStrAm => DateEnd.ToEthiopianDateString("MMMM dd, yyyy");
 }
 
 public class AddPeriodDto
@@ -25,9 +24,9 @@ public class AddPeriodDto
     public required string Name { get; set; }
     public DateTime DateStart { get; set; } = DateTime.UtcNow;
     public DateTime DateEnd { get; set; } = DateTime.UtcNow;
-    public string IsActive { get; set; } = default!;
-    public Guid QuarterId { get; set; }
-    public Guid FiscalYearId { get; set; }
+    public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
+    public Guid QuarterId { get; set; }  // lub.Quarter
+    public Guid FiscalYearId { get; set; }  // FiscalYear
 }
 
 public class EditPeriodDto
@@ -36,8 +35,8 @@ public class EditPeriodDto
     public required string Name { get; set; }
     public DateTime DateStart { get; set; }
     public DateTime DateEnd { get; set; }
-    public string IsActive { get; set; } = default!;
-    public Guid QuarterId { get; set; }
-    public Guid FiscalYearId { get; set; }
+    public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
+    public Guid QuarterId { get; set; }  // lub.Quarter
+    public Guid FiscalYearId { get; set; }  // FiscalYear
     public string RowVersion { get; set; } = default!;
 }

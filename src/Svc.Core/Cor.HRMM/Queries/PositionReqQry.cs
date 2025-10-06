@@ -37,9 +37,13 @@ public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<
             {
                 Id = data.Id,
                 PositionId = data.PositionId,
-                Gender = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
-                SaturdayWorkOption = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
-                SundayWorkOption = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
+                ProfessionTypeId = data.ProfessionTypeId,
+                Gender = data.Gender,
+                SaturdayWorkOption = data.SaturdayWorkOption,
+                SundayWorkOption = data.SundayWorkOption,
+                GenderStr = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
+                SaturdayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
+                SundayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
                 WorkingHours = data.WorkingHours,
                 ProfessionType = posType != null ? posType.Name : "PROFESSION TYPE NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
@@ -87,15 +91,19 @@ public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, Pos
         {
             Id = data.Id,
             PositionId = data.PositionId,
-            Gender = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
-            SaturdayWorkOption = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
-            SundayWorkOption = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
+            ProfessionTypeId = data.ProfessionTypeId,
+            Gender = data.Gender,
+            SaturdayWorkOption = data.SaturdayWorkOption,
+            SundayWorkOption = data.SundayWorkOption,
+            GenderStr = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
+            SaturdayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
+            SundayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
             WorkingHours = data.WorkingHours,
             ProfessionType = posType != null ? posType.Name : "PROFESSION TYPE NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion),
+            RowVersion = Convert.ToBase64String(data.RowVersion)
         };
 
         if (pos != null)

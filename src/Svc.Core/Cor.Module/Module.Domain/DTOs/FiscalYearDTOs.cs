@@ -6,16 +6,15 @@ namespace Module.Domain.DTOs;
 public class FiscYearListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
-    public string IsActive { get; set; } = default!;
-    [JsonIgnore]
+    public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
     public DateTime DateStart { get; set; }
-    [JsonIgnore]
     public DateTime DateEnd { get; set; }
 
-    public string StartDate => $"{DateStart:MMMM dd, yyyy}";
-    public string StartDateAm => DateStart.ToEthiopianDateString("MMMM dd, yyyy");
-    public string EndDate => $"{DateEnd:MMMM dd, yyyy}";
-    public string EndDateAm => DateEnd.ToEthiopianDateString("MMMM dd, yyyy");
+    public string IsActiveStr { get; set; } = default!;
+    public string DateStartStr => $"{DateStart:MMMM dd, yyyy}";
+    public string DateStartStrAm => DateStart.ToEthiopianDateString("MMMM dd, yyyy");
+    public string DateEndStr => $"{DateEnd:MMMM dd, yyyy}";
+    public string DateEndStrAm => DateEnd.ToEthiopianDateString("MMMM dd, yyyy");
 }
 
 public class AddFiscYearDto

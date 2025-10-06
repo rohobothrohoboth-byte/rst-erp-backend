@@ -25,7 +25,7 @@ public class BenefitSetAllQryHandler : IRequestHandler<BenefitSetAllQry, List<Be
             {
                 Id = data.Id,
                 Name = data.Name,
-                BenefitValue = data.BenefitValue,
+                Benefit = data.BenefitValue,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -52,7 +52,7 @@ public class BenefitSetByIdQryHandler : IRequestHandler<BenefitSetByIdQry, Benef
         {
             Id = nData.Id,
             Name = nData.Name,
-            BenefitValue = nData.BenefitValue,
+            Benefit = nData.BenefitValue,
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,

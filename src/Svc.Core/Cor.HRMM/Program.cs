@@ -24,13 +24,13 @@ builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { 
 // --- Add controllers + API versioning + problem details ---
 builder.Services.AddControllers();
 
-var gatewayUrl = builder.Configuration["Services:GatewayService"];
-var lupUrl = builder.Configuration["Services:LupService"];
-var coreModuleUrl = builder.Configuration["Services:CoreModuleService"];
+var gatewayUrl = builder.Configuration["Services:Gateway"];
+var lupUrl = builder.Configuration["Services:Lup"];
+var corModuleUrl = builder.Configuration["Services:Cor.Module"];
 
 builder.Services.AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
-builder.Services.AddHttpClient<ICoreModuleClient, CoreModuleClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), coreModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
+builder.Services.AddHttpClient<ICoreModuleClient, CoreModuleClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddApiVersioning(option =>
     {
