@@ -39,7 +39,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         }
         return Ok(dept);
     }
-    
+
     [HttpPost("AddDept")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

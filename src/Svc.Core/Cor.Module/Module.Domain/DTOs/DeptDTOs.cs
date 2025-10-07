@@ -10,6 +10,13 @@ public class DeptListDto : BaseDTO
     public string DeptStatStr { get; set; } = default!;
 }
 
+public class DeptNameListDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string NameAm { get; set; } = default!;
+}
+
 public class AddDeptDto
 {
     public string Name { get; set; } = default!;

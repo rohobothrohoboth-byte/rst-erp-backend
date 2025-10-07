@@ -83,6 +83,58 @@ public class Lup(HttpClient http) : ILup
         catch (JsonException) { return null; }        // bad JSON
     }
 
+    public async Task<LupListDto?> EmploymentType(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync($"EmploymentType/{id}", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<LupListDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (JsonException) { return null; }
+    }
+
+    public async Task<List<LupListDto>?> EmploymentTypeList(CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync("EmploymentType", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<List<LupListDto>>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }   // network errors
+        catch (NotSupportedException) { return null; } // invalid content type
+        catch (JsonException) { return null; }        // bad JSON
+    }
+
+    public async Task<LupListDto?> EmploymentNature(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync($"EmploymentNature/{id}", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<LupListDto>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (NotSupportedException) { return null; }
+        catch (JsonException) { return null; }
+    }
+
+    public async Task<List<LupListDto>?> EmploymentNatureList(CancellationToken ct = default)
+    {
+        try
+        {
+            using var res = await http.GetAsync("EmploymentNature", ct);
+            if (!res.IsSuccessStatusCode) { return null; }
+            return await res.Content.ReadFromJsonAsync<List<LupListDto>>(cancellationToken: ct);
+        }
+        catch (HttpRequestException) { return null; }   // network errors
+        catch (NotSupportedException) { return null; } // invalid content type
+        catch (JsonException) { return null; }        // bad JSON
+    }
+
 
 
 

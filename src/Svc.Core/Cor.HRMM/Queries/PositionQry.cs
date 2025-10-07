@@ -8,8 +8,9 @@ using MediatR;
 namespace Cor.HRMM.Queries;
 
 public class PositionAllQry : IRequest<List<PositionListDto>> { }
-
+public class PositionNameAllQry : IRequest<List<NameAmList>> { }
 public class PositionByIdQry : IRequest<PositionListDto?> { public Guid Id { get; set; } }
+public class PositionNameByIdQry : IRequest<NameAmList?> { public Guid Id { get; set; } }
 
 public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<PositionListDto>>
 {
@@ -53,6 +54,39 @@ public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<Positi
     }
 }
 
+public class PositionNameAllQryHandler : IRequestHandler<PositionNameAllQry, List<NameAmList>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICoreModuleClient _lupClient;
+
+    public PositionNameAllQryHandler(IUnitOfWork unitOfWork, ICoreModuleClient lupClient)
+    {
+        _unitOfWork = unitOfWork;
+        _lupClient = lupClient;
+    }
+
+    public async Task<List<NameAmList>> Handle(PositionNameAllQry request, CancellationToken cancellationToken)
+    {
+        var dbData = await _unitOfWork.Repository<Position>().GetAll();
+        var dataL = new List<NameAmList>();
+        var deptL = await _lupClient.DepartmentList(cancellationToken);
+
+        foreach (var data in dbData)
+        {
+            var dept = deptL!.FirstOrDefault(t => t.Id == data.DepartmentId);
+            var c = new NameAmList
+            {
+                Id = data.Id,
+                Name = data.Name,
+                NameAm = data.NameAm
+            };
+            dataL.Add(c);
+        }
+
+        return dataL;
+    }
+}
+
 public class PositionByIdQryHandler : IRequestHandler<PositionByIdQry, PositionListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -84,6 +118,33 @@ public class PositionByIdQryHandler : IRequestHandler<PositionByIdQry, PositionL
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
             RowVersion = Convert.ToBase64String(data.RowVersion)
+        };
+        return c;
+    }
+}
+
+public class PositionNameByIdQryHandler : IRequestHandler<PositionNameByIdQry, NameAmList?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICoreModuleClient _lupClient;
+
+    public PositionNameByIdQryHandler(IUnitOfWork unitOfWork, ICoreModuleClient lupClient)
+    {
+        _unitOfWork = unitOfWork;
+        _lupClient = lupClient;
+    }
+
+    public async Task<NameAmList?> Handle(PositionNameByIdQry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<Position>().GetById(request.Id);
+        if (data == null) { return null; }
+        var dept = await _lupClient.Department(data.DepartmentId, cancellationToken);
+
+        var c = new NameAmList
+        {
+            Id = data.Id,
+            Name = data.Name,
+            NameAm = data.NameAm
         };
         return c;
     }

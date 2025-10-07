@@ -4,13 +4,14 @@ namespace Profile.Domain.DTOs;
 
 public class EmpPensionCardListDto : BaseDto
 {
+    public Guid EmployeeId { get; set; } = default!; //Employee
     public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
     public DateTime? SentDate { get; set; }
     public DateTime? ReceivedDate { get; set; }
     public string IsReceived { get; set; } = default!; //enum.YesNo
     public string IsSent { get; set; } = default!; //enum.YesNo
-    public Guid EmployeeId { get; set; } = default!; //Employee
-    public string EmpFullName { get; set; } = default!; //Employee
+    public string EmpFullName { get; set; } = default!;
+    public string EmpFullNameAm { get; set; } = default!;
     public string IsReceivedStr { get; set; } = default!;
     public string IsSentStr { get; set; } = default!;
     public string RegistrationDateStr => $"{RegistrationDate:MMMM dd, yyyy}";

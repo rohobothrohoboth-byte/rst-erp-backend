@@ -6,8 +6,9 @@ using MediatR;
 namespace Cor.HRMM.Queries;
 
 public class JobGradeAllQry : IRequest<List<JobGradeListDto>> { }
-
+public class JobGradeNameAllQry : IRequest<List<NameList>> { }
 public class JobGradeByIdQry : IRequest<JobGradeListDto?> { public Guid Id { get; set; } }
+public class JobGradeNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
 public class JobGradeAllQryHandler : IRequestHandler<JobGradeAllQry, List<JobGradeListDto>>
 {
@@ -39,6 +40,30 @@ public class JobGradeAllQryHandler : IRequestHandler<JobGradeAllQry, List<JobGra
     }
 }
 
+public class JobGradeNameAllQryHandler : IRequestHandler<JobGradeNameAllQry, List<NameList>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public JobGradeNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<NameList>> Handle(JobGradeNameAllQry request, CancellationToken cancellationToken)
+    {
+        var dbData = await _unitOfWork.Repository<JobGrade>().GetAll();
+        var dataL = new List<NameList>();
+
+        foreach (var data in dbData)
+        {
+            var c = new NameList
+            {
+                Id = data.Id,
+                Name = data.Name
+            };
+            dataL.Add(c);
+        }
+
+        return dataL;
+    }
+}
+
 public class JobGradeByIdQryHandler : IRequestHandler<JobGradeByIdQry, JobGradeListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -59,6 +84,25 @@ public class JobGradeByIdQryHandler : IRequestHandler<JobGradeByIdQry, JobGradeL
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,
             RowVersion = Convert.ToBase64String(nData.RowVersion)
+        };
+        return c;
+    }
+}
+
+public class JobGradeNameByIdQryHandler : IRequestHandler<JobGradeNameByIdQry, NameList?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public JobGradeNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<NameList?> Handle(JobGradeNameByIdQry request, CancellationToken cancellationToken)
+    {
+        var nData = await _unitOfWork.Repository<JobGrade>().GetById(request.Id);
+        if (nData == null) { return null; }
+
+        var c = new NameList
+        {
+            Id = nData.Id,
+            Name = nData.Name
         };
         return c;
     }

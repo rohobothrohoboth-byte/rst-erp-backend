@@ -8,7 +8,11 @@ namespace Module.App.Queries;
 
 public class AllDeptsQry : IRequest<List<DeptListDto>> { }
 
+public class AllDeptNameQry : IRequest<List<DeptNameListDto>> { }
+
 public class DeptByIdQry : IRequest<DeptListDto?> { public Guid Id { get; set; } }
+
+public class DeptNameByIdQry : IRequest<DeptNameListDto?> { public Guid Id { get; set; } }
 
 public class AllDeptsQryHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
 {
@@ -37,6 +41,33 @@ public class AllDeptsQryHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>
                 DateAdd = dept.DateAdd,
                 DateMod = dept.DateMod,
                 RowVersion = Convert.ToBase64String(dept.RowVersion)
+            };
+            deptL.Add(c);
+        }
+
+        return deptL;
+    }
+}
+
+public class AllDeptNameQryHandler : IRequestHandler<AllDeptNameQry, List<DeptNameListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AllDeptNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<DeptNameListDto>> Handle(AllDeptNameQry request, CancellationToken cancellationToken)
+    {
+        var depts = await _unitOfWork.Repository<Department>().GetAll();
+        var deptL = new List<DeptNameListDto>();
+        foreach (var dept in depts)
+        {
+            var branch = await _unitOfWork.Repository<Branch>().GetById(dept.BranchId);
+            if (branch == null) continue;
+            var c = new DeptNameListDto
+            {
+                Id = dept.Id,
+                Name = dept.Name,
+                NameAm = dept.NameAm
             };
             deptL.Add(c);
         }
@@ -74,6 +105,29 @@ public class DeptByIdQryHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
             DateAdd = dept.DateAdd,
             DateMod = dept.DateMod,
             RowVersion = Convert.ToBase64String(dept.RowVersion)
+        };
+        return c;
+    }
+}
+
+public class DeptNameByIdQryHandler : IRequestHandler<DeptNameByIdQry, DeptNameListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeptNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<DeptNameListDto?> Handle(DeptNameByIdQry request, CancellationToken cancellationToken)
+    {
+        var dept = await _unitOfWork.Repository<Department>().GetById(request.Id);
+        if (dept == null) { return null; }
+
+        var branch = await _unitOfWork.Repository<Branch>().GetById(dept.BranchId);
+        if (branch == null) return null;
+        var c = new DeptNameListDto
+        {
+            Id = dept.Id,
+            Name = dept.Name,
+            NameAm = dept.NameAm
         };
         return c;
     }

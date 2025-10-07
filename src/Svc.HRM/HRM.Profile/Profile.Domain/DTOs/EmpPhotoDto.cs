@@ -4,13 +4,13 @@ namespace Profile.Domain.DTOs;
 
 public class EmpPhotoDto: BaseDto
 {
+    public Guid EmployeeId { get; set; } = default!; //Employee
     public Guid FileMetaDataId { get; set; } = default!; //FileMetaData
+    public Guid PhotoBlobId { get; set; } // EmpPhotoBlob
+    public Guid PhotoThumbnailId { get; set; } // EmpPhotoThumbnail
     public string FileName { get; set; } = default!;
     public string ContentType { get; set; } = default!;
     public string FileSize { get; set; } = default!;
-    public Guid PhotoThumbnailId { get; set; } // EmpPhotoThumbnail
-    public Guid PhotoBlobId { get; set; } // EmpPhotoBlob
-    public Guid EmployeeId { get; set; } = default!; //Employee
     public string EmpFullName { get; set; } = default!;
     public string EmpFullNameAm { get; set; } = default!;
 }

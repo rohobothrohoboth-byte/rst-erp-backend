@@ -6,31 +6,28 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Queries;
 
-public class EmpPhotoByIdQry : IRequest<EmpPhotoDto?> { public Guid Id { get; set; } }
+public class EmpStampByIdQry : IRequest<EmpStampDto?> { public Guid Id { get; set; } }
 
-public class EmpPhotoByIdQryHandler : IRequestHandler<EmpPhotoByIdQry, EmpPhotoDto?>
+public class EmpStampByIdQryHandler : IRequestHandler<EmpStampByIdQry, EmpStampDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public EmpPhotoByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public EmpStampByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task<EmpPhotoDto?> Handle(EmpPhotoByIdQry request, CancellationToken cancellationToken)
+    public async Task<EmpStampDto?> Handle(EmpStampByIdQry request, CancellationToken cancellationToken)
     {
-        var nData = await _unitOfWork.Repository<EmpPhoto>().GetFoD(e => e.EmployeeId == request.Id);
+        var nData = await _unitOfWork.Repository<EmpStamp>().GetFoD(e => e.EmployeeId == request.Id);
         if (nData == null) { return null; }
         var fData = await _unitOfWork.Repository<FileMetaData>().GetById(nData.FileMetaDataId);
         if (fData == null) { return null; }
-        var fBlob = await _unitOfWork.Repository<EmpPhotoBlob>().GetFoD(e => e.FileMetaDataId == nData.FileMetaDataId);
+        var fBlob = await _unitOfWork.Repository<EmpStampBlob>().GetFoD(e => e.FileMetaDataId == nData.FileMetaDataId);
         if (fBlob == null) { return null; }
-        var tBlob = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(e => e.FileMetaDataId == nData.FileMetaDataId);
-        if (tBlob == null) { return null; }
         var emp = await _unitOfWork.Repository<Employee>().GetById(nData.EmployeeId);
 
-        var c = new EmpPhotoDto
+        var c = new EmpStampDto
         {
             Id = fData.Id,
             FileMetaDataId = nData.FileMetaDataId,
-            PhotoBlobId = fBlob.Id,
-            PhotoThumbnailId = tBlob.Id,
+            EmpStampBlobId = fBlob.Id,
             EmployeeId = nData.Id,
             FileName = fData.FileName,
             ContentType = fData.ContentType,
@@ -42,7 +39,7 @@ public class EmpPhotoByIdQryHandler : IRequestHandler<EmpPhotoByIdQry, EmpPhotoD
             DateMod = nData.DateMod,
             RowVersion = Convert.ToBase64String(nData.RowVersion)
         };
-        
+
         return c;
     }
 }

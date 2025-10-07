@@ -15,12 +15,14 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorHRMM _corHRMM;
+    private readonly ICorMod _corMod;
     private readonly ILup _lup;
 
-    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ILup lup)
+    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
+        _corMod = corMod;
         _lup = lup;
     }
 
@@ -29,32 +31,41 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
         var dbData = await _unitOfWork.Repository<Employee>().GetAll();
         var dataL = new List<EmployeeListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var empL = await _unitOfWork.Repository<Employee>().GetAll();
-        var addL = await _corHRMM.AddressList(cancellationToken);
-        var reL = await _lup.RelationList(cancellationToken);
+        var deL = await _corMod.DeptList(cancellationToken);
+        var jgL = await _corHRMM.JobGradeList(cancellationToken);
+        var poL = await _corHRMM.PositionList(cancellationToken);
+        var eTL = await _lup.EmploymentTypeList(cancellationToken);
+        var eNL = await _lup.EmploymentNatureList(cancellationToken);
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
-            var add = addL!.FirstOrDefault(t => t.Id == data.AddressId);
-            var re = reL!.FirstOrDefault(t => t.Id == data.RelationId);
-            var emp = empL!.FirstOrDefault(t => t.Id == data.EmployeeId);
+            var et = eTL!.FirstOrDefault(t => t.Id == data.EmploymentTypeId);
+            var en = eNL!.FirstOrDefault(t => t.Id == data.EmploymentNatureId);
+            var dept = deL!.FirstOrDefault(t => t.Id == data.DepartmentId);
+            var jg = jgL!.FirstOrDefault(t => t.Id == data.JobGradeId);
+            var pos = poL!.FirstOrDefault(t => t.Id == data.PositionId);
             var c = new EmployeeListDto
             {
                 Id = data.Id,
                 PersonId = data.PersonId,
-                AddressId = data.AddressId,
-                RelationId = data.RelationId,
-                EmployeeId = data.EmployeeId,
+                JobGradeId = data.JobGradeId,
+                PositionId = data.PositionId,
+                DepartmentId = data.DepartmentId,
+                EmploymentTypeId = data.EmploymentTypeId,
+                EmploymentNatureId = data.EmploymentNatureId,
                 Gender = per!.Gender,
                 Nationality = per.Nationality,
-                ContactName = per.FullName,
-                ContactNameAm = per.FullNameAm,
+                Code = data.Code,
+                EmploymentDate = data.EmploymentDate,
+                JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
+                Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
+                Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
+                EmploymentType = et != null ? et.Name : "NOT AVAILABLE",
+                EmploymentNature = en != null ? en.Name : "NOT AVAILABLE",
                 GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-                Address = add != null ? add.Telephone : "ADDRESS NOT AVAILABLE",
-                Relation = re != null ? re.Name : "RELATION NOT AVAILABLE",
-                EmpFullName = emp != null ? emp!.Person.FullName : "EMPLOYEE NOT AVAILABLE",
-                EmpFullNameAm = emp != null ? emp!.Person.FullNameAm : "የሰራተኛው መረጃ ማግኘት አልተቻለም",
+                EmpFullName = per.FullName,
+                EmpFullNameAm = per.FullNameAm,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -71,12 +82,14 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorHRMM _corHRMM;
+    private readonly ICorMod _corMod;
     private readonly ILup _lup;
 
-    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ILup lup)
+    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
+        _corMod = corMod;
         _lup = lup;
     }
 
@@ -85,26 +98,33 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
         var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var emp = await _unitOfWork.Repository<Employee>().GetById(data.EmployeeId);
-        var add = await _corHRMM.Address(data.AddressId, cancellationToken);
-        var re = await _lup.Relation(data.RelationId, cancellationToken);
+        var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
+        var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
+        var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var et = await _lup.EmploymentType(data.EmploymentTypeId, cancellationToken);
+        var en = await _lup.EmploymentNature(data.EmploymentNatureId, cancellationToken);
 
         var c = new EmployeeListDto
         {
             Id = data.Id,
             PersonId = data.PersonId,
-            AddressId = data.AddressId,
-            RelationId = data.RelationId,
-            EmployeeId = data.EmployeeId,
+            JobGradeId = data.JobGradeId,
+            PositionId = data.PositionId,
+            DepartmentId = data.DepartmentId,
+            EmploymentTypeId = data.EmploymentTypeId,
+            EmploymentNatureId = data.EmploymentNatureId,
             Gender = per!.Gender,
             Nationality = per.Nationality,
-            ContactName = per.FullName,
-            ContactNameAm = per.FullNameAm,
+            Code = data.Code,
+            EmploymentDate = data.EmploymentDate,
+            JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
+            Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
+            Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
+            EmploymentType = et != null ? et.Name : "NOT AVAILABLE",
+            EmploymentNature = en != null ? en.Name : "NOT AVAILABLE",
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            Address = add != null ? add.Telephone : "ADDRESS NOT AVAILABLE",
-            Relation = re != null ? re.Name : "RELATION NOT AVAILABLE",
-            EmpFullName = emp != null ? emp!.Person.FullName : "EMPLOYEE NOT AVAILABLE",
-            EmpFullNameAm = emp != null ? emp!.Person.FullNameAm : "የሰራተኛው መረጃ ማግኘት አልተቻለም",
+            EmpFullName = per.FullName,
+            EmpFullNameAm = per.FullNameAm,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

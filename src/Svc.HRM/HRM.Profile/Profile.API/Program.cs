@@ -27,13 +27,13 @@ builder.Services.AddControllers();
 var gatewayUrl = builder.Configuration["Services:Gateway"];
 var lupUrl = builder.Configuration["Services:Lup"];
 var corHRMMUrl = builder.Configuration["Services:Cor.HRMM"];
-//var corModuleUrl = builder.Configuration["Services:Cor.Module"];
+var corModuleUrl = builder.Configuration["Services:Cor.Module"];
 
 builder.Services.AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddHttpClient<ICorHRMM, CorHRMM>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corHRMMUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
-//builder.Services.AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
+builder.Services.AddHttpClient<ICorMod, CorMod>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddApiVersioning(option =>
     {
