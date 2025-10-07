@@ -8,7 +8,6 @@ using Profile.Domain.Enums;
 namespace Profile.App.Queries;
 
 public class EmployeeAllQry : IRequest<List<EmployeeListDto>> { }
-
 public class EmployeeByIdQry : IRequest<EmployeeListDto?> { public Guid Id { get; set; } }
 
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>

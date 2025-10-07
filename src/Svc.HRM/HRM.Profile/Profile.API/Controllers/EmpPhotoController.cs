@@ -30,12 +30,12 @@ public class EmpPhotoController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpPhoto(Guid id)
     {
-        var bra = await med.Send(new EmpPhotoByIdQry { Id = id });
-        if (bra == null)
+        var res = await med.Send(new EmpPhotoByIdQry { Id = id });
+        if (res == null)
         {
-            return NotFound(new { Error = $"BRANCH with Id {id} not found" });
+            return NotFound(new { Error = $"EMPLOYEE PHOTO with Id {id} NOT FOUND" });
         }
-        return Ok(bra);
+        return Ok(res);
     }
     
     [HttpPost("AddEmpPhoto")]
@@ -53,7 +53,7 @@ public class EmpPhotoController(IMediator med) : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new { Error = "Failed to create BRANCH", Details = ex.Message });
+            return BadRequest(new { Error = "Failed to upload EMPLOYEE PHOTO", Details = ex.Message });
         }
     }
 

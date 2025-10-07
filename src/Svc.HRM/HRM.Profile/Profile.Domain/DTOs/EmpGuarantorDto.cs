@@ -20,11 +20,11 @@ public class EmpGuarantorListDto : BaseDto
 public class EmpGuarantorAddDto
 {
     public string FirstName { get; set; } = default!;
-    public string FirstNameA { get; set; } = default!;
+    public string FirstNameAm { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
-    public string MiddleNameA { get; set; } = default!;
+    public string MiddleNameAm { get; set; } = default!;
     public string LastName { get; set; } = default!;
-    public string LastNameA { get; set; } = default!;
+    public string LastNameAm { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
     public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
@@ -36,15 +36,16 @@ public class EmpGuarantorModDto
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = default!;
-    public string FirstNameA { get; set; } = default!;
+    public string FirstNameAm { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
-    public string MiddleNameA { get; set; } = default!;
+    public string MiddleNameAm { get; set; } = default!;
     public string LastName { get; set; } = default!;
-    public string LastNameA { get; set; } = default!;
+    public string LastNameAm { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
     public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid RelationId { get; set; } = default!; //lup.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
+    public Guid PersonId { get; set; } = default!; //Person
     public string RowVersion { get; set; } = default!;
 }

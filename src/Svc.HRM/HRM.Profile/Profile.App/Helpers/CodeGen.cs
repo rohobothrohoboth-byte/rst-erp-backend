@@ -1,0 +1,35 @@
+﻿using Profile.App.Interfaces;
+using Profile.Domain.Entities;
+
+namespace Profile.App.Helpers;
+
+public class EmpCode
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public EmpCode(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<string> GetEmpCode()
+    {
+        var validBraId = string.Empty;
+        var gen = new NumToWord();
+        var cGen = gen.IdGenerator(10);
+        var allEmp = await _unitOfWork.Repository<Employee>().GetAll();
+        if (allEmp.Any())
+        {
+            var validId = allEmp.FirstOrDefault(i => i.Code == cGen);
+            if (validId != null) { await GetEmpCode(); }
+            else { validBraId = cGen; }
+        }
+        else
+        {
+            validBraId = cGen;
+        }
+
+        return validBraId;
+    }
+
+
+
+
+}

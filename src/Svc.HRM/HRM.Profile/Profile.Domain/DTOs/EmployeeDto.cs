@@ -29,14 +29,13 @@ public class EmployeeListDto : BaseDto
 public class EmployeeAddDto
 {
     public string FirstName { get; set; } = default!;
-    public string FirstNameA { get; set; } = default!;
+    public string FirstNameAm { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
-    public string MiddleNameA { get; set; } = default!;
+    public string MiddleNameAm { get; set; } = default!;
     public string LastName { get; set; } = default!;
-    public string LastNameA { get; set; } = default!;
+    public string LastNameAm { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
-    public string Code { get; set; } = default!;
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade
     public Guid PositionId { get; set; } = default!; //Cor.HRMM.Position
@@ -49,14 +48,13 @@ public class EmployeeModDto
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = default!;
-    public string FirstNameA { get; set; } = default!;
+    public string FirstNameAm { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
-    public string MiddleNameA { get; set; } = default!;
+    public string MiddleNameAm { get; set; } = default!;
     public string LastName { get; set; } = default!;
-    public string LastNameA { get; set; } = default!;
+    public string LastNameAm { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
-    public string Code { get; set; } = default!;
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
     public Guid PersonId { get; set; } = default!; //Person
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade

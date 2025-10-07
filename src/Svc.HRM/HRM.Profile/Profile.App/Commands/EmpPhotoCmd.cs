@@ -9,10 +9,6 @@ namespace Profile.App.Commands;
 
 public class EmpPhotoAddCmd : IRequest<EmpPhotoDto> { public EmpPhotoAddDto AddDto { get; set; } = default!; }
 
-public class EmpPhotoModCmd : IRequest<EmpPhotoDto> { public EmpPhotoModDto ModDto { get; set; } = default!; }
-
-public class EmpPhotoDelCmd : IRequest { public Guid Id { get; set; } }
-
 public class EmpPhotoAddCmdHandler : IRequestHandler<EmpPhotoAddCmd, EmpPhotoDto>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -76,65 +72,6 @@ public class EmpPhotoAddCmdHandler : IRequestHandler<EmpPhotoAddCmd, EmpPhotoDto
             if (response == null) { return res; }
             res = response;
             return res;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-    }
-}
-
-//public class EmployeePhotoModCmdHandler : IRequestHandler<EmployeePhotoModCmd, EmpPhotoListDto>
-//{
-//    private readonly IUnitOfWork _unitOfWork;
-//    private readonly IMediator _med;
-
-//    public EmployeePhotoModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-//    public async Task<EmpPhotoListDto> Handle(EmployeePhotoModCmd request, CancellationToken cancellationToken)
-//    {
-//        var oldData = await _unitOfWork.Repository<EmployeePhoto>().GetById(request.ModDto.Id);
-//        if (oldData == null) { throw new KeyNotFoundException($"BENEFIT SETTING with Id {request.ModDto.Id} NOT FOUND."); }
-
-//        oldData.Name = request.ModDto.Name;
-//        oldData.BenefitValue = request.ModDto.BenefitValue;
-
-//        await _unitOfWork.Begin();
-
-//        try
-//        {
-//            var data = await _unitOfWork.Repository<EmployeePhoto>().Update(oldData);
-//            await _unitOfWork.Commit();
-
-//            var res = new EmpPhotoListDto();
-//            var response = await _med.Send(new EmployeePhotoByIdQry { Id = data.Id }, cancellationToken);
-//            if (response == null) { return res; }
-//            res = response;
-//            return res;
-//        }
-//        catch
-//        {
-//            await _unitOfWork.Rollback();
-//            throw;
-//        }
-//    }
-//}
-
-public class EmpPhotoDelCmdHandler : IRequestHandler<EmpPhotoDelCmd>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public EmpPhotoDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task Handle(EmpPhotoDelCmd request, CancellationToken cancellationToken)
-    {
-        await _unitOfWork.Begin();
-        try
-        {
-            //await _unitOfWork.Repository<>()
-
-            await _unitOfWork.Repository<EmpPhoto>().Delete(request.Id);
-            await _unitOfWork.Commit();
         }
         catch
         {
