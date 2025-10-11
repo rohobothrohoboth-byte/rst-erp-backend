@@ -65,7 +65,7 @@ public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYea
         }
 
         oldYear.Name = request.EditFiscYearDto.Name;
-        oldYear.DateStart = request.EditFiscYearDto.DateEnd;
+        oldYear.DateStart = request.EditFiscYearDto.DateStart;
         oldYear.DateEnd = request.EditFiscYearDto.DateEnd;
         oldYear.IsActive = request.EditFiscYearDto.IsActive;
 

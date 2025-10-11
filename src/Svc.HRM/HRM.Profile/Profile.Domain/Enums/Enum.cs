@@ -17,11 +17,3 @@ public enum Gender
     [Display(Name = "Female")]
     Female
 }
-
-public enum StorageType
-{
-    [Display(Name = "BYTEA")]
-    Bytea,
-    [Display(Name = "LO")]
-    LargeObject
-}

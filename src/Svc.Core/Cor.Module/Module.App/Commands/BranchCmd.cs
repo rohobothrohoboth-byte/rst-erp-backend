@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Module.App.Helpers;
 using Module.App.Interfaces;
 using Module.App.Queries;
 using Module.Domain.DTOs;
@@ -21,21 +22,21 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
 
     public async Task<BranchListDto> Handle(AddBranchCmd request, CancellationToken cancellationToken)
     {
-        var bra = new Branch
-        {
-            Name = request.AddBranchDto.Name,
-            NameAm = request.AddBranchDto.NameAm,
-            Code = request.AddBranchDto.Code,
-            Location = request.AddBranchDto.Location,
-            BranchType = request.AddBranchDto.BranchType,
-            BranchStat = "0",
-            OpenDate = request.AddBranchDto.OpenDate,
-            CompId = request.AddBranchDto.CompId
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var code = await new BraCode(_unitOfWork).GetBraCode();
+            var bra = new Branch
+            {
+                Name = request.AddBranchDto.Name,
+                NameAm = request.AddBranchDto.NameAm,
+                Code = code,
+                Location = request.AddBranchDto.Location,
+                BranchType = request.AddBranchDto.BranchType,
+                BranchStat = "0",
+                OpenDate = request.AddBranchDto.OpenDate,
+                CompId = request.AddBranchDto.CompId
+            };
             await _unitOfWork.Repository<Branch>().Add(bra);
             await _unitOfWork.Commit();
 
@@ -65,19 +66,16 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
         var oldBra = await _unitOfWork.Repository<Branch>().GetById(request.EditBranchDto.Id);
         if (oldBra == null) { throw new KeyNotFoundException($"BRANCH with Id {request.EditBranchDto.Id} NOT FOUND."); }
 
-        oldBra.Name = request.EditBranchDto.Name;
-        oldBra.NameAm = request.EditBranchDto.NameAm;
-        oldBra.Code = request.EditBranchDto.Code;
-        oldBra.Location = request.EditBranchDto.Location;
-        oldBra.BranchType = request.EditBranchDto.BranchType;
-        oldBra.BranchStat = request.EditBranchDto.BranchStat;
-        oldBra.OpenDate = request.EditBranchDto.OpenDate;
-        oldBra.CompId = request.EditBranchDto.CompId;
-
         await _unitOfWork.Begin();
-
         try
         {
+            oldBra.Name = request.EditBranchDto.Name;
+            oldBra.NameAm = request.EditBranchDto.NameAm;
+            oldBra.Location = request.EditBranchDto.Location;
+            oldBra.BranchType = request.EditBranchDto.BranchType;
+            oldBra.BranchStat = request.EditBranchDto.BranchStat;
+            oldBra.OpenDate = request.EditBranchDto.OpenDate;
+            oldBra.CompId = request.EditBranchDto.CompId;
             var nBra = await _unitOfWork.Repository<Branch>().Update(oldBra);
             await _unitOfWork.Commit();
 

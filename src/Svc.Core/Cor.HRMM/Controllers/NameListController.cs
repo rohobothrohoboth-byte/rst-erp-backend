@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
-/// End point to get the list of names & Ids of Core.HRMM entities
+/// End point to get the list of names and Ids of Core.HRMM entities
 /// </summary>
 
 //[Authorize]

@@ -31,7 +31,6 @@ public class AddBranchDto
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
-    public string Code { get; set; } = default!;
     public string Location { get; set; } = default!;
     public DateTime OpenDate { get; set; } = DateTime.UtcNow;
     public string BranchType { get; set; } = default!;  // enum.BranchType (0/1)
@@ -43,7 +42,6 @@ public class EditBranchDto
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
-    public string Code { get; set; } = default!;
     public string Location { get; set; } = default!;
     public DateTime OpenDate { get; set; } = DateTime.UtcNow;
     public string BranchType { get; set; } = default!;  // enum.BranchType (0/1)

@@ -19,17 +19,6 @@ namespace Module.API.Controllers;
 [ApiVersion("1.0")]
 public class BranchController(IMediator med) : ControllerBase
 {
-    /// <summary>
-    /// End point to get list of branches with company, Response will be (BranchName => CompanyName) or (BranchNameAm => CompanyNameAm) including Id of Branch.
-    /// </summary>
-    [HttpGet("BranchCompList")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> BranchCompList()
-    {
-        var branches = await med.Send(new BranchCompListQry());
-        return Ok(branches);
-    }
-
     [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranch()
