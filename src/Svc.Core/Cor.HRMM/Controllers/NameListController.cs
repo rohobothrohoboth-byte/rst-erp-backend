@@ -33,6 +33,66 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [HttpGet("AllBenefitSetName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllBenefitSetName()
+    {
+        var res = await med.Send(new BenefitSetNameAllQry());
+        return Ok(res);
+    }
+
+    [HttpGet("GetBenefitSetName/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBenefitSetName(Guid id)
+    {
+        var res = await med.Send(new BenefitSetNameByIdQry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"BENEFIT SETTING with Id {id} not found" }); }
+        return Ok(res);
+    }
+
+    [HttpGet("AllEducationQualName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllEducationQualName()
+    {
+        var res = await med.Send(new EducationQualNameAllQry());
+        return Ok(res);
+    }
+
+    [HttpGet("GetEducationQualName/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEducationQualName(Guid id)
+    {
+        var res = await med.Send(new EducationQualNameByIdQry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"EDUCATION QUALIFICATION with Id {id} not found" }); }
+        return Ok(res);
+    }
+
+    /// <summary>
+    /// End point to get the list of JOB GRADE STEP names and Ids. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
+    /// </summary>
+    [HttpGet("AllJgStepName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllJgStepName()
+    {
+        var res = await med.Send(new JgStepNameAllQry());
+        return Ok(res);
+    }
+
+    /// <summary>
+    /// End point to get JOB GRADE STEP names and Id. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
+    /// </summary>
+    [HttpGet("GetJgStepName/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetJgStepName(Guid id)
+    {
+        var res = await med.Send(new JgStepNameByIdQry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"JOB GRADE STEP with Id {id} not found" }); }
+        return Ok(res);
+    }
+
     [HttpGet("AllJobGradeName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobGradeName()
