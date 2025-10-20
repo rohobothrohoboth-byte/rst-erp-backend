@@ -1,11 +1,12 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Cor.HRMM.Models.Enums;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class PositionBenefitAllQry : IRequest<List<PositionBenefitListDto>> { }
+public class PositionBenefitAllQry : IRequest<List<PositionBenefitListDto>> { public Guid Id { get; set; } }
 
 public class PositionBenefitByIdQry : IRequest<PositionBenefitListDto?> { public Guid Id { get; set; } }
 
@@ -16,21 +17,22 @@ public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQr
 
     public async Task<List<PositionBenefitListDto>> Handle(PositionBenefitAllQry request, CancellationToken cancellationToken)
     {
-        var dbData = await _unitOfWork.Repository<PositionBenefit>().GetAll();
+        var dbData = await _unitOfWork.Repository<PositionBenefit>().Find(c => c.PositionId == request.Id);
         var dataL = new List<PositionBenefitListDto>();
-        //var benefitL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
+        var nData = dbData.ToList();
+        if (nData.Count <= 0) return dataL;
         var posL = await _unitOfWork.Repository<Position>().GetAll();
+        var benL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
 
         foreach (var data in dbData)
         {
-            //var benefit = benefitL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
             var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
+            var ben = benL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
             var c = new PositionBenefitListDto
             {
                 Id = data.Id,
                 BenefitSettingId = data.BenefitSettingId,
                 PositionId = data.PositionId,
-                //BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -46,6 +48,19 @@ public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQr
             {
                 c.Position = "POSITION NOT AVAILABLE";
                 c.PositionAm = "POSITION NOT AVAILABLE";
+            }
+
+            if (ben != null)
+            {
+                c.BenefitName = ben.Name;
+                c.Benefit = $"{ben.BenefitValue:#,##0.##}";
+                c.PerStr = ((Per)Enum.Parse(typeof(Per), ben.Per)).ToDisplayName();
+            }
+            else
+            {
+                c.BenefitName = "BENEFIT NOT AVAILABLE";
+                c.Benefit = "";
+                c.PerStr = "";
             }
             dataL.Add(c);
         }
@@ -63,15 +78,14 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
     {
         var nData = await _unitOfWork.Repository<PositionBenefit>().GetById(request.Id);
         if (nData == null) { return null; }
-        //var benefit = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
-        var pos = await _unitOfWork.Repository<Position>().GetById(nData.BenefitSettingId);
+        var pos = await _unitOfWork.Repository<Position>().GetById(nData.PositionId);
+        var ben = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
 
         var c = new PositionBenefitListDto
         {
             Id = nData.Id,
             BenefitSettingId = nData.BenefitSettingId,
             PositionId = nData.PositionId,
-            //BenefitSetting = benefit != null ? benefit.Name : "BENEFIT SETTING NOT AVAILABLE",
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,
@@ -87,6 +101,19 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
         {
             c.Position = "POSITION NOT AVAILABLE";
             c.PositionAm = "POSITION NOT AVAILABLE";
+        }
+
+        if (ben != null)
+        {
+            c.BenefitName = ben.Name;
+            c.Benefit = $"{ben.BenefitValue:#,##0.##}";
+            c.PerStr = ((Per)Enum.Parse(typeof(Per), ben.Per)).ToDisplayName();
+        }
+        else
+        {
+            c.BenefitName = "BENEFIT NOT AVAILABLE";
+            c.Benefit = "";
+            c.PerStr = "";
         }
         return c;
     }

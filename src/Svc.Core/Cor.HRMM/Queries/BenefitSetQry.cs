@@ -1,6 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Cor.HRMM.Models.Enums;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -26,6 +27,8 @@ public class BenefitSetAllQryHandler : IRequestHandler<BenefitSetAllQry, List<Be
                 Id = data.Id,
                 Name = data.Name,
                 Benefit = data.BenefitValue,
+                Per = data.Per,
+                PerStr = ((Per)Enum.Parse(typeof(Per), data.Per)).ToDisplayName(),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -53,6 +56,8 @@ public class BenefitSetByIdQryHandler : IRequestHandler<BenefitSetByIdQry, Benef
             Id = nData.Id,
             Name = nData.Name,
             Benefit = nData.BenefitValue,
+            Per = nData.Per,
+            PerStr = ((Per)Enum.Parse(typeof(Per), nData.Per)).ToDisplayName(),
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,

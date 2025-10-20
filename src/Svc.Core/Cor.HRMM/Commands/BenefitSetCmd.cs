@@ -24,7 +24,8 @@ public class BenefitSetAddCmdHandler : IRequestHandler<BenefitSetAddCmd, Benefit
         var data = new BenefitSetting
         {
             Name = request.AddDto.Name,
-            BenefitValue = request.AddDto.BenefitValue
+            BenefitValue = request.AddDto.BenefitValue,
+            Per = request.AddDto.Per
         };
 
         await _unitOfWork.Begin();
@@ -61,6 +62,7 @@ public class BenefitSetModCmdHandler : IRequestHandler<BenefitSetModCmd, Benefit
 
         oldData.Name = request.ModDto.Name;
         oldData.BenefitValue = request.ModDto.BenefitValue;
+        oldData.Per = request.ModDto.Per;
 
         await _unitOfWork.Begin();
 

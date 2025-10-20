@@ -19,11 +19,14 @@ namespace Cor.HRMM.Controllers;
 
 public class PositionEduController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllPositionEdu")]
+    /// <summary>
+    /// End point to get list of Position Education by PositionId
+    /// </summary>
+    [HttpGet("AllPositionEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllPositionEdu()
+    public async Task<IActionResult> AllPositionEdu(Guid id)
     {
-        var response = await med.Send(new PositionEduAllQry());
+        var response = await med.Send(new PositionEduAllQry { Id = id  });
         return Ok(response);
     }
 

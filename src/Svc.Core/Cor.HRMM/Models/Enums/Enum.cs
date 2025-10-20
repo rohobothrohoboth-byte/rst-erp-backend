@@ -35,5 +35,17 @@ public enum WorkOption
     [Display(Name = "Afternoon")]
     Afternoon,
     [Display(Name = "Both")]
-    Both
+    Both,
+    [Display(Name = "None")]
+    None
+}
+
+public enum Per
+{
+    [Display(Name = "Day")]
+    Day,
+    [Display(Name = "Month")]
+    Month,
+    [Display(Name = "Year")]
+    Year
 }

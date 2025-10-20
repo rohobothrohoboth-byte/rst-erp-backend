@@ -48,7 +48,8 @@ namespace Cor.HRMM.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    BenefitValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    BenefitValue = table.Column<double>(type: "double precision", nullable: false),
+                    Per = table.Column<string>(type: "text", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -81,8 +82,8 @@ namespace Cor.HRMM.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    StartSalary = table.Column<decimal>(type: "numeric", nullable: false),
-                    MaxSalary = table.Column<decimal>(type: "numeric", nullable: false),
+                    StartSalary = table.Column<double>(type: "double precision", nullable: false),
+                    MaxSalary = table.Column<double>(type: "double precision", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -119,7 +120,7 @@ namespace Cor.HRMM.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Salary = table.Column<decimal>(type: "numeric", nullable: false),
+                    Salary = table.Column<double>(type: "double precision", nullable: false),
                     JobGradeId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -230,7 +231,7 @@ namespace Cor.HRMM.Migrations
                     Gender = table.Column<string>(type: "text", nullable: false),
                     SaturdayWorkOption = table.Column<string>(type: "text", nullable: false),
                     SundayWorkOption = table.Column<string>(type: "text", nullable: false),
-                    WorkingHours = table.Column<decimal>(type: "numeric", nullable: false),
+                    WorkingHours = table.Column<double>(type: "double precision", nullable: false),
                     ProfessionTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     PositionId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

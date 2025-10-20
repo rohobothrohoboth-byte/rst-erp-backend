@@ -81,7 +81,7 @@ public class NameListController(IMediator med) : ControllerBase
     }
 
     /// <summary>
-    /// End point to get JOB GRADE STEP names and Id. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
+    /// End point to get JOB GRADE STEP name and Id. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
     /// </summary>
     [HttpGet("GetJgStepName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -5,22 +5,23 @@ using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class JgStepAllQry : IRequest<List<JgStepListDto>> { }
-
+public class JgStepAllQry : IRequest<List<JgStepListDto>> { public Guid Id { get; set; } }
 public class JgStepByIdQry : IRequest<JgStepListDto?> { public Guid Id { get; set; } }
 
 public class JgStepAllQryHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+
     public JgStepAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<List<JgStepListDto>> Handle(JgStepAllQry request, CancellationToken cancellationToken)
     {
-        var dbData = await _unitOfWork.Repository<JgStep>().GetAll();
+        var dbData = await _unitOfWork.Repository<JgStep>().Find(c => c.JobGradeId == request.Id);
         var dataL = new List<JgStepListDto>();
+        var nData = dbData.ToList();
+        if (nData.Count <= 0) return dataL;
         var jobGradeL = await _unitOfWork.Repository<JobGrade>().GetAll();
-
-        foreach (var data in dbData)
+        foreach (var data in nData)
         {
             var jobGrade = jobGradeL.FirstOrDefault(t => t.Id == data.JobGradeId);
             var c = new JgStepListDto
@@ -37,7 +38,6 @@ public class JgStepAllQryHandler : IRequestHandler<JgStepAllQry, List<JgStepList
             };
             dataL.Add(c);
         }
-
         return dataL;
     }
 }

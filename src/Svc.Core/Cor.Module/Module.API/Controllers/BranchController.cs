@@ -47,8 +47,8 @@ public class BranchController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CompBranches(Guid id)
     {
-        var branches = await med.Send(new BranchByCompQry { Id = id });
-        return Ok(branches);
+        var res = await med.Send(new BranchByCompQry { Id = id });
+        return Ok(res);
     }
 
     [HttpPost("AddBranch")]

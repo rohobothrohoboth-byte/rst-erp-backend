@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class PositionExpAllQry : IRequest<List<PositionExpListDto>> { }
+public class PositionExpAllQry : IRequest<List<PositionExpListDto>> { public Guid Id { get; set; } }
 
 public class PositionExpByIdQry : IRequest<PositionExpListDto?> { public Guid Id { get; set; } }
 
@@ -16,8 +16,10 @@ public class PositionExpAllQryHandler : IRequestHandler<PositionExpAllQry, List<
 
     public async Task<List<PositionExpListDto>> Handle(PositionExpAllQry request, CancellationToken cancellationToken)
     {
-        var dbData = await _unitOfWork.Repository<PositionExp>().GetAll();
+        var dbData = await _unitOfWork.Repository<PositionExp>().Find(c => c.PositionId == request.Id);
         var dataL = new List<PositionExpListDto>();
+        var nData = dbData.ToList();
+        if (nData.Count <= 0) return dataL;
         var posL = await _unitOfWork.Repository<Position>().GetAll();
 
         foreach (var data in dbData)

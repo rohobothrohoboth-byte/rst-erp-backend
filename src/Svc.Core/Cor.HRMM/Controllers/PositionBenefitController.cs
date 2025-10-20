@@ -19,14 +19,17 @@ namespace Cor.HRMM.Controllers;
 
 public class PositionBenefitController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllPositionBenefit")]
+    /// <summary>
+    /// End point to get list of Position Benefits by PositionId
+    /// </summary>
+    [HttpGet("AllPositionBenefit/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllPositionBenefit()
+    public async Task<IActionResult> AllPositionBenefit(Guid id)
     {
-        var response = await med.Send(new PositionBenefitAllQry());
+        var response = await med.Send(new PositionBenefitAllQry { Id = id  });
         return Ok(response);
     }
-
+    
     [HttpGet("GetPositionBenefit/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

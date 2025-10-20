@@ -19,14 +19,18 @@ namespace Cor.HRMM.Controllers;
 
 public class JgStepController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllJgStep")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllJgStep()
-    {
-        var response = await med.Send(new JgStepAllQry());
-        return Ok(response);
-    }
 
+    /// <summary>
+    /// End point to get list of Job Grade Steps by JobGradeId
+    /// </summary>
+    [HttpGet("AllJgSteps/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllJgSteps(Guid id)
+    {
+        var branches = await med.Send(new JgStepAllQry { Id = id });
+        return Ok(branches);
+    }
+    
     [HttpGet("GetJgStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

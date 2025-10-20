@@ -105,8 +105,8 @@ namespace Cor.HRMM.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("BenefitValue")
-                        .HasColumnType("numeric");
+                    b.Property<double>("BenefitValue")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -118,6 +118,10 @@ namespace Cor.HRMM.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Per")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -190,8 +194,8 @@ namespace Cor.HRMM.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
-                    b.Property<decimal>("Salary")
-                        .HasColumnType("numeric");
+                    b.Property<double>("Salary")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -215,8 +219,8 @@ namespace Cor.HRMM.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("MaxSalary")
-                        .HasColumnType("numeric");
+                    b.Property<double>("MaxSalary")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -228,8 +232,8 @@ namespace Cor.HRMM.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
-                    b.Property<decimal>("StartSalary")
-                        .HasColumnType("numeric");
+                    b.Property<double>("StartSalary")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -437,8 +441,8 @@ namespace Cor.HRMM.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("WorkingHours")
-                        .HasColumnType("numeric");
+                    b.Property<double>("WorkingHours")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
