@@ -11,10 +11,8 @@ public class EmContactListDto : BaseDto
     public string ContactName { get; set; } = default!;
     public string ContactNameAm { get; set; } = default!;
     public string GenderStr { get; set; } = default!;
-    public string Address { get; set; } = default!; 
+    public string Address { get; set; } = default!;
     public string Relation { get; set; } = default!;
-    public string EmpFullName { get; set; } = default!;
-    public string EmpFullNameAm { get; set; } = default!;
 }
 
 public class EmContactAddDto
@@ -27,8 +25,8 @@ public class EmContactAddDto
     public string LastNameAm { get; set; } = default!;
     public string Nationality { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid RelationId { get; set; } = default!; //lup.Relation
+    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid EmployeeId { get; set; } = default!; //Employee
 }
 
@@ -43,9 +41,8 @@ public class EmContactModDto
     public string LastNameAm { get; set; } = default!;
     public string Nationality { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid RelationId { get; set; } = default!; //lup.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
+    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
     public Guid PersonId { get; set; } = default!; //Person
-    public string RowVersion { get; set; } = default!;
 }

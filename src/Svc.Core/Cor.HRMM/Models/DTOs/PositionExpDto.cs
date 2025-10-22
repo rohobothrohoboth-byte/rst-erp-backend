@@ -7,8 +7,6 @@ public class PositionExpListDto : BaseDto
     public int OtherPosExp { get; set; } = 0;
     public int MinAge { get; set; } = default!;
     public int MaxAge { get; set; } = default!;
-    public string Position { get; set; } = default!;
-    public string PositionAm { get; set; } = default!;
 }
 
 public class PositionExpAddDto

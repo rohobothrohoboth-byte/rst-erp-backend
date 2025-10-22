@@ -10,8 +10,6 @@ public class EmpStampDto : BaseDto
     public string FileName { get; set; } = default!;
     public string ContentType { get; set; } = default!;
     public string FileSize { get; set; } = default!;
-    public string EmpFullName { get; set; } = default!;
-    public string EmpFullNameAm { get; set; } = default!;
 }
 
 public class EmpStampAddDto

@@ -29,13 +29,11 @@ public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<
         if (nData.Count <= 0) return dataL;
 
         var eduLevelL = await _lupClient.EducationLevelList(cancellationToken);
-        var posL = await _unitOfWork.Repository<Position>().GetAll();
         var eduQualL = await _unitOfWork.Repository<EducationQual>().GetAll();
 
         foreach (var data in dbData)
         {
             var eduLevel = eduLevelL!.FirstOrDefault(t => t.Id == data.EducationLevelId);
-            var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
             var eduQual = eduQualL.FirstOrDefault(t => t.Id == data.EducationQualId);
             var c = new PositionEduListDto
             {
@@ -50,17 +48,6 @@ public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<
                 DateMod = data.DateMod,
                 RowVersion = Convert.ToBase64String(data.RowVersion)
             };
-
-            if (pos != null)
-            {
-                c.Position = pos.Name;
-                c.PositionAm = pos.NameAm;
-            }
-            else
-            {
-                c.Position = "POSITION NOT AVAILABLE";
-                c.PositionAm = "POSITION NOT AVAILABLE";
-            }
             dataL.Add(c);
         }
 
@@ -84,7 +71,6 @@ public class PositionEduByIdQryHandler : IRequestHandler<PositionEduByIdQry, Pos
         var data = await _unitOfWork.Repository<PositionEducation>().GetById(request.Id);
         if (data == null) { return null; }
         var eduLevel = await _lupClient.EducationLevel(data.EducationLevelId, cancellationToken);
-        var pos = await _unitOfWork.Repository<Position>().GetById(data.PositionId);
         var eduQual = await _unitOfWork.Repository<EducationQual>().GetById(data.EducationQualId);
 
         var c = new PositionEduListDto
@@ -100,17 +86,6 @@ public class PositionEduByIdQryHandler : IRequestHandler<PositionEduByIdQry, Pos
             DateMod = data.DateMod,
             RowVersion = Convert.ToBase64String(data.RowVersion),
         };
-
-        if (pos != null)
-        {
-            c.Position = pos.Name;
-            c.PositionAm = pos.NameAm;
-        }
-        else
-        {
-            c.Position = "POSITION NOT AVAILABLE";
-            c.PositionAm = "POSITION NOT AVAILABLE";
-        }
         return c;
     }
 }

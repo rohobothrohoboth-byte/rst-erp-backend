@@ -16,7 +16,7 @@ public enum PositionGender
     Male,
     [Display(Name = "Female")]
     Female,
-    [Display(Name = "Both")]
+    [Display(Name = "Male/Female")]
     Both
 }
 

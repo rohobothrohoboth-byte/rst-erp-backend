@@ -11,8 +11,6 @@ public class EmpFamilyListDto : BaseDto
     public string GenderStr { get; set; } = default!;
     public string FamilyName { get; set; } = default!;
     public string FamilyNameAm { get; set; } = default!;
-    public string EmpFullName { get; set; } = default!;
-    public string EmpFullNameAm { get; set; } = default!;
 }
 
 public class EmpFamilyAddDto

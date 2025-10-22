@@ -24,10 +24,7 @@ public class EmpStampController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpStamp(Guid id)
     {
         var res = await med.Send(new EmpStampByIdQry { Id = id });
-        if (res == null)
-        {
-            return NotFound(new { Error = $"EMPLOYEE STAMP with Id {id} NOT FOUND" });
-        }
+        if (res == null) { return NotFound(new { Error = $"EMPLOYEE STAMP with Id {id} NOT FOUND" }); }
         return Ok(res);
     }
 
@@ -41,8 +38,8 @@ public class EmpStampController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpStampAddCmd { AddDto = addDto };
-            var braId = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpStamp), new { id = braId.Id }, braId);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

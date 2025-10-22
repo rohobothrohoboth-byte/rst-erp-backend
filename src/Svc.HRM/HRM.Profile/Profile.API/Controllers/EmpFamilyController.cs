@@ -18,11 +18,11 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpFamilyController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpFamily")]
+    [HttpGet("AllEmpFamily/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpFamily()
+    public async Task<IActionResult> AllEmpFamily(Guid id)
     {
-        var response = await med.Send(new EmpFamilyAllQry());
+        var response = await med.Send(new EmpFamilyAllQry { Id = id });
         return Ok(response);
     }
 
@@ -32,10 +32,7 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpFamily(Guid id)
     {
         var response = await med.Send(new EmpFamilyByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee Family with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee Family with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +46,8 @@ public class EmpFamilyController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpFamilyAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpFamily), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

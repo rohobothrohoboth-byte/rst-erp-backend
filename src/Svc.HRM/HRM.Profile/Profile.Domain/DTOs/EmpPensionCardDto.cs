@@ -10,8 +10,6 @@ public class EmpPensionCardListDto : BaseDto
     public DateTime? ReceivedDate { get; set; }
     public string IsReceived { get; set; } = default!; //enum.YesNo
     public string IsSent { get; set; } = default!; //enum.YesNo
-    public string EmpFullName { get; set; } = default!;
-    public string EmpFullNameAm { get; set; } = default!;
     public string IsReceivedStr { get; set; } = default!;
     public string IsSentStr { get; set; } = default!;
     public string RegistrationDateStr => $"{RegistrationDate:MMMM dd, yyyy}";

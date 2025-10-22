@@ -24,10 +24,7 @@ public class EmpSignController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpSign(Guid id)
     {
         var res = await med.Send(new EmpSignByIdQry { Id = id });
-        if (res == null)
-        {
-            return NotFound(new { Error = $"EMPLOYEE SIGNATURE with Id {id} NOT FOUND" });
-        }
+        if (res == null) { return NotFound(new { Error = $"EMPLOYEE SIGNATURE with Id {id} NOT FOUND" }); }
         return Ok(res);
     }
 
@@ -40,9 +37,9 @@ public class EmpSignController(IMediator med) : ControllerBase
 
         try
         {
-            var command = new EmpSignAddCmd { AddDto = addDto };
-            var braId = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpSign), new { id = braId.Id }, braId);
+            var command = new EmpSignAddCmd { AddDto = addDto }; 
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

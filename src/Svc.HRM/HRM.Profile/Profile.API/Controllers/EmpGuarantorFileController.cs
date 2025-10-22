@@ -24,10 +24,7 @@ public class EmpGuarantorFileController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpGuarantorFile(Guid id)
     {
         var res = await med.Send(new EmpGuarantorFileByIdQry { Id = id });
-        if (res == null)
-        {
-            return NotFound(new { Error = $"EMPLOYEE GUARANTOR FILE with Id {id} NOT FOUND" });
-        }
+        if (res == null) { return NotFound(new { Error = $"EMPLOYEE GUARANTOR FILE with Id {id} NOT FOUND" }); }
         return Ok(res);
     }
 
@@ -41,8 +38,8 @@ public class EmpGuarantorFileController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpGuarantorFileAddCmd { AddDto = addDto };
-            var braId = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpGuarantorFile), new { id = braId.Id }, braId);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

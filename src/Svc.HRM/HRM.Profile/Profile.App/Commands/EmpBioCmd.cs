@@ -30,6 +30,7 @@ public class EmpBioAddCmdHandler : IRequestHandler<EmpBioAddCmd, EmpBioListDto>
                 HasBirthCert = request.AddDto.HasBirthCert,
                 HasMarriageCert = request.AddDto.HasMarriageCert,
                 MaritalStatusId = request.AddDto.MaritalStatusId,
+                AddressId = request.AddDto.AddressId,
                 EmployeeId = request.AddDto.EmployeeId
             };
             await _unitOfWork.Repository<EmpBio>().Add(data);
@@ -71,6 +72,7 @@ public class EmpBioModCmdHandler : IRequestHandler<EmpBioModCmd, EmpBioListDto>
             oldData.HasBirthCert = request.ModDto.HasBirthCert;
             oldData.HasMarriageCert = request.ModDto.HasMarriageCert;
             oldData.MaritalStatusId = request.ModDto.MaritalStatusId;
+            oldData.AddressId = request.ModDto.AddressId;
             oldData.EmployeeId = request.ModDto.EmployeeId;
             var data = await _unitOfWork.Repository<EmpBio>().Update(oldData);
             await _unitOfWork.Commit();

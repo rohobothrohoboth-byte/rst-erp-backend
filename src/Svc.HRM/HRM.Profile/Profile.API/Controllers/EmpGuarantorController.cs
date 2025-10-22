@@ -18,24 +18,13 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpGuarantorController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpGuarantor")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpGuarantor()
-    {
-        var response = await med.Send(new EmpGuarantorAllQry());
-        return Ok(response);
-    }
-
     [HttpGet("GetEmpGuarantor/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpGuarantor(Guid id)
     {
         var response = await med.Send(new EmpGuarantorByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee Guarantor with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee Guarantor with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +38,8 @@ public class EmpGuarantorController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpGuarantorAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpGuarantor), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

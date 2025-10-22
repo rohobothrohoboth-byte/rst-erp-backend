@@ -18,24 +18,13 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpPensionCardController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpPensionCard")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpPensionCard()
-    {
-        var response = await med.Send(new EmpPensionCardAllQry());
-        return Ok(response);
-    }
-
     [HttpGet("GetEmpPensionCard/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpPensionCard(Guid id)
     {
         var response = await med.Send(new EmpPensionCardByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee Pension Card with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee Pension Card with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +38,8 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpPensionCardAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpPensionCard), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

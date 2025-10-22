@@ -12,8 +12,6 @@ public class PositionReqListDto : BaseDto
     public string SaturdayWorkOptionStr { get; set; } = default!;
     public string SundayWorkOptionStr { get; set; } = default!;
     public string ProfessionType { get; set; } = default!;
-    public string Position { get; set; } = default!;
-    public string PositionAm { get; set; } = default!;
 }
 
 public class PositionReqAddDto

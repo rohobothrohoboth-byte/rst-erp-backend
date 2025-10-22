@@ -18,24 +18,13 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpBioController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpBio")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpBio()
-    {
-        var response = await med.Send(new EmpBioAllQry());
-        return Ok(response);
-    }
-
     [HttpGet("GetEmpBio/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpBio(Guid id)
     {
         var response = await med.Send(new EmpBioByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee Bio with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee Bio with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +38,8 @@ public class EmpBioController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpBioAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpBio), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

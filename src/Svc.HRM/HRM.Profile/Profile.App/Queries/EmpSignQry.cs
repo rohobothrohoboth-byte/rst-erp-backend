@@ -21,7 +21,6 @@ public class EmpSignByIdQryHandler : IRequestHandler<EmpSignByIdQry, EmpSignDto?
         if (fData == null) { return null; }
         var fBlob = await _unitOfWork.Repository<EmpSignBlob>().GetFoD(e => e.FileMetaDataId == nData.FileMetaDataId);
         if (fBlob == null) { return null; }
-        var emp = await _unitOfWork.Repository<Employee>().GetById(nData.EmployeeId);
 
         var c = new EmpSignDto
         {
@@ -32,8 +31,6 @@ public class EmpSignByIdQryHandler : IRequestHandler<EmpSignByIdQry, EmpSignDto?
             FileName = fData.FileName,
             ContentType = fData.ContentType,
             FileSize = SizeFormatter.FormatBytes(fData.FileSize),
-            EmpFullName = emp != null ? emp.Person.FullName : "NOT AVAILABLE",
-            EmpFullNameAm = emp != null ? emp.Person.FullNameAm : "መረጃ ማግኘት አልተቻለም",
             IsDeleted = nData.IsDeleted,
             DateAdd = nData.DateAdd,
             DateMod = nData.DateMod,

@@ -7,7 +7,7 @@ using Profile.Domain.Enums;
 
 namespace Profile.App.Queries;
 
-public class EmpFamilyAllQry : IRequest<List<EmpFamilyListDto>> { }
+public class EmpFamilyAllQry : IRequest<List<EmpFamilyListDto>> { public Guid Id { get; set; } }
 
 public class EmpFamilyByIdQry : IRequest<EmpFamilyListDto?> { public Guid Id { get; set; } }
 
@@ -24,17 +24,15 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
 
     public async Task<List<EmpFamilyListDto>> Handle(EmpFamilyAllQry request, CancellationToken cancellationToken)
     {
-        var dbData = await _unitOfWork.Repository<EmpFamily>().GetAll();
+        var dbData = await _unitOfWork.Repository<EmpFamily>().Find(e => e.EmployeeId == request.Id);
         var dataL = new List<EmpFamilyListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var empL = await _unitOfWork.Repository<Employee>().GetAll();
         var reL = await _lup.RelationList(cancellationToken);
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
             var re = reL!.FirstOrDefault(t => t.Id == data.RelationId);
-            var emp = empL!.FirstOrDefault(t => t.Id == data.EmployeeId);
             var c = new EmpFamilyListDto
             {
                 Id = data.Id,
@@ -47,8 +45,6 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
                 FamilyNameAm = per.FullNameAm,
                 GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
                 Relation = re != null ? re.Name : "NOT AVAILABLE",
-                EmpFullName = emp != null ? emp!.Person.FullName : "NOT AVAILABLE",
-                EmpFullNameAm = emp != null ? emp!.Person.FullNameAm : "መረጃ ማግኘት አልተቻለም",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -92,8 +88,6 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
             FamilyNameAm = per.FullNameAm,
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
             Relation = re != null ? re.Name : "NOT AVAILABLE",
-            EmpFullName = emp != null ? emp!.Person.FullName : "NOT AVAILABLE",
-            EmpFullNameAm = emp != null ? emp!.Person.FullNameAm : "መረጃ ማግኘት አልተቻለም",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

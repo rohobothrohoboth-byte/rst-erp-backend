@@ -32,10 +32,7 @@ public class EmployeeController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmployee(Guid id)
     {
         var response = await med.Send(new EmployeeByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +46,8 @@ public class EmployeeController(IMediator med) : ControllerBase
         try
         {
             var command = new EmployeeAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmployee), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

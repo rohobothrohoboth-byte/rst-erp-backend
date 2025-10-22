@@ -29,12 +29,10 @@ public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<
         var nData = dbData.ToList();
         if (nData.Count <= 0) return dataL;
         var posTypeL = await _lupClient.ProfessionTypeList(cancellationToken);
-        var posL = await _unitOfWork.Repository<Position>().GetAll();
 
         foreach (var data in dbData)
         {
             var posType = posTypeL!.FirstOrDefault(t => t.Id == data.ProfessionTypeId);
-            var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
             var c = new PositionReqListDto
             {
                 Id = data.Id,
@@ -53,17 +51,6 @@ public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<
                 DateMod = data.DateMod,
                 RowVersion = Convert.ToBase64String(data.RowVersion)
             };
-
-            if (pos != null)
-            {
-                c.Position = pos.Name;
-                c.PositionAm = pos.NameAm;
-            }
-            else
-            {
-                c.Position = "POSITION NOT AVAILABLE";
-                c.PositionAm = "POSITION NOT AVAILABLE";
-            }
             dataL.Add(c);
         }
 
@@ -87,7 +74,6 @@ public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, Pos
         var data = await _unitOfWork.Repository<PositionReq>().GetById(request.Id);
         if (data == null) { return null; }
         var posType = await _lupClient.ProfessionType(data.ProfessionTypeId, cancellationToken);
-        var pos = await _unitOfWork.Repository<Position>().GetById(data.PositionId);
 
         var c = new PositionReqListDto
         {
@@ -107,17 +93,6 @@ public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, Pos
             DateMod = data.DateMod,
             RowVersion = Convert.ToBase64String(data.RowVersion)
         };
-
-        if (pos != null)
-        {
-            c.Position = pos.Name;
-            c.PositionAm = pos.NameAm;
-        }
-        else
-        {
-            c.Position = "POSITION NOT AVAILABLE";
-            c.PositionAm = "POSITION NOT AVAILABLE";
-        }
         return c;
     }
 }

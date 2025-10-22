@@ -13,8 +13,6 @@ public class EmpStateListDto : BaseDto
     public string IsStandByStr { get; set; } = default!;
     public string IsRetiredStr { get; set; } = default!;
     public string IsUnderProbationStr { get; set; } = default!;
-    public string EmpFullName { get; set; } = default!;
-    public string EmpFullNameAm { get; set; } = default!;
 }
 
 public class EmpStateAddDto

@@ -21,12 +21,10 @@ public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQr
         var dataL = new List<PositionBenefitListDto>();
         var nData = dbData.ToList();
         if (nData.Count <= 0) return dataL;
-        var posL = await _unitOfWork.Repository<Position>().GetAll();
         var benL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
 
         foreach (var data in dbData)
         {
-            var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
             var ben = benL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
             var c = new PositionBenefitListDto
             {
@@ -38,17 +36,6 @@ public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQr
                 DateMod = data.DateMod,
                 RowVersion = Convert.ToBase64String(data.RowVersion)
             };
-            
-            if (pos != null)
-            {
-                c.Position = pos.Name;
-                c.PositionAm = pos.NameAm;
-            }
-            else
-            {
-                c.Position = "POSITION NOT AVAILABLE";
-                c.PositionAm = "POSITION NOT AVAILABLE";
-            }
 
             if (ben != null)
             {
@@ -78,7 +65,6 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
     {
         var nData = await _unitOfWork.Repository<PositionBenefit>().GetById(request.Id);
         if (nData == null) { return null; }
-        var pos = await _unitOfWork.Repository<Position>().GetById(nData.PositionId);
         var ben = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
 
         var c = new PositionBenefitListDto
@@ -91,17 +77,6 @@ public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitById
             DateMod = nData.DateMod,
             RowVersion = Convert.ToBase64String(nData.RowVersion)
         };
-
-        if (pos != null)
-        {
-            c.Position = pos.Name;
-            c.PositionAm = pos.NameAm;
-        }
-        else
-        {
-            c.Position = "POSITION NOT AVAILABLE";
-            c.PositionAm = "POSITION NOT AVAILABLE";
-        }
 
         if (ben != null)
         {

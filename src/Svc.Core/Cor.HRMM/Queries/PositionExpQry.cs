@@ -20,11 +20,9 @@ public class PositionExpAllQryHandler : IRequestHandler<PositionExpAllQry, List<
         var dataL = new List<PositionExpListDto>();
         var nData = dbData.ToList();
         if (nData.Count <= 0) return dataL;
-        var posL = await _unitOfWork.Repository<Position>().GetAll();
 
         foreach (var data in dbData)
         {
-            var pos = posL.FirstOrDefault(t => t.Id == data.PositionId);
             var c = new PositionExpListDto
             {
                 Id = data.Id,
@@ -38,17 +36,6 @@ public class PositionExpAllQryHandler : IRequestHandler<PositionExpAllQry, List<
                 DateMod = data.DateMod,
                 RowVersion = Convert.ToBase64String(data.RowVersion)
             };
-
-            if (pos != null)
-            {
-                c.Position = pos.Name;
-                c.PositionAm = pos.NameAm;
-            }
-            else
-            {
-                c.Position = "POSITION NOT AVAILABLE";
-                c.PositionAm = "POSITION NOT AVAILABLE";
-            }
             dataL.Add(c);
         }
 
@@ -65,7 +52,6 @@ public class PositionExpByIdQryHandler : IRequestHandler<PositionExpByIdQry, Pos
     {
         var data = await _unitOfWork.Repository<PositionExp>().GetById(request.Id);
         if (data == null) { return null; }
-        var pos = await _unitOfWork.Repository<Position>().GetById(data.PositionId);
 
         var c = new PositionExpListDto
         {
@@ -80,17 +66,6 @@ public class PositionExpByIdQryHandler : IRequestHandler<PositionExpByIdQry, Pos
             DateMod = data.DateMod,
             RowVersion = Convert.ToBase64String(data.RowVersion),
         };
-
-        if (pos != null)
-        {
-            c.Position = pos.Name;
-            c.PositionAm = pos.NameAm;
-        }
-        else
-        {
-            c.Position = "POSITION NOT AVAILABLE";
-            c.PositionAm = "POSITION NOT AVAILABLE";
-        }
         return c;
     }
 }

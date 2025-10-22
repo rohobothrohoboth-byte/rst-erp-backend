@@ -18,24 +18,13 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpFinanceController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpFinance")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpFinance()
-    {
-        var response = await med.Send(new EmpFinanceAllQry());
-        return Ok(response);
-    }
-
     [HttpGet("GetEmpFinance/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpFinance(Guid id)
     {
         var response = await med.Send(new EmpFinanceByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee Finance with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee Finance with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +38,8 @@ public class EmpFinanceController(IMediator med) : ControllerBase
         try
         {
             var command = new EmpFinanceAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpFinance), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

@@ -18,11 +18,11 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmContactController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmContact")]
+    [HttpGet("AllEmContact/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmContact()
+    public async Task<IActionResult> AllEmContact(Guid id)
     {
-        var response = await med.Send(new EmContactAllQry());
+        var response = await med.Send(new EmContactAllQry { Id = id });
         return Ok(response);
     }
 
@@ -32,10 +32,7 @@ public class EmContactController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmContact(Guid id)
     {
         var response = await med.Send(new EmContactByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Emergency Contact with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Emergency Contact with Id {id} not found" }); }
         return Ok(response);
     }
 
@@ -49,8 +46,8 @@ public class EmContactController(IMediator med) : ControllerBase
         try
         {
             var command = new EmContactAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmContact), new { id = response.Id }, response);
+            var res = await med.Send(command);
+            return Ok(res);
         }
         catch (Exception ex)
         {

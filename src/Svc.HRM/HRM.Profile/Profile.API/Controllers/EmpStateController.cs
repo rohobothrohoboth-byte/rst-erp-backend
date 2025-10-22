@@ -18,24 +18,13 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpStateController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmpState")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmpState()
-    {
-        var response = await med.Send(new EmpStateAllQry());
-        return Ok(response);
-    }
-
     [HttpGet("GetEmpState/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpState(Guid id)
     {
         var response = await med.Send(new EmpStateByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Employee State with Id {id} not found" });
-        }
+        if (response == null) { return NotFound(new { Error = $"Employee State with Id {id} not found" }); }
         return Ok(response);
     }
 
