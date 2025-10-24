@@ -31,21 +31,6 @@ public class lupTablesController(IMediator med) : ControllerBase
         return Ok(lup);
     }
     
-    [HttpGet("AddressType")]
-    public async Task<IActionResult> AddressType()
-    {
-        var lups = await med.Send(new AddressTypeQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("AddressType/{id:guid}")]
-    public async Task<IActionResult> AddressType(Guid id)
-    {
-        var lup = await med.Send(new AddressTypeGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
     [HttpGet("AdmissionType")]
     public async Task<IActionResult> AdmissionType()
     {
@@ -120,37 +105,7 @@ public class lupTablesController(IMediator med) : ControllerBase
         if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
         return Ok(lup);
     }
-
-    [HttpGet("EmploymentNature")]
-    public async Task<IActionResult> EmploymentNature()
-    {
-        var lups = await med.Send(new EmploymentNatureQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("EmploymentNature/{id:guid}")]
-    public async Task<IActionResult> EmploymentNature(Guid id)
-    {
-        var lup = await med.Send(new EmploymentNatureGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
-    [HttpGet("EmploymentType")]
-    public async Task<IActionResult> EmploymentType()
-    {
-        var lups = await med.Send(new EmploymentTypeQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("EmploymentType/{id:guid}")]
-    public async Task<IActionResult> EmploymentTypeNature(Guid id)
-    {
-        var lup = await med.Send(new EmploymentTypeGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
+    
     [HttpGet("EducationLevel")]
     public async Task<IActionResult> EducationLevel()
     {
@@ -240,22 +195,7 @@ public class lupTablesController(IMediator med) : ControllerBase
         if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
         return Ok(lup);
     }
-
-    [HttpGet("MaritalStatus")]
-    public async Task<IActionResult> MaritalStatus()
-    {
-        var lups = await med.Send(new MaritalStatusQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("MaritalStatus/{id:guid}")]
-    public async Task<IActionResult> MaritalStatus(Guid id)
-    {
-        var lup = await med.Send(new MaritalStatusGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
+    
     [HttpGet("MeasureTaken")]
     public async Task<IActionResult> MeasureTaken()
     {
@@ -315,37 +255,7 @@ public class lupTablesController(IMediator med) : ControllerBase
         if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
         return Ok(lup);
     }
-
-    [HttpGet("ProfessionType")]
-    public async Task<IActionResult> ProfessionType()
-    {
-        var lups = await med.Send(new ProfessionTypeQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("ProfessionType/{id:guid}")]
-    public async Task<IActionResult> ProfessionType(Guid id)
-    {
-        var lup = await med.Send(new ProfessionTypeGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
-    [HttpGet("Quarter")]
-    public async Task<IActionResult> Quarter()
-    {
-        var lups = await med.Send(new QuarterQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("Quarter/{id:guid}")]
-    public async Task<IActionResult> Quarter(Guid id)
-    {
-        var lup = await med.Send(new QuarterGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
+    
     [HttpGet("Rating")]
     public async Task<IActionResult> Rating()
     {
@@ -360,22 +270,7 @@ public class lupTablesController(IMediator med) : ControllerBase
         if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
         return Ok(lup);
     }
-
-    [HttpGet("Region")]
-    public async Task<IActionResult> Region()
-    {
-        var lups = await med.Send(new RegionQry());
-        return Ok(lups);
-    }
-
-    [HttpGet("Region/{id:guid}")]
-    public async Task<IActionResult> Region(Guid id)
-    {
-        var lup = await med.Send(new RegionGetQry { Id = id });
-        if (lup == null) { return NotFound(new { Error = $"Data with Id {id} not found" }); }
-        return Ok(lup);
-    }
-
+    
     [HttpGet("Relation")]
     public async Task<IActionResult> Relation()
     {

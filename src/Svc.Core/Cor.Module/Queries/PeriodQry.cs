@@ -2,42 +2,36 @@
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Models.Enums;
-using Cor.Module.Services;
 using MediatR;
 
 namespace Cor.Module.Queries;
 
 public class AllPeriodQry : IRequest<List<PeriodListDto>> { }
-
 public class PeriodByIdQry : IRequest<PeriodListDto?> { public Guid Id { get; set; } }
 
 public class AllPeriodQryHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
 
-    public AllPeriodQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient; }
+    public AllPeriodQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork;}
 
     public async Task<List<PeriodListDto>> Handle(AllPeriodQry request, CancellationToken cancellationToken)
     {
         var dataList = await _unitOfWork.Repository<Period>().GetAll();
         var dataL = new List<PeriodListDto>();
 
-        var quarterL = await _lupClient.QuarterList(cancellationToken);
-
         foreach (var data in dataList)
         {
             var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
             if (fYear == null) continue;
-            var quarter = quarterL!.FirstOrDefault(q => q.Id == data.QuarterId);
             var c = new PeriodListDto
             {
                 Id = data.Id,
                 FiscalYearId = data.FiscalYearId,
-                QuarterId = data.QuarterId,
+                Quarter = data.Quarter,
                 Name = data.Name,
                 FiscYear = fYear.Name,
-                Quarter = quarter!.Name,
+                QuarterStr = ((Quarter)Enum.Parse(typeof(Quarter), data.Quarter)).ToDisplayName(),
                 DateStart = data.DateStart,
                 DateEnd = data.DateEnd,
                 IsActive = data.IsActive,
@@ -57,9 +51,8 @@ public class AllPeriodQryHandler : IRequestHandler<AllPeriodQry, List<PeriodList
 public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
 
-    public PeriodByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient) { _unitOfWork = unitOfWork; _lupClient = lupClient; }
+    public PeriodByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork;}
 
     public async Task<PeriodListDto?> Handle(PeriodByIdQry request, CancellationToken cancellationToken)
     {
@@ -68,16 +61,15 @@ public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto
 
         var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
         if (fYear == null) { return null; }
-        var quarter = await _lupClient.Quarter(data.QuarterId, cancellationToken);
 
         var c = new PeriodListDto
         {
             Id = data.Id,
             FiscalYearId = data.FiscalYearId,
-            QuarterId = data.QuarterId,
+            Quarter = data.Quarter,
             Name = data.Name,
             FiscYear = fYear.Name,
-            Quarter = quarter!.Name,
+            QuarterStr = ((Quarter)Enum.Parse(typeof(Quarter), data.Quarter)).ToDisplayName(),
             DateStart = data.DateStart,
             DateEnd = data.DateEnd,
             IsActive = data.IsActive,

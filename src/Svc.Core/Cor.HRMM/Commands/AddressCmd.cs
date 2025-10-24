@@ -7,9 +7,7 @@ using MediatR;
 namespace Cor.HRMM.Commands;
 
 public class AddressAddCmd : IRequest<AddressListDto> { public AddressAddDto AddDto { get; set; } = default!; }
-
 public class AddressModCmd : IRequest<AddressListDto> { public AddressModDto ModDto { get; set; } = default!; }
-
 public class AddressDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddressAddCmdHandler : IRequestHandler<AddressAddCmd, AddressListDto>
@@ -23,9 +21,9 @@ public class AddressAddCmdHandler : IRequestHandler<AddressAddCmd, AddressListDt
     {
         var data = new Address
         {
-            RegionId = request.AddDto.RegionId,
-            AddressTypeId = request.AddDto.AddressTypeId,
+            AddressType = request.AddDto.AddressType,
             Country = request.AddDto.Country,
+            Region = request.AddDto.Region,
             Subcity = request.AddDto.Subcity,
             Zone = request.AddDto.Zone,
             Woreda = request.AddDto.Woreda,
@@ -70,9 +68,9 @@ public class AddressModCmdHandler : IRequestHandler<AddressModCmd, AddressListDt
         var oldData = await _unitOfWork.Repository<Address>().GetById(request.ModDto.Id);
         if (oldData == null) { throw new KeyNotFoundException($"ADDRESS with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.RegionId = request.ModDto.RegionId;
-        oldData.AddressTypeId = request.ModDto.AddressTypeId;
+        oldData.AddressType = request.ModDto.AddressType;
         oldData.Country = request.ModDto.Country;
+        oldData.Region = request.ModDto.Region;
         oldData.Zone = request.ModDto.Zone;
         oldData.Woreda = request.ModDto.Woreda;
         oldData.Kebele = request.ModDto.Kebele;

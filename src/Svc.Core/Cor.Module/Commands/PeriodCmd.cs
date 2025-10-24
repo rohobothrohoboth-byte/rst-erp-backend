@@ -25,7 +25,7 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
             DateStart = request.AddPeriodDto.DateStart,
             DateEnd = request.AddPeriodDto.DateEnd,
             IsActive = request.AddPeriodDto.IsActive,
-            QuarterId = request.AddPeriodDto.QuarterId,
+            Quarter = request.AddPeriodDto.Quarter,
             FiscalYearId = request.AddPeriodDto.FiscalYearId
         };
 
@@ -68,7 +68,7 @@ public class ModPeriodCmdHandler : IRequestHandler<ModPeriodCmd, PeriodListDto>
         oldPeriod.DateStart = request.EditPeriodDto.DateStart;
         oldPeriod.DateEnd = request.EditPeriodDto.DateEnd;
         oldPeriod.IsActive = request.EditPeriodDto.IsActive;
-        oldPeriod.QuarterId = request.EditPeriodDto.QuarterId;
+        oldPeriod.Quarter = request.EditPeriodDto.Quarter;
         oldPeriod.FiscalYearId = request.EditPeriodDto.FiscalYearId;
 
         await _unitOfWork.Begin();

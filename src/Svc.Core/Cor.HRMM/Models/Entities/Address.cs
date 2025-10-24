@@ -2,9 +2,9 @@
 
 public class Address : BaseEntity
 {
-    public Guid RegionId { get; set; }
-    public Guid AddressTypeId { get; set; }
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
+    public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
     public string Zone { get; set; } = default!;
     public string Woreda { get; set; } = default!;

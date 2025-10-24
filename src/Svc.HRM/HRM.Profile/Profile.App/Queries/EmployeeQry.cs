@@ -15,14 +15,12 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorHRMM _corHRMM;
     private readonly ICorMod _corMod;
-    private readonly ILup _lup;
 
-    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
+    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
         _corMod = corMod;
-        _lup = lup;
     }
 
     public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken cancellationToken)
@@ -33,14 +31,10 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
         var deL = await _corMod.DeptList(cancellationToken);
         var jgL = await _corHRMM.JobGradeList(cancellationToken);
         var poL = await _corHRMM.PositionList(cancellationToken);
-        var eTL = await _lup.EmploymentTypeList(cancellationToken);
-        var eNL = await _lup.EmploymentNatureList(cancellationToken);
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
-            var et = eTL!.FirstOrDefault(t => t.Id == data.EmploymentTypeId);
-            var en = eNL!.FirstOrDefault(t => t.Id == data.EmploymentNatureId);
             var dept = deL!.FirstOrDefault(t => t.Id == data.DepartmentId);
             var jg = jgL!.FirstOrDefault(t => t.Id == data.JobGradeId);
             var pos = poL!.FirstOrDefault(t => t.Id == data.PositionId);
@@ -51,8 +45,8 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 JobGradeId = data.JobGradeId,
                 PositionId = data.PositionId,
                 DepartmentId = data.DepartmentId,
-                EmploymentTypeId = data.EmploymentTypeId,
-                EmploymentNatureId = data.EmploymentNatureId,
+                EmploymentType = data.EmploymentType,
+                EmploymentNature = data.EmploymentNature,
                 Gender = per!.Gender,
                 Nationality = per.Nationality,
                 Code = data.Code,
@@ -60,8 +54,8 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
                 Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
                 Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
-                EmploymentType = et != null ? et.Name : "NOT AVAILABLE",
-                EmploymentNature = en != null ? en.Name : "NOT AVAILABLE",
+                EmploymentTypeStr = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
+                EmploymentNatureStr = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
                 GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
                 EmpFullName = per.FullName,
                 EmpFullNameAm = per.FullNameAm,
@@ -82,14 +76,12 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorHRMM _corHRMM;
     private readonly ICorMod _corMod;
-    private readonly ILup _lup;
 
-    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
+    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
         _corMod = corMod;
-        _lup = lup;
     }
 
     public async Task<EmployeeListDto?> Handle(EmployeeByIdQry request, CancellationToken cancellationToken)
@@ -100,8 +92,6 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
         var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
         var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
         var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
-        var et = await _lup.EmploymentType(data.EmploymentTypeId, cancellationToken);
-        var en = await _lup.EmploymentNature(data.EmploymentNatureId, cancellationToken);
 
         var c = new EmployeeListDto
         {
@@ -110,8 +100,8 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             JobGradeId = data.JobGradeId,
             PositionId = data.PositionId,
             DepartmentId = data.DepartmentId,
-            EmploymentTypeId = data.EmploymentTypeId,
-            EmploymentNatureId = data.EmploymentNatureId,
+            EmploymentType = data.EmploymentType,
+            EmploymentNature = data.EmploymentNature,
             Gender = per!.Gender,
             Nationality = per.Nationality,
             Code = data.Code,
@@ -119,8 +109,8 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
             Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
             Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
-            EmploymentType = et != null ? et.Name : "NOT AVAILABLE",
-            EmploymentNature = en != null ? en.Name : "NOT AVAILABLE",
+            EmploymentTypeStr = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
+            EmploymentNatureStr = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
             EmpFullName = per.FullName,
             EmpFullNameAm = per.FullNameAm,

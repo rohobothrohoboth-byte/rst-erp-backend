@@ -44,8 +44,8 @@ public class EmployeeAddCmdHandler : IRequestHandler<EmployeeAddCmd, EmployeeLis
                 JobGradeId = request.AddDto.JobGradeId,
                 PositionId = request.AddDto.PositionId,
                 DepartmentId = request.AddDto.DepartmentId,
-                EmploymentTypeId = request.AddDto.EmploymentTypeId,
-                EmploymentNatureId = request.AddDto.EmploymentNatureId,
+                EmploymentType = request.AddDto.EmploymentType,
+                EmploymentNature = request.AddDto.EmploymentNature,
                 PersonId = per.Id
             };
             await _unitOfWork.Repository<Employee>().Add(data);
@@ -96,8 +96,8 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
             oldData.JobGradeId = request.ModDto.JobGradeId;
             oldData.PositionId = request.ModDto.PositionId;
             oldData.DepartmentId = request.ModDto.DepartmentId;
-            oldData.EmploymentTypeId = request.ModDto.EmploymentTypeId;
-            oldData.EmploymentNatureId = request.ModDto.EmploymentNatureId;
+            oldData.EmploymentType = request.ModDto.EmploymentType;
+            oldData.EmploymentNature = request.ModDto.EmploymentNature;
             oldData.PersonId = per.Id;
             var data = await _unitOfWork.Repository<Employee>().Update(oldData);
             await _unitOfWork.Commit();

@@ -39,3 +39,15 @@ public enum DeptStat
     [Display(Name = "Inactive")]
     InAct
 }
+
+public enum Quarter
+{
+    [Display(Name = "1st Quarter")]
+    Q1,
+    [Display(Name = "2nd Quarter")]
+    Q2,
+    [Display(Name = "3rd Quarter")]
+    Q3,
+    [Display(Name = "4th Quarter")]
+    Q4
+}

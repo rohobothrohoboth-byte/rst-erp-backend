@@ -9,8 +9,8 @@ public class Period : BaseEntity
     public DateTime DateStart { get; set; } = DateTime.UtcNow;
     [JsonIgnore]
     public DateTime DateEnd { get; set; } = DateTime.UtcNow;
-    public string IsActive { get; set; } = default!;// Enum.YesNo
-    public Guid QuarterId { get; set; }
+    public string IsActive { get; set; } = default!; // Enum.YesNo
+    public string Quarter { get; set; } // Enum.Quarter
     public Guid FiscalYearId { get; set; }
 
     //******************************************//

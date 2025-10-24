@@ -16,15 +16,6 @@ public static class LupSeeder
             await context.SaveChangesAsync();
         }
 
-        if (!context.AddressType.Any())
-        {
-            await context.AddressType.AddRangeAsync(
-                new AddressType { Id = Guid.NewGuid(), Name = "Residence" },
-                new AddressType { Id = Guid.NewGuid(), Name = "Work Place" }
-            );
-            await context.SaveChangesAsync();
-        }
-
         if (!context.AdmissionType.Any())
         {
             await context.AdmissionType.AddRangeAsync(
@@ -84,27 +75,7 @@ public static class LupSeeder
             );
             await context.SaveChangesAsync();
         }
-
-        if (!context.EmploymentNature.Any())
-        {
-            await context.EmploymentNature.AddRangeAsync(
-                new EmploymentNature { Id = Guid.NewGuid(), Name = "Permanent" },
-                new EmploymentNature { Id = Guid.NewGuid(), Name = "Contract" }
-            );
-            await context.SaveChangesAsync();
-        }
-
-        if (!context.EmploymentType.Any())
-        {
-            await context.EmploymentType.AddRangeAsync(
-                new EmploymentType { Id = Guid.NewGuid(), Name = "በለቀቁ ምትክ" },
-                new EmploymentType { Id = Guid.NewGuid(), Name = "አዲስ በመከፈቱ" },
-                new EmploymentType { Id = Guid.NewGuid(), Name = "ተጨማሪ በማስፈለጉ" },
-                new EmploymentType { Id = Guid.NewGuid(), Name = "Old Employee" }
-            );
-            await context.SaveChangesAsync();
-        }
-
+        
         if (!context.EducationLevel.Any())
         {
             await context.EducationLevel.AddRangeAsync(
@@ -173,20 +144,7 @@ public static class LupSeeder
             );
             await context.SaveChangesAsync();
         }
-
-        if (!context.MaritalStatus.Any())
-        {
-            await context.MaritalStatus.AddRangeAsync(
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Not Married" },
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Single" },
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Married" },
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Widow/er" },
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Divorced" },
-                new MaritalStatus { Id = Guid.NewGuid(), Name = "Not Mentioned" }
-            );
-            await context.SaveChangesAsync();
-        }
-
+        
         if (!context.MeasureTaken.Any())
         {
             await context.MeasureTaken.AddRangeAsync(
@@ -232,28 +190,7 @@ public static class LupSeeder
             );
             await context.SaveChangesAsync();
         }
-
-        if (!context.ProfessionType.Any())
-        {
-            await context.ProfessionType.AddRangeAsync(
-                new ProfessionType { Id = Guid.NewGuid(), Name = "Professional" },
-                new ProfessionType { Id = Guid.NewGuid(), Name = "Semi-Professional," },
-                new ProfessionType { Id = Guid.NewGuid(), Name = "Non-Professional" }
-            );
-            await context.SaveChangesAsync();
-        }
-
-        if (!context.Quarter.Any())
-        {
-            await context.Quarter.AddRangeAsync(
-                new Quarter { Id = Guid.NewGuid(), Name = "1st Quarter" },
-                new Quarter { Id = Guid.NewGuid(), Name = "2nd Quarter" },
-                new Quarter { Id = Guid.NewGuid(), Name = "3rd Quarter" },
-                new Quarter { Id = Guid.NewGuid(), Name = "4th Quarter" }
-            );
-            await context.SaveChangesAsync();
-        }
-
+        
         if (!context.Rating.Any())
         {
             await context.Rating.AddRangeAsync(
@@ -265,20 +202,7 @@ public static class LupSeeder
             );
             await context.SaveChangesAsync();
         }
-
-        if (!context.Region.Any())
-        {
-            await context.Region.AddRangeAsync(
-                new Region { Id = Guid.NewGuid(), Name = "Amhara" },
-                new Region { Id = Guid.NewGuid(), Name = "Diredawa" },
-                new Region { Id = Guid.NewGuid(), Name = "Benishangul" },
-                new Region { Id = Guid.NewGuid(), Name = "Somalia" },
-                new Region { Id = Guid.NewGuid(), Name = "Gambella" },
-                new Region { Id = Guid.NewGuid(), Name = "Benishangul" }
-            );
-            await context.SaveChangesAsync();
-        }
-
+        
         if (!context.Relation.Any())
         {
             await context.Relation.AddRangeAsync(
@@ -401,307 +325,7 @@ public static class LupSeeder
             );
             await context.SaveChangesAsync();
         }
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
-        //if (!context.LeaveType.Any())
-        //{
-        //    await context.LeaveType.AddRangeAsync(
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" },
-        //        new LeaveType { Id = Guid.NewGuid(), Name = "Add" }
-        //    );
-        //    await context.SaveChangesAsync();
-        //}
-
+        
 
 
 

@@ -15,17 +15,6 @@ public class AbsentReasonQryHandler : IRequestHandler<AbsentReasonQry, List<LupC
     }
 }
 
-public class AddressTypeQryHandler : IRequestHandler<AddressTypeQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public AddressTypeQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(AddressTypeQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<AddressType>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
 public class AdmissionTypeQryHandler : IRequestHandler<AdmissionTypeQry, List<LupListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -77,28 +66,6 @@ public class CriterionTypeQryHandler : IRequestHandler<CriterionTypeQry, List<Lu
     public async Task<List<LupListDto>> Handle(CriterionTypeQry request, CancellationToken cancellationToken)
     {
         var lups = await _unitOfWork.Repository<CriterionType>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
-public class EmploymentNatureQryHandler : IRequestHandler<EmploymentNatureQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public EmploymentNatureQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(EmploymentNatureQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<EmploymentNature>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
-public class EmploymentTypeQryHandler : IRequestHandler<EmploymentTypeQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public EmploymentTypeQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(EmploymentTypeQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<EmploymentType>().GetAll();
         return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
     }
 }
@@ -169,17 +136,6 @@ public class LeaveUsageQryHandler : IRequestHandler<LeaveUsageQry, List<LupListD
     }
 }
 
-public class MaritalStatusQryHandler : IRequestHandler<MaritalStatusQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public MaritalStatusQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(MaritalStatusQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<MaritalStatus>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
 public class MeasureTakenQryHandler : IRequestHandler<MeasureTakenQry, List<LupListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -224,28 +180,6 @@ public class PositionChangeReasonQryHandler : IRequestHandler<PositionChangeReas
     }
 }
 
-public class ProfessionTypeQryHandler : IRequestHandler<ProfessionTypeQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public ProfessionTypeQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(ProfessionTypeQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<ProfessionType>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
-public class QuarterQryHandler : IRequestHandler<QuarterQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public QuarterQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(QuarterQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<Quarter>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
 public class RatingQryHandler : IRequestHandler<RatingQry, List<LupListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -253,17 +187,6 @@ public class RatingQryHandler : IRequestHandler<RatingQry, List<LupListDto>>
     public async Task<List<LupListDto>> Handle(RatingQry request, CancellationToken cancellationToken)
     {
         var lups = await _unitOfWork.Repository<Rating>().GetAll();
-        return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
-    }
-}
-
-public class RegionQryHandler : IRequestHandler<RegionQry, List<LupListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public RegionQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-    public async Task<List<LupListDto>> Handle(RegionQry request, CancellationToken cancellationToken)
-    {
-        var lups = await _unitOfWork.Repository<Region>().GetAll();
         return lups.Select(lup => new LupListDto { Id = lup.Id, Name = lup.Name }).ToList();
     }
 }

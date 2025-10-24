@@ -1,7 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
-using Cor.HRMM.Services;
+using Cor.HRMM.Models.Enums;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -12,31 +12,22 @@ public class AddressByIdQry : IRequest<AddressListDto?> { public Guid Id { get; 
 public class AddressAllQryHandler : IRequestHandler<AddressAllQry, List<AddressListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
-
-    public AddressAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
-    {
-        _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
-    }
+    public AddressAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<List<AddressListDto>> Handle(AddressAllQry request, CancellationToken cancellationToken)
     {
         var dbData = await _unitOfWork.Repository<Address>().GetAll();
         var dataL = new List<AddressListDto>();
-        var regionL = await _lupClient.RegionList(cancellationToken);
-        var aTypeL = await _lupClient.AddressTypeList(cancellationToken);
 
         foreach (var data in dbData)
         {
-            var region = regionL!.FirstOrDefault(t => t.Id == data.RegionId);
-            var aType = aTypeL!.FirstOrDefault(t => t.Id == data.AddressTypeId);
             var c = new AddressListDto
             {
                 Id = data.Id,
-                Region = region!.Name,
-                AddressType = aType!.Name,
+                AddressType = data.AddressType,
+                AddressTypeStr = ((AddressType)Enum.Parse(typeof(AddressType), data.AddressType)).ToDisplayName(),
                 Country = data.Country,
+                Region = data.Region,
                 Subcity = data.Subcity,
                 Zone = data.Zone,
                 Woreda = data.Woreda,
@@ -62,27 +53,20 @@ public class AddressAllQryHandler : IRequestHandler<AddressAllQry, List<AddressL
 public class AddressByIdQryHandler : IRequestHandler<AddressByIdQry, AddressListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
-
-    public AddressByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
-    {
-        _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
-    }
+    public AddressByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<AddressListDto?> Handle(AddressByIdQry request, CancellationToken cancellationToken)
     {
         var nData = await _unitOfWork.Repository<Address>().GetById(request.Id);
         if (nData == null) { return null; }
-        var region = await _lupClient.Region(nData.RegionId, cancellationToken);
-        var aType = await _lupClient.AddressType(nData.AddressTypeId, cancellationToken);
         
         var c = new AddressListDto
         {
             Id = nData.Id,
-            Region = region!.Name,
-            AddressType = aType!.Name,
+            AddressType = nData.AddressType,
+            AddressTypeStr = ((AddressType)Enum.Parse(typeof(AddressType), nData.AddressType)).ToDisplayName(),
             Country = nData.Country,
+            Region = nData.Region,
             Subcity = nData.Subcity,
             Zone = nData.Zone,
             Woreda = nData.Woreda,

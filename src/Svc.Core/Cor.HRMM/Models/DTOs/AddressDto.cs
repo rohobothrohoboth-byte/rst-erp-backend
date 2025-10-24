@@ -2,11 +2,10 @@
 
 public class AddressListDto : BaseDto
 {
-    public Guid RegionId { get; set; }
-    public Guid AddressTypeId { get; set; }
-    public string Region { get; set; } = default!;
-    public string AddressType { get; set; } = default!;
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
+    public string AddressTypeStr { get; set; } = default!;
     public string Country { get; set; } = default!;
+    public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
     public string Zone { get; set; } = default!;
     public string Woreda { get; set; } = default!;
@@ -21,9 +20,9 @@ public class AddressListDto : BaseDto
 
 public class AddressAddDto
 {
-    public Guid RegionId { get; set; }
-    public Guid AddressTypeId { get; set; }
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
+    public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
     public string Zone { get; set; } = default!;
     public string Woreda { get; set; } = default!;
@@ -39,9 +38,9 @@ public class AddressAddDto
 public class AddressModDto
 {
     public Guid Id { get; set; }
-    public Guid RegionId { get; set; }
-    public Guid AddressTypeId { get; set; }
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
+    public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
     public string Zone { get; set; } = default!;
     public string Woreda { get; set; } = default!;

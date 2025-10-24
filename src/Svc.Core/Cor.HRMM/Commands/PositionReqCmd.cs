@@ -7,9 +7,7 @@ using MediatR;
 namespace Cor.HRMM.Commands;
 
 public class PositionReqAddCmd : IRequest<PositionReqListDto> { public PositionReqAddDto AddDto { get; set; } = default!; }
-
 public class PositionReqModCmd : IRequest<PositionReqListDto> { public PositionReqModDto ModDto { get; set; } = default!; }
-
 public class PositionReqDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class PositionReqAddCmdHandler : IRequestHandler<PositionReqAddCmd, PositionReqListDto>
@@ -27,7 +25,7 @@ public class PositionReqAddCmdHandler : IRequestHandler<PositionReqAddCmd, Posit
             SaturdayWorkOption = request.AddDto.SaturdayWorkOption,
             SundayWorkOption = request.AddDto.SundayWorkOption,
             WorkingHours = request.AddDto.WorkingHours,
-            ProfessionTypeId = request.AddDto.ProfessionTypeId,
+            ProfessionType = request.AddDto.ProfessionType,
             PositionId = request.AddDto.PositionId
         };
         await _unitOfWork.Begin();
@@ -67,7 +65,7 @@ public class PositionReqModCmdHandler : IRequestHandler<PositionReqModCmd, Posit
         oldData.SaturdayWorkOption = request.ModDto.SaturdayWorkOption;
         oldData.SundayWorkOption = request.ModDto.SundayWorkOption;
         oldData.WorkingHours = request.ModDto.WorkingHours;
-        oldData.ProfessionTypeId = request.ModDto.ProfessionTypeId;
+        oldData.ProfessionType = request.ModDto.ProfessionType;
         oldData.PositionId = request.ModDto.PositionId;
         await _unitOfWork.Begin();
 

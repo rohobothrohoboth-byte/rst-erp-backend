@@ -49,3 +49,21 @@ public enum Per
     [Display(Name = "Year")]
     Year
 }
+
+public enum AddressType
+{
+    [Display(Name = "Residence")]
+    Res,
+    [Display(Name = "Work Place")]
+    Work
+}
+
+public enum ProfessionType
+{
+    [Display(Name = "Professional")]
+    Pro,
+    [Display(Name = "Semi-Professional")]
+    SemiPro,
+    [Display(Name = "Non-Professional")]
+    NonPro
+}
