@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Logging;
 using Profile.App.Interfaces;
-using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 using Profile.Utility.Extensions;
 using System.Data;
