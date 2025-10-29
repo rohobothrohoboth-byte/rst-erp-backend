@@ -27,26 +27,7 @@ public class EmpBioController(IMediator med) : ControllerBase
         if (response == null) { return NotFound(new { Error = $"Employee Bio with Id {id} not found" }); }
         return Ok(response);
     }
-
-    [HttpPost("AddEmpBio")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] EmpBioAddDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new EmpBioAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee Bio", Details = ex.Message });
-        }
-    }
-
+    
     [HttpPut("ModEmpBio/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

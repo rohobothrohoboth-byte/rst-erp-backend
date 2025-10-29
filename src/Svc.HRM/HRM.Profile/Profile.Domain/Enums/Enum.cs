@@ -53,3 +53,11 @@ public enum MaritalStat
     [Display(Name = "Not Mentioned")]
     NotMen
 }
+
+public enum AddressType
+{
+    [Display(Name = "Residence")]
+    Res,
+    [Display(Name = "Work Place")]
+    Work
+}

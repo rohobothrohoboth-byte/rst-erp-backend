@@ -7,63 +7,8 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Commands;
 
-public class EmployeeAddCmd : IRequest<EmployeeListDto> { public EmployeeAddDto AddDto { get; set; } = default!; }
 public class EmployeeModCmd : IRequest<EmployeeListDto> { public EmployeeModDto ModDto { get; set; } = default!; }
 public class EmployeeDelCmd : IRequest { public Guid Id { get; set; } }
-
-public class EmployeeAddCmdHandler : IRequestHandler<EmployeeAddCmd, EmployeeListDto>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMediator _med;
-
-    public EmployeeAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<EmployeeListDto> Handle(EmployeeAddCmd request, CancellationToken cancellationToken)
-    {
-        await _unitOfWork.Begin();
-        try
-        {
-            var per = new Person
-            {
-                FirstName = request.AddDto.FirstName,
-                FirstNameAm = request.AddDto.FirstNameAm,
-                MiddleName = request.AddDto.MiddleName,
-                MiddleNameAm = request.AddDto.MiddleNameAm,
-                LastName = request.AddDto.LastName,
-                LastNameAm = request.AddDto.LastNameAm,
-                Gender = request.AddDto.Gender,
-                Nationality = request.AddDto.Nationality
-            };
-            await _unitOfWork.Repository<Person>().Add(per);
-            
-            var code = await new EmpCode(_unitOfWork).GetEmpCode();
-            var data = new Employee
-            {
-                Code = code,
-                EmploymentDate = request.AddDto.EmploymentDate,
-                JobGradeId = request.AddDto.JobGradeId,
-                PositionId = request.AddDto.PositionId,
-                DepartmentId = request.AddDto.DepartmentId,
-                EmploymentType = request.AddDto.EmploymentType,
-                EmploymentNature = request.AddDto.EmploymentNature,
-                PersonId = per.Id
-            };
-            await _unitOfWork.Repository<Employee>().Add(data);
-            await _unitOfWork.Commit();
-
-            var res = new EmployeeListDto();
-            var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-    }
-}
 
 public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeListDto>
 {

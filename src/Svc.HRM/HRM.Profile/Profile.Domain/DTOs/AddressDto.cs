@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.DTOs;
+﻿namespace Profile.Domain.DTOs;
 
 public class AddressListDto : BaseDto
 {

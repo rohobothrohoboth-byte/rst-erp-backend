@@ -12,14 +12,14 @@ public class EmpGuarantorByIdQry : IRequest<EmpGuarantorListDto?> { public Guid 
 public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, EmpGuarantorListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
     private readonly ILup _lup;
+    private readonly IMediator _med;
 
-    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ILup lup)
+    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ILup lup, IMediator med)
     {
         _unitOfWork = unitOfWork;
-        _corHRMM = corHRMM;
         _lup = lup;
+        _med = med;
     }
 
     public async Task<EmpGuarantorListDto?> Handle(EmpGuarantorByIdQry request, CancellationToken cancellationToken)
@@ -27,7 +27,7 @@ public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, E
         var data = await _unitOfWork.Repository<EmergencyContact>().GetFoD(e => e.EmployeeId == request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var add = await _corHRMM.Address(data.AddressId, cancellationToken);
+        var add = await _med.Send(new AddressNameByIdQry { Id = data.AddressId }, cancellationToken);
         var re = await _lup.Relation(data.RelationId, cancellationToken);
 
         var c = new EmpGuarantorListDto
@@ -39,8 +39,8 @@ public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, E
             EmployeeId = data.EmployeeId,
             Gender = per!.Gender,
             Nationality = per.Nationality,
-            GuarantorName = per.FullName,
-            GuarantorNameAm = per.FullNameAm,
+            GuarantorName = $"{per.FirstName} {per.MiddleName} {per.LastName}",
+            GuarantorNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
             Address = add != null ? add.Name : "NOT AVAILABLE",
             Relation = re != null ? re.Name : "NOT AVAILABLE",

@@ -25,7 +25,38 @@ public class NameListController(IMediator med) : ControllerBase
         var res = await med.Send(new BranchCompListQry());
         return Ok(res);
     }
-    
+
+    /// <summary>
+    /// End point to get list of branches with company by Id, Response will be (BranchName => CompanyName) or (BranchNameAm => CompanyNameAm) including Id of Branch.
+    /// </summary>
+    [HttpGet("GetBranchCompList/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBranchCompList(Guid id)
+    {
+        var res = await med.Send(new BranchCompByIdQry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"BRANCH with Id {id} NOT FOUND" }); }
+        return Ok(res);
+    }
+
+    [HttpGet("AllBranchName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllBranchName()
+    {
+        var res = await med.Send(new BranchAllNameQry());
+        return Ok(res);
+    }
+
+    [HttpGet("GetBranchName/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBranchName(Guid id)
+    {
+        var res = await med.Send(new BranchNameByIdQry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"BRANCH with Id {id} NOT FOUND" }); }
+        return Ok(res);
+    }
+
     [HttpGet("AllDeptName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllDeptName()

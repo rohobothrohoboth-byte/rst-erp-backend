@@ -4,7 +4,7 @@ namespace Cor.Module.Models.DTOs;
 
 public class PeriodListDto : BaseDTO
 {
-    public string Quarter { get; set; }  // enum.Quarter (0/1)
+    public string Quarter { get; set; } = default!;  // enum.Quarter (0/1)
     public Guid FiscalYearId { get; set; }  // FiscalYear
     public string Name { get; set; } = default!;
     public string QuarterStr { get; set; } = default!;
@@ -21,22 +21,21 @@ public class PeriodListDto : BaseDTO
 
 public class AddPeriodDto
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = default!;
     public DateTime DateStart { get; set; } = DateTime.UtcNow;
     public DateTime DateEnd { get; set; } = DateTime.UtcNow;
-    public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
-    public string Quarter { get; set; }  // enum.Quarter (0/1)
+    public string Quarter { get; set; } = default!;  // enum.Quarter (0/1)
     public Guid FiscalYearId { get; set; }  // FiscalYear
 }
 
 public class EditPeriodDto
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
+    public string Name { get; set; } = default!;
     public DateTime DateStart { get; set; }
     public DateTime DateEnd { get; set; }
     public string IsActive { get; set; } = default!;  // enum.YesNo (0/1)
-    public string Quarter { get; set; }  // enum.Quarter (0/1)
+    public string Quarter { get; set; } = default!;  // enum.Quarter (0/1)
     public Guid FiscalYearId { get; set; }  // FiscalYear
     public string RowVersion { get; set; } = default!;
 }

@@ -6,8 +6,11 @@ using MediatR;
 namespace Cor.Module.Queries;
 
 public class BranchCompListQry : IRequest<List<NameListDto>> { }
-public class DeptAllNameQry : IRequest<List<NameListDto>> { }
-public class DeptNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class BranchCompByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class BranchAllNameQry : IRequest<List<NameListDto>> { }
+public class BranchNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class DeptAllNameQry : IRequest<List<NameAmListDto>> { }
+public class DeptNameByIdQry : IRequest<NameAmListDto?> { public Guid Id { get; set; } }
 public class CompAllNameQry : IRequest<List<NameListDto>> { }
 public class CompNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
 public class FiscalYearAllNameQry : IRequest<List<NameListDto>> { }
@@ -40,23 +43,78 @@ public class BranchCompListQryHandler : IRequestHandler<BranchCompListQry, List<
     }
 }
 
-public class DeptAllNameQryHandler : IRequestHandler<DeptAllNameQry, List<NameListDto>>
+public class BranchCompByIdQryHandler : IRequestHandler<BranchCompByIdQry, NameListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public BranchCompByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<NameListDto?> Handle(BranchCompByIdQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Branch>().GetById(request.Id);
+        if (res == null) { return null; }
+        var comp = await _unitOfWork.Repository<Company>().GetById(res.CompId);
+        if (comp == null) { return null; }
+
+        var c = new NameListDto
+        {
+            Id = res.Id,
+            Name = $"{res.Name} => {comp.Name}"
+        };
+        return c;
+    }
+}
+
+public class BranchAllNameQryHandler : IRequestHandler<BranchAllNameQry, List<NameListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public BranchAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<NameListDto>> Handle(BranchAllNameQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Branch>().GetAll();
+
+        return res.Select(data => new NameListDto { Id = data.Id, Name = data.Name }).ToList();
+    }
+}
+
+public class BranchNameByIdQryHandler : IRequestHandler<BranchNameByIdQry, NameListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public BranchNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<NameListDto?> Handle(BranchNameByIdQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Branch>().GetById(request.Id);
+        if (res == null) { return null; }
+
+        var c = new NameListDto
+        {
+            Id = res.Id,
+            Name = res.Name
+        };
+        return c;
+    }
+}
+
+public class DeptAllNameQryHandler : IRequestHandler<DeptAllNameQry, List<NameAmListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     public DeptAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task<List<NameListDto>> Handle(DeptAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameAmListDto>> Handle(DeptAllNameQry request, CancellationToken cancellationToken)
     {
         var res = await _unitOfWork.Repository<Department>().GetAll();
-        var nameL = new List<NameListDto>();
+        var nameL = new List<NameAmListDto>();
+
         foreach (var data in res)
         {
-            var branch = await _unitOfWork.Repository<Branch>().GetById(data.BranchId);
-            if (branch == null) continue;
-            var c = new NameListDto
+            var bra = await _unitOfWork.Repository<Branch>().GetById(data.BranchId);
+            if (bra == null) continue;
+            var c = new NameAmListDto
             {
                 Id = data.Id,
-                Name = data.Name
+                Name = data.Name,
+                NameAm = bra.Name
             };
             nameL.Add(c);
         }
@@ -65,22 +123,23 @@ public class DeptAllNameQryHandler : IRequestHandler<DeptAllNameQry, List<NameLi
     }
 }
 
-public class DeptNameByIdQryHandler : IRequestHandler<DeptNameByIdQry, NameListDto?>
+public class DeptNameByIdQryHandler : IRequestHandler<DeptNameByIdQry, NameAmListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
     public DeptNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task<NameListDto?> Handle(DeptNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameAmListDto?> Handle(DeptNameByIdQry request, CancellationToken cancellationToken)
     {
         var res = await _unitOfWork.Repository<Department>().GetById(request.Id);
         if (res == null) { return null; }
+        var bra = await _unitOfWork.Repository<Branch>().GetById(res.BranchId);
+        if (bra == null) { return null; }
 
-        var branch = await _unitOfWork.Repository<Branch>().GetById(res.BranchId);
-        if (branch == null) return null;
-        var c = new NameListDto
+        var c = new NameAmListDto
         {
             Id = res.Id,
-            Name = res.Name
+            Name = res.Name,
+            NameAm = bra.Name
         };
         return c;
     }

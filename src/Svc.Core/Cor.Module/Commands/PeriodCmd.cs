@@ -24,7 +24,7 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
             Name = request.AddPeriodDto.Name,
             DateStart = request.AddPeriodDto.DateStart,
             DateEnd = request.AddPeriodDto.DateEnd,
-            IsActive = request.AddPeriodDto.IsActive,
+            IsActive = "0",
             Quarter = request.AddPeriodDto.Quarter,
             FiscalYearId = request.AddPeriodDto.FiscalYearId
         };

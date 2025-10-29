@@ -6,13 +6,41 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Profile.Utility.Migrations
 {
     /// <inheritdoc />
-    public partial class MigHRMPro00 : Migration
+    public partial class MigHrmPro00 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
                 .Annotation("Npgsql:PostgresExtension:pgcrypto", ",,");
+
+            migrationBuilder.CreateTable(
+                name: "Address",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AddressType = table.Column<string>(type: "text", nullable: false),
+                    Country = table.Column<string>(type: "text", nullable: false),
+                    Region = table.Column<string>(type: "text", nullable: false),
+                    Subcity = table.Column<string>(type: "text", nullable: false),
+                    Zone = table.Column<string>(type: "text", nullable: false),
+                    Woreda = table.Column<string>(type: "text", nullable: false),
+                    Kebele = table.Column<string>(type: "text", nullable: false),
+                    HouseNo = table.Column<string>(type: "text", nullable: false),
+                    Telephone = table.Column<string>(type: "text", nullable: false),
+                    PoBox = table.Column<string>(type: "text", nullable: false),
+                    Fax = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Website = table.Column<string>(type: "text", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Address", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "FileMetaData",
@@ -217,6 +245,12 @@ namespace Profile.Utility.Migrations
                 {
                     table.PrimaryKey("PK_EmergencyContact", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_EmergencyContact_Address_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Address",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_EmergencyContact_Employee_EmployeeId",
                         column: x => x.EmployeeId,
                         principalTable: "Employee",
@@ -251,6 +285,12 @@ namespace Profile.Utility.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmpBio", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmpBio_Address_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Address",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_EmpBio_Employee_EmployeeId",
                         column: x => x.EmployeeId,
@@ -331,6 +371,12 @@ namespace Profile.Utility.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmpGuarantor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmpGuarantor_Address_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Address",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_EmpGuarantor_Employee_EmployeeId",
                         column: x => x.EmployeeId,
@@ -516,6 +562,11 @@ namespace Profile.Utility.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_EmergencyContact_AddressId",
+                table: "EmergencyContact",
+                column: "AddressId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EmergencyContact_EmployeeId",
                 table: "EmergencyContact",
                 column: "EmployeeId");
@@ -524,6 +575,11 @@ namespace Profile.Utility.Migrations
                 name: "IX_EmergencyContact_PersonId",
                 table: "EmergencyContact",
                 column: "PersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpBio_AddressId",
+                table: "EmpBio",
+                column: "AddressId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmpBio_EmployeeId",
@@ -544,6 +600,11 @@ namespace Profile.Utility.Migrations
                 name: "IX_EmpFinance_EmployeeId",
                 table: "EmpFinance",
                 column: "EmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpGuarantor_AddressId",
+                table: "EmpGuarantor",
+                column: "AddressId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmpGuarantor_EmployeeId",
@@ -689,6 +750,9 @@ namespace Profile.Utility.Migrations
 
             migrationBuilder.DropTable(
                 name: "FileMetaData");
+
+            migrationBuilder.DropTable(
+                name: "Address");
 
             migrationBuilder.DropTable(
                 name: "Employee");

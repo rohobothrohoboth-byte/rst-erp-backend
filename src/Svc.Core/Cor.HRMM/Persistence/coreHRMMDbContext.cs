@@ -14,7 +14,6 @@ public class coreHRMMDbContext : DbContext
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
         modelBuilder.HasPostgresExtension("pgcrypto");
-        modelBuilder.Entity<Address>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<BenefitSetting>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EducationQual>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<JgStep>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
@@ -26,7 +25,6 @@ public class coreHRMMDbContext : DbContext
         modelBuilder.Entity<PositionReq>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
     }
 
-    public DbSet<Address> Address { get; set; }
     public DbSet<BenefitSetting> BenefitSetting { get; set; }
     public DbSet<EducationQual> EducationQual { get; set; }
     public DbSet<JgStep> JgStep { get; set; }

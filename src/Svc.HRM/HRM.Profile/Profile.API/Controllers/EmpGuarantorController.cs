@@ -27,26 +27,7 @@ public class EmpGuarantorController(IMediator med) : ControllerBase
         if (response == null) { return NotFound(new { Error = $"Employee Guarantor with Id {id} not found" }); }
         return Ok(response);
     }
-
-    [HttpPost("AddEmpGuarantor")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] EmpGuarantorAddDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new EmpGuarantorAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee Guarantor", Details = ex.Message });
-        }
-    }
-
+    
     [HttpPut("ModEmpGuarantor/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

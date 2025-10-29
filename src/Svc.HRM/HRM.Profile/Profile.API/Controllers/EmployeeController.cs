@@ -35,26 +35,7 @@ public class EmployeeController(IMediator med) : ControllerBase
         if (response == null) { return NotFound(new { Error = $"Employee with Id {id} not found" }); }
         return Ok(response);
     }
-
-    [HttpPost("AddEmployee")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] EmployeeAddDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new EmployeeAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee", Details = ex.Message });
-        }
-    }
-
+    
     [HttpPut("ModEmployee/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

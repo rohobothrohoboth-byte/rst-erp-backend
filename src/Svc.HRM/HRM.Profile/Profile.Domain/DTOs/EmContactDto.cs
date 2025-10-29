@@ -3,7 +3,7 @@
 public class EmContactListDto : BaseDto
 {
     public Guid PersonId { get; set; } = default!; //Person
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid RelationId { get; set; } = default!; //lup.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
@@ -26,7 +26,7 @@ public class EmContactAddDto
     public string Nationality { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender
     public Guid RelationId { get; set; } = default!; //lup.Relation
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid EmployeeId { get; set; } = default!; //Employee
 }
 
@@ -43,6 +43,6 @@ public class EmContactModDto
     public string Gender { get; set; } = default!; // enum.Gender
     public Guid RelationId { get; set; } = default!; //lup.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid PersonId { get; set; } = default!; //Person
 }

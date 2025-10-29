@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Profile.App.Interfaces;
-using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 using Profile.Domain.Enums;
@@ -12,19 +11,19 @@ public class EmpBioByIdQry : IRequest<EmpBioListDto?> { public Guid Id { get; se
 public class EmpBioByIdQryHandler : IRequestHandler<EmpBioByIdQry, EmpBioListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
+    private readonly IMediator _med;
 
-    public EmpBioByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM)
+    public EmpBioByIdQryHandler(IUnitOfWork unitOfWork, IMediator med)
     {
         _unitOfWork = unitOfWork;
-        _corHRMM = corHRMM;
+        _med = med;
     }
 
     public async Task<EmpBioListDto?> Handle(EmpBioByIdQry request, CancellationToken cancellationToken)
     {
         var data = await _unitOfWork.Repository<EmpBio>().GetFoD(e=>e.EmployeeId == request.Id);
         if (data == null) { return null; }
-        var add = await _corHRMM.Address(data.AddressId, cancellationToken);
+        var add = await _med.Send(new AddressNameByIdQry { Id = data.AddressId }, cancellationToken);
 
         var c = new EmpBioListDto
         {

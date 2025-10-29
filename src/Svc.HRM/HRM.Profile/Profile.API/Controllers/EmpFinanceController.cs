@@ -27,26 +27,7 @@ public class EmpFinanceController(IMediator med) : ControllerBase
         if (response == null) { return NotFound(new { Error = $"Employee Finance with Id {id} not found" }); }
         return Ok(response);
     }
-
-    [HttpPost("AddEmpFinance")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] EmpFinanceAddDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new EmpFinanceAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee Finance", Details = ex.Message });
-        }
-    }
-
+    
     [HttpPut("ModEmpFinance/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

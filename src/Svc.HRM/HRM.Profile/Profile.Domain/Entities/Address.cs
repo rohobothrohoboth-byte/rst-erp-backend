@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.Entities;
+﻿namespace Profile.Domain.Entities;
 
 public class Address : BaseEntity
 {

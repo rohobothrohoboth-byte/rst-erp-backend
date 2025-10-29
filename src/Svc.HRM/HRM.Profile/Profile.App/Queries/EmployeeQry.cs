@@ -31,6 +31,7 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
         var deL = await _corMod.DeptList(cancellationToken);
         var jgL = await _corHRMM.JobGradeList(cancellationToken);
         var poL = await _corHRMM.PositionList(cancellationToken);
+        var ePhotoL = await _unitOfWork.Repository<EmpPhoto>().GetAll();
 
         foreach (var data in dbData)
         {
@@ -38,27 +39,22 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
             var dept = deL!.FirstOrDefault(t => t.Id == data.DepartmentId);
             var jg = jgL!.FirstOrDefault(t => t.Id == data.JobGradeId);
             var pos = poL!.FirstOrDefault(t => t.Id == data.PositionId);
+            var ePhoto = ePhotoL.FirstOrDefault(t => t.EmployeeId == data.Id);
+            var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.FileMetaDataId);
             var c = new EmployeeListDto
             {
                 Id = data.Id,
-                PersonId = data.PersonId,
-                JobGradeId = data.JobGradeId,
-                PositionId = data.PositionId,
-                DepartmentId = data.DepartmentId,
-                EmploymentType = data.EmploymentType,
-                EmploymentNature = data.EmploymentNature,
-                Gender = per!.Gender,
-                Nationality = per.Nationality,
+                EmpFullName = $"{per!.FirstName} {per.MiddleName} {per.LastName}",
+                EmpFullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
                 Code = data.Code,
-                EmploymentDate = data.EmploymentDate,
+                Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
+                Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
+                Department = dept != null ? dept.Name : "NOT AVAILABLE",
+                Position = pos != null ? pos.Name : "NOT AVAILABLE",
                 JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
-                Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
-                Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
-                EmploymentTypeStr = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-                EmploymentNatureStr = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
-                GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-                EmpFullName = per.FullName,
-                EmpFullNameAm = per.FullNameAm,
+                EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
+                EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+                Photo = Convert.ToBase64String(ePhotoB!.Data),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -92,28 +88,23 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
         var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
         var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
         var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(t => t.EmployeeId == request.Id);
+        var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.FileMetaDataId);
 
         var c = new EmployeeListDto
         {
             Id = data.Id,
-            PersonId = data.PersonId,
-            JobGradeId = data.JobGradeId,
-            PositionId = data.PositionId,
-            DepartmentId = data.DepartmentId,
-            EmploymentType = data.EmploymentType,
-            EmploymentNature = data.EmploymentNature,
-            Gender = per!.Gender,
-            Nationality = per.Nationality,
+            EmpFullName = $"{per!.FirstName} {per.MiddleName} {per.LastName}",
+            EmpFullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             Code = data.Code,
-            EmploymentDate = data.EmploymentDate,
+            Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
+            Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
+            Department = dept != null ? dept.Name : "NOT AVAILABLE",
+            Position = pos != null ? pos.Name : "NOT AVAILABLE",
             JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
-            Position = pos != null ? $"{pos.Name}({pos.NameAm})" : "NOT AVAILABLE",
-            Department = dept != null ? $"{dept.Name}({dept.NameAm})" : "NOT AVAILABLE",
-            EmploymentTypeStr = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-            EmploymentNatureStr = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
-            GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            EmpFullName = per.FullName,
-            EmpFullNameAm = per.FullNameAm,
+            EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
+            EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+            Photo = Convert.ToBase64String(ePhotoB!.Data),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

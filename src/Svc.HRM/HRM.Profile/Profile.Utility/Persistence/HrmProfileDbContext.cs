@@ -15,6 +15,7 @@ public class HrmProfileDbContext : DbContext
 
         modelBuilder.HasPostgresExtension("pgcrypto");
 
+        modelBuilder.Entity<Address>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmergencyContact>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpBio>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpFamily>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
@@ -36,6 +37,7 @@ public class HrmProfileDbContext : DbContext
         modelBuilder.Entity<Person>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
     }
 
+    public DbSet<Address> Address { get; set; }
     public DbSet<EmergencyContact> EmergencyContact { get; set; }
     public DbSet<EmpBio> EmpBio { get; set; }
     public DbSet<EmpFamily> EmpFamily { get; set; }

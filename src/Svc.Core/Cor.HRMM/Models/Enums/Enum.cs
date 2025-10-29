@@ -50,14 +50,6 @@ public enum Per
     Year
 }
 
-public enum AddressType
-{
-    [Display(Name = "Residence")]
-    Res,
-    [Display(Name = "Work Place")]
-    Work
-}
-
 public enum ProfessionType
 {
     [Display(Name = "Professional")]

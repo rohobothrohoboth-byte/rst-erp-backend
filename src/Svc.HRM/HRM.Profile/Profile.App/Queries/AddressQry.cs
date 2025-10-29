@@ -1,10 +1,10 @@
-﻿using Cor.HRMM.Interfaces;
-using Cor.HRMM.Models.DTOs;
-using Cor.HRMM.Models.Entities;
-using Cor.HRMM.Models.Enums;
-using MediatR;
+﻿using MediatR;
+using Profile.App.Interfaces;
+using Profile.Domain.DTOs;
+using Profile.Domain.Entities;
+using Profile.Domain.Enums;
 
-namespace Cor.HRMM.Queries;
+namespace Profile.App.Queries;
 
 public class AddressAllQry : IRequest<List<AddressListDto>> { }
 public class AddressByIdQry : IRequest<AddressListDto?> { public Guid Id { get; set; } }

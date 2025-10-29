@@ -35,26 +35,7 @@ public class EmContactController(IMediator med) : ControllerBase
         if (response == null) { return NotFound(new { Error = $"Emergency Contact with Id {id} not found" }); }
         return Ok(response);
     }
-
-    [HttpPost("AddEmContact")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] EmContactAddDto addDto)
-    {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
-
-        try
-        {
-            var command = new EmContactAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Emergency Contact", Details = ex.Message });
-        }
-    }
-
+    
     [HttpPut("ModEmContact/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

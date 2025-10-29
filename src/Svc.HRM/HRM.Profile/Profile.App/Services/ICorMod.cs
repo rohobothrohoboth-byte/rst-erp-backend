@@ -2,6 +2,6 @@
 
 public interface ICorMod
 {
-    Task<NameAmList?> Dept(Guid id, CancellationToken ct = default);
-    Task<List<NameAmList>?> DeptList(CancellationToken ct = default);
+    Task<NameAmListDto?> Dept(Guid id, CancellationToken ct = default);
+    Task<List<NameAmListDto>?> DeptList(CancellationToken ct = default);
 }

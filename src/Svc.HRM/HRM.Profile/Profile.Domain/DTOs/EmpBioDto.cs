@@ -5,7 +5,7 @@ namespace Profile.Domain.DTOs;
 public class EmpBioListDto : BaseDto
 {
     public string MaritalStatus { get; set; } = default!; //eum.MaritalStatus (0/1)
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid EmployeeId { get; set; } = default!; //Employee
     public DateTime BirthDate { get; set; } = DateTime.UtcNow;
     public string BirthLocation { get; set; } = default!;
@@ -28,7 +28,7 @@ public class EmpBioAddDto
     public string HasBirthCert { get; set; } = default!; // enum.YesNo (0/1)
     public string HasMarriageCert { get; set; } = default!; // enum.YesNo (0/1)
     public string MaritalStatus { get; set; } = default!; //eum.MaritalStatus (0/1)
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid EmployeeId { get; set; } = default!; //Employee
 }
 
@@ -41,7 +41,7 @@ public class EmpBioModDto
     public string HasBirthCert { get; set; } = default!; // enum.YesNo (0/1)
     public string HasMarriageCert { get; set; } = default!; // enum.YesNo (0/1)
     public string MaritalStatus { get; set; } = default!; //eum.MaritalStatus (0/1)
-    public Guid AddressId { get; set; } = default!; //Cor.HRMM.Address
+    public Guid AddressId { get; set; } = default!; //Address
     public Guid EmployeeId { get; set; } = default!; //Employee
     public string RowVersion { get; set; } = default!;
 }

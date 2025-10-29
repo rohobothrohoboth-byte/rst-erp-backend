@@ -6,58 +6,8 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Commands;
 
-public class EmpGuarantorAddCmd : IRequest<EmpGuarantorListDto> { public EmpGuarantorAddDto AddDto { get; set; } = default!; }
 public class EmpGuarantorModCmd : IRequest<EmpGuarantorListDto> { public EmpGuarantorModDto ModDto { get; set; } = default!; }
 public class EmpGuarantorDelCmd : IRequest { public Guid Id { get; set; } }
-
-public class EmpGuarantorAddCmdHandler : IRequestHandler<EmpGuarantorAddCmd, EmpGuarantorListDto>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMediator _med;
-
-    public EmpGuarantorAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<EmpGuarantorListDto> Handle(EmpGuarantorAddCmd request, CancellationToken cancellationToken)
-    {
-        await _unitOfWork.Begin();
-        try
-        {
-            var per = new Person
-            {
-                FirstName = request.AddDto.FirstName,
-                FirstNameAm = request.AddDto.FirstNameAm,
-                MiddleName = request.AddDto.MiddleName,
-                MiddleNameAm = request.AddDto.MiddleNameAm,
-                LastName = request.AddDto.LastName,
-                LastNameAm = request.AddDto.LastNameAm,
-                Gender = request.AddDto.Gender,
-                Nationality = request.AddDto.Nationality
-            };
-            await _unitOfWork.Repository<Person>().Add(per);
-
-            var data = new EmpGuarantor
-            {
-                AddressId = request.AddDto.AddressId,
-                RelationId = request.AddDto.RelationId,
-                EmployeeId = request.AddDto.EmployeeId,
-                PersonId = per.Id
-            };
-            await _unitOfWork.Repository<EmpGuarantor>().Add(data);
-            await _unitOfWork.Commit();
-
-            var res = new EmpGuarantorListDto();
-            var response = await _med.Send(new EmpGuarantorByIdQry { Id = data.Id }, cancellationToken);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-    }
-}
 
 public class EmpGuarantorModCmdHandler : IRequestHandler<EmpGuarantorModCmd, EmpGuarantorListDto>
 {
