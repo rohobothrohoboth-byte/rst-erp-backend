@@ -39,22 +39,31 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
             var dept = deL!.FirstOrDefault(t => t.Id == data.DepartmentId);
             var jg = jgL!.FirstOrDefault(t => t.Id == data.JobGradeId);
             var pos = poL!.FirstOrDefault(t => t.Id == data.PositionId);
-            var ePhoto = ePhotoL.FirstOrDefault(t => t.EmployeeId == data.Id);
-            var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.FileMetaDataId);
+            var photo = "";
+            if (ePhotoL.Any())
+            {
+                var ePhoto = ePhotoL.FirstOrDefault(t => t.EmployeeId == data.Id);
+                if (ePhoto != null)
+                {
+                    var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.ThumbnailId);
+                    photo = Convert.ToBase64String(ePhotoB!.Data);
+                }
+            }
+            
             var c = new EmployeeListDto
             {
                 Id = data.Id,
-                EmpFullName = $"{per!.FirstName} {per.MiddleName} {per.LastName}",
-                EmpFullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
+                EmpFullName = per != null ? $"{per.FirstName} {per.MiddleName} {per.LastName}" : "NOT AVAILABLE",
+                EmpFullNameAm = per != null ? $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}" : "NOT AVAILABLE",
                 Code = data.Code,
-                Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
+                Gender = ((Gender)Enum.Parse(typeof(Gender), per!.Gender)).ToDisplayName(),
                 Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
                 Department = dept != null ? dept.Name : "NOT AVAILABLE",
                 Position = pos != null ? pos.Name : "NOT AVAILABLE",
                 JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
                 EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
                 EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
-                Photo = Convert.ToBase64String(ePhotoB!.Data),
+                Photo = photo,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,

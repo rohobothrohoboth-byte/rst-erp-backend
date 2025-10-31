@@ -11,13 +11,9 @@ public class EmpAddStep2Cmd : IRequest<EmpAddRes> { public Step2Dto AddDto { get
 public class EmpAddStep3Cmd : IRequest<EmpAddRes> { public Step3Dto AddDto { get; set; } = default!; }
 public class EmpAddStep4Cmd : IRequest<EmpAddRes> { public Step4Dto AddDto { get; set; } = default!; }
 
-
 public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _unitOfWork;
-    //private readonly IMediator _med;
-
-    //public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
     public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
 
     public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken cancellationToken)
@@ -52,46 +48,51 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             };
             await _unitOfWork.Repository<Employee>().Add(data);
 
-            var mData = new FileMetaData
+            if (request.AddDto.File != null)
             {
-                FileName = request.AddDto.File.FileName,
-                ContentType = request.AddDto.File.ContentType,
-                FileSize = request.AddDto.File.Length
-            };
-            await _unitOfWork.Repository<FileMetaData>().Add(mData);
+                var mData = new FileMetaData
+                {
+                    FileName = request.AddDto.File.FileName,
+                    ContentType = request.AddDto.File.ContentType,
+                    FileSize = request.AddDto.File.Length
+                };
+                await _unitOfWork.Repository<FileMetaData>().Add(mData);
 
-            using var ms = new MemoryStream();
-            await request.AddDto.File.CopyToAsync(ms, cancellationToken);
-            ms.Position = 0;
-            var pBlob = new EmpPhotoBlob
-            {
-                FileMetaDataId = mData.Id,
-                Data = ms.ToArray()
-            };
-            await _unitOfWork.Repository<EmpPhotoBlob>().Add(pBlob);
+                using var ms = new MemoryStream();
+                await request.AddDto.File.CopyToAsync(ms, cancellationToken);
+                ms.Position = 0;
+                var pBlob = new EmpPhotoBlob
+                {
+                    FileMetaDataId = mData.Id,
+                    Data = ms.ToArray()
+                };
+                await _unitOfWork.Repository<EmpPhotoBlob>().Add(pBlob);
 
-            var thumbData = ThumbnailGenerator.GenerateThumbnail(ms);
-            var tData = new FileMetaData
-            {
-                FileName = $"{request.AddDto.File.FileName}_thumb",
-                ContentType = "image/png",
-                FileSize = thumbData.Length
-            };
-            await _unitOfWork.Repository<FileMetaData>().Add(tData);
+                var thumbData = ThumbnailGenerator.GenerateThumbnail(ms);
+                var tData = new FileMetaData
+                {
+                    FileName = $"{request.AddDto.File.FileName}_thumbnail",
+                    ContentType = "image/png",
+                    FileSize = thumbData.Length
+                };
+                await _unitOfWork.Repository<FileMetaData>().Add(tData);
 
-            var tBlob = new EmpPhotoThumbnail
-            {
-                FileMetaDataId = tData.Id,
-                Data = thumbData.ToArray()
-            };
-            await _unitOfWork.Repository<EmpPhotoThumbnail>().Add(tBlob);
+                var tBlob = new EmpPhotoThumbnail
+                {
+                    FileMetaDataId = tData.Id,
+                    Data = thumbData.ToArray()
+                };
+                await _unitOfWork.Repository<EmpPhotoThumbnail>().Add(tBlob);
 
-            var emp = new EmpPhoto
-            {
-                FileMetaDataId = mData.Id,
-                EmployeeId = data.Id
-            };
-            await _unitOfWork.Repository<EmpPhoto>().Add(emp);
+                var emp = new EmpPhoto
+                {
+                    ThumbnailId = tData.Id,
+                    FileMetaDataId = mData.Id,
+                    EmployeeId = data.Id
+                };
+                await _unitOfWork.Repository<EmpPhoto>().Add(emp);
+            }
+
             await _unitOfWork.Commit();
 
             var res = new EmpAddRes { Id = data.Id };
@@ -306,30 +307,33 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
             };
             await _unitOfWork.Repository<EmpGuarantor>().Add(data);
 
-            var mData = new FileMetaData
+            if (request.AddDto.File != null)
             {
-                FileName = request.AddDto.File.FileName,
-                ContentType = request.AddDto.File.ContentType,
-                FileSize = request.AddDto.File.Length
-            };
-            await _unitOfWork.Repository<FileMetaData>().Add(mData);
+                var mData = new FileMetaData
+                {
+                    FileName = request.AddDto.File.FileName,
+                    ContentType = request.AddDto.File.ContentType,
+                    FileSize = request.AddDto.File.Length
+                };
+                await _unitOfWork.Repository<FileMetaData>().Add(mData);
 
-            using var ms = new MemoryStream();
-            await request.AddDto.File.CopyToAsync(ms, cancellationToken);
-            ms.Position = 0;
-            var pBlob = new EmpGuarantorFileBlob
-            {
-                FileMetaDataId = mData.Id,
-                Data = ms.ToArray()
-            };
-            await _unitOfWork.Repository<EmpGuarantorFileBlob>().Add(pBlob);
+                using var ms = new MemoryStream();
+                await request.AddDto.File.CopyToAsync(ms, cancellationToken);
+                ms.Position = 0;
+                var pBlob = new EmpGuarantorFileBlob
+                {
+                    FileMetaDataId = mData.Id,
+                    Data = ms.ToArray()
+                };
+                await _unitOfWork.Repository<EmpGuarantorFileBlob>().Add(pBlob);
 
-            var emp = new EmpGuarantorFile
-            {
-                FileMetaDataId = mData.Id,
-                EmpGuarantorId = data.Id
-            };
-            await _unitOfWork.Repository<EmpGuarantorFile>().Add(emp);
+                var emp = new EmpGuarantorFile
+                {
+                    FileMetaDataId = mData.Id,
+                    EmpGuarantorId = data.Id
+                };
+                await _unitOfWork.Repository<EmpGuarantorFile>().Add(emp);
+            }
             await _unitOfWork.Commit();
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };

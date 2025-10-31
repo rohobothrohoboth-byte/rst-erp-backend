@@ -26,8 +26,8 @@ builder.Services.AddControllers();
 
 var gatewayUrl = builder.Configuration["Services:Gateway"];
 var lupUrl = builder.Configuration["Services:Lup"];
-var corHRMMUrl = builder.Configuration["Services:Cor.HRMM"];
-var corModuleUrl = builder.Configuration["Services:Cor.Module"];
+var corHRMMUrl = builder.Configuration["Services:CorHRMM"];
+var corModuleUrl = builder.Configuration["Services:CorModule"];
 
 builder.Services.AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 

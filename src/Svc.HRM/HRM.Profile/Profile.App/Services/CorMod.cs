@@ -9,7 +9,7 @@ public class CorMod(HttpClient http) : ICorMod
     {
         try
         {
-            using var res = await http.GetAsync($"GetDeptName/{id}", ct);
+            using var res = await http.GetAsync($"Names/GetDeptName/{id}", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<NameAmListDto>(cancellationToken: ct);
         }
@@ -22,7 +22,7 @@ public class CorMod(HttpClient http) : ICorMod
     {
         try
         {
-            using var res = await http.GetAsync("AllDeptName", ct);
+            using var res = await http.GetAsync("Names/AllDeptName", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<List<NameAmListDto>>(cancellationToken: ct);
         }

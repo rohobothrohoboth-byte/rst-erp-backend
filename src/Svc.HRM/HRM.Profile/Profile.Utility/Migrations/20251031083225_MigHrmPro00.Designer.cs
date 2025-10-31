@@ -12,7 +12,7 @@ using Profile.Utility.Persistence;
 namespace Profile.Utility.Migrations
 {
     [DbContext(typeof(HrmProfileDbContext))]
-    [Migration("20251029114550_MigHrmPro00")]
+    [Migration("20251031083225_MigHrmPro00")]
     partial class MigHrmPro00
     {
         /// <inheritdoc />
@@ -479,11 +479,16 @@ namespace Profile.Utility.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
+                    b.Property<Guid>("ThumbnailId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("FileMetaDataId");
+
+                    b.HasIndex("ThumbnailId");
 
                     b.ToTable("EmpPhoto");
                 });
@@ -1059,9 +1064,17 @@ namespace Profile.Utility.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Profile.Domain.Entities.FileMetaData", "Thumbnail")
+                        .WithMany()
+                        .HasForeignKey("ThumbnailId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Employee");
 
                     b.Navigation("FileMetaData");
+
+                    b.Navigation("Thumbnail");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.EmpPhotoBlob", b =>

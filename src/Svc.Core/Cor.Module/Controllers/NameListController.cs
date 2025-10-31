@@ -56,7 +56,18 @@ public class NameListController(IMediator med) : ControllerBase
         if (res == null) { return NotFound(new { Error = $"BRANCH with Id {id} NOT FOUND" }); }
         return Ok(res);
     }
-
+    
+    /// <summary>
+    /// End point to get list of Departments by BranchId
+    /// </summary>
+    [HttpGet("BranchDept/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> BranchDept(Guid id)
+    {
+        var res = await med.Send(new DeptByBraQry { Id = id });
+        return Ok(res);
+    }
+    
     [HttpGet("AllDeptName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllDeptName()

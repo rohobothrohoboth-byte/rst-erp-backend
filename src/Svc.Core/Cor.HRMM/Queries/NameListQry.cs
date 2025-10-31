@@ -13,6 +13,7 @@ public class JgStepNameAllQry : IRequest<List<NameList>> { }
 public class JgStepNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 public class JobGradeNameAllQry : IRequest<List<NameList>> { }
 public class JobGradeNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class PositionByDeptQry : IRequest<List<NameList>> { public Guid Id { get; set; } }
 public class PositionNameAllQry : IRequest<List<NameList>> { }
 public class PositionNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
@@ -155,6 +156,24 @@ public class JobGradeNameByIdQryHandler : IRequestHandler<JobGradeNameByIdQry, N
             Name = nData.Name
         };
         return c;
+    }
+}
+
+public class PositionByDeptQryHandler : IRequestHandler<PositionByDeptQry, List<NameList>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public PositionByDeptQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<NameList>> Handle(PositionByDeptQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Position>().Find(c => c.DepartmentId == request.Id);
+        var resL = new List<NameList>();
+        var nData = res.ToList();
+        if (nData.Count <= 0) return resL;
+        resL.AddRange(nData.Select(data => new NameList { Id = data.Id, Name = data.Name }));
+
+        return resL;
     }
 }
 

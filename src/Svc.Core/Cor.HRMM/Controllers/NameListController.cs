@@ -93,6 +93,17 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    /// <summary>
+    /// End point to get list of Positions by DepartmentId
+    /// </summary>
+    [HttpGet("DeptPosition/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeptPosition(Guid id)
+    {
+        var res = await med.Send(new PositionByDeptQry { Id = id });
+        return Ok(res);
+    }
+
     [HttpGet("AllPositionName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionName()

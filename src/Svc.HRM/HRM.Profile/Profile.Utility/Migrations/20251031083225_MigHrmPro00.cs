@@ -425,6 +425,7 @@ namespace Profile.Utility.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
                     FileMetaDataId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ThumbnailId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -442,6 +443,12 @@ namespace Profile.Utility.Migrations
                     table.ForeignKey(
                         name: "FK_EmpPhoto_FileMetaData_FileMetaDataId",
                         column: x => x.FileMetaDataId,
+                        principalTable: "FileMetaData",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EmpPhoto_FileMetaData_ThumbnailId",
+                        column: x => x.ThumbnailId,
                         principalTable: "FileMetaData",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -650,6 +657,11 @@ namespace Profile.Utility.Migrations
                 name: "IX_EmpPhoto_FileMetaDataId",
                 table: "EmpPhoto",
                 column: "FileMetaDataId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpPhoto_ThumbnailId",
+                table: "EmpPhoto",
+                column: "ThumbnailId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmpPhotoBlob_FileMetaDataId",

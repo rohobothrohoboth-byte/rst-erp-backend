@@ -9,6 +9,7 @@ public class BranchCompListQry : IRequest<List<NameListDto>> { }
 public class BranchCompByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
 public class BranchAllNameQry : IRequest<List<NameListDto>> { }
 public class BranchNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class DeptByBraQry : IRequest<List<BranchDeptList>> { public Guid Id { get; set; } }
 public class DeptAllNameQry : IRequest<List<NameAmListDto>> { }
 public class DeptNameByIdQry : IRequest<NameAmListDto?> { public Guid Id { get; set; } }
 public class CompAllNameQry : IRequest<List<NameListDto>> { }
@@ -93,6 +94,36 @@ public class BranchNameByIdQryHandler : IRequestHandler<BranchNameByIdQry, NameL
             Name = res.Name
         };
         return c;
+    }
+}
+
+public class DeptByBraQryHandler : IRequestHandler<DeptByBraQry, List<BranchDeptList>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeptByBraQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<BranchDeptList>> Handle(DeptByBraQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Department>().Find(c => c.BranchId == request.Id);
+        var resL = new List<BranchDeptList>();
+        var nData = res.ToList();
+        if (nData.Count <= 0) return resL;
+        foreach (var data in nData)
+        {
+            var bra = await _unitOfWork.Repository<Branch>().GetById(data.BranchId);
+            if (bra == null) continue;
+            var c = new BranchDeptList
+            {
+                Id = data.Id,
+                BranchId = data.BranchId,
+                Dept = data.Name,
+                Branch = bra.Name
+            };
+            resL.Add(c);
+        }
+
+        return resL;
     }
 }
 

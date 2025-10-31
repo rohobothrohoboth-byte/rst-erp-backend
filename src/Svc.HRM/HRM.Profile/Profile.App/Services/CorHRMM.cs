@@ -9,7 +9,7 @@ public class CorHRMM(HttpClient http) : ICorHRMM
     {
         try
         {
-            using var res = await http.GetAsync($"GetJobGradeName/{id}", ct);
+            using var res = await http.GetAsync($"Names/GetJobGradeName/{id}", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<NameList>(cancellationToken: ct);
         }
@@ -22,7 +22,7 @@ public class CorHRMM(HttpClient http) : ICorHRMM
     {
         try
         {
-            using var res = await http.GetAsync("AllJobGradeName", ct);
+            using var res = await http.GetAsync("Names/AllJobGradeName", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<List<NameList>>(cancellationToken: ct);
         }
@@ -35,7 +35,7 @@ public class CorHRMM(HttpClient http) : ICorHRMM
     {
         try
         {
-            using var res = await http.GetAsync($"GetPositionName/{id}", ct);
+            using var res = await http.GetAsync($"Names/GetPositionName/{id}", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<NameAmList>(cancellationToken: ct);
         }
@@ -48,7 +48,7 @@ public class CorHRMM(HttpClient http) : ICorHRMM
     {
         try
         {
-            using var res = await http.GetAsync("AllPositionName", ct);
+            using var res = await http.GetAsync("Names/AllPositionName", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<List<NameAmList>>(cancellationToken: ct);
         }

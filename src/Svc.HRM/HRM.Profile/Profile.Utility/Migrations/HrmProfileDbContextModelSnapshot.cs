@@ -476,11 +476,16 @@ namespace Profile.Utility.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
+                    b.Property<Guid>("ThumbnailId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("FileMetaDataId");
+
+                    b.HasIndex("ThumbnailId");
 
                     b.ToTable("EmpPhoto");
                 });
@@ -1056,9 +1061,17 @@ namespace Profile.Utility.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Profile.Domain.Entities.FileMetaData", "Thumbnail")
+                        .WithMany()
+                        .HasForeignKey("ThumbnailId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Employee");
 
                     b.Navigation("FileMetaData");
+
+                    b.Navigation("Thumbnail");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.EmpPhotoBlob", b =>
