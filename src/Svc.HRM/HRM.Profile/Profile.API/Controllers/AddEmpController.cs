@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
 namespace Profile.API.Controllers;
@@ -92,5 +93,15 @@ public class AddEmpController(IMediator med) : ControllerBase
         {
             return BadRequest(new { Error = "Failed to create Employee", Details = ex.Message });
         }
+    }
+
+    [HttpGet("Step5/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Step5(Guid id)
+    {
+        var res = await med.Send(new Step5Qry { Id = id });
+        if (res == null) { return NotFound(new { Error = $"EMPLOYEE with Id {id} NOT FOUND!" }); }
+        return Ok(res);
     }
 }
