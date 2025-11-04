@@ -191,7 +191,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             c.MotherFullName = eBio.MotherFullName;
             c.HasBirthCert = ((YesNo)Enum.Parse(typeof(YesNo), eBio.HasBirthCert)).ToDisplayName();
             c.HasMarriageCert = ((YesNo)Enum.Parse(typeof(YesNo), eBio.HasMarriageCert)).ToDisplayName();
-            c.MaritalStatus = ((YesNo)Enum.Parse(typeof(MaritalStat), eBio.MaritalStatus)).ToDisplayName();
+            c.MaritalStatus = ((MaritalStat)Enum.Parse(typeof(MaritalStat), eBio.MaritalStatus)).ToDisplayName();
 
             var address = await _unitOfWork.Repository<Address>().GetById(eBio.AddressId);
             if (address != null)

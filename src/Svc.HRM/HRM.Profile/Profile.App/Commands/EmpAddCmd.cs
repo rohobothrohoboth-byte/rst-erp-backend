@@ -115,9 +115,6 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _unitOfWork;
-    //private readonly IMediator _med;
-
-    //public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
     public EmpAddStep2CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
 
     public async Task<EmpAddRes> Handle(EmpAddStep2Cmd request, CancellationToken cancellationToken)
@@ -168,12 +165,6 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
-
-            //var res = new EmpAddRes();
-            //var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
-            //if (response == null) { return res; }
-            //res.Id = response.Id;
-            //return res;
         }
         catch
         {
@@ -186,9 +177,6 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _unitOfWork;
-    //private readonly IMediator _med;
-
-    //public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
     public EmpAddStep3CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
 
     public async Task<EmpAddRes> Handle(EmpAddStep3Cmd request, CancellationToken cancellationToken)
@@ -239,12 +227,6 @@ public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
-
-            //var res = new EmpAddRes();
-            //var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
-            //if (response == null) { return res; }
-            //res.Id = response.Id;
-            //return res;
         }
         catch
         {
@@ -257,9 +239,6 @@ public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _unitOfWork;
-    //private readonly IMediator _med;
-
-    //public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
     public EmpAddStep4CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
 
     public async Task<EmpAddRes> Handle(EmpAddStep4Cmd request, CancellationToken cancellationToken)
@@ -267,24 +246,6 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
         await _unitOfWork.Begin();
         try
         {
-            var address = new Address
-            {
-                AddressType = request.AddDto.AddressType,
-                Country = request.AddDto.Country,
-                Region = request.AddDto.Region,
-                Subcity = request.AddDto.Subcity,
-                Zone = request.AddDto.Zone,
-                Woreda = request.AddDto.Woreda,
-                Kebele = request.AddDto.Kebele,
-                HouseNo = request.AddDto.HouseNo,
-                Telephone = request.AddDto.Telephone,
-                PoBox = request.AddDto.PoBox,
-                Fax = request.AddDto.Fax,
-                Email = request.AddDto.Email,
-                Website = request.AddDto.Website
-            };
-            await _unitOfWork.Repository<Address>().Add(address);
-
             var per = new Person
             {
                 FirstName = request.AddDto.FirstName,
@@ -297,6 +258,25 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
                 Nationality = request.AddDto.Nationality
             };
             await _unitOfWork.Repository<Person>().Add(per);
+
+            var address = new Address
+            {
+                AddressType = request.AddDto.AddressType,
+                Country = request.AddDto.Country,
+                Region = request.AddDto.Region,
+                Subcity = request.AddDto.Subcity,
+                Zone = request.AddDto.Zone,
+                Woreda = request.AddDto.Woreda,
+                Kebele = request.AddDto.Kebele,
+                HouseNo = request.AddDto.HouseNo,
+                Telephone = request.AddDto.Telephone,
+                PoBox = request.AddDto.PoBox ?? "",
+                Fax = request.AddDto.Fax ?? "",
+                Email = request.AddDto.Email ?? "",
+                Website = request.AddDto.Website ?? ""
+            };
+
+            await _unitOfWork.Repository<Address>().Add(address);
 
             var data = new EmpGuarantor
             {
@@ -338,12 +318,6 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
-
-            //var res = new EmpAddRes();
-            //var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
-            //if (response == null) { return res; }
-            //res.Id = response.Id;
-            //return res;
         }
         catch
         {
