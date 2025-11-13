@@ -1,11 +1,12 @@
-﻿using System.Collections.Concurrent;
-using System.Data;
-using Cor.HRMM.Extensions;
-using Cor.HRMM.Interfaces;
-using Cor.HRMM.Models.Entities;
+﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using Profile.App.Interfaces;
+using Profile.Domain.Entities;
+using Profile.Utility.Extensions;
+using System.Collections.Concurrent;
+using System.Data;
 
-namespace Cor.HRMM.Repositories;
+namespace Profile.Utility.Repos;
 
 public class UnitOfWork : IUnitOfWork
 {
@@ -23,16 +24,16 @@ public class UnitOfWork : IUnitOfWork
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
-    public ICorHRMMRepo<TEntity> Repository<TEntity>() where TEntity : BaseEntity
+    public IHrmProfileRepo<TEntity> Repository<TEntity>() where TEntity : BaseEntity
     {
-        return (ICorHRMMRepo<TEntity>)_repositories.GetOrAdd(typeof(TEntity), _ =>
+        return (IHrmProfileRepo<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
         {
-            _logger.LogInformation("Creating new CorHRMMRepo<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
-            var repoLogger = _loggerFactory.CreateLogger<CorHRMMRepo<TEntity>>();
-            return new CorHRMMRepo<TEntity>(_context, repoLogger);
+            _logger.LogInformation("Creating new HrmProfileRepo<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
+            var repoLogger = _loggerFactory.CreateLogger<HrmProfileRepo<TEntity>>();
+            return new HrmProfileRepo<TEntity>(_context, repoLogger);
         });
     }
-
+    
     public async Task Begin()
     {
         if (_transaction != null)

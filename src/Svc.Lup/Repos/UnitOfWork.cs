@@ -1,39 +1,30 @@
-﻿using System.Collections.Concurrent;
+﻿using Npgsql;
+using Svc.Lup.Extensions;
+using Svc.Lup.Interfaces;
+using System.Collections.Concurrent;
 using System.Data;
-using Microsoft.Extensions.Logging;
-using Npgsql;
-using Profile.App.Interfaces;
-using Profile.Domain.Entities;
-using Profile.Utility.Extensions;
 
-namespace Profile.Utility.Repositories;
+namespace Svc.Lup.Repos;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(DapperContext context, ILogger<UnitOfWork> logger, ILoggerFactory loggerFactory) : IUnitOfWork
 {
-    private readonly DapperContext _context;
-    private readonly ILogger<UnitOfWork> _logger;
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly DapperContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    private readonly ILogger<UnitOfWork> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
     private NpgsqlTransaction? _transaction;
     private bool _disposed;
 
-    public UnitOfWork(DapperContext context, ILogger<UnitOfWork> logger, ILoggerFactory loggerFactory)
+    public ILupRepository<TEntity> Repository<TEntity>() where TEntity : class
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-    }
-
-    public IHrmProfileRepo<TEntity> Repository<TEntity>() where TEntity : BaseEntity
-    {
-        return (IHrmProfileRepo<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
+        return (ILupRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
         {
-            _logger.LogInformation("Creating new HrmProfileRepo<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
-            var repoLogger = _loggerFactory.CreateLogger<HrmProfileRepo<TEntity>>();
-            return new HrmProfileRepo<TEntity>(_context, repoLogger);
+            _logger.LogInformation("Creating new LupRepository<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
+            var repoLogger = _loggerFactory.CreateLogger<LupRepository<TEntity>>();
+            return new LupRepository<TEntity>(_context, repoLogger);
         });
     }
-    
+
     public async Task Begin()
     {
         if (_transaction != null)

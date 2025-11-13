@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using Cor.Module.Extensions;
 
-namespace Cor.Module.Repositories;
+namespace Cor.Module.Repos;
 
 public class UnitOfWork : IUnitOfWork
 {

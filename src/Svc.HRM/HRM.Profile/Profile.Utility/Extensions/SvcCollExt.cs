@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Profile.App.Interfaces;
 using Profile.Utility.Persistence;
-using Profile.Utility.Repositories;
+using Profile.Utility.Repos;
 
 namespace Profile.Utility.Extensions;
 

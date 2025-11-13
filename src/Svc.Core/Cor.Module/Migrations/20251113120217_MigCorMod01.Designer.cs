@@ -3,17 +3,20 @@ using System;
 using Cor.Module.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Module.Utility.Migrations
+namespace Cor.Module.Migrations
 {
     [DbContext(typeof(CoreModuleDbContext))]
-    partial class CoreModuleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251113120217_MigCorMod01")]
+    partial class MigCorMod01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

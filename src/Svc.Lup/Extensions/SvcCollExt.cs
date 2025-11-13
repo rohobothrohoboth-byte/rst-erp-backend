@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Svc.Lup.Interfaces;
 using Svc.Lup.Persistence;
-using Svc.Lup.Repositories;
+using Svc.Lup.Repos;
 
 namespace Svc.Lup.Extensions;
 

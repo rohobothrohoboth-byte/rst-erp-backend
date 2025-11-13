@@ -1,13 +1,13 @@
-﻿using Cor.HRMM.Extensions;
-using Cor.HRMM.Interfaces;
-using Cor.HRMM.Models.Entities;
+﻿using Cor.Module.Interfaces;
+using Cor.Module.Models.Entities;
 using Dapper;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Cor.Module.Extensions;
 
-namespace Cor.HRMM.Repositories;
+namespace Cor.Module.Repos;
 
 public class DynamicQuery
 {
@@ -15,19 +15,19 @@ public class DynamicQuery
     public DynamicParameters Parameters { get; set; } = new DynamicParameters();
 }
 
-public class CorHRMMRepo<T> : ICorHRMMRepo<T> where T : BaseEntity
+public class CoreModuleRepo<T> : ICoreModuleRepo<T> where T : BaseEntity
 {
     private readonly IDbConnection _dbConnection;
-    private readonly ILogger<CorHRMMRepo<T>> _logger;
+    private readonly ILogger<CoreModuleRepo<T>> _logger;
     private readonly string _tableName;
 
-    public CorHRMMRepo(DapperContext context, ILogger<CorHRMMRepo<T>> logger)
+    public CoreModuleRepo(DapperContext context, ILogger<CoreModuleRepo<T>> logger)
     {
         _dbConnection = context.CreateConnection();
         _logger = logger;
         _tableName = typeof(T).Name;
     }
-    
+
     public async Task<IEnumerable<T>> GetAll()
     {
         _logger.LogInformation("Fetching all entities from {TableName} where IsDeleted = false", _tableName);
@@ -45,10 +45,21 @@ public class CorHRMMRepo<T> : ICorHRMMRepo<T> where T : BaseEntity
     public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
     {
         _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-        var query = BuildDynamicQuery(predicate);
-        _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
-        return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
+
+        var (sqlWhere, parameters) = ExpressionToSql.Parse(predicate);
+        var sql = $"SELECT * FROM {_tableName} WHERE {sqlWhere} LIMIT 1";
+
+        _logger.LogDebug("Executing SQL: {Sql} with parameters: {@Params}", sql, parameters);
+
+        return await _dbConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
     }
+    //public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
+    //{
+    //    _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
+    //    var query = BuildDynamicQuery(predicate);
+    //    _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
+    //    return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
+    //}
 
     public async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> predicate)
     {

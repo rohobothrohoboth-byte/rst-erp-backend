@@ -1,6 +1,6 @@
 ﻿using Cor.Module.Interfaces;
 using Cor.Module.Persistence;
-using Cor.Module.Repositories;
+using Cor.Module.Repos;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Module.Extensions;

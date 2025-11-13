@@ -1,13 +1,14 @@
-﻿using Cor.Module.Interfaces;
-using Cor.Module.Models.Entities;
-using Dapper;
+﻿using Dapper;
+using Microsoft.Extensions.Logging;
+using Profile.App.Interfaces;
+using Profile.Domain.Entities;
+using Profile.Utility.Extensions;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using Cor.Module.Extensions;
 
-namespace Cor.Module.Repositories;
+namespace Profile.Utility.Repos;
 
 public class DynamicQuery
 {
@@ -15,13 +16,13 @@ public class DynamicQuery
     public DynamicParameters Parameters { get; set; } = new DynamicParameters();
 }
 
-public class CoreModuleRepo<T> : ICoreModuleRepo<T> where T : BaseEntity
+public class HrmProfileRepo<T> : IHrmProfileRepo<T> where T : BaseEntity
 {
     private readonly IDbConnection _dbConnection;
-    private readonly ILogger<CoreModuleRepo<T>> _logger;
+    private readonly ILogger<HrmProfileRepo<T>> _logger;
     private readonly string _tableName;
 
-    public CoreModuleRepo(DapperContext context, ILogger<CoreModuleRepo<T>> logger)
+    public HrmProfileRepo(DapperContext context, ILogger<HrmProfileRepo<T>> logger)
     {
         _dbConnection = context.CreateConnection();
         _logger = logger;
@@ -60,11 +61,7 @@ public class CoreModuleRepo<T> : ICoreModuleRepo<T> where T : BaseEntity
 
     public async Task Add(T entity)
     {
-        if (entity.Id == Guid.Empty)
-        {
-            entity.Id = Guid.NewGuid();
-        }
-
+        if (entity.Id == Guid.Empty) { entity.Id = Guid.NewGuid(); }
         entity.DateAdd = DateTime.UtcNow;
 
         var properties = typeof(T).GetProperties().Where(p => IsSupportedDapperType(p.PropertyType) && !IsIgnoredProperty(p)).ToList();
@@ -75,15 +72,12 @@ public class CoreModuleRepo<T> : ICoreModuleRepo<T> where T : BaseEntity
         var sql = $@"INSERT INTO ""{_tableName}"" ({columns}, ""RowVersion"") VALUES ({paramList}, gen_random_bytes(8));";
 
         var paramObj = new DynamicParameters();
-        foreach (var prop in properties)
-        {
-            paramObj.Add("@" + prop.Name, prop.GetValue(entity));
-        }
+        foreach (var prop in properties) { paramObj.Add("@" + prop.Name, prop.GetValue(entity)); }
 
         _logger.LogDebug("Inserting entity into {TableName} with Id {Id}", _tableName, entity.Id);
         await _dbConnection.ExecuteAsync(sql, paramObj);
     }
-
+    
     public async Task<T> Update(T entity)
     {
         var newRowVersion = await _dbConnection.ExecuteScalarAsync<byte[]>("SELECT gen_random_bytes(8);") ?? throw new InvalidOperationException("Failed to generate RowVersion.");
@@ -134,12 +128,12 @@ public class CoreModuleRepo<T> : ICoreModuleRepo<T> where T : BaseEntity
     private bool IsSupportedDapperType(Type type)
     {
         var t = Nullable.GetUnderlyingType(type) ?? type;
-        return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(Enum) || t == typeof(int) || t == typeof(DateTime) || t == typeof(byte[]);
+        //return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(Enum) || t == typeof(int) || t == typeof(DateTime) || t == typeof(byte[]);
+        return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(byte[]) || t == typeof(DateTime) || t.IsEnum || t == typeof(uint) || t == typeof(sbyte) || t == typeof(long);
     }
 
     private bool IsIgnoredProperty(PropertyInfo p)
     {
-        //return p.Name is nameof(BaseEntity.RowVersion) or "StartDate" or "EndDate" or "StartDateAm" or "EndDateAm" || !IsSupportedDapperType(p.PropertyType);
         return p.Name is nameof(BaseEntity.RowVersion) || !IsSupportedDapperType(p.PropertyType);
     }
 

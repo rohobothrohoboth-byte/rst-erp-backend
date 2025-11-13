@@ -1,27 +1,35 @@
-﻿using Npgsql;
-using Svc.Lup.Extensions;
-using Svc.Lup.Interfaces;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Data;
+using Cor.HRMM.Extensions;
+using Cor.HRMM.Interfaces;
+using Cor.HRMM.Models.Entities;
+using Npgsql;
 
-namespace Svc.Lup.Repositories;
+namespace Cor.HRMM.Repos;
 
-public class UnitOfWork(DapperContext context, ILogger<UnitOfWork> logger, ILoggerFactory loggerFactory) : IUnitOfWork
+public class UnitOfWork : IUnitOfWork
 {
-    private readonly DapperContext _context = context ?? throw new ArgumentNullException(nameof(context));
-    private readonly ILogger<UnitOfWork> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly ILoggerFactory _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    private readonly DapperContext _context;
+    private readonly ILogger<UnitOfWork> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
     private NpgsqlTransaction? _transaction;
     private bool _disposed;
 
-    public ILupRepository<TEntity> Repository<TEntity>() where TEntity : class
+    public UnitOfWork(DapperContext context, ILogger<UnitOfWork> logger, ILoggerFactory loggerFactory)
     {
-        return (ILupRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity), type =>
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
+
+    public ICorHRMMRepo<TEntity> Repository<TEntity>() where TEntity : BaseEntity
+    {
+        return (ICorHRMMRepo<TEntity>)_repositories.GetOrAdd(typeof(TEntity), _ =>
         {
-            _logger.LogInformation("Creating new LupRepository<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
-            var repoLogger = _loggerFactory.CreateLogger<LupRepository<TEntity>>();
-            return new LupRepository<TEntity>(_context, repoLogger);
+            _logger.LogInformation("Creating new CorHRMMRepo<{EntityType}> instance for UnitOfWork.", typeof(TEntity).Name);
+            var repoLogger = _loggerFactory.CreateLogger<CorHRMMRepo<TEntity>>();
+            return new CorHRMMRepo<TEntity>(_context, repoLogger);
         });
     }
 

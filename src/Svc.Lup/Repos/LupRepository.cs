@@ -3,7 +3,7 @@ using Svc.Lup.Extensions;
 using Svc.Lup.Interfaces;
 using System.Data;
 
-namespace Svc.Lup.Repositories;
+namespace Svc.Lup.Repos;
 
 public class LupRepository<T> : ILupRepository<T> where T : class
 {
