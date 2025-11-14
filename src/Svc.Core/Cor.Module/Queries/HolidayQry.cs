@@ -46,7 +46,6 @@ public class AllHolidayQryHandler : IRequestHandler<AllHolidayQry, List<HolidayL
 public class HolidayByIdQryHandler : IRequestHandler<HolidayByIdQry, HolidayListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-
     public HolidayByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task<HolidayListDto?> Handle(HolidayByIdQry request, CancellationToken cancellationToken)

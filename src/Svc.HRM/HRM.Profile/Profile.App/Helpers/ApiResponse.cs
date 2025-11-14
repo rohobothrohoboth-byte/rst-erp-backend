@@ -1,4 +1,4 @@
-﻿namespace Cor.Module.Middlewares;
+﻿namespace Profile.App.Helpers;
 
 public class ApiResponse<T>
 {
@@ -29,7 +29,5 @@ public class ApiResponse<T>
     }
 
     public static ApiResponse<T> Ok(T? data, string? message = null) => new(data, message);
-    public static ApiResponse<T> Ok(string? message) => new(default, message);
     public static ApiResponse<T> Fail(string? message, List<string>? errors = null, int? statusCode = 400) => new(message, errors, statusCode);
-    public static ApiResponse<T> Fail(string? message, int statusCode = 400) => new(message, null, statusCode);
 }

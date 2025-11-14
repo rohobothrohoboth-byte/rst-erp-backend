@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Dapper;
 
-namespace Cor.Module.Repos;
+namespace Cor.HRMM.Repos;
 
 public static class ExpressionToSql
 {

@@ -6,15 +6,8 @@ using Profile.Utility.Extensions;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Profile.Utility.Repos;
-
-public class DynamicQuery
-{
-    public string Sql { get; set; } = string.Empty;
-    public DynamicParameters Parameters { get; set; } = new DynamicParameters();
-}
 
 public class HrmProfileRepo<T> : IHrmProfileRepo<T> where T : BaseEntity
 {
@@ -46,17 +39,29 @@ public class HrmProfileRepo<T> : IHrmProfileRepo<T> where T : BaseEntity
     public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
     {
         _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-        var query = BuildDynamicQuery(predicate);
-        _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
-        return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
+
+        var (sqlWhere, parameters) = ExpressionToSql.Parse(predicate);
+        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE {sqlWhere} AND ""IsDeleted"" = false LIMIT 1";
+        _logger.LogDebug("Executing SQL: {Sql} with parameters: {@Params}", sql, parameters);
+
+        return await _dbConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
     }
+
+    //public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
+    //{
+    //    _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
+    //    var query = BuildDynamicQuery(predicate);
+    //    _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
+    //    return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
+    //}
 
     public async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> predicate)
     {
         _logger.LogInformation("Fetching {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-        var query = BuildDynamicQuery(predicate);
-        _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
-        return await _dbConnection.QueryAsync<T>(query.Sql, query.Parameters);
+        var (sqlWhere, parameters) = ExpressionToSql.Parse(predicate);
+        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE {sqlWhere} AND ""IsDeleted"" = false";
+        _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", sql, parameters);
+        return await _dbConnection.QueryAsync<T>(sql, parameters);
     }
 
     public async Task Add(T entity)
@@ -135,88 +140,5 @@ public class HrmProfileRepo<T> : IHrmProfileRepo<T> where T : BaseEntity
     private bool IsIgnoredProperty(PropertyInfo p)
     {
         return p.Name is nameof(BaseEntity.RowVersion) || !IsSupportedDapperType(p.PropertyType);
-    }
-
-    private DynamicQuery BuildDynamicQuery(Expression<Func<T, bool>> predicate)
-    {
-        var parameters = new DynamicParameters();
-        var sb = new StringBuilder();
-        int index = 0;
-
-        void Parse(Expression expr)
-        {
-            if (expr is BinaryExpression be)
-            {
-                if (be.NodeType == ExpressionType.Equal)
-                {
-                    if (be.Left is MemberExpression member)
-                    {
-                        var value = Expression.Lambda(be.Right).Compile().DynamicInvoke();
-                        var paramName = $"@p{index++}";
-                        sb.Append($@"""{member.Member.Name}"" = {paramName}");
-                        parameters.Add(paramName, value);
-                    }
-                    else
-                        throw new NotSupportedException("Left side must be a property.");
-                }
-                else if (be.NodeType == ExpressionType.AndAlso || be.NodeType == ExpressionType.OrElse)
-                {
-                    sb.Append("(");
-                    Parse(be.Left);
-                    sb.Append(be.NodeType == ExpressionType.AndAlso ? " AND " : " OR ");
-                    Parse(be.Right);
-                    sb.Append(")");
-                }
-                else
-                    throw new NotSupportedException($"Operator {be.NodeType} not supported.");
-            }
-            else
-                throw new NotSupportedException($"Expression type {expr.GetType().Name} not supported.");
-        }
-
-        Parse(predicate.Body);
-
-        return new DynamicQuery
-        {
-            Sql = $@"SELECT * FROM ""{_tableName}"" WHERE ""IsDeleted"" = false AND {sb}",
-            Parameters = parameters
-        };
-    }
-
-    private void ParseExpression(Expression expression, StringBuilder whereClause, DynamicParameters parameters, ref int paramIndex)
-    {
-        if (expression is BinaryExpression binary)
-        {
-            if (binary.NodeType == ExpressionType.Equal)
-            {
-                if (binary.Left is MemberExpression member && binary.Right is ConstantExpression constant)
-                {
-                    var columnName = member.Member.Name;
-                    var paramName = $"@p{paramIndex++}";
-                    whereClause.Append($@"""{columnName}"" = {paramName}");
-                    parameters.Add(paramName, constant.Value);
-                }
-                else
-                {
-                    throw new NotSupportedException($"Expression type {binary.Right.GetType().Name} not supported.");
-                }
-            }
-            else if (binary.NodeType == ExpressionType.AndAlso || binary.NodeType == ExpressionType.OrElse)
-            {
-                whereClause.Append("(");
-                ParseExpression(binary.Left, whereClause, parameters, ref paramIndex);
-                whereClause.Append(binary.NodeType == ExpressionType.AndAlso ? " AND " : " OR ");
-                ParseExpression(binary.Right, whereClause, parameters, ref paramIndex);
-                whereClause.Append(")");
-            }
-            else
-            {
-                throw new NotSupportedException($"Binary operator {binary.NodeType} not supported.");
-            }
-        }
-        else
-        {
-            throw new NotSupportedException($"Expression type {expression.GetType().Name} not supported.");
-        }
     }
 }

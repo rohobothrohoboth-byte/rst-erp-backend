@@ -19,6 +19,7 @@ public class AddHolidayDto
     public string Name { get; set; } = default!;
     public DateTime Date { get; set; } = default!;
     public bool IsPublic { get; set; }  // bool (true/false)
+    public Guid FiscalYearId { get; set; }
 }
 
 public class EditHolidayDto

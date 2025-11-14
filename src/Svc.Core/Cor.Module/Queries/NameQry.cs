@@ -16,6 +16,7 @@ public class CompAllNameQry : IRequest<List<NameListDto>> { }
 public class CompNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
 public class FiscalYearAllNameQry : IRequest<List<NameListDto>> { }
 public class FiscalYearNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class FiscalYearActiveQry : IRequest<List<NameListDto>> { }
 public class PeriodAllNameQry : IRequest<List<NameListDto>> { }
 public class PeriodNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
 
@@ -257,6 +258,29 @@ public class FiscalYearNameByIdQryHandler : IRequestHandler<FiscalYearNameByIdQr
             Name = res.Name
         };
         return c;
+    }
+}
+
+public class FiscalYearActiveQryHandler : IRequestHandler<FiscalYearActiveQry, List<NameListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public FiscalYearActiveQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<NameListDto>> Handle(FiscalYearActiveQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<FiscalYear>().Find(f => f.IsActive == "0" && f.DateEnd >= DateTime.UtcNow);
+        var nameL = new List<NameListDto>();
+        foreach (var data in res)
+        {
+            var c = new NameListDto
+            {
+                Id = data.Id,
+                Name = data.Name
+            };
+            nameL.Add(c);
+        }
+
+        return nameL;
     }
 }
 

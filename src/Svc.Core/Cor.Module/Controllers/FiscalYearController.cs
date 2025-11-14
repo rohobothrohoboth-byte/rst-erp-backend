@@ -1,10 +1,10 @@
 ﻿using Asp.Versioning;
 using Cor.Module.Commands;
+using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace Cor.Module.Controllers;
 
@@ -22,8 +22,8 @@ public class FiscalYearController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllFiscalYear()
     {
-        var comps = await med.Send(new AllFiscalYearsQry());
-        return Ok(comps);
+        var response = await med.Send(new AllFiscalYearsQry());
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetFiscalYear/{id:guid}")]
@@ -31,12 +31,9 @@ public class FiscalYearController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFiscalYear(Guid id)
     {
-        var fiscYear = await med.Send(new FiscalYearByIdQry { Id = id });
-        if (fiscYear == null)
-        {
-            return NotFound(new { Error = $"FISCAL YEAR with Id {id} not found" });
-        }
-        return Ok(fiscYear);
+        var response = await med.Send(new FiscalYearByIdQry { Id = id });
+        if (response == null) { throw new DomainException($"FISCAL YEAR  with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddFiscalYear")]
@@ -44,18 +41,15 @@ public class FiscalYearController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddFiscYearDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new AddFiscalYearCmd { AddFiscYearDto = addDto };
-            var response = await med.Send(command);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create FISCAL YEAR", Details = ex.Message });
-        }
+        var command = new AddFiscalYearCmd { AddFiscYearDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New FISCAL YEAR successfully created."));
     }
 
     [HttpPut("ModFiscalYear/{id:guid}")]
@@ -67,26 +61,13 @@ public class FiscalYearController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modFiscYear = await med.Send(new ModFiscalYearCmd { EditFiscYearDto = modDto });
-            return Ok(modFiscYear);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the FISCAL YEAR was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"FISCAL YEAR with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update FISCAL YEAR", Details = ex.Message });
-        }
+        var command = new ModFiscalYearCmd { EditFiscYearDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected FISCAL YEAR successfully updated."));
     }
 
     [HttpDelete("DelFiscalYear/{id:guid}")]
@@ -94,18 +75,8 @@ public class FiscalYearController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new DelFiscalYearCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"FISCAL YEAR with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete FISCAL YEAR", Details = ex.Message });
-        }
+        var command = new DelFiscalYearCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"FISCAL YEAR with Id {id} successfully deleted."));
     }
 }

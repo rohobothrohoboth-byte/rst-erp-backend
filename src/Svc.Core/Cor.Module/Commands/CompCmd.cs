@@ -1,4 +1,5 @@
-﻿using Cor.Module.Interfaces;
+﻿using Cor.Module.Helpers;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
@@ -19,15 +20,14 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
 
     public async Task<CompListDto> Handle(AddCompCmd request, CancellationToken cancellationToken)
     {
-        var com = new Company
-        {
-            Name = request.AddCompDto.Name,
-            NameAm = request.AddCompDto.NameAm
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var com = new Company
+            {
+                Name = request.AddCompDto.Name,
+                NameAm = request.AddCompDto.NameAm
+            };
             await _unitOfWork.Repository<Company>().Add(com);
             await _unitOfWork.Commit();
 
@@ -49,25 +49,19 @@ public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
-    
+
     public ModCompCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<CompListDto> Handle(ModCompCmd request, CancellationToken cancellationToken)
     {
         var oldComp = await _unitOfWork.Repository<Company>().GetById(request.EditCompDto.Id);
-
-        if (oldComp == null)
-        {
-            throw new KeyNotFoundException($"COMPANY with Id {request.EditCompDto.Id} not found.");
-        }
-
-        oldComp.Name = request.EditCompDto.Name;
-        oldComp.NameAm = request.EditCompDto.NameAm;
+        if (oldComp == null) { throw new DomainException($"COMPANY with id [{request.EditCompDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
-
         try
         {
+            oldComp.Name = request.EditCompDto.Name;
+            oldComp.NameAm = request.EditCompDto.NameAm;
             var comp = await _unitOfWork.Repository<Company>().Update(oldComp);
             await _unitOfWork.Commit();
 
@@ -95,6 +89,11 @@ public class DelCompCmdHandler : IRequestHandler<DelCompCmd>
         await _unitOfWork.Begin();
         try
         {
+            var bra = await _unitOfWork.Repository<Branch>().Find(b => b.CompId == request.Id);
+            if (bra.Any()) { throw new DomainException($"COMPANY with id [{request.Id}] Has branches, can not be deleted."); }
+
+            var data = await _unitOfWork.Repository<Company>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"COMPANY with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Company>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

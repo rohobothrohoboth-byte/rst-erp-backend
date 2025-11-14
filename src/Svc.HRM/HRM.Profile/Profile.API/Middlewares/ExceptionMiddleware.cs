@@ -1,5 +1,5 @@
-﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
+﻿using Profile.App.Helpers;
+using System.Text.Json;
 
 namespace Profile.API.Middlewares;
 
@@ -7,11 +7,24 @@ public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
+    private readonly List<IExceptionHandler> _handlers;
 
     public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
     {
         _next = next;
         _logger = logger;
+
+        _handlers = new List<IExceptionHandler>
+        {
+            new UnauthorizedExceptionHandler(),
+            new ForbiddenExceptionHandler(),
+            new ConflictExceptionHandler(),
+            new DomainExceptionHandler(),
+            new NotFoundExceptionHandler(),
+            new BadRequestExceptionHandler(),
+            new DatabaseExceptionHandler(),
+            new FallbackExceptionHandler()
+        };
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -20,21 +33,21 @@ public class ExceptionMiddleware
         {
             await _next(context);
         }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            _logger.LogWarning(ex, "Concurrency conflict occurred.");
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/json";
-            var result = new { message = "The resource was modified by another user. Please reload and try again." };
-            await context.Response.WriteAsJsonAsync(result);
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception occurred.");
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            _logger.LogError(ex, "Exception caught in middleware.");
+            var handler = _handlers.First(h => h.CanHandle(ex));
+            var apiResponse = await handler.HandleAsync(ex, context);
+            context.Response.StatusCode = apiResponse.StatusCode ?? 500;
             context.Response.ContentType = "application/json";
-            var result = new { error = "Internal Server Error", detail = ex.Message };
-            await context.Response.WriteAsJsonAsync(JsonSerializer.Serialize(result));
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(apiResponse, jsonOptions));
         }
     }
 }

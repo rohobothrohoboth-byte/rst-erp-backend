@@ -62,7 +62,7 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
     public async Task<BranchListDto> Handle(ModBranchCmd request, CancellationToken cancellationToken)
     {
         var oldBra = await _unitOfWork.Repository<Branch>().GetById(request.EditBranchDto.Id);
-        if (oldBra == null) { throw new KeyNotFoundException($"BRANCH with Id {request.EditBranchDto.Id} NOT FOUND."); }
+        if (oldBra == null) { throw new DomainException($"BRANCH with id [{request.EditBranchDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
@@ -101,6 +101,8 @@ public class DelBranchCmdHandler : IRequestHandler<DelBranchCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"BRANCH with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Branch>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

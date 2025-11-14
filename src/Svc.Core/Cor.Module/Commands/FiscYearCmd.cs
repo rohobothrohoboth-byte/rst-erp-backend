@@ -1,4 +1,5 @@
-﻿using Cor.Module.Interfaces;
+﻿using Cor.Module.Helpers;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
@@ -19,17 +20,16 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
 
     public async Task<FiscYearListDto> Handle(AddFiscalYearCmd request, CancellationToken cancellationToken)
     {
-        var fYear = new FiscalYear
-        {
-            Name = request.AddFiscYearDto.Name,
-            DateStart = request.AddFiscYearDto.DateStart,
-            DateEnd = request.AddFiscYearDto.DateEnd,
-            IsActive = "0",
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var fYear = new FiscalYear
+            {
+                Name = request.AddFiscYearDto.Name,
+                DateStart = request.AddFiscYearDto.DateStart,
+                DateEnd = request.AddFiscYearDto.DateEnd,
+                IsActive = "0",
+            };
             await _unitOfWork.Repository<FiscalYear>().Add(fYear);
             await _unitOfWork.Commit();
 
@@ -57,20 +57,15 @@ public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYea
     public async Task<FiscYearListDto> Handle(ModFiscalYearCmd request, CancellationToken cancellationToken)
     {
         var oldYear = await _unitOfWork.Repository<FiscalYear>().GetById(request.EditFiscYearDto.Id);
-        if (oldYear == null)
-        {
-            throw new KeyNotFoundException($"FISCAL YEAR with Id {request.EditFiscYearDto.Id} NOT FOUND.");
-        }
-
-        oldYear.Name = request.EditFiscYearDto.Name;
-        oldYear.DateStart = request.EditFiscYearDto.DateStart;
-        oldYear.DateEnd = request.EditFiscYearDto.DateEnd;
-        oldYear.IsActive = request.EditFiscYearDto.IsActive;
-
+        if (oldYear == null) { throw new DomainException($"FISCAL YEAR with id [{request.EditFiscYearDto.Id}] NOT FOUND."); }
+        
         await _unitOfWork.Begin();
-
         try
         {
+            oldYear.Name = request.EditFiscYearDto.Name;
+            oldYear.DateStart = request.EditFiscYearDto.DateStart;
+            oldYear.DateEnd = request.EditFiscYearDto.DateEnd;
+            oldYear.IsActive = request.EditFiscYearDto.IsActive;
             var fYear = await _unitOfWork.Repository<FiscalYear>().Update(oldYear);
             await _unitOfWork.Commit();
 
@@ -98,6 +93,8 @@ public class DelFiscalYearCmdHandler : IRequestHandler<DelFiscalYearCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"FISCAL YEAR with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<FiscalYear>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

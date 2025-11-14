@@ -1,10 +1,10 @@
 ﻿using Asp.Versioning;
 using Cor.Module.Commands;
+using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace Cor.Module.Controllers;
 
@@ -22,8 +22,8 @@ public class DepartmentController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllDept()
     {
-        var depts = await med.Send(new AllDeptsQry());
-        return Ok(depts);
+        var response = await med.Send(new AllDeptsQry());
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetDept/{id:guid}")]
@@ -31,12 +31,9 @@ public class DepartmentController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDept(Guid id)
     {
-        var dept = await med.Send(new DeptByIdQry { Id = id });
-        if (dept == null)
-        {
-            return NotFound(new { Error = $"DEPARTMENT with Id {id} not found" });
-        }
-        return Ok(dept);
+        var response = await med.Send(new DeptByIdQry { Id = id });
+        if (response == null) { throw new DomainException($"DEPARTMENT with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddDept")]
@@ -44,18 +41,15 @@ public class DepartmentController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddDeptDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new AddDeptCmd { AddDeptDto = addDto };
-            var response = await med.Send(command);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create DEPARTMENT", Details = ex.Message });
-        }
+        var command = new AddDeptCmd { AddDeptDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New DEPARTMENT successfully created."));
     }
     
     [HttpPut("ModDept/{id:guid}")]
@@ -67,26 +61,13 @@ public class DepartmentController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modDept = await med.Send(new ModDeptCmd { EdtDeptDto = modDto });
-            return Ok(modDept);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the DEPARTMENT was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"DEPARTMENT with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update DEPARTMENT", Details = ex.Message });
-        }
+        var command = new ModDeptCmd { EdtDeptDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected DEPARTMENT successfully updated."));
     }
 
     [HttpDelete("DelDept/{id:guid}")]
@@ -94,18 +75,8 @@ public class DepartmentController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new DelDeptCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"DEPARTMENT with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete DEPARTMENT", Details = ex.Message });
-        }
+        var command = new DelDeptCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"DEPARTMENT with Id {id} successfully deleted."));
     }
 }

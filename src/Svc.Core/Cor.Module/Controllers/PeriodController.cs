@@ -1,10 +1,10 @@
 ﻿using Asp.Versioning;
 using Cor.Module.Commands;
+using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace Cor.Module.Controllers;
 
@@ -23,7 +23,7 @@ public class PeriodController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllPeriod()
     {
         var response = await med.Send(new AllPeriodQry());
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetPeriod/{id:guid}")]
@@ -32,11 +32,8 @@ public class PeriodController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetPeriod(Guid id)
     {
         var response = await med.Send(new PeriodByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"PERIOD with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"PERIOD with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpPost("AddPeriod")]
@@ -44,18 +41,15 @@ public class PeriodController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddPeriodDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new AddPeriodCmd { AddPeriodDto = addDto };
-            var response = await med.Send(command);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create PERIOD", Details = ex.Message });
-        }
+        var command = new AddPeriodCmd { AddPeriodDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New PERIOD successfully created."));
     }
 
     [HttpPut("ModPeriod/{id:guid}")]
@@ -67,26 +61,14 @@ public class PeriodController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var response = await med.Send(new ModPeriodCmd { EditPeriodDto = modDto });
-            return Ok(response);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the PERIOD was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"PERIOD with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update PERIOD", Details = ex.Message });
-        }
+        var command = new ModPeriodCmd { EditPeriodDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected PERIOD successfully updated."));
+
     }
 
     [HttpDelete("DelPeriod/{id:guid}")]
@@ -94,18 +76,8 @@ public class PeriodController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new DelPeriodCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"PERIOD with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete PERIOD", Details = ex.Message });
-        }
+        var command = new DelPeriodCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"PERIOD with Id {id} successfully deleted."));
     }
 }

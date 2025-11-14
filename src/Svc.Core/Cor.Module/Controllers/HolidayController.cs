@@ -1,6 +1,6 @@
 ﻿using Asp.Versioning;
 using Cor.Module.Commands;
-using Cor.Module.Middlewares;
+using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
 using MediatR;
@@ -23,7 +23,7 @@ public class HolidayController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllHoliday()
     {
         var response = await med.Send(new AllHolidayQry());
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetHoliday/{id:guid}")]
@@ -32,10 +32,7 @@ public class HolidayController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetHoliday(Guid id)
     {
         var response = await med.Send(new HolidayByIdQry { Id = id });
-        if (response == null)
-        {
-            throw new EntityNotFoundException("Holiday", id);
-        }
+        if (response == null) { throw new DomainException($"HOLIDAY with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -52,7 +49,7 @@ public class HolidayController(IMediator med) : ControllerBase
 
         var command = new AddHolidayCmd { AddHolidayDto = addDto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "Holiday created successfully"));
+        return Ok(ApiResponse<object>.Ok(response, "New HOLIDAY successfully created."));
     }
 
     [HttpPut("ModHoliday/{id:guid}")]
@@ -70,7 +67,7 @@ public class HolidayController(IMediator med) : ControllerBase
 
         var command = new ModHolidayCmd { EditHolidayDto = modDto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "Holiday updated successfully"));
+        return Ok(ApiResponse<object>.Ok(response, "Selected HOLIDAY successfully updated."));
     }
 
     [HttpDelete("DelHoliday/{id:guid}")]
@@ -80,6 +77,6 @@ public class HolidayController(IMediator med) : ControllerBase
     {
         var command = new DelHolidayCmd { Id = id };
         await med.Send(command);
-        return Ok(ApiResponse<string>.Ok(null!, $"Holiday with Id {id} deleted successfully"));
+        return Ok(ApiResponse<string>.Ok(null!, $"HOLIDAY with Id {id} successfully deleted."));
     }
 }
