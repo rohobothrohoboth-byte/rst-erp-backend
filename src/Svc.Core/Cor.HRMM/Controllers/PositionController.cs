@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
+using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using MediatR;
@@ -24,7 +24,7 @@ public class PositionController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllPosition()
     {
         var response = await med.Send(new PositionAllQry());
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetPosition/{id:guid}")]
@@ -33,11 +33,8 @@ public class PositionController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetPosition(Guid id)
     {
         var response = await med.Send(new PositionByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Position with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"POSITION with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddPosition")]
@@ -45,18 +42,15 @@ public class PositionController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new PositionAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetPosition), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Position", Details = ex.Message });
-        }
+        var command = new PositionAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New POSITION successfully created."));
     }
 
     [HttpPut("ModPosition/{id:guid}")]
@@ -68,26 +62,13 @@ public class PositionController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new PositionModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Position was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Position", Details = ex.Message });
-        }
+        var command = new PositionModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected POSITION successfully updated."));
     }
 
     [HttpDelete("DelPosition/{id:guid}")]
@@ -95,18 +76,8 @@ public class PositionController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new PositionDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Position", Details = ex.Message });
-        }
+        var command = new PositionDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"POSITION with Id {id} successfully deleted."));
     }
 }

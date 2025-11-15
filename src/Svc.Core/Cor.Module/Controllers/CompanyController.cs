@@ -48,7 +48,7 @@ public class CompanyController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new AddCompCmd { AddCompDto = addDto };
+        var command = new AddCompCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New COMPANY successfully created."));
     }
@@ -66,7 +66,7 @@ public class CompanyController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModCompCmd { EditCompDto = modDto };
+        var command = new ModCompCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected COMPANY successfully updated."));
     }

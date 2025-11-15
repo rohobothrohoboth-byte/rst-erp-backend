@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
@@ -19,10 +20,9 @@ public class EmpBioModCmdHandler : IRequestHandler<EmpBioModCmd, EmpBioListDto>
     public async Task<EmpBioListDto> Handle(EmpBioModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<EmpBio>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EMPLOYEE BIO with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EMPLOYEE BIO with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
-
         try
         {
             oldData.BirthDate = request.ModDto.BirthDate;
@@ -60,6 +60,8 @@ public class EmpBioDelCmdHandler : IRequestHandler<EmpBioDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<EmpBio>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EMPLOYEE BIO with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<EmpBio>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

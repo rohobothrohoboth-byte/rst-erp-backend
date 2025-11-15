@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 
 namespace Profile.API.Controllers;
@@ -20,7 +21,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllAddressName()
     {
         var res = await med.Send(new AddressNameAllQry());
-        return Ok(res);
+        return Ok(ApiResponse<object>.Ok(res));
     }
 
     [HttpGet("GetAddressName/{id:guid}")]
@@ -29,8 +30,8 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetAddressName(Guid id)
     {
         var res = await med.Send(new AddressNameByIdQry { Id = id });
-        if (res == null) { return NotFound(new { Error = $"ADDRESS with Id {id} not found" }); }
-        return Ok(res);
+        if (res == null) { throw new DomainException($"ADDRESS with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(res));
     }
 
 

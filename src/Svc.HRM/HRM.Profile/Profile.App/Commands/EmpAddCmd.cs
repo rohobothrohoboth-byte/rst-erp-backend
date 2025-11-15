@@ -97,12 +97,6 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 
             var res = new EmpAddRes { Id = data.Id };
             return res;
-
-            //var res = new EmpAddRes();
-            //var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
-            //if (response == null) { return res; }
-            //res.Id = response.Id;
-            //return res;
         }
         catch
         {

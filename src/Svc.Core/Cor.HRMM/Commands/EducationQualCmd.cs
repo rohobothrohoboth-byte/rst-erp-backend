@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -21,14 +22,13 @@ public class EducationQualAddCmdHandler : IRequestHandler<EducationQualAddCmd, E
 
     public async Task<EducationQualListDto> Handle(EducationQualAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new EducationQual
-        {
-            Name = request.AddDto.Name
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var data = new EducationQual
+            {
+                Name = request.AddDto.Name
+            };
             await _unitOfWork.Repository<EducationQual>().Add(data);
             await _unitOfWork.Commit();
             
@@ -56,13 +56,12 @@ public class EducationQualModCmdHandler : IRequestHandler<EducationQualModCmd, E
     public async Task<EducationQualListDto> Handle(EducationQualModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<EducationQual>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EDUCATION QUALIFICATION with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EDUCATION QUALIFICATION with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.Name = request.ModDto.Name;
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.Name = request.ModDto.Name;
             var data = await _unitOfWork.Repository<EducationQual>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -90,6 +89,8 @@ public class EducationQualDelCmdHandler : IRequestHandler<EducationQualDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<EducationQual>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EDUCATION QUALIFICATION with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<EducationQual>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

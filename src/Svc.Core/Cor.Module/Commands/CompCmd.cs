@@ -7,8 +7,8 @@ using MediatR;
 
 namespace Cor.Module.Commands;
 
-public class AddCompCmd : IRequest<CompListDto> { public AddCompDto AddCompDto { get; set; } = default!; }
-public class ModCompCmd : IRequest<CompListDto> { public EditCompDto EditCompDto { get; set; } = default!; }
+public class AddCompCmd : IRequest<CompListDto> { public AddCompDto AddDto { get; set; } = default!; }
+public class ModCompCmd : IRequest<CompListDto> { public EditCompDto ModDto { get; set; } = default!; }
 public class DelCompCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
@@ -25,8 +25,8 @@ public class AddCompCmdHandler : IRequestHandler<AddCompCmd, CompListDto>
         {
             var com = new Company
             {
-                Name = request.AddCompDto.Name,
-                NameAm = request.AddCompDto.NameAm
+                Name = request.AddDto.Name,
+                NameAm = request.AddDto.NameAm
             };
             await _unitOfWork.Repository<Company>().Add(com);
             await _unitOfWork.Commit();
@@ -54,14 +54,14 @@ public class ModCompCmdHandler : IRequestHandler<ModCompCmd, CompListDto>
 
     public async Task<CompListDto> Handle(ModCompCmd request, CancellationToken cancellationToken)
     {
-        var oldComp = await _unitOfWork.Repository<Company>().GetById(request.EditCompDto.Id);
-        if (oldComp == null) { throw new DomainException($"COMPANY with id [{request.EditCompDto.Id}] NOT FOUND."); }
+        var oldComp = await _unitOfWork.Repository<Company>().GetById(request.ModDto.Id);
+        if (oldComp == null) { throw new DomainException($"COMPANY with id [{request.ModDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
         {
-            oldComp.Name = request.EditCompDto.Name;
-            oldComp.NameAm = request.EditCompDto.NameAm;
+            oldComp.Name = request.ModDto.Name;
+            oldComp.NameAm = request.ModDto.NameAm;
             var comp = await _unitOfWork.Repository<Company>().Update(oldComp);
             await _unitOfWork.Commit();
 

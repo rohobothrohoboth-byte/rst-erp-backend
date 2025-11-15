@@ -47,7 +47,7 @@ public class HolidayController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new AddHolidayCmd { AddHolidayDto = addDto };
+        var command = new AddHolidayCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New HOLIDAY successfully created."));
     }
@@ -65,7 +65,7 @@ public class HolidayController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModHolidayCmd { EditHolidayDto = modDto };
+        var command = new ModHolidayCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected HOLIDAY successfully updated."));
     }

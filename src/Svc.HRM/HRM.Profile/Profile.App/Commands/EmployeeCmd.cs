@@ -20,7 +20,7 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
     public async Task<EmployeeListDto> Handle(EmployeeModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<Employee>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EMPLOYEE with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EMPLOYEE with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
 
@@ -71,6 +71,8 @@ public class EmployeeDelCmdHandler : IRequestHandler<EmployeeDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EMPLOYEE with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Employee>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

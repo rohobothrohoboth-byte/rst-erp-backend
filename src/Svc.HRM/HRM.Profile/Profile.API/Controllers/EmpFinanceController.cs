@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -24,8 +24,8 @@ public class EmpFinanceController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpFinance(Guid id)
     {
         var response = await med.Send(new EmpFinanceByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Employee Finance with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EMPLOYEE FINANCE with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpPut("ModEmpFinance/{id:guid}")]
@@ -37,26 +37,13 @@ public class EmpFinanceController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmpFinanceModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Employee Finance was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Finance with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Employee Finance", Details = ex.Message });
-        }
+        var command = new EmpFinanceModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE FINANCE successfully updated."));
     }
 
     [HttpDelete("DelEmpFinance/{id:guid}")]
@@ -64,18 +51,8 @@ public class EmpFinanceController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmpFinanceDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Finance with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Employee Finance", Details = ex.Message });
-        }
+        var command = new EmpFinanceDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EMPLOYEE FINANCE with Id {id} successfully deleted."));
     }
 }

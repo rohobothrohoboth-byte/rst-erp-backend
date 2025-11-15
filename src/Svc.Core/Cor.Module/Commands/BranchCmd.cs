@@ -7,8 +7,8 @@ using MediatR;
 
 namespace Cor.Module.Commands;
 
-public class AddBranchCmd : IRequest<BranchListDto> { public AddBranchDto AddBranchDto { get; set; } = default!; }
-public class ModBranchCmd : IRequest<BranchListDto> { public EditBranchDto EditBranchDto { get; set; } = default!; }
+public class AddBranchCmd : IRequest<BranchListDto> { public AddBranchDto AddDto { get; set; } = default!; }
+public class ModBranchCmd : IRequest<BranchListDto> { public EditBranchDto ModDto { get; set; } = default!; }
 public class DelBranchCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
@@ -26,14 +26,14 @@ public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
             var code = await new BraCode(_unitOfWork).GetBraCode();
             var bra = new Branch
             {
-                Name = request.AddBranchDto.Name,
-                NameAm = request.AddBranchDto.NameAm,
+                Name = request.AddDto.Name,
+                NameAm = request.AddDto.NameAm,
                 Code = code,
-                Location = request.AddBranchDto.Location,
-                BranchType = request.AddBranchDto.BranchType,
+                Location = request.AddDto.Location,
+                BranchType = request.AddDto.BranchType,
                 BranchStat = "0",
-                OpenDate = request.AddBranchDto.OpenDate,
-                CompId = request.AddBranchDto.CompId
+                OpenDate = request.AddDto.OpenDate,
+                CompId = request.AddDto.CompId
             };
             await _unitOfWork.Repository<Branch>().Add(bra);
             await _unitOfWork.Commit();
@@ -61,19 +61,19 @@ public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
 
     public async Task<BranchListDto> Handle(ModBranchCmd request, CancellationToken cancellationToken)
     {
-        var oldBra = await _unitOfWork.Repository<Branch>().GetById(request.EditBranchDto.Id);
-        if (oldBra == null) { throw new DomainException($"BRANCH with id [{request.EditBranchDto.Id}] NOT FOUND."); }
+        var oldBra = await _unitOfWork.Repository<Branch>().GetById(request.ModDto.Id);
+        if (oldBra == null) { throw new DomainException($"BRANCH with id [{request.ModDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
         {
-            oldBra.Name = request.EditBranchDto.Name;
-            oldBra.NameAm = request.EditBranchDto.NameAm;
-            oldBra.Location = request.EditBranchDto.Location;
-            oldBra.BranchType = request.EditBranchDto.BranchType;
-            oldBra.BranchStat = request.EditBranchDto.BranchStat;
-            oldBra.OpenDate = request.EditBranchDto.OpenDate;
-            oldBra.CompId = request.EditBranchDto.CompId;
+            oldBra.Name = request.ModDto.Name;
+            oldBra.NameAm = request.ModDto.NameAm;
+            oldBra.Location = request.ModDto.Location;
+            oldBra.BranchType = request.ModDto.BranchType;
+            oldBra.BranchStat = request.ModDto.BranchStat;
+            oldBra.OpenDate = request.ModDto.OpenDate;
+            oldBra.CompId = request.ModDto.CompId;
             var nBra = await _unitOfWork.Repository<Branch>().Update(oldBra);
             await _unitOfWork.Commit();
 
@@ -101,7 +101,7 @@ public class DelBranchCmdHandler : IRequestHandler<DelBranchCmd>
         await _unitOfWork.Begin();
         try
         {
-            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            var data = await _unitOfWork.Repository<Branch>().GetById(request.Id);
             if (data == null) { throw new DomainException($"BRANCH with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Branch>().Delete(request.Id);
             await _unitOfWork.Commit();

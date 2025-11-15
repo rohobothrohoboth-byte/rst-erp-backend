@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -7,9 +8,7 @@ using MediatR;
 namespace Cor.HRMM.Commands;
 
 public class PositionEduAddCmd : IRequest<PositionEduListDto> { public PositionEduAddDto AddDto { get; set; } = default!; }
-
 public class PositionEduModCmd : IRequest<PositionEduListDto> { public PositionEduModDto ModDto { get; set; } = default!; }
-
 public class PositionEduDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class PositionEduAddCmdHandler : IRequestHandler<PositionEduAddCmd, PositionEduListDto>
@@ -21,16 +20,15 @@ public class PositionEduAddCmdHandler : IRequestHandler<PositionEduAddCmd, Posit
 
     public async Task<PositionEduListDto> Handle(PositionEduAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new PositionEducation
-        {
-            PositionId = request.AddDto.PositionId,
-            EducationQualId = request.AddDto.EducationQualId,
-            EducationLevelId = request.AddDto.EducationLevelId
-        };
         await _unitOfWork.Begin();
-
         try
         {
+            var data = new PositionEducation
+            {
+                PositionId = request.AddDto.PositionId,
+                EducationQualId = request.AddDto.EducationQualId,
+                EducationLevelId = request.AddDto.EducationLevelId
+            };
             await _unitOfWork.Repository<PositionEducation>().Add(data);
             await _unitOfWork.Commit();
 
@@ -58,15 +56,14 @@ public class PositionEduModCmdHandler : IRequestHandler<PositionEduModCmd, Posit
     public async Task<PositionEduListDto> Handle(PositionEduModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<PositionEducation>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"POSITION EDUCATION with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"POSITION EDUCATION with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.PositionId = request.ModDto.PositionId;
-        oldData.EducationQualId = request.ModDto.EducationQualId;
-        oldData.EducationLevelId = request.ModDto.EducationLevelId;
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.PositionId = request.ModDto.PositionId;
+            oldData.EducationQualId = request.ModDto.EducationQualId;
+            oldData.EducationLevelId = request.ModDto.EducationLevelId;
             var data = await _unitOfWork.Repository<PositionEducation>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -94,6 +91,8 @@ public class PositionEduDelCmdHandler : IRequestHandler<PositionEduDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<PositionEducation>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"POSITION EDUCATION with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<PositionEducation>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

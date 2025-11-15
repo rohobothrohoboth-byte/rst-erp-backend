@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
+using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using MediatR;
@@ -26,8 +26,8 @@ public class PositionReqController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionReq(Guid id)
     {
-        var response = await med.Send(new PositionReqAllQry { Id = id  });
-        return Ok(response);
+        var response = await med.Send(new PositionReqAllQry { Id = id });
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetPositionReq/{id:guid}")]
@@ -36,11 +36,8 @@ public class PositionReqController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetPositionReq(Guid id)
     {
         var response = await med.Send(new PositionReqByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Position Requirement with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"POSITION REQUIREMENT with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddPositionReq")]
@@ -48,18 +45,15 @@ public class PositionReqController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionReqAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new PositionReqAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetPositionReq), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Position Requirement", Details = ex.Message });
-        }
+        var command = new PositionReqAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New POSITION REQUIREMENT successfully created."));
     }
 
     [HttpPut("ModPositionReq/{id:guid}")]
@@ -71,26 +65,13 @@ public class PositionReqController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new PositionReqModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Position Requirement was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position Requirement with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Position Requirement", Details = ex.Message });
-        }
+        var command = new PositionReqModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected POSITION REQUIREMENT successfully updated."));
     }
 
     [HttpDelete("DelPositionReq/{id:guid}")]
@@ -98,18 +79,8 @@ public class PositionReqController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new PositionReqDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position Requirement with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Position Requirement", Details = ex.Message });
-        }
+        var command = new PositionReqDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"POSITION REQUIREMENT with Id {id} successfully deleted."));
     }
 }

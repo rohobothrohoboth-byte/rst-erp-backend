@@ -59,7 +59,7 @@ public class BranchController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
         
-        var command = new AddBranchCmd { AddBranchDto = addDto };
+        var command = new AddBranchCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New BRANCH successfully created."));
     }
@@ -77,7 +77,7 @@ public class BranchController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModBranchCmd { EditBranchDto = modDto };
+        var command = new ModBranchCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected BRANCH successfully updated."));
     }

@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -23,7 +23,7 @@ public class EmContactController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllEmContact(Guid id)
     {
         var response = await med.Send(new EmContactAllQry { Id = id });
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetEmContact/{id:guid}")]
@@ -32,8 +32,8 @@ public class EmContactController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmContact(Guid id)
     {
         var response = await med.Send(new EmContactByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Emergency Contact with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EMERGENCY CONTACT with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpPut("ModEmContact/{id:guid}")]
@@ -45,26 +45,13 @@ public class EmContactController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmContactModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Emergency Contact was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Emergency Contact with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Emergency Contact", Details = ex.Message });
-        }
+        var command = new EmContactModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMERGENCY CONTACT successfully updated."));
     }
 
     [HttpDelete("DelEmContact/{id:guid}")]
@@ -72,18 +59,8 @@ public class EmContactController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmContactDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Emergency Contact with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Emergency Contact", Details = ex.Message });
-        }
+        var command = new EmContactDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EMERGENCY CONTACT with Id {id} successfully deleted."));
     }
 }

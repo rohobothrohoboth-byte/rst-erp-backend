@@ -47,7 +47,7 @@ public class FiscalYearController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new AddFiscalYearCmd { AddFiscYearDto = addDto };
+        var command = new AddFiscalYearCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New FISCAL YEAR successfully created."));
     }
@@ -65,7 +65,7 @@ public class FiscalYearController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModFiscalYearCmd { EditFiscYearDto = modDto };
+        var command = new ModFiscalYearCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected FISCAL YEAR successfully updated."));
     }

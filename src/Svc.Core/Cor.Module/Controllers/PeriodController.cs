@@ -47,7 +47,7 @@ public class PeriodController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new AddPeriodCmd { AddPeriodDto = addDto };
+        var command = new AddPeriodCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New PERIOD successfully created."));
     }
@@ -65,7 +65,7 @@ public class PeriodController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModPeriodCmd { EditPeriodDto = modDto };
+        var command = new ModPeriodCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected PERIOD successfully updated."));
 

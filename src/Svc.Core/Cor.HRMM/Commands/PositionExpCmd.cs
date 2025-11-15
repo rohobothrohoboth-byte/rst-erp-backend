@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -7,9 +8,7 @@ using MediatR;
 namespace Cor.HRMM.Commands;
 
 public class PositionExpAddCmd : IRequest<PositionExpListDto> { public PositionExpAddDto AddDto { get; set; } = default!; }
-
 public class PositionExpModCmd : IRequest<PositionExpListDto> { public PositionExpModDto ModDto { get; set; } = default!; }
-
 public class PositionExpDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class PositionExpAddCmdHandler : IRequestHandler<PositionExpAddCmd, PositionExpListDto>
@@ -21,18 +20,17 @@ public class PositionExpAddCmdHandler : IRequestHandler<PositionExpAddCmd, Posit
 
     public async Task<PositionExpListDto> Handle(PositionExpAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new PositionExp
-        {
-            SamePosExp = request.AddDto.SamePosExp,
-            OtherPosExp = request.AddDto.OtherPosExp,
-            MinAge = request.AddDto.MinAge,
-            MaxAge = request.AddDto.MaxAge,
-            PositionId = request.AddDto.PositionId
-        };
         await _unitOfWork.Begin();
-
         try
         {
+            var data = new PositionExp
+            {
+                SamePosExp = request.AddDto.SamePosExp,
+                OtherPosExp = request.AddDto.OtherPosExp,
+                MinAge = request.AddDto.MinAge,
+                MaxAge = request.AddDto.MaxAge,
+                PositionId = request.AddDto.PositionId
+            };
             await _unitOfWork.Repository<PositionExp>().Add(data);
             await _unitOfWork.Commit();
 
@@ -60,17 +58,16 @@ public class PositionExpModCmdHandler : IRequestHandler<PositionExpModCmd, Posit
     public async Task<PositionExpListDto> Handle(PositionExpModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<PositionExp>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"PositionExp with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"POSITION EXPERIENCE with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.SamePosExp = request.ModDto.SamePosExp;
-        oldData.OtherPosExp = request.ModDto.OtherPosExp;
-        oldData.MinAge = request.ModDto.MinAge;
-        oldData.MaxAge = request.ModDto.MaxAge;
-        oldData.PositionId = request.ModDto.PositionId;
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.SamePosExp = request.ModDto.SamePosExp;
+            oldData.OtherPosExp = request.ModDto.OtherPosExp;
+            oldData.MinAge = request.ModDto.MinAge;
+            oldData.MaxAge = request.ModDto.MaxAge;
+            oldData.PositionId = request.ModDto.PositionId;
             var data = await _unitOfWork.Repository<PositionExp>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -98,6 +95,8 @@ public class PositionExpDelCmdHandler : IRequestHandler<PositionExpDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<PositionExp>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"POSITION EXPERIENCE with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<PositionExp>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

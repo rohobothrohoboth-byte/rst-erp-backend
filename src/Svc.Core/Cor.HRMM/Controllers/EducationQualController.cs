@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
+using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using MediatR;
@@ -24,7 +24,7 @@ public class EducationQualController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllEducationQual()
     {
         var response = await med.Send(new EducationQualAllQry());
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetEducationQual/{id:guid}")]
@@ -33,11 +33,8 @@ public class EducationQualController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEducationQual(Guid id)
     {
         var response = await med.Send(new EducationQualByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Education Qualification with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EDUCATION QUALIFICATION with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddEducationQual")]
@@ -45,18 +42,15 @@ public class EducationQualController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] EducationQualAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new EducationQualAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEducationQual), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Education Qualification", Details = ex.Message });
-        }
+        var command = new EducationQualAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New EDUCATION QUALIFICATION successfully created."));
     }
 
     [HttpPut("ModEducationQual/{id:guid}")]
@@ -68,26 +62,13 @@ public class EducationQualController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EducationQualModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Education Qualification was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Education Qualification with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Education Qualification", Details = ex.Message });
-        }
+        var command = new EducationQualModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EDUCATION QUALIFICATION successfully updated."));
     }
 
     [HttpDelete("DelEducationQual/{id:guid}")]
@@ -95,18 +76,8 @@ public class EducationQualController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EducationQualDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Education Qualification with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Education Qualification", Details = ex.Message });
-        }
+        var command = new EducationQualDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EDUCATION QUALIFICATION with Id {id} successfully deleted."));
     }
 }

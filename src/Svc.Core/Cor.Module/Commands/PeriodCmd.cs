@@ -7,8 +7,8 @@ using MediatR;
 
 namespace Cor.Module.Commands;
 
-public class AddPeriodCmd : IRequest<PeriodListDto> { public AddPeriodDto AddPeriodDto { get; set; } = default!; }
-public class ModPeriodCmd : IRequest<PeriodListDto> { public EditPeriodDto EditPeriodDto { get; set; } = default!; }
+public class AddPeriodCmd : IRequest<PeriodListDto> { public AddPeriodDto AddDto { get; set; } = default!; }
+public class ModPeriodCmd : IRequest<PeriodListDto> { public EditPeriodDto ModDto { get; set; } = default!; }
 public class DelPeriodCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
@@ -25,12 +25,12 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
         {
             var period = new Period
             {
-                Name = request.AddPeriodDto.Name,
-                DateStart = request.AddPeriodDto.DateStart,
-                DateEnd = request.AddPeriodDto.DateEnd,
+                Name = request.AddDto.Name,
+                DateStart = request.AddDto.DateStart,
+                DateEnd = request.AddDto.DateEnd,
                 IsActive = "0",
-                Quarter = request.AddPeriodDto.Quarter,
-                FiscalYearId = request.AddPeriodDto.FiscalYearId
+                Quarter = request.AddDto.Quarter,
+                FiscalYearId = request.AddDto.FiscalYearId
             };
             await _unitOfWork.Repository<Period>().Add(period);
             await _unitOfWork.Commit();
@@ -58,18 +58,18 @@ public class ModPeriodCmdHandler : IRequestHandler<ModPeriodCmd, PeriodListDto>
 
     public async Task<PeriodListDto> Handle(ModPeriodCmd request, CancellationToken cancellationToken)
     {
-        var oldPeriod = await _unitOfWork.Repository<Period>().GetById(request.EditPeriodDto.Id);
-        if (oldPeriod == null) { throw new DomainException($"PERIOD with id [{request.EditPeriodDto.Id}] NOT FOUND."); }
+        var oldPeriod = await _unitOfWork.Repository<Period>().GetById(request.ModDto.Id);
+        if (oldPeriod == null) { throw new DomainException($"PERIOD with id [{request.ModDto.Id}] NOT FOUND."); }
         
         await _unitOfWork.Begin();
         try
         {
-            oldPeriod.Name = request.EditPeriodDto.Name;
-            oldPeriod.DateStart = request.EditPeriodDto.DateStart;
-            oldPeriod.DateEnd = request.EditPeriodDto.DateEnd;
-            oldPeriod.IsActive = request.EditPeriodDto.IsActive;
-            oldPeriod.Quarter = request.EditPeriodDto.Quarter;
-            oldPeriod.FiscalYearId = request.EditPeriodDto.FiscalYearId;
+            oldPeriod.Name = request.ModDto.Name;
+            oldPeriod.DateStart = request.ModDto.DateStart;
+            oldPeriod.DateEnd = request.ModDto.DateEnd;
+            oldPeriod.IsActive = request.ModDto.IsActive;
+            oldPeriod.Quarter = request.ModDto.Quarter;
+            oldPeriod.FiscalYearId = request.ModDto.FiscalYearId;
             var nPeriod = await _unitOfWork.Repository<Period>().Update(oldPeriod);
             await _unitOfWork.Commit();
 
@@ -97,7 +97,7 @@ public class DelPeriodCmdHandler : IRequestHandler<DelPeriodCmd>
         await _unitOfWork.Begin();
         try
         {
-            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            var data = await _unitOfWork.Repository<Period>().GetById(request.Id);
             if (data == null) { throw new DomainException($"PERIOD with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Period>().Delete(request.Id);
             await _unitOfWork.Commit();

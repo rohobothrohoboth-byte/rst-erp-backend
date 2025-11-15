@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -21,16 +22,15 @@ public class BenefitSetAddCmdHandler : IRequestHandler<BenefitSetAddCmd, Benefit
 
     public async Task<BenefitSetListDto> Handle(BenefitSetAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new BenefitSetting
-        {
-            Name = request.AddDto.Name,
-            BenefitValue = request.AddDto.BenefitValue,
-            Per = request.AddDto.Per
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var data = new BenefitSetting
+            {
+                Name = request.AddDto.Name,
+                BenefitValue = request.AddDto.BenefitValue,
+                Per = request.AddDto.Per
+            };
             await _unitOfWork.Repository<BenefitSetting>().Add(data);
             await _unitOfWork.Commit();
 
@@ -58,16 +58,14 @@ public class BenefitSetModCmdHandler : IRequestHandler<BenefitSetModCmd, Benefit
     public async Task<BenefitSetListDto> Handle(BenefitSetModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<BenefitSetting>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"BENEFIT SETTING with Id {request.ModDto.Id} NOT FOUND."); }
-
-        oldData.Name = request.ModDto.Name;
-        oldData.BenefitValue = request.ModDto.BenefitValue;
-        oldData.Per = request.ModDto.Per;
-
+        if (oldData == null) { throw new DomainException($"BENEFIT SETTING with Id {request.ModDto.Id} NOT FOUND."); }
+        
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.Name = request.ModDto.Name;
+            oldData.BenefitValue = request.ModDto.BenefitValue;
+            oldData.Per = request.ModDto.Per;
             var data = await _unitOfWork.Repository<BenefitSetting>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -95,6 +93,8 @@ public class BenefitSetDelCmdHandler : IRequestHandler<BenefitSetDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<BenefitSetting>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"BENEFIT SETTING with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<BenefitSetting>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

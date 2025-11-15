@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -24,8 +24,8 @@ public class EmpStateController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpState(Guid id)
     {
         var response = await med.Send(new EmpStateByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Employee State with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EMPLOYEE STATUS with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddEmpState")]
@@ -33,18 +33,15 @@ public class EmpStateController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] EmpStateAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new EmpStateAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetEmpState), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee State", Details = ex.Message });
-        }
+        var command = new EmpStateAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE STATUS successfully created."));
     }
 
     [HttpPut("ModEmpState/{id:guid}")]
@@ -56,26 +53,13 @@ public class EmpStateController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmpStateModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Employee State was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee State with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Employee State", Details = ex.Message });
-        }
+        var command = new EmpStateModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE STATUS successfully updated."));
     }
 
     [HttpDelete("DelEmpState/{id:guid}")]
@@ -83,18 +67,8 @@ public class EmpStateController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmpStateDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee State with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Employee State", Details = ex.Message });
-        }
+        var command = new EmpStateDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EMPLOYEE STATUS with Id {id} successfully deleted."));
     }
 }

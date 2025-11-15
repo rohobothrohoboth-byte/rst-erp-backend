@@ -7,8 +7,8 @@ using MediatR;
 
 namespace Cor.Module.Commands;
 
-public class AddDeptCmd : IRequest<DeptListDto> { public AddDeptDto AddDeptDto { get; set; } = default!; }
-public class ModDeptCmd : IRequest<DeptListDto> { public EdtDeptDto EdtDeptDto { get; set; } = default!; }
+public class AddDeptCmd : IRequest<DeptListDto> { public AddDeptDto AddDto { get; set; } = default!; }
+public class ModDeptCmd : IRequest<DeptListDto> { public EdtDeptDto ModDto { get; set; } = default!; }
 public class DelDeptCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddDeptCmdHandler : IRequestHandler<AddDeptCmd, DeptListDto>
@@ -25,10 +25,10 @@ public class AddDeptCmdHandler : IRequestHandler<AddDeptCmd, DeptListDto>
         {
             var dep = new Department
             {
-                Name = request.AddDeptDto.Name,
-                NameAm = request.AddDeptDto.NameAm,
+                Name = request.AddDto.Name,
+                NameAm = request.AddDto.NameAm,
                 DeptStat = "0",
-                BranchId = request.AddDeptDto.BranchId
+                BranchId = request.AddDto.BranchId
             };
             await _unitOfWork.Repository<Department>().Add(dep);
             await _unitOfWork.Commit();
@@ -56,16 +56,16 @@ public class ModDeptCmdHandler : IRequestHandler<ModDeptCmd, DeptListDto>
 
     public async Task<DeptListDto> Handle(ModDeptCmd request, CancellationToken cancellationToken)
     {
-        var oldDept = await _unitOfWork.Repository<Department>().GetById(request.EdtDeptDto.Id);
-        if (oldDept == null) { throw new DomainException($"DEPARTMENT with id [{request.EdtDeptDto.Id}] NOT FOUND."); }
+        var oldDept = await _unitOfWork.Repository<Department>().GetById(request.ModDto.Id);
+        if (oldDept == null) { throw new DomainException($"DEPARTMENT with id [{request.ModDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
         {
-            oldDept.Name = request.EdtDeptDto.Name;
-            oldDept.NameAm = request.EdtDeptDto.NameAm;
-            oldDept.DeptStat = request.EdtDeptDto.DeptStat;
-            oldDept.BranchId = request.EdtDeptDto.BranchId;
+            oldDept.Name = request.ModDto.Name;
+            oldDept.NameAm = request.ModDto.NameAm;
+            oldDept.DeptStat = request.ModDto.DeptStat;
+            oldDept.BranchId = request.ModDto.BranchId;
             var dep = await _unitOfWork.Repository<Department>().Update(oldDept);
             await _unitOfWork.Commit();
 
@@ -93,7 +93,7 @@ public class DelDeptCmdHandler : IRequestHandler<DelDeptCmd>
         await _unitOfWork.Begin();
         try
         {
-            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            var data = await _unitOfWork.Repository<Department>().GetById(request.Id);
             if (data == null) { throw new DomainException($"DEPARTMENT with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Department>().Delete(request.Id);
             await _unitOfWork.Commit();

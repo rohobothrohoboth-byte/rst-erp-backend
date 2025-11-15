@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
+using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using MediatR;
@@ -27,8 +27,8 @@ public class JgStepController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgSteps(Guid id)
     {
-        var branches = await med.Send(new JgStepAllQry { Id = id });
-        return Ok(branches);
+        var response = await med.Send(new JgStepAllQry { Id = id });
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpGet("GetJgStep/{id:guid}")]
@@ -37,11 +37,8 @@ public class JgStepController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetJgStep(Guid id)
     {
         var response = await med.Send(new JgStepByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Job Grade Step with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"JOB GRADE STEP with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddJgStep")]
@@ -49,18 +46,15 @@ public class JgStepController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] JgStepAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new JgStepAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetJgStep), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Job Grade Step", Details = ex.Message });
-        }
+        var command = new JgStepAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New JOB GRADE STEP successfully created."));
     }
 
     [HttpPut("ModJgStep/{id:guid}")]
@@ -72,26 +66,13 @@ public class JgStepController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new JgStepModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Job Grade Step was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Job Grade Step with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Job Grade Step", Details = ex.Message });
-        }
+        var command = new JgStepModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected JOB GRADE STEP successfully updated."));
     }
 
     [HttpDelete("DelJgStep/{id:guid}")]
@@ -99,18 +80,8 @@ public class JgStepController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new JgStepDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Job Grade Step with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Job Grade Step", Details = ex.Message });
-        }
+        var command = new JgStepDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"JOB GRADE STEP with Id {id} successfully deleted."));
     }
 }

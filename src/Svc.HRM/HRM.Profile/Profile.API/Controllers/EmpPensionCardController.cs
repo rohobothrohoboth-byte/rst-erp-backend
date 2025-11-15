@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -24,8 +24,8 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpPensionCard(Guid id)
     {
         var response = await med.Send(new EmpPensionCardByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Employee Pension Card with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"PENSION CARD with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddEmpPensionCard")]
@@ -33,18 +33,15 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] EmpPensionCardAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new EmpPensionCardAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee Pension Card", Details = ex.Message });
-        }
+        var command = new EmpPensionCardAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New PENSION CARD successfully created."));
     }
 
     [HttpPut("ModEmpPensionCard/{id:guid}")]
@@ -56,26 +53,13 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmpPensionCardModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Employee Pension Card was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Pension Card with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Employee Pension Card", Details = ex.Message });
-        }
+        var command = new EmpPensionCardModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected PENSION CARD successfully updated."));
     }
 
     [HttpDelete("DelEmpPensionCard/{id:guid}")]
@@ -83,18 +67,8 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmpPensionCardDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Pension Card with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Employee Pension Card", Details = ex.Message });
-        }
+        var command = new EmpPensionCardDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"PENSION CARD with Id {id} successfully deleted."));
     }
 }

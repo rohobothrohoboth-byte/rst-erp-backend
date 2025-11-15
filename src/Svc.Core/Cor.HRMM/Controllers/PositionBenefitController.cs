@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
+using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using MediatR;
@@ -26,8 +26,8 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionBenefit(Guid id)
     {
-        var response = await med.Send(new PositionBenefitAllQry { Id = id  });
-        return Ok(response);
+        var response = await med.Send(new PositionBenefitAllQry { Id = id });
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpGet("GetPositionBenefit/{id:guid}")]
@@ -36,11 +36,8 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetPositionBenefit(Guid id)
     {
         var response = await med.Send(new PositionBenefitByIdQry { Id = id });
-        if (response == null)
-        {
-            return NotFound(new { Error = $"Position Benefit with Id {id} not found" });
-        }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"POSITION BENEFIT with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddPositionBenefit")]
@@ -48,18 +45,15 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionBenefitAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new PositionBenefitAddCmd { AddDto = addDto };
-            var response = await med.Send(command);
-            return CreatedAtAction(nameof(GetPositionBenefit), new { id = response.Id }, response);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Position Benefit", Details = ex.Message });
-        }
+        var command = new PositionBenefitAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New POSITION BENEFIT successfully created."));
     }
 
     [HttpPut("ModPositionBenefit/{id:guid}")]
@@ -71,26 +65,13 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new PositionBenefitModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Position Benefit was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position Benefit with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Position Benefit", Details = ex.Message });
-        }
+        var command = new PositionBenefitModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected POSITION BENEFIT successfully updated."));
     }
 
     [HttpDelete("DelPositionBenefit/{id:guid}")]
@@ -98,18 +79,8 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new PositionBenefitDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Position Benefit with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Position Benefit", Details = ex.Message });
-        }
+        var command = new PositionBenefitDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"POSITION BENEFIT with Id {id} successfully deleted."));
     }
 }

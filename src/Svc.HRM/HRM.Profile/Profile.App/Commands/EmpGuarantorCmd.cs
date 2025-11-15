@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
@@ -19,7 +20,7 @@ public class EmpGuarantorModCmdHandler : IRequestHandler<EmpGuarantorModCmd, Emp
     public async Task<EmpGuarantorListDto> Handle(EmpGuarantorModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<EmpGuarantor>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EMPLOYEE GUARANTOR with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EMPLOYEE GUARANTOR with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
 
@@ -67,6 +68,8 @@ public class EmpGuarantorDelCmdHandler : IRequestHandler<EmpGuarantorDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<EmpGuarantor>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EMPLOYEE GUARANTOR with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<EmpGuarantor>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

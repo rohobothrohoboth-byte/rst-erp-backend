@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -23,7 +23,7 @@ public class EmployeeController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllEmployee()
     {
         var response = await med.Send(new EmployeeAllQry());
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetEmployee/{id:guid}")]
@@ -32,8 +32,8 @@ public class EmployeeController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmployee(Guid id)
     {
         var response = await med.Send(new EmployeeByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Employee with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EMPLOYEE with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
     
     [HttpPut("ModEmployee/{id:guid}")]
@@ -45,26 +45,13 @@ public class EmployeeController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmployeeModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Employee was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Employee", Details = ex.Message });
-        }
+        var command = new EmployeeModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE successfully updated."));
     }
 
     [HttpDelete("DelEmployee/{id:guid}")]
@@ -72,18 +59,8 @@ public class EmployeeController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmployeeDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Employee", Details = ex.Message });
-        }
+        var command = new EmployeeDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EMPLOYEE with Id {id} successfully deleted."));
     }
 }

@@ -1,8 +1,8 @@
-﻿using System.Data;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -23,7 +23,7 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllEmpFamily(Guid id)
     {
         var response = await med.Send(new EmpFamilyAllQry { Id = id });
-        return Ok(response);
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetEmpFamily/{id:guid}")]
@@ -32,8 +32,8 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpFamily(Guid id)
     {
         var response = await med.Send(new EmpFamilyByIdQry { Id = id });
-        if (response == null) { return NotFound(new { Error = $"Employee Family with Id {id} not found" }); }
-        return Ok(response);
+        if (response == null) { throw new DomainException($"EMPLOYEE FAMILY with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpPost("AddEmpFamily")]
@@ -41,18 +41,15 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] EmpFamilyAddDto addDto)
     {
-        if (!ModelState.IsValid) { return BadRequest(ModelState); }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
 
-        try
-        {
-            var command = new EmpFamilyAddCmd { AddDto = addDto };
-            var res = await med.Send(command);
-            return Ok(res);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to create Employee Family", Details = ex.Message });
-        }
+        var command = new EmpFamilyAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE FAMILY successfully created."));
     }
 
     [HttpPut("ModEmpFamily/{id:guid}")]
@@ -64,26 +61,13 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
-            return BadRequest(ModelState);
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
         }
 
-        try
-        {
-            var modComp = await med.Send(new EmpFamilyModCmd { ModDto = modDto });
-            return Ok(modComp);
-        }
-        catch (DBConcurrencyException ex)
-        {
-            return Conflict(new { Error = "Concurrency conflict: the Employee Family was modified by another user", Details = ex.Message });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Family with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to update Employee Family", Details = ex.Message });
-        }
+        var command = new EmpFamilyModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE FAMILY successfully updated."));
     }
 
     [HttpDelete("DelEmpFamily/{id:guid}")]
@@ -91,18 +75,8 @@ public class EmpFamilyController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            await med.Send(new EmpFamilyDelCmd { Id = id });
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { Error = $"Employee Family with Id {id} not found" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "Failed to delete Employee Family", Details = ex.Message });
-        }
+        var command = new EmpFamilyDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"EMPLOYEE FAMILY with Id {id} successfully deleted."));
     }
 }

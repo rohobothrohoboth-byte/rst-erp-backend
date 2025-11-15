@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
@@ -19,7 +20,7 @@ public class EmpFinanceModCmdHandler : IRequestHandler<EmpFinanceModCmd, EmpFina
     public async Task<EmpFinanceListDto> Handle(EmpFinanceModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<EmpFinance>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EMPLOYEE FINANCE with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EMPLOYEE FINANCE with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
 
@@ -56,6 +57,8 @@ public class EmpFinanceDelCmdHandler : IRequestHandler<EmpFinanceDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<EmpFinance>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EMPLOYEE FINANCE with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<EmpFinance>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
@@ -68,7 +69,7 @@ public class EmpFamilyModCmdHandler : IRequestHandler<EmpFamilyModCmd, EmpFamily
     public async Task<EmpFamilyListDto> Handle(EmpFamilyModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<EmpFamily>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"EMPLOYEE FAMILY with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"EMPLOYEE FAMILY with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
 
@@ -115,6 +116,8 @@ public class EmpFamilyDelCmdHandler : IRequestHandler<EmpFamilyDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<EmpFamily>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"EMPLOYEE FAMILY with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<EmpFamily>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

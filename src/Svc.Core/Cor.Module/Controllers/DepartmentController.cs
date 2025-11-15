@@ -47,7 +47,7 @@ public class DepartmentController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new AddDeptCmd { AddDeptDto = addDto };
+        var command = new AddDeptCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New DEPARTMENT successfully created."));
     }
@@ -65,7 +65,7 @@ public class DepartmentController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new ModDeptCmd { EdtDeptDto = modDto };
+        var command = new ModDeptCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected DEPARTMENT successfully updated."));
     }

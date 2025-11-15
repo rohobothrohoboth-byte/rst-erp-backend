@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -7,9 +8,7 @@ using MediatR;
 namespace Cor.HRMM.Commands;
 
 public class PositionAddCmd : IRequest<PositionListDto> { public PositionAddDto AddDto { get; set; } = default!; }
-
 public class PositionModCmd : IRequest<PositionListDto> { public PositionModDto ModDto { get; set; } = default!; }
-
 public class PositionDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class PositionAddCmdHandler : IRequestHandler<PositionAddCmd, PositionListDto>
@@ -21,18 +20,17 @@ public class PositionAddCmdHandler : IRequestHandler<PositionAddCmd, PositionLis
 
     public async Task<PositionListDto> Handle(PositionAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new Position
-        {
-            Name = request.AddDto.Name,
-            NameAm = request.AddDto.NameAm,
-            NoOfPosition = request.AddDto.NoOfPosition,
-            IsVacant = request.AddDto.IsVacant,
-            DepartmentId = request.AddDto.DepartmentId
-        };
-
         await _unitOfWork.Begin();
         try
         {
+            var data = new Position
+            {
+                Name = request.AddDto.Name,
+                NameAm = request.AddDto.NameAm,
+                NoOfPosition = request.AddDto.NoOfPosition,
+                IsVacant = request.AddDto.IsVacant,
+                DepartmentId = request.AddDto.DepartmentId
+            };
             await _unitOfWork.Repository<Position>().Add(data);
             await _unitOfWork.Commit();
 
@@ -60,17 +58,16 @@ public class PositionModCmdHandler : IRequestHandler<PositionModCmd, PositionLis
     public async Task<PositionListDto> Handle(PositionModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<Position>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"POSITION with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"POSITION with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.Name = request.ModDto.Name;
-        oldData.NameAm = request.ModDto.NameAm;
-        oldData.NoOfPosition = request.ModDto.NoOfPosition;
-        oldData.IsVacant = request.ModDto.IsVacant;
-        oldData.DepartmentId = request.ModDto.DepartmentId;
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.Name = request.ModDto.Name;
+            oldData.NameAm = request.ModDto.NameAm;
+            oldData.NoOfPosition = request.ModDto.NoOfPosition;
+            oldData.IsVacant = request.ModDto.IsVacant;
+            oldData.DepartmentId = request.ModDto.DepartmentId;
             var data = await _unitOfWork.Repository<Position>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -98,6 +95,8 @@ public class PositionDelCmdHandler : IRequestHandler<PositionDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<Position>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"POSITION with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<Position>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

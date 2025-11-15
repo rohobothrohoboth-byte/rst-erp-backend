@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Helpers;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
@@ -19,19 +20,18 @@ public class PositionReqAddCmdHandler : IRequestHandler<PositionReqAddCmd, Posit
 
     public async Task<PositionReqListDto> Handle(PositionReqAddCmd request, CancellationToken cancellationToken)
     {
-        var data = new PositionReq
-        {
-            Gender = request.AddDto.Gender,
-            SaturdayWorkOption = request.AddDto.SaturdayWorkOption,
-            SundayWorkOption = request.AddDto.SundayWorkOption,
-            WorkingHours = request.AddDto.WorkingHours,
-            ProfessionType = request.AddDto.ProfessionType,
-            PositionId = request.AddDto.PositionId
-        };
         await _unitOfWork.Begin();
-
         try
         {
+            var data = new PositionReq
+            {
+                Gender = request.AddDto.Gender,
+                SaturdayWorkOption = request.AddDto.SaturdayWorkOption,
+                SundayWorkOption = request.AddDto.SundayWorkOption,
+                WorkingHours = request.AddDto.WorkingHours,
+                ProfessionType = request.AddDto.ProfessionType,
+                PositionId = request.AddDto.PositionId
+            };
             await _unitOfWork.Repository<PositionReq>().Add(data);
             await _unitOfWork.Commit();
 
@@ -59,18 +59,17 @@ public class PositionReqModCmdHandler : IRequestHandler<PositionReqModCmd, Posit
     public async Task<PositionReqListDto> Handle(PositionReqModCmd request, CancellationToken cancellationToken)
     {
         var oldData = await _unitOfWork.Repository<PositionReq>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new KeyNotFoundException($"PositionReq with Id {request.ModDto.Id} NOT FOUND."); }
+        if (oldData == null) { throw new DomainException($"POSITION REQUIREMENT with Id {request.ModDto.Id} NOT FOUND."); }
 
-        oldData.Gender = request.ModDto.Gender;
-        oldData.SaturdayWorkOption = request.ModDto.SaturdayWorkOption;
-        oldData.SundayWorkOption = request.ModDto.SundayWorkOption;
-        oldData.WorkingHours = request.ModDto.WorkingHours;
-        oldData.ProfessionType = request.ModDto.ProfessionType;
-        oldData.PositionId = request.ModDto.PositionId;
         await _unitOfWork.Begin();
-
         try
         {
+            oldData.Gender = request.ModDto.Gender;
+            oldData.SaturdayWorkOption = request.ModDto.SaturdayWorkOption;
+            oldData.SundayWorkOption = request.ModDto.SundayWorkOption;
+            oldData.WorkingHours = request.ModDto.WorkingHours;
+            oldData.ProfessionType = request.ModDto.ProfessionType;
+            oldData.PositionId = request.ModDto.PositionId;
             var data = await _unitOfWork.Repository<PositionReq>().Update(oldData);
             await _unitOfWork.Commit();
 
@@ -98,6 +97,8 @@ public class PositionReqDelCmdHandler : IRequestHandler<PositionReqDelCmd>
         await _unitOfWork.Begin();
         try
         {
+            var data = await _unitOfWork.Repository<PositionReq>().GetById(request.Id);
+            if (data == null) { throw new DomainException($"POSITION REQUIREMENT with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<PositionReq>().Delete(request.Id);
             await _unitOfWork.Commit();
         }

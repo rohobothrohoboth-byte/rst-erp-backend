@@ -8,8 +8,8 @@ using System.Data;
 
 namespace Cor.Module.Commands;
 
-public class AddHolidayCmd : IRequest<HolidayListDto> { public AddHolidayDto AddHolidayDto { get; set; } = default!; }
-public class ModHolidayCmd : IRequest<HolidayListDto> { public EditHolidayDto EditHolidayDto { get; set; } = default!; }
+public class AddHolidayCmd : IRequest<HolidayListDto> { public AddHolidayDto AddDto { get; set; } = default!; }
+public class ModHolidayCmd : IRequest<HolidayListDto> { public EditHolidayDto ModDto { get; set; } = default!; }
 public class DelHolidayCmd : IRequest { public Guid Id { get; set; } }
 
 public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDto>
@@ -26,10 +26,10 @@ public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDt
         {
             var holiday = new Holiday
             {
-                Name = request.AddHolidayDto.Name,
-                Date = request.AddHolidayDto.Date,
-                IsPublic = request.AddHolidayDto.IsPublic,
-                FiscalYearId = request.AddHolidayDto.FiscalYearId
+                Name = request.AddDto.Name,
+                Date = request.AddDto.Date,
+                IsPublic = request.AddDto.IsPublic,
+                FiscalYearId = request.AddDto.FiscalYearId
             };
             await _unitOfWork.Repository<Holiday>().Add(holiday);
             await _unitOfWork.Commit();
@@ -57,15 +57,15 @@ public class ModHolidayCmdHandler : IRequestHandler<ModHolidayCmd, HolidayListDt
 
     public async Task<HolidayListDto> Handle(ModHolidayCmd request, CancellationToken cancellationToken)
     {
-        var oldHoliday = await _unitOfWork.Repository<Holiday>().GetById(request.EditHolidayDto.Id);
-        if (oldHoliday == null) { throw new DomainException($"HOLIDAY with id [{request.EditHolidayDto.Id}] NOT FOUND."); }
+        var oldHoliday = await _unitOfWork.Repository<Holiday>().GetById(request.ModDto.Id);
+        if (oldHoliday == null) { throw new DomainException($"HOLIDAY with id [{request.ModDto.Id}] NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
         {
-            oldHoliday.Name = request.EditHolidayDto.Name;
-            oldHoliday.Date = request.EditHolidayDto.Date;
-            oldHoliday.IsPublic = request.EditHolidayDto.IsPublic;
+            oldHoliday.Name = request.ModDto.Name;
+            oldHoliday.Date = request.ModDto.Date;
+            oldHoliday.IsPublic = request.ModDto.IsPublic;
             var nHoliday = await _unitOfWork.Repository<Holiday>().Update(oldHoliday);
             await _unitOfWork.Commit();
 
