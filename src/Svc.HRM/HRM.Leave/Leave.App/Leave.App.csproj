@@ -8,8 +8,18 @@
 
   <ItemGroup>
     <Folder Include="Commands\" />
-    <Folder Include="Interfaces\" />
     <Folder Include="Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
+    <PackageReference Include="Npgsql" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Leave.Domain\Leave.Domain.csproj" />
   </ItemGroup>
 
 </Project>
