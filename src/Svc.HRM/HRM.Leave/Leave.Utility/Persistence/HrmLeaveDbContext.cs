@@ -21,8 +21,10 @@ public class HrmLeaveDbContext : DbContext
         modelBuilder.Entity<AttachmentBlob>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<AuditLog>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<EmpLeavePolicy>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.Entity<LeaveBalance>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<LeaveLedger>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<LeavePolicy>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.Entity<LeavePolicyAccrual>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<LeaveRequest>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         modelBuilder.Entity<LeaveType>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
         //modelBuilder.Entity<Address>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
@@ -34,8 +36,10 @@ public class HrmLeaveDbContext : DbContext
     public DbSet<AttachmentBlob> AttachmentBlob { get; set; }
     public DbSet<AuditLog> AuditLog { get; set; }
     public DbSet<EmpLeavePolicy> EmpLeavePolicy { get; set; }
+    public DbSet<LeaveBalance> LeaveBalance { get; set; }
     public DbSet<LeaveLedger> LeaveLedger { get; set; }
     public DbSet<LeavePolicy> LeavePolicy { get; set; }
+    public DbSet<LeavePolicyAccrual> LeavePolicyAccrual { get; set; }
     public DbSet<LeaveRequest> LeaveRequest { get; set; }
     public DbSet<LeaveType> LeaveType { get; set; }
     //public DbSet<Address> Address { get; set; }

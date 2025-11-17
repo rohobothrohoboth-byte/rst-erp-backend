@@ -23,7 +23,6 @@ public class EmContactModCmdHandler : IRequestHandler<EmContactModCmd, EmContact
         if (oldData == null) { throw new DomainException($"EMERGENCY CONTACT with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
-
         try
         {
             var oldPer = await _unitOfWork.Repository<Person>().GetById(oldData.PersonId);

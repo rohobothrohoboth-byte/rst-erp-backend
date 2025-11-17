@@ -45,4 +45,5 @@ public class EmContactModDto
     public Guid EmployeeId { get; set; } = default!; //Employee
     public Guid AddressId { get; set; } = default!; //Address
     public Guid PersonId { get; set; } = default!; //Person
+    public string RowVersion { get; set; } = default!;
 }
