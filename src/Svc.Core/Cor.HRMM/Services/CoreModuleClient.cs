@@ -8,7 +8,7 @@ public class CoreModuleClient(HttpClient http) : ICoreModuleClient
     {
         try
         {
-            using var res = await http.GetAsync($"Department/GetDept/{id}", ct);
+            using var res = await http.GetAsync($"Names/GetDeptName/{id}", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<LupListDto>(cancellationToken: ct);
         }
@@ -21,7 +21,7 @@ public class CoreModuleClient(HttpClient http) : ICoreModuleClient
     {
         try
         {
-            using var res = await http.GetAsync("Department/AllDept", ct);
+            using var res = await http.GetAsync("Names/AllDeptName", ct);
             if (!res.IsSuccessStatusCode) { return null; }
             return await res.Content.ReadFromJsonAsync<List<LupListDto>>(cancellationToken: ct);
         }

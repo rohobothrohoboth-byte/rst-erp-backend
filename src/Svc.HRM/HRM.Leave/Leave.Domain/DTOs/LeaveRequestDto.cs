@@ -11,11 +11,10 @@ public class LeaveRequestListDto : BaseDto
     public DateTime EndDate { get; set; } = default!;
     public DateTime DateRequested { get; set; } = default!;
     public DateTime? DateApproved { get; set; } = default!;
-    public double DaysRequested { get; set; } = default!;
-    public bool IsHalfDay { get; set; } = default!;
-    public string Status { get; set; } = default!; // enum.LeaveRequestStatus (0/1)
+    //public double DaysRequested { get; set; } = default!;
+    //public bool IsHalfDay { get; set; } = default!;
+    //public string Status { get; set; } = default!; // enum.LeaveRequestStatus (0/1)
     public string Comments { get; set; } = default!;
-
     public string DaysRequestedStr { get; set; } = default!;
     public string IsHalfDayStr { get; set; } = default!;
     public string StatusStr { get; set; } = default!;
@@ -29,6 +28,7 @@ public class LeaveRequestListDto : BaseDto
     public string DateRequestedStrAm => DateRequested.ToEthiopianDateString("MMMM dd, yyyy");
     public string ApprovedBy { get; set; } = default!;
     public string Employee { get; set; } = default!;
+    public string LeaveType { get; set; } = default!;
 }
 
 public class LeaveRequestAddDto

@@ -24,7 +24,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> BranchCompList()
     {
         var res = await med.Send(new BranchCompListQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new BranchCompByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BRANCH with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllBranchName")]
@@ -45,7 +45,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllBranchName()
     {
         var res = await med.Send(new BranchAllNameQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetBranchName/{id:guid}")]
@@ -55,7 +55,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new BranchNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BRANCH with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> BranchDept(Guid id)
     {
         var res = await med.Send(new DeptByBraQry { Id = id });
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllDeptName")]
@@ -84,7 +84,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new DeptNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"DEPARTMENT with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllCompName")]
@@ -92,7 +92,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllCompName()
     {
         var res = await med.Send(new CompAllNameQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetCompName/{id:guid}")]
@@ -102,7 +102,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new CompNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"COMPANY with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllFiscYearName")]
@@ -110,7 +110,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllFiscYearName()
     {
         var res = await med.Send(new FiscalYearAllNameQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetFiscYearName/{id:guid}")]
@@ -120,7 +120,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new FiscalYearNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"FISCAL YEAR with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("ActiveFiscYear")]
@@ -128,7 +128,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> ActiveFiscYear()
     {
         var res = await med.Send(new FiscalYearActiveQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllPeriodName")]
@@ -136,7 +136,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllPeriodName()
     {
         var res = await med.Send(new PeriodAllNameQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetPeriodName/{id:guid}")]
@@ -146,6 +146,6 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new PeriodNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"PERIOD with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 }

@@ -21,7 +21,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllAddressName()
     {
         var res = await med.Send(new AddressNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetAddressName/{id:guid}")]
@@ -30,8 +30,25 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetAddressName(Guid id)
     {
         var res = await med.Send(new AddressNameByIdQry { Id = id });
-        if (res == null) { throw new DomainException($"ADDRESS with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        if (res == null) { throw new DomainException($"ADDRESS with Id [{id}] NOT FOUND."); }
+        return Ok(res);
+    }
+    [HttpGet("AllEmpName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllEmpName()
+    {
+        var res = await med.Send(new EmpNameAllQry());
+        return Ok(res);
+    }
+
+    [HttpGet("GetEmpName/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEmpName(Guid id)
+    {
+        var res = await med.Send(new EmpNameByIdQry { Id = id });
+        if (res == null) { throw new DomainException($"EMPLOYEE with Id [{id}] NOT FOUND."); }
+        return Ok(res);
     }
 
 

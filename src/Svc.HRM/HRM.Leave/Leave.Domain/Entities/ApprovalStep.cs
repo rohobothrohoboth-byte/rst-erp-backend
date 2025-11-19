@@ -6,7 +6,7 @@ public class ApprovalStep : BaseEntity
     public Guid ApprovedById { get; set; } // external user id for approver (Employee)
     public bool IsApproved { get; set; } = false;
     public DateTime? Date { get; set; }
-    public string? Comments { get; set; } = default!;
+    public string Comments { get; set; } = default!;
     public Guid LeaveRequestId { get; set; }
 
     //******************************************//

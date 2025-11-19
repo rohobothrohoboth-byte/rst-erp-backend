@@ -12,7 +12,6 @@ public class LeaveBalanceListDto : BaseDto
     public DateTime? CarriedExpireDate { get; set; }
     public string CarriedExpireDateStr => CarriedExpireDate.HasValue ? $"{CarriedExpireDate:MMMM dd, yyyy}" : "";
     public string CarriedExpireDateStrAm => CarriedExpireDate.HasValue ? CarriedExpireDate.Value.ToEthiopianDateString("MMMM dd, yyyy") : "";
-    public string Comments { get; set; } = default!;
     public string LeavePolicy { get; set; } = default!;
     public string FiscalYear { get; set; } = default!;
     public string EmployeeName { get; set; } = default!;

@@ -2,7 +2,7 @@
 
 public class LeaveLedger: BaseEntity
 {
-    public Guid LeaveBalanceId { get; set; }
+    //public Guid LeaveBalanceId { get; set; }
     public Guid EmployeeId { get; set; }
     public Guid LeavePolicyId { get; set; }
     public DateTime Date { get; set; } = DateTime.UtcNow;
@@ -14,5 +14,5 @@ public class LeaveLedger: BaseEntity
     //******************************************//
 
     public LeavePolicy LeavePolicy { get; set; } = null!;
-    public LeaveBalance LeaveBalance { get; set; } = null!;
+    //public LeaveBalance LeaveBalance { get; set; } = null!;
 }

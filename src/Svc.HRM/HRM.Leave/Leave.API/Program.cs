@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Leave.API.Middlewares;
+using Leave.App.Services;
 using Leave.Utility.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi;
@@ -23,16 +24,19 @@ builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { 
 // --- Add controllers + API versioning + problem details ---
 builder.Services.AddControllers();
 
-//var gatewayUrl = builder.Configuration["Services:Gateway"];
+var gatewayUrl = builder.Configuration["Services:Gateway"];
 //var lupUrl = builder.Configuration["Services:Lup"];
 //var corHRMMUrl = builder.Configuration["Services:CorHRMM"];
-//var corModuleUrl = builder.Configuration["Services:CorModule"];
+var corModUrl = builder.Configuration["Services:CorMod"];
+var hrmProUrl = builder.Configuration["Services:HrmProfile"];
 
 //builder.Services.AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 //builder.Services.AddHttpClient<ICorHRMM, CorHRMM>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corHRMMUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
-//builder.Services.AddHttpClient<ICorMod, CorMod>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
+builder.Services.AddHttpClient<ICorMod, CorMod>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
+
+builder.Services.AddHttpClient<IHrmProfile, HrmProfile>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), hrmProUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
 
 builder.Services.AddApiVersioning(option =>
     {

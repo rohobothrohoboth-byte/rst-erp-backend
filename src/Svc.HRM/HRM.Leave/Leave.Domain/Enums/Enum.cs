@@ -30,17 +30,6 @@ public enum AccrualFrequency
     None = 3
 }
 
-public enum LeaveTypeCode
-{
-    Annual = 0,
-    Sick = 1,
-    Maternity = 2,
-    Paternity = 3,
-    Unpaid = 4,
-    CompOff = 5,
-    Special = 6
-}
-
 public enum LedgerEntryType
 {
     Accrual = 1,
