@@ -24,7 +24,7 @@ public class LeaveBalanceAddDto
     public Guid LeavePolicyId { get; set; } // LeavePolicy
     public double Balance { get; set; }
     public double Carried { get; set; }
-    public DateTime? CarriedExpiresAt { get; set; }
+    public DateTime? CarriedExpireDate { get; set; }
 }
 
 public class LeaveBalanceModDto
@@ -35,6 +35,6 @@ public class LeaveBalanceModDto
     public Guid LeavePolicyId { get; set; } // LeavePolicy
     public double Balance { get; set; }
     public double Carried { get; set; }
-    public DateTime? CarriedExpiresAt { get; set; }
+    public DateTime? CarriedExpireDate { get; set; }
     public string RowVersion { get; set; } = default!;
 }

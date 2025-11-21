@@ -33,10 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Leave.Utility\Leave.Utility.csproj" />
     <ProjectReference Include="..\Leave.Worker\Leave.Worker.csproj" />
   </ItemGroup>

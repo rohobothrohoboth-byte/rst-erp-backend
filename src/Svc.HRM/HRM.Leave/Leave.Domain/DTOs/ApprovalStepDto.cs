@@ -23,7 +23,7 @@ public class ApprovalStepAddDto
     public int StepOrder { get; set; }
     public bool IsApproved { get; set; } = false;
     public DateTime? Date { get; set; }
-    public string? Comments { get; set; } = default!;
+    public string Comments { get; set; } = default!;
 }
 
 public class ApprovalStepModDto
@@ -34,6 +34,6 @@ public class ApprovalStepModDto
     public int StepOrder { get; set; }
     public bool IsApproved { get; set; } = false;
     public DateTime? Date { get; set; }
-    public string? Comments { get; set; } = default!;
+    public string Comments { get; set; } = default!;
     public string RowVersion { get; set; } = default!;
 }
