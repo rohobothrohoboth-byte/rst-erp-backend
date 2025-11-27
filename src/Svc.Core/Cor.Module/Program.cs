@@ -4,6 +4,7 @@ using Cor.Module.Extensions;
 using Cor.Module.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -107,8 +108,8 @@ app.UseHttpsRedirection(); // Must be before Swagger
 if (app.Environment.IsDevelopment())
 {
     //app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Core Module API v1"); c.RoutePrefix = string.Empty; });
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference(options => { options.WithTitle("Core Module API"); });
     app.ApplyMigration();
 }
 

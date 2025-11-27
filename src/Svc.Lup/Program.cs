@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using Serilog;
 using Svc.Lup.Extensions;
 using Svc.Lup.Middlewares;
@@ -106,8 +107,8 @@ app.UseHttpsRedirection(); // Must be before Swagger
 if (app.Environment.IsDevelopment())
 {
     //app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Lup Tables API v1"); c.RoutePrefix = string.Empty; });
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference(options => { options.WithTitle("Lup Tables API"); });
     app.ApplyMigration();
     await app.ApplySeedAsync();
 }

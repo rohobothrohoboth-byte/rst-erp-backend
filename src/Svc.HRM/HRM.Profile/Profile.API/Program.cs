@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Profile.API.Middlewares;
 using Profile.App.Services;
 using Profile.Utility.Extensions;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -119,14 +120,14 @@ app.UseHttpsRedirection(); // Must be before Swagger
 if (app.Environment.IsDevelopment())
 {
     //app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRM Profile API v1"); c.RoutePrefix = string.Empty; });
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference(options => { options.WithTitle("HRM Profile API"); });
     app.ApplyMigration();
 }
 
 app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
+//app.UseAuthentication();
+//app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

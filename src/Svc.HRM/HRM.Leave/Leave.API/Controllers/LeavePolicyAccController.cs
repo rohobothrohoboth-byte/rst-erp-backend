@@ -14,7 +14,7 @@ namespace Leave.API.Controllers;
 
 //[Authorize]
 [ApiController]
-[Route("api/hrm/profile/v{version:apiVersion}/LeavePolicyAcc")]
+[Route("api/hrm/leave/v{version:apiVersion}/LeavePolicyAcc")]
 [ApiVersion("1.0")]
 public class LeavePolicyAccController(IMediator med) : ControllerBase
 {
