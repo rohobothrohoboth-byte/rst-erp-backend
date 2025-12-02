@@ -16,6 +16,5 @@ public static class MigrationExt
     {
         using var scope = app.ApplicationServices.CreateScope();
         await using var dbContext = scope.ServiceProvider.GetRequiredService<coreHRMMDbContext>();
-        //await LupSeeder.SeedAsync(dbContext);
     }
 }

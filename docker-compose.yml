@@ -1,55 +1,8 @@
-﻿version: '3.9'
-
 services:
-  rabbitmq:
-    image: rabbitmq:4-management
-    ports:
-     - 5672:5672
-     - 15672:15672
-    networks:
-      - rstnet 
-
-
-  # --- Core Database ---
-  cor.db:
-    image: postgres:latest
-    container_name: cor.db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: AmFox@2013
-      POSTGRES_DB: coredb
-    ports:
-      - "5433:5432"
-    networks:
-      - rstnet
-    volumes:
-      - coredb_data:/var/lib/postgresql/data
-      - ./src/Svc.Core/Cor.Infrastructure/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-
-  # --- Core API ---
-  cor.api:
+  svc.authmgr:
+    image: ${DOCKER_REGISTRY-}svcauthmgr
     build:
-      context: ./src/Svc.Core/Cor.API
-      dockerfile: Dockerfile
-    container_name: cor.api
-    depends_on:
-      - cor.db
-      - rabbitmq
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: https://+:1214
-      RABBITMQ_HOST: rabbitmq
-      # ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
-      # ASPNETCORE_Kestrel__Certificates__Default__Password: AmFox@2013
-      ConnectionStrings__CoreDbCon: Host=cor.db;Port=5432;Database=CoreDb;Username=postgres;Password=AmFox@2013;Include Error Detail=true
+      context: .
+      dockerfile: src/Svc.AuthMgr/Dockerfile
     ports:
-      - "1214:1214"
-    networks:
-      - rstnet
-
-networks:
-  rstnet:
-    driver: bridge
-
-volumes:
-  coredb_data:
+     - 

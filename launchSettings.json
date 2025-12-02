@@ -4,7 +4,8 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "cor.api": "StartDebugging"
+        "cor.api": "StartDebugging",
+        "svc.authmgr": "StartDebugging"
       }
     }
   }

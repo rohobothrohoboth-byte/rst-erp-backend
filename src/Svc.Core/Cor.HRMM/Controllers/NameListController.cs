@@ -21,7 +21,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllBenefitSetName()
     {
         var res = await med.Send(new BenefitSetNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetBenefitSetName/{id:guid}")]
@@ -31,7 +31,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new BenefitSetNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BENEFIT SETTING with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllEducationQualName")]
@@ -39,7 +39,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllEducationQualName()
     {
         var res = await med.Send(new EducationQualNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetEducationQualName/{id:guid}")]
@@ -49,7 +49,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new EducationQualNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"EDUCATION QUALIFICATION with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllJgStepName()
     {
         var res = await med.Send(new JgStepNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new JgStepNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"JOB GRADE STEP with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllJobGradeName")]
@@ -81,7 +81,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllJobGradeName()
     {
         var res = await med.Send(new JobGradeNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetJobGradeName/{id:guid}")]
@@ -91,7 +91,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new JobGradeNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"JOB GRADE with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> DeptPosition(Guid id)
     {
         var res = await med.Send(new PositionByDeptQry { Id = id });
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("AllPositionName")]
@@ -110,7 +110,7 @@ public class NameListController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllPositionName()
     {
         var res = await med.Send(new PositionNameAllQry());
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
     [HttpGet("GetPositionName/{id:guid}")]
@@ -120,7 +120,7 @@ public class NameListController(IMediator med) : ControllerBase
     {
         var res = await med.Send(new PositionNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"POSITION with id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(res));
+        return Ok(res);
     }
 
 
