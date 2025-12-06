@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!--<TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>-->
+    <UserSecretsId>0abf4ba6-797d-4763-b9ea-a578c07482fd</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Svc.Auth\Svc.Auth.csproj" />
+    <ProjectReference Include="..\Svc.Core\Cor.HRMM\Cor.HRMM.csproj" />
+    <ProjectReference Include="..\Svc.Core\Cor.Module\Cor.Module.csproj" />
+    <ProjectReference Include="..\Svc.Gateway\Svc.Gateway.csproj" />
+    <ProjectReference Include="..\Svc.HRM\HRM.Leave\Leave.API\Leave.API.csproj" />
+    <ProjectReference Include="..\Svc.HRM\HRM.Profile\Profile.API\Profile.API.csproj" />
+    <ProjectReference Include="..\Svc.Lup\Svc.Lup.csproj" />
+  </ItemGroup>
+
+</Project>

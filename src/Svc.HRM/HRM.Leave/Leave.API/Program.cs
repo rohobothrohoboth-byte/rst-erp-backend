@@ -10,6 +10,8 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // --- Logging ---
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -112,6 +114,8 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddUtilitySvc(builder.Configuration);
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // --- global exception middleware ---
 app.UseMiddleware<ExceptionMiddleware>();

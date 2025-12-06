@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -18,6 +20,8 @@ builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { 
 
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 app.UseCors("AllowAll");
 app.MapReverseProxy();

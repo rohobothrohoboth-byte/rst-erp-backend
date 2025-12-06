@@ -30,4 +30,8 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\RST_ERP.ServiceDefaults\RST_ERP.ServiceDefaults.csproj" />
+	</ItemGroup>
+
 </Project>
