@@ -1,16 +1,18 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Asp.Versioning;
+using Asp.Versioning.Conventions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Svc.Auth.Constants;
 using Svc.Auth.Interfaces;
-using Svc.Auth.Models.Dtos;
-using Svc.Auth.Persistence;
-using System.Text;
-using Asp.Versioning;
-using Asp.Versioning.Conventions;
 using Svc.Auth.Middlewares;
 using Svc.Auth.Models.Entities;
+using Svc.Auth.Persistence;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using Svc.Auth.Services;
 
 namespace Svc.Auth.Extensions;
 
@@ -33,6 +35,7 @@ public static class DependencyInjection
             });
 
         builder.Services.AddOpenApi();
+        builder.Services.AddUtilitySvc(builder.Configuration);
         return builder;
     }
 
@@ -57,15 +60,6 @@ public static class DependencyInjection
         });
         builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-        return builder;
-    }
-
-    public static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
-    {
-        builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("authMgrCon")));
-        builder.Services.AddScoped<ILogService, LogService>();
-        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
-
         return builder;
     }
     
@@ -96,22 +90,23 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
     {
-        builder.Services
-            .AddIdentity<AppUser, IdentityRole>()
-            .AddEntityFrameworkStores<AuthDbContext>();
+        builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AuthDbContext>();
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, PerApiHandler>();
+        builder.Services.AddScoped<ITokenService, TokenService>();
 
-        builder.Services.Configure<JwtAuthDto>(builder.Configuration.GetSection("Jwt"));
+        //builder.Services.Configure<JwtAuthDto>(builder.Configuration.GetSection("Jwt"));
 
-        var jwtAuthOption = builder.Configuration.GetSection("Jwt").Get<JwtAuthDto>()!;
+        //var jwtAuthOption = builder.Configuration.GetSection("Jwt").Get<JwtAuthDto>()!;
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(o =>
             {
                 o.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidIssuer = jwtAuthOption.Issuer,
-                    ValidAudience = jwtAuthOption.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtAuthOption.SecretKey))
+                    ValidIssuer = JwtCons.Issuer,
+                    ValidAudience = JwtCons.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey))
                 };
             });
 

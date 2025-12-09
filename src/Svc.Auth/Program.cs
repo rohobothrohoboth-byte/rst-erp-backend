@@ -1,6 +1,7 @@
 using Scalar.AspNetCore;
 using Serilog;
 using Svc.Auth.Extensions;
+using Svc.Auth.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +21,12 @@ builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { 
 builder.AddApiServices()
     .AddHttpClientServices()
     .AddErrorHandling()
-    .AddDatabase()
     .AddSwaggerService()
     .AddAuthService();
 
 var app = builder.Build();
 
-//app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
@@ -35,7 +35,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference(options => { options.WithTitle("Auth Manager API"); });
-    //await app.ApplyMigrationsAsync();
+    app.ApplyMigration();
 }
 
 app.UseCors("AllowAll");
