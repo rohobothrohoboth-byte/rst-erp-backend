@@ -4,21 +4,20 @@ public class RegisterStep1
 {
     public Guid EmployeeId { get; set; }
     public string Password { get; set; } = default!;
-    public string ConfirmPassword { get; set; } = default!;
     public Guid RoleId { get; set; }
-    public List<KeyValuePair<Guid, string>> PerModules { get; set; } = default!;
+    public List<Guid> PerModules { get; set; } = default!;
 }
 
 public class RegisterStep2
 {
     public Guid EmployeeId { get; set; }
-    public List<KeyValuePair<Guid, string>> PerMenus { get; set; } = default!;
+    public List<Guid> PerMenus { get; set; } = default!;
 }
 
 public class RegisterStep3
 {
     public Guid EmployeeId { get; set; }
-    public List<KeyValuePair<Guid, string>> PerAccess { get; set; } = default!;
+    public List<Guid> PerAccess { get; set; } = default!;
 }
 
 

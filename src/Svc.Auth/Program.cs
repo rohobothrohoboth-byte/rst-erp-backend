@@ -36,6 +36,10 @@ if (app.Environment.IsDevelopment())
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference(options => { options.WithTitle("Auth Manager API"); });
     app.ApplyMigration();
+    await app.ApplyAdminRole();
+    await app.ApplyPerModSeed();
+    //await app.ApplyPerMenuSeed();
+    //await app.ApplyPerApiSeed();
 }
 
 app.UseCors("AllowAll");

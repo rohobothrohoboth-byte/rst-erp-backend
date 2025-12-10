@@ -18,11 +18,12 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class LeavePolicyAccController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllLeavePolicyAcc/{id:guid}")]
+    [HttpGet("AllLeavePolicyAcc")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllLeavePolicyAcc(Guid id)
+    public async Task<IActionResult> AllLeavePolicyAcc()
     {
-        var response = await med.Send(new LeavePolicyAccrualAllQry());
+        //var response = await med.Send(new LeavePolicyAccrualAllQry { Id = id });
+        var response = await med.Send(new LeavePolicyAccrualAllQry ());
         return Ok(ApiResponse<object>.Ok(response));
     }
 

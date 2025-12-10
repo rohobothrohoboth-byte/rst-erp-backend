@@ -12,7 +12,7 @@ using Svc.Auth.Persistence;
 namespace Svc.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20251209085826_MigAuth01")]
+    [Migration("20251210131509_MigAuth01")]
     partial class MigAuth01
     {
         /// <inheritdoc />
@@ -50,6 +50,8 @@ namespace Svc.Auth.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("Role", (string)null);
+
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -440,6 +442,23 @@ namespace Svc.Auth.Migrations
                     b.ToTable("UserPerModule");
                 });
 
+            modelBuilder.Entity("Svc.Auth.Models.Entities.AppRole", b =>
+                {
+                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityRole");
+
+                    b.Property<string>("Desc")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AppRole", (string)null);
+                });
+
             modelBuilder.Entity("Svc.Auth.Models.Entities.AppUser", b =>
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
@@ -456,7 +475,7 @@ namespace Svc.Auth.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("UserProfile", (string)null);
+                    b.ToTable("AppUser", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -576,6 +595,15 @@ namespace Svc.Auth.Migrations
                     b.Navigation("PerModule");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Svc.Auth.Models.Entities.AppRole", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithOne()
+                        .HasForeignKey("Svc.Auth.Models.Entities.AppRole", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.AppUser", b =>

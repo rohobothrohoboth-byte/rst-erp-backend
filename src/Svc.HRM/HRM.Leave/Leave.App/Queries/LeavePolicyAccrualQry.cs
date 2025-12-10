@@ -43,6 +43,31 @@ public class LeavePolicyAccrualAllQryHandler : IRequestHandler<LeavePolicyAccrua
             dataL.Add(c);
         }
 
+        //var data = await _unitOfWork.Repository<LeavePolicyAccrual>().GetFoD(a => a.LeavePolicyId == request.Id);
+        //var dataL = new List<LeavePolicyAccrualListDto>();
+        //if (data == null) { return null; }
+        //var lpoL = await _unitOfWork.Repository<LeavePolicy>().GetAll();
+
+        //var lpo = lpoL.FirstOrDefault(t => t.Id == data.LeavePolicyId);
+        //var c = new LeavePolicyAccrualListDto
+        //{
+        //    Id = data.Id,
+        //    LeavePolicyId = data.LeavePolicyId,
+        //    Entitlement = data.Entitlement,
+        //    Frequency = data.Frequency,
+        //    AccrualRate = data.AccrualRate,
+        //    MinServiceMonths = data.MinServiceMonths,
+        //    MaxCarryoverDays = data.MaxCarryoverDays,
+        //    CarryoverExpiryDays = data.CarryoverExpiryDays,
+        //    FrequencyStr = ((AccrualFrequency)Enum.Parse(typeof(AccrualFrequency), data.Frequency)).ToDisplayName(),
+        //    LeavePolicy = lpo != null ? lpo.Name : "NOT AVAILABLE",
+        //    IsDeleted = data.IsDeleted,
+        //    DateAdd = data.DateAdd,
+        //    DateMod = data.DateMod,
+        //    RowVersion = Convert.ToBase64String(data.RowVersion)
+        //};
+        //dataL.Add(c);
+
         return dataL;
     }
 }

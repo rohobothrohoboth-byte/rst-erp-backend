@@ -103,6 +103,24 @@ namespace Svc.Auth.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AppRole",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Desc = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppRole", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppRole_Role_Id",
+                        column: x => x.Id,
+                        principalTable: "Role",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RoleClaim",
                 columns: table => new
                 {
@@ -119,6 +137,25 @@ namespace Svc.Auth.Migrations
                         name: "FK_RoleClaim_Role_RoleId",
                         column: x => x.RoleId,
                         principalTable: "Role",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUser",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUser", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppUser_User_Id",
+                        column: x => x.Id,
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -159,25 +196,6 @@ namespace Svc.Auth.Migrations
                     table.ForeignKey(
                         name: "FK_UserLogin_User_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserProfile",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserProfile", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserProfile_User_Id",
-                        column: x => x.Id,
                         principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -245,9 +263,9 @@ namespace Svc.Auth.Migrations
                 {
                     table.PrimaryKey("PK_RefreshToken", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_RefreshToken_UserProfile_UserId",
+                        name: "FK_RefreshToken_AppUser_UserId",
                         column: x => x.UserId,
-                        principalTable: "UserProfile",
+                        principalTable: "AppUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -267,15 +285,15 @@ namespace Svc.Auth.Migrations
                 {
                     table.PrimaryKey("PK_UserPerApi", x => new { x.UserId, x.PerApiId });
                     table.ForeignKey(
-                        name: "FK_UserPerApi_PerApi_PerApiId",
-                        column: x => x.PerApiId,
-                        principalTable: "PerApi",
+                        name: "FK_UserPerApi_AppUser_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserPerApi_UserProfile_UserId",
-                        column: x => x.UserId,
-                        principalTable: "UserProfile",
+                        name: "FK_UserPerApi_PerApi_PerApiId",
+                        column: x => x.PerApiId,
+                        principalTable: "PerApi",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -295,15 +313,15 @@ namespace Svc.Auth.Migrations
                 {
                     table.PrimaryKey("PK_UserPerMenu", x => new { x.UserId, x.PerMenuId });
                     table.ForeignKey(
-                        name: "FK_UserPerMenu_PerMenu_PerMenuId",
-                        column: x => x.PerMenuId,
-                        principalTable: "PerMenu",
+                        name: "FK_UserPerMenu_AppUser_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserPerMenu_UserProfile_UserId",
-                        column: x => x.UserId,
-                        principalTable: "UserProfile",
+                        name: "FK_UserPerMenu_PerMenu_PerMenuId",
+                        column: x => x.PerMenuId,
+                        principalTable: "PerMenu",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -323,18 +341,36 @@ namespace Svc.Auth.Migrations
                 {
                     table.PrimaryKey("PK_UserPerModule", x => new { x.UserId, x.PerModuleId });
                     table.ForeignKey(
+                        name: "FK_UserPerModule_AppUser_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUser",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_UserPerModule_PerModule_PerModuleId",
                         column: x => x.PerModuleId,
                         principalTable: "PerModule",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserPerModule_UserProfile_UserId",
-                        column: x => x.UserId,
-                        principalTable: "UserProfile",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppRole_Id",
+                table: "AppRole",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUser_EmployeeId",
+                table: "AppUser",
+                column: "EmployeeId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUser_Id",
+                table: "AppUser",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PerApi_Key",
@@ -358,6 +394,18 @@ namespace Svc.Auth.Migrations
                 name: "IX_RefreshToken_UserId",
                 table: "RefreshToken",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Role_Id",
+                table: "Role",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Role_Name",
+                table: "Role",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
@@ -413,18 +461,6 @@ namespace Svc.Auth.Migrations
                 column: "PerModuleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserProfile_EmployeeId",
-                table: "UserProfile",
-                column: "EmployeeId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserProfile_Id",
-                table: "UserProfile",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserRole_RoleId",
                 table: "UserRole",
                 column: "RoleId");
@@ -433,6 +469,9 @@ namespace Svc.Auth.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AppRole");
+
             migrationBuilder.DropTable(
                 name: "RefreshToken");
 
@@ -467,10 +506,10 @@ namespace Svc.Auth.Migrations
                 name: "PerMenu");
 
             migrationBuilder.DropTable(
-                name: "PerModule");
+                name: "AppUser");
 
             migrationBuilder.DropTable(
-                name: "UserProfile");
+                name: "PerModule");
 
             migrationBuilder.DropTable(
                 name: "Role");

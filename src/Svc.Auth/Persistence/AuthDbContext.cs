@@ -12,7 +12,8 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDb
         base.OnModelCreating(builder);
         builder.HasPostgresExtension("pg_trgm");
 
-        builder.Entity<AppUser>().ToTable("UserProfile");
+        builder.Entity<AppUser>().ToTable("AppUser");
+        builder.Entity<AppRole>().ToTable("AppRole");
         builder.Entity<IdentityUser>().ToTable("User");
         builder.Entity<IdentityRole>().ToTable("Role");
         builder.Entity<IdentityUserRole<string>>().ToTable("UserRole");
@@ -23,6 +24,8 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDb
 
         builder.Entity<AppUser>().HasIndex(p => p.EmployeeId).IsUnique();
         builder.Entity<AppUser>().HasIndex(p => p.Id).IsUnique();
+        builder.Entity<AppRole>().HasIndex(p => p.Name).IsUnique();
+        builder.Entity<AppRole>().HasIndex(p => p.Id).IsUnique();
         builder.Entity<PerModule>().HasIndex(p => p.Key).IsUnique();
         builder.Entity<PerMenu>().HasIndex(p => p.Key).IsUnique();
         builder.Entity<PerApi>().HasIndex(p => p.Key).IsUnique();

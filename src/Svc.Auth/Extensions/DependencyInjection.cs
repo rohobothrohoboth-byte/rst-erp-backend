@@ -90,7 +90,7 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
     {
-        builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AuthDbContext>();
+        builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AuthDbContext>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerApiHandler>();
         builder.Services.AddScoped<ITokenService, TokenService>();
