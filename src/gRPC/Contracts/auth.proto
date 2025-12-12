@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package auth;
+
+service AuthValidator {
+  rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc GetUser (GetUserRequest) returns (GetUserResponse);
+}
+
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool is_valid = 1;
+  string error_message = 2;
+}
+
+message GetUserRequest {
+  string token = 1;
+}
+
+message GetUserResponse {
+  string EmployeeId = 1;
+  string UserId = 2;
+  string Username = 3;
+  string Role = 4;
+  repeated string PerModule = 5;
+  repeated string PerMenu = 6;
+  repeated string PerApi = 7;
+  string error_message = 8;
+}

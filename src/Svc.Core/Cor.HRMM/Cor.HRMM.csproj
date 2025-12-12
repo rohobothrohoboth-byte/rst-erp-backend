@@ -4,6 +4,12 @@
 		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
 		<PackageReference Include="Dapper" />
 		<PackageReference Include="EthiopianCalendar" />
+		<PackageReference Include="Google.Protobuf" />
+		<PackageReference Include="Grpc.AspNetCore" />
+		<PackageReference Include="Grpc.Tools">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="MediatR" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" />
@@ -22,7 +28,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\gRPC\Contracts\Contracts.csproj" />
 	  <ProjectReference Include="..\..\RST_ERP.ServiceDefaults\RST_ERP.ServiceDefaults.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include="..\..\gRPC\Contracts\auth.proto" GrpcServices="Client" />
 	</ItemGroup>
 
 </Project>

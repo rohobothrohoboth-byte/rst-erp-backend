@@ -68,8 +68,7 @@ public class AuthMngrRepo<T> : IAuthMngrRepo<T> where T : BaseEntity
 
         var columns = string.Join(", ", properties.Select(p => $@"""{p.Name}"""));
         var paramList = string.Join(", ", properties.Select(p => "@" + p.Name));
-
-        var sql = $@"INSERT INTO ""{_tableName}"" ({columns}, ""RowVersion"") VALUES ({paramList}, gen_random_bytes(8));";
+        var sql = $@"INSERT INTO ""{_tableName}"" ({columns}) VALUES ({paramList});";
 
         var paramObj = new DynamicParameters();
         foreach (var prop in properties)
@@ -88,7 +87,7 @@ public class AuthMngrRepo<T> : IAuthMngrRepo<T> where T : BaseEntity
         var props = typeof(T).GetProperties().Where(p => p.CanRead && p.CanWrite && !IsIgnoredProperty(p) && IsSupportedDapperType(p.PropertyType)).ToList();
         
         var setClause = string.Join(", ", props.Select(p => $@"""{p.Name}"" = @{p.Name}"));
-        var sql = $@"UPDATE ""{_tableName}"" SET {setClause} WHERE ""Id"" = @Id AND ""RowVersion"" = @RowVersionOriginal AND ""IsDeleted"" = false RETURNING *;";
+        var sql = $@"UPDATE ""{_tableName}"" SET {setClause} WHERE ""Id"" = @Id AND ""IsDeleted"" = false RETURNING *;";
 
         var parameters = new DynamicParameters();
         foreach (var prop in props)
@@ -123,7 +122,7 @@ public class AuthMngrRepo<T> : IAuthMngrRepo<T> where T : BaseEntity
         _logger.LogInformation("Entity soft-deleted from {TableName} with Id {Id}", _tableName, id);
     }
 
-    private bool IsSupportedDapperType(Type type)
+    protected virtual bool IsSupportedDapperType(Type type)
     {
         var t = Nullable.GetUnderlyingType(type) ?? type;
         return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(Enum) || t == typeof(int) || t == typeof(DateTime) || t == typeof(byte[]);

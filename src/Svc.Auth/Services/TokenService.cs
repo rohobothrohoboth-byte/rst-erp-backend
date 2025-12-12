@@ -13,132 +13,109 @@ namespace Svc.Auth.Services;
 public class TokenService : ITokenService
 {
     private readonly IUnitOfWork _unitOfWork;
-    //private readonly IConfiguration _config;
     private readonly UserManager<AppUser> _userManager;
 
-    //public TokenService(IUnitOfWork unitOfWork, IConfiguration config, UserManager<AppUser> userManager)
     public TokenService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
     {
         _unitOfWork = unitOfWork;
-        //_config = config;
         _userManager = userManager;
     }
 
     public async Task<string> GenerateAccessToken(AppUser user)
     {
-        //var jwtAuthOp = _config.GetSection("Jwt").Get<JwtAuthDto>()!;
-        await _unitOfWork.Begin();
-        try
-        {
-            var pModule = await _unitOfWork.Repository<UserPerModule>().Find(p => p.UserId == user.Id);
-            var pMenu = await _unitOfWork.Repository<UserPerMenu>().Find(p => p.UserId == user.Id);
-            var pApi = await _unitOfWork.Repository<UserPerApi>().Find(p => p.UserId == user.Id);
-            var roles = await _userManager.GetRolesAsync(user);
+        var pModule = (await _unitOfWork.Repository<UserPerModule>().Find(p => p.UserId == user.Id)).ToList();
+        var pMenu = (await _unitOfWork.Repository<UserPerMenu>().Find(p => p.UserId == user.Id)).ToList();
+        var pApi = (await _unitOfWork.Repository<UserPerApi>().Find(p => p.UserId == user.Id)).ToList();
+        var roles = (await _userManager.GetRolesAsync(user)).ToList();
 
-            var claims = new List<Claim>
-            {
-                new(AuthCons.UserId, user.Id),
-                new(AuthCons.EmployeeId, user.EmployeeId.ToString()!),
-                new(AuthCons.UserName, user.UserName!)
-            };
+        var claims = new List<Claim>
+        {
+            new(AuthCons.UserId, user.Id),
+            new(AuthCons.UserName, user.UserName!),
+            user.EmployeeId != null
+                ? new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!)
+                : new Claim(AuthCons.EmployeeId, "")
+        };
+
+        if (roles.Count > 0)
+        {
             claims.AddRange(roles.Select(p => new Claim(AuthCons.Role, p)));
-            claims.AddRange(pModule.Select(p => new Claim(AuthCons.PerModule, p.PerModule.Key)));
-            claims.AddRange(pMenu.Select(p => new Claim(AuthCons.PerMenu, p.PerMenu.Key)));
-            claims.AddRange(pApi.Select(p => new Claim(AuthCons.PerApi, p.PerApi.Key)));
+        }
 
-            var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                            issuer: JwtCons.Issuer,
-                            audience: JwtCons.Audience,
-                            claims: claims,
-                            expires: DateTime.Now.AddMinutes(JwtCons.ExpiryInMinutes),
-                            signingCredentials: creds);
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-        catch
+        if (pModule.Count > 0)
         {
-            await _unitOfWork.Rollback();
-            throw;
+            claims.AddRange(pModule.Select(p => new Claim(AuthCons.PerModule, p.PerModule.Key)));
         }
+        else
+        {
+            claims.Add(new Claim(AuthCons.PerModule, ""));
+        }
+
+        if (pModule.Count > 0)
+        {
+            claims.AddRange(pMenu.Select(p => new Claim(AuthCons.PerMenu, p.PerMenu.Key)));
+        }
+        else
+        {
+            claims.Add(new Claim(AuthCons.PerMenu, ""));
+        }
+
+        if (pModule.Count > 0)
+        {
+            claims.AddRange(pApi.Select(p => new Claim(AuthCons.PerApi, p.PerApi.Key)));
+        }
+        else
+        {
+            claims.Add(new Claim(AuthCons.PerApi, ""));
+        }
+            
+        var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
+        var token = new JwtSecurityToken(
+            issuer: JwtCons.Issuer,
+            audience: JwtCons.Audience,
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(JwtCons.ExpiryInMinutes),
+            signingCredentials: creds);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     public async Task<RefreshToken> GenerateRefreshTokenAsync(AppUser user)
     {
-        await _unitOfWork.Begin();
-        try
+        var refreshToken = new RefreshToken
         {
-            var refreshToken = new RefreshToken
-            {
-                Token = Guid.NewGuid().ToString(),
-                ExpiryDate = DateTime.Now.AddDays(7),
-                IsRevoked = false,
-                UserId = user.Id
-            };
+            Token = Guid.NewGuid().ToString(),
+            ExpiryDate = DateTime.Now.AddDays(JwtCons.RefreshTokenExpireDays),
+            IsRevoked = false,
+            UserId = user.Id
+        };
 
-            await _unitOfWork.Repository<RefreshToken>().Add(refreshToken);
-            await _unitOfWork.Commit();
-            return refreshToken;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
+        await _unitOfWork.Repository<RefreshToken>().Add(refreshToken);
+        await _unitOfWork.Commit();
+        return refreshToken;
     }
 
-    public async Task<TokenDto> RefreshTokenAsync(string userId)
+    public async Task<TokenDto> RefreshTokenAsync(AppUser user, RefreshToken refreshToken)
     {
-        await _unitOfWork.Begin();
-        try
+        var newAccessToken = await GenerateAccessToken(user!);
+        await RevokeTokenAsync(refreshToken);
+        var newRefresh = await GenerateRefreshTokenAsync(user!);
+        await _unitOfWork.Commit();
+
+        return new TokenDto
         {
-            var token = await _unitOfWork.Repository<RefreshToken>().GetFoD(rt => rt.UserId == userId);
-            if (token == null) throw new SecurityTokenException("Invalid refresh token");
-
-            var user = await _userManager.FindByIdAsync(userId);
-            var newAccessToken = await GenerateAccessToken(user!);
-
-            token.IsRevoked = true;
-            token.RevokedDate = DateTime.UtcNow;
-            await _unitOfWork.Repository<RefreshToken>().Update(token);
-            var newRefresh = await GenerateRefreshTokenAsync(user!);
-            await _unitOfWork.Commit();
-
-            return new TokenDto
-            {
-                AccessToken = newAccessToken,
-                RefreshToken = newRefresh.Token,
-                Expiry = newRefresh.ExpiryDate
-            };
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
+            AccessToken = newAccessToken,
+            RefreshToken = newRefresh.Token,
+            Expiry = newRefresh.ExpiryDate
+        };
     }
 
-    public async Task RevokeTokenAsync(string userId)
+    public async Task RevokeTokenAsync(RefreshToken refreshToken)
     {
-        await _unitOfWork.Begin();
-        try
-        {
-            var refreshToken = await _unitOfWork.Repository<RefreshToken>().GetFoD(rt => rt.UserId == userId);
-            if (refreshToken != null)
-            {
-                refreshToken.IsRevoked = true;
-                refreshToken.RevokedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<RefreshToken>().Update(refreshToken);
-                await _unitOfWork.Commit();
-            }
-            // For access token, consider blacklisting (e.g., via Redis cache, not implemented here for simplicity)
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-
-
+        refreshToken.IsRevoked = true;
+        refreshToken.IsDeleted = true;
+        refreshToken.RevokedDate = DateTime.UtcNow;
+        await _unitOfWork.Repository<RefreshToken>().Update(refreshToken);
+        await _unitOfWork.Commit();
     }
 
     public bool ValidateToken(string token)
@@ -146,7 +123,6 @@ public class TokenService : ITokenService
         var tokenHandler = new JwtSecurityTokenHandler();
         try
         {
-            //var jwtAuthOp = _config.GetSection("Jwt").Get<JwtAuthDto>()!;
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -178,15 +154,28 @@ public class TokenService : ITokenService
         var perMenu = jwtToken.Claims.Where(c => c.Type == AuthCons.PerMenu).Select(c => c.Value).ToList();
         var perApi = jwtToken.Claims.Where(c => c.Type == AuthCons.PerApi).Select(c => c.Value).ToList();
 
-        return new UserDto
+        var res = new UserDto
         {
-            EmployeeId = Guid.Parse(empId),
             UserId = userId,
             Username = uName,
             Role = role,
             PerModule = perModule,
             PerMenu = perMenu,
-            PerApi = perApi
+            PerApi = perApi,
+            EmployeeId = empId.Length <= 0 ? null : Guid.Parse(empId)
         };
+
+        return res;
+
+        //return new UserDto
+        //{
+        //    EmployeeId = Guid.Parse(empId),
+        //    UserId = userId,
+        //    Username = uName,
+        //    Role = role,
+        //    PerModule = perModule,
+        //    PerMenu = perMenu,
+        //    PerApi = perApi
+        //};
     }
 }

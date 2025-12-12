@@ -20,11 +20,10 @@ public class RegisterStep3
     public List<Guid> PerAccess { get; set; } = default!;
 }
 
-
 public class LoginDto
 {
-    public string Username { get; set; } = default!;
-    public string Password { get; set; } = default!;
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
 }
 
 public class LoginResDto
@@ -58,9 +57,9 @@ public class RefreshTokenDto
     public string RefreshToken { get; set; } = default!;
 }
 
-public class RevokeTokenDto
-{
-    public string Token { get; set; } = default!;  // Access or Refresh token
-}
+//public class RevokeTokenDto
+//{
+//    public string Token { get; set; } = default!;  // Access or Refresh token
+//}
 
 

@@ -125,4 +125,13 @@ public class NameListController(IMediator med) : ControllerBase
 
 
 
+    [HttpGet("GetUser/{token}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUser(string token)
+    {
+        var response = await med.Send(new ValUserQry { Token = token });
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
 }

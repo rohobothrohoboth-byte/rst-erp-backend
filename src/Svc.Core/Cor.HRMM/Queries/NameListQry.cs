@@ -1,4 +1,5 @@
-﻿using Cor.HRMM.Interfaces;
+﻿using Contracts;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using MediatR;
@@ -205,6 +206,22 @@ public class PositionNameByIdQryHandler : IRequestHandler<PositionNameByIdQry, N
             Id = data.Id,
             Name = data.Name
         };
+        return c;
+    }
+}
+
+
+
+public class ValUserQry : IRequest<GetUserResponse?> { public string Token { get; set; } = default!; }
+
+public class ValUserQryHandler : IRequestHandler<ValUserQry, GetUserResponse?>
+{
+    private readonly IAuthClient _authClient;
+    public ValUserQryHandler(IAuthClient authClient) { _authClient = authClient; }
+
+    public async Task<GetUserResponse?> Handle(ValUserQry request, CancellationToken cancellationToken)
+    {
+        var c = await _authClient.GetUser(request.Token, cancellationToken);
         return c;
     }
 }

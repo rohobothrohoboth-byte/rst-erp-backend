@@ -1,6 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Persistence;
 using Cor.HRMM.Repos;
+using Cor.HRMM.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.HRMM.Extensions;
@@ -15,6 +16,7 @@ public static class SvcCollExt
         // Dapper and UoW
         services.AddScoped<DapperContext>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IAuthClient, AuthClient>();
 
         // Generic Repo (scoped via UoW)
         services.AddScoped(typeof(ICorHRMMRepo<>), typeof(CorHRMMRepo<>));

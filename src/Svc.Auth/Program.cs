@@ -2,6 +2,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Svc.Auth.Extensions;
 using Svc.Auth.Middlewares;
+using Svc.Auth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.MapGrpcService<AuthValidatorService>();
 
 // Development-only: Swagger + detailed errors
 if (app.Environment.IsDevelopment())

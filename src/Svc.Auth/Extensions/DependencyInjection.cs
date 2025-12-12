@@ -1,21 +1,18 @@
-﻿using Asp.Versioning;
+﻿using System.Reflection;
+using System.Text;
+using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Svc.Auth.Constants;
 using Svc.Auth.Interfaces;
-using Svc.Auth.Middlewares;
 using Svc.Auth.Models.Entities;
 using Svc.Auth.Persistence;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using Svc.Auth.Services;
 
 namespace Svc.Auth.Extensions;
-
 
 public static class DependencyInjection
 {
@@ -36,6 +33,7 @@ public static class DependencyInjection
 
         builder.Services.AddOpenApi();
         builder.Services.AddUtilitySvc(builder.Configuration);
+        builder.Services.AddGrpc();
         return builder;
     }
 
@@ -58,11 +56,11 @@ public static class DependencyInjection
                 context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
             };
         });
-        builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
-        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        //builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+        //builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         return builder;
     }
-    
+
     public static WebApplicationBuilder AddSwaggerService(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
@@ -80,9 +78,9 @@ public static class DependencyInjection
                 }
             });
 
-            var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+            c.IncludeXmlComments(xmlPath, true);
         });
 
         return builder;
@@ -94,21 +92,26 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerApiHandler>();
         builder.Services.AddScoped<ITokenService, TokenService>();
-
-        //builder.Services.Configure<JwtAuthDto>(builder.Configuration.GetSection("Jwt"));
-
-        //var jwtAuthOption = builder.Configuration.GetSection("Jwt").Get<JwtAuthDto>()!;
-        builder.Services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(o =>
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidIssuer = JwtCons.Issuer,
-                    ValidAudience = JwtCons.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey))
-                };
-            });
+                ValidateIssuer = true,
+                ValidIssuer = JwtCons.Issuer,
+                ValidateAudience = true,
+                ValidAudience = JwtCons.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromSeconds(30)
+            };
+        });
 
         builder.Services.AddAuthorization();
 
