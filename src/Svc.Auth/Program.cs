@@ -15,12 +15,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Host.UseSerilog();
 
-// --- CORS ---
-builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }); });
-
-
 builder.AddApiServices()
-    .AddHttpClientServices()
     .AddErrorHandling()
     .AddSwaggerService()
     .AddAuthService();
@@ -32,7 +27,6 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapGrpcService<AuthValidatorService>();
 
-// Development-only: Swagger + detailed errors
 if (app.Environment.IsDevelopment())
 {
     app.MapSwagger("/openapi/{documentName}.json");

@@ -44,31 +44,52 @@ public class TokenService : ITokenService
 
         if (pModule.Count > 0)
         {
-            claims.AddRange(pModule.Select(p => new Claim(AuthCons.PerModule, p.PerModule.Key)));
+            foreach (var api in pModule)
+            {
+                var per = await _unitOfWork.Repository<PerModule>().GetById(api.PerModuleId);
+                if (per != null)
+                {
+                    claims.Add(new Claim(AuthCons.PerModule, per.Key));
+                }
+            }
         }
         else
         {
             claims.Add(new Claim(AuthCons.PerModule, ""));
         }
 
-        if (pModule.Count > 0)
+        if (pMenu.Count > 0)
         {
-            claims.AddRange(pMenu.Select(p => new Claim(AuthCons.PerMenu, p.PerMenu.Key)));
+            foreach (var api in pMenu)
+            {
+                var per = await _unitOfWork.Repository<PerMenu>().GetById(api.PerMenuId);
+                if (per != null)
+                {
+                    claims.Add(new Claim(AuthCons.PerMenu, per.Key));
+                }
+            }
         }
         else
         {
             claims.Add(new Claim(AuthCons.PerMenu, ""));
         }
 
-        if (pModule.Count > 0)
+        if (pApi.Count > 0)
         {
-            claims.AddRange(pApi.Select(p => new Claim(AuthCons.PerApi, p.PerApi.Key)));
+            foreach (var api in pApi)
+            {
+                var per = await _unitOfWork.Repository<PerApi>().GetById(api.PerApiId);
+                if (per != null)
+                {
+                    claims.Add(new Claim(AuthCons.PerApi, per.Key));
+                }
+            }
         }
         else
         {
             claims.Add(new Claim(AuthCons.PerApi, ""));
         }
-            
+
         var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: JwtCons.Issuer,

@@ -7,7 +7,7 @@ public class LoginVal : AbstractValidator<LoginDto>
 {
     public LoginVal()
     {
-        RuleFor(x => x.Username).NotEmpty().WithMessage("Please enter EMPLOYEE CODE.");
-        RuleFor(x => x.Password).NotEmpty().WithMessage("Please enter PASSWORD.");
+        RuleFor(x => x.Username).NotEmpty().WithMessage("EMPLOYEE CODE is required");
+        RuleFor(x => x.Password).NotEmpty().WithMessage("PASSWORD is required");
     }
 }

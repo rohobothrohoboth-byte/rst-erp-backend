@@ -1,9 +1,11 @@
 ﻿using Asp.Versioning;
+using Auth.Security;
 using Leave.App.Commands;
 using Leave.App.Helpers;
 using Leave.App.Queries;
 using Leave.Domain.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Leave.API.Controllers;
@@ -12,12 +14,13 @@ namespace Leave.API.Controllers;
 /// LEAVE TYPE management end points
 /// </summary>
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/hrm/leave/v{version:apiVersion}/LeaveType")]
 [ApiVersion("1.0")]
 public class LeaveTypeController(IMediator med) : ControllerBase
 {
+    [PerAuth("CreateOrder")]
     [HttpGet("AllLeaveType")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllLeaveType()

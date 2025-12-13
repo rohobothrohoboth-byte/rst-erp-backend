@@ -1,19 +1,19 @@
-﻿using Asp.Versioning;
+﻿using System.Reflection;
+using System.Text;
+using Asp.Versioning;
 using Asp.Versioning.Conventions;
+using Auth.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Svc.Auth.Constants;
-using Svc.Auth.Interfaces;
-using Svc.Auth.Models.Entities;
-using Svc.Auth.Persistence;
-using Svc.Auth.Services;
-using System.Reflection;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Svc.Auth.Repos;
+using Svc.Lup.Extensions;
+using Svc.Lup.Interfaces;
+using Svc.Lup.Persistence;
+using Svc.Lup.Repos;
 
-namespace Svc.Auth.Extensions;
+namespace Svc.Lup.Middlewares;
 
 public static class DependencyInjection
 {
@@ -21,6 +21,7 @@ public static class DependencyInjection
     {
         builder.AddServiceDefaults();
         builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }); });
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddControllers();
         builder.Services.AddApiVersioning(option =>
             {
@@ -33,11 +34,15 @@ public static class DependencyInjection
                 option.GroupNameFormat = "'v'V";
                 option.SubstituteApiVersionInUrl = true;
             });
-        
-        builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("authMgrCon")));
+
+        builder.Services.AddDbContext<LupDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("lupTableDbCon")));
         builder.Services.AddScoped<DapperContext>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-        builder.Services.AddScoped(typeof(IAuthMngrRepo<>), typeof(AuthMngrRepo<>));
+        builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<PerValService, PerValService>();
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
+        builder.Services.AddScoped(typeof(ILupRepository<>), typeof(LupRepository<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();
@@ -56,7 +61,7 @@ public static class DependencyInjection
         });
         return builder;
     }
-
+    
     public static WebApplicationBuilder AddSwaggerService(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
@@ -64,9 +69,9 @@ public static class DependencyInjection
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Auth Manager API",
+                Title = "Lup Tables API",
                 Version = "v1",
-                Description = "API documentation for Auth Manager API Microservice",
+                Description = "API documentation for Lup Tables API Microservice",
                 Contact = new OpenApiContact
                 {
                     Name = "Development Team",
@@ -77,6 +82,32 @@ public static class DependencyInjection
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             c.IncludeXmlComments(xmlPath, true);
+
+            //JWT Authentication (if needed)
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please insert JWT token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
         });
 
         return builder;
@@ -84,14 +115,13 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
     {
-        builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AuthDbContext>();
-        builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(options =>
         {
+            options.Authority = builder.Configuration["AuthUrl"];
             options.RequireHttpsMetadata = false;
             options.SaveToken = true;
             options.TokenValidationParameters = new TokenValidationParameters
