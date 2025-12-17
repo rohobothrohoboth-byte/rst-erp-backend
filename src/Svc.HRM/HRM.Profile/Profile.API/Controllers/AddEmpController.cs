@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
 using Profile.App.Helpers;
@@ -16,7 +17,6 @@ namespace Profile.API.Controllers;
 [ApiController]
 [Route("api/hrm/profile/v{version:apiVersion}/AddEmp")]
 [ApiVersion("1.0")]
-
 public class AddEmpController(IMediator med) : ControllerBase
 {
     [HttpPost("Step1")]

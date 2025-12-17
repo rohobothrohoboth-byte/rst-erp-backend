@@ -33,8 +33,8 @@ public class AuthClient : IAuthClient
         var request = new ValidateTokenRequest { Token = token };
         var res = await client.ValidateTokenAsync(request);
         return res.IsValid;
-
     }
+
 
 
 }

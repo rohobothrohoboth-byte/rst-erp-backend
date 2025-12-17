@@ -28,10 +28,9 @@ public class LoginDto
 
 public class LoginResDto
 {
-    public string AccessToken { get; set; } = default!;
-    public string RefreshToken { get; set; } = default!;
+    public string AccessToken { get; set; } = default;
+    public string RefreshToken { get; set; } = default;
     public DateTime ExpiresDate { get; set; }
-    public string TokenType { get; set; } = "Bearer";
 }
 
 public class UserDto
@@ -49,12 +48,11 @@ public class TokenDto
 {
     public string AccessToken { get; set; } = default!;
     public string RefreshToken { get; set; } = default!;
-    public DateTime Expiry { get; set; }
 }
 
 public class RefreshTokenDto
 {
-    public string RefreshToken { get; set; } = default!;
+    public string Token { get; set; } = default!;
 }
 
 //public class RevokeTokenDto

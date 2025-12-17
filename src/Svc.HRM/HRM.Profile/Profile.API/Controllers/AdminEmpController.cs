@@ -1,0 +1,46 @@
+﻿using Asp.Versioning;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Profile.App.Commands;
+using Profile.App.Helpers;
+using Profile.App.Queries;
+using Profile.Domain.DTOs;
+
+namespace Profile.API.Controllers;
+
+/// <summary>
+/// Employees Management by ADMIN end points
+/// </summary>
+
+[Authorize(Roles = "admin")]
+[ApiController]
+[Route("api/hrm/profile/v{version:apiVersion}/AdminEmp")]
+[ApiVersion("1.0")]
+public class AdminEmpController(IMediator med) : ControllerBase
+{
+    [HttpGet("AllEmployee")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllEmployee()
+    {
+        var response = await med.Send(new EmployeeAllQry());
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpPost("Step1")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Step1([FromForm] Step1Dto addDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValidationException(errors);
+        }
+
+        var command = new EmpAddStep1Cmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE successfully created."));
+    }
+}

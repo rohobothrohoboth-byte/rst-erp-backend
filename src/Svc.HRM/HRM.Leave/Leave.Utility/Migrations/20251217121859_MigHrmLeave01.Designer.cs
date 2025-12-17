@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leave.Utility.Migrations
 {
     [DbContext(typeof(HrmLeaveDbContext))]
-    [Migration("20251127100023_MigHrmLev01")]
-    partial class MigHrmLev01
+    [Migration("20251217121859_MigHrmLeave01")]
+    partial class MigHrmLeave01
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

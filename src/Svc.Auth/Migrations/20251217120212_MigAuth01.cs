@@ -250,11 +250,12 @@ namespace Svc.Auth.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    Token = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    Token = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsRevoked = table.Column<bool>(type: "boolean", nullable: false),
                     RevokedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    AppUserId = table.Column<string>(type: "text", nullable: true),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
@@ -262,6 +263,11 @@ namespace Svc.Auth.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RefreshToken", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshToken_AppUser_AppUserId",
+                        column: x => x.AppUserId,
+                        principalTable: "AppUser",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_RefreshToken_AppUser_UserId",
                         column: x => x.UserId,
@@ -388,6 +394,17 @@ namespace Svc.Auth.Migrations
                 name: "IX_PerModule_Key",
                 table: "PerModule",
                 column: "Key",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshToken_AppUserId",
+                table: "RefreshToken",
+                column: "AppUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshToken_Token",
+                table: "RefreshToken",
+                column: "Token",
                 unique: true);
 
             migrationBuilder.CreateIndex(

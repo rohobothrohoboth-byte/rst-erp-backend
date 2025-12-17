@@ -5,10 +5,13 @@ using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Svc.Auth.Constants;
 
 namespace Svc.Auth.Services;
+
+
 
 public class TokenService : ITokenService
 {
@@ -19,6 +22,12 @@ public class TokenService : ITokenService
     {
         _unitOfWork = unitOfWork;
         _userManager = userManager;
+    }
+
+    private static string GenRefToken()
+    {
+        var rByte = RandomNumberGenerator.GetBytes(32);
+        return Convert.ToBase64String(rByte);
     }
 
     public async Task<string> GenerateAccessToken(AppUser user)
@@ -100,43 +109,46 @@ public class TokenService : ITokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public async Task<RefreshToken> GenerateRefreshTokenAsync(AppUser user)
+    public async Task<RefreshToken> GenerateRefreshToken(string userId)
     {
+        await RevokeToken(userId);
         var refreshToken = new RefreshToken
         {
-            Token = Guid.NewGuid().ToString(),
+            Token = GenRefToken(),
             ExpiryDate = DateTime.Now.AddDays(JwtCons.RefreshTokenExpireDays),
             IsRevoked = false,
-            UserId = user.Id
+            UserId = userId
         };
 
         await _unitOfWork.Repository<RefreshToken>().Add(refreshToken);
-        await _unitOfWork.Commit();
         return refreshToken;
     }
 
-    public async Task<TokenDto> RefreshTokenAsync(AppUser user, RefreshToken refreshToken)
+    public async Task<TokenDto> RefreshToken(AppUser user)
     {
-        var newAccessToken = await GenerateAccessToken(user!);
-        await RevokeTokenAsync(refreshToken);
-        var newRefresh = await GenerateRefreshTokenAsync(user!);
-        await _unitOfWork.Commit();
+        var newAccessToken = await GenerateAccessToken(user);
+        var newRefresh = await GenerateRefreshToken(user.Id);
 
         return new TokenDto
         {
             AccessToken = newAccessToken,
-            RefreshToken = newRefresh.Token,
-            Expiry = newRefresh.ExpiryDate
+            RefreshToken = newRefresh.Token
         };
     }
 
-    public async Task RevokeTokenAsync(RefreshToken refreshToken)
+    public async Task RevokeToken(string userId)
     {
-        refreshToken.IsRevoked = true;
-        refreshToken.IsDeleted = true;
-        refreshToken.RevokedDate = DateTime.UtcNow;
-        await _unitOfWork.Repository<RefreshToken>().Update(refreshToken);
-        await _unitOfWork.Commit();
+        var rToken = (await _unitOfWork.Repository<RefreshToken>().Find(p => p.UserId == userId)).ToList();
+        if (rToken.Count > 0)
+        {
+            foreach (var token in rToken)
+            {
+                token.IsRevoked = true;
+                token.IsDeleted = true;
+                token.RevokedDate = DateTime.UtcNow;
+                await _unitOfWork.Repository<RefreshToken>().Update(token);
+            }
+        }
     }
 
     public bool ValidateToken(string token)
@@ -187,16 +199,5 @@ public class TokenService : ITokenService
         };
 
         return res;
-
-        //return new UserDto
-        //{
-        //    EmployeeId = Guid.Parse(empId),
-        //    UserId = userId,
-        //    Username = uName,
-        //    Role = role,
-        //    PerModule = perModule,
-        //    PerMenu = perMenu,
-        //    PerApi = perApi
-        //};
     }
 }

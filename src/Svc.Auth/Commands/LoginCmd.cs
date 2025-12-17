@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Svc.Auth.Constants;
 using Svc.Auth.Helpers;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -33,14 +34,16 @@ public class LoginCmdHandler : IRequestHandler<LoginCmd, LoginResDto>
                 throw new UnauthorizedException("Invalid credentials.");
             }
 
-            var token = await _tokenService.GenerateAccessToken(user);
-            var refreshToken = await _tokenService.GenerateRefreshTokenAsync(user);
+            var aToken = await _tokenService.GenerateAccessToken(user);
+            var rToken = await _tokenService.GenerateRefreshToken(user.Id);
+
+            await _unitOfWork.Commit();
 
             return new LoginResDto
             {
-                AccessToken = token,
-                RefreshToken = refreshToken.Token,
-                ExpiresDate = refreshToken.ExpiryDate
+                AccessToken = aToken,
+                RefreshToken = rToken.Token,
+                ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
             };
         }
         catch

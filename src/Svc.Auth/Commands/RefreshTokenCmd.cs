@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Svc.Auth.Constants;
 using Svc.Auth.Helpers;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -7,7 +8,11 @@ using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Commands;
 
-public class RefreshTokenCmd : IRequest<LoginResDto> { public RefreshTokenDto Input { get; set; } = default!; }
+public class RefreshTokenCmd : IRequest<LoginResDto>
+{
+    public string UserId { get; set; } = default!;
+    public RefreshTokenDto Input { get; set; } = default!;
+}
 
 public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResDto>
 {
@@ -27,18 +32,20 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
         await _unitOfWork.Begin();
         try
         {
-            var tokenRec = await _unitOfWork.Repository<RefreshToken>().GetFoD(t => t.Token == request.Input.RefreshToken);
-            if (tokenRec is not { IsRevoked: true }) { throw new DomainException($"REFRESH TOKEN with Token {request.Input.RefreshToken} NOT FOUND."); }
+            var rToken = await _unitOfWork.Repository<RefreshToken>().GetFoD(p => p.UserId == request.UserId && p.Token == request.Input.Token);
+            if (rToken == null || rToken.IsRevoked) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
 
-            var user = await _userManager.FindByIdAsync(tokenRec.UserId);
-            if (user == null) { throw new UnauthorizedException("User NOT FOUND!"); }
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
 
-            var newRefresh = await _tokenService.RefreshTokenAsync(user, tokenRec);
+            var newRefresh = await _tokenService.RefreshToken(user);
+            await _unitOfWork.Commit();
+
             return new LoginResDto
             {
                 AccessToken = newRefresh.AccessToken,
                 RefreshToken = newRefresh.RefreshToken,
-                ExpiresDate = newRefresh.Expiry
+                ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
             };
         }
         catch

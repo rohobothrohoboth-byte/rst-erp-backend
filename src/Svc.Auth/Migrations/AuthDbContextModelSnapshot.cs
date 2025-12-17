@@ -322,6 +322,9 @@ namespace Svc.Auth.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
 
@@ -342,13 +345,20 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -528,8 +538,12 @@ namespace Svc.Auth.Migrations
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
+                    b.HasOne("Svc.Auth.Models.Entities.AppUser", null)
                         .WithMany("RefreshTokens")
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

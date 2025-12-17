@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Leave.Utility.Migrations
 {
     /// <inheritdoc />
-    public partial class MigHrmLev01 : Migration
+    public partial class MigHrmLeave01 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

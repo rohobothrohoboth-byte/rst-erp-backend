@@ -33,7 +33,7 @@ public class LeaveRequestListDto : BaseDto
 
 public class LeaveRequestAddDto
 {
-    public Guid EmployeeId { get; set; } //HRM.Profile.Employee
+    /*public Guid EmployeeId { get; set; }*/ //HRM.Profile.Employee
     public Guid LeaveTypeId { get; set; } // LeaveType
     public DateTime StartDate { get; set; } = default!;
     public DateTime EndDate { get; set; } = default!;
@@ -44,7 +44,7 @@ public class LeaveRequestAddDto
 public class LeaveRequestModDto
 {
     public Guid Id { get; set; }
-    public Guid EmployeeId { get; set; } //HRM.Profile.Employee
+    /*public Guid EmployeeId { get; set; }*/ //HRM.Profile.Employee
     public Guid LeaveTypeId { get; set; } // LeaveType
     public DateTime StartDate { get; set; } = default!;
     public DateTime EndDate { get; set; } = default!;

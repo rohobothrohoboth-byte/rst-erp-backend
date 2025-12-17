@@ -20,7 +20,6 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class LeaveTypeController(IMediator med) : ControllerBase
 {
-    [PerAuth("CreateOrder")]
     [HttpGet("AllLeaveType")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllLeaveType()

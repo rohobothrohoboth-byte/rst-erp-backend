@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
 using Profile.App.Helpers;
@@ -12,7 +13,7 @@ namespace Profile.API.Controllers;
 /// Employees Management end points
 /// </summary>
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/hrm/profile/v{version:apiVersion}/Employee")]
 [ApiVersion("1.0")]
@@ -35,7 +36,7 @@ public class EmployeeController(IMediator med) : ControllerBase
         if (response == null) { throw new DomainException($"EMPLOYEE with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
-    
+
     [HttpPut("ModEmployee/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

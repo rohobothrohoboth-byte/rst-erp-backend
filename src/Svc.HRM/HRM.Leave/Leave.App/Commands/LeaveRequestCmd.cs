@@ -7,7 +7,7 @@ using MediatR;
 
 namespace Leave.App.Commands;
 
-public class LeaveRequestAddCmd : IRequest<LeaveRequestListDto> { public LeaveRequestAddDto AddDto { get; set; } = default!; }
+public class LeaveRequestAddCmd : IRequest<LeaveRequestListDto> { public LeaveRequestAddDto AddDto { get; set; } = default!; public Guid EmpId { get; set; } = default!;}
 public class LeaveRequestModCmd : IRequest<LeaveRequestListDto> { public LeaveRequestModDto ModDto { get; set; } = default!; }
 public class LeaveRequestDelCmd : IRequest { public Guid Id { get; set; } }
 
@@ -26,16 +26,14 @@ public class LeaveRequestAddCmdHandler : IRequestHandler<LeaveRequestAddCmd, Lea
             var dRequested = request.AddDto.EndDate.Subtract(request.AddDto.StartDate);
             var data = new LeaveRequest
             {
-                EmployeeId = request.AddDto.EmployeeId,
+                EmployeeId = request.EmpId,
                 LeaveTypeId = request.AddDto.LeaveTypeId,
                 StartDate = request.AddDto.StartDate,
                 EndDate = request.AddDto.EndDate,
                 DaysRequested = dRequested.TotalDays,
                 IsHalfDay = request.AddDto.IsHalfDay,
                 Status = "0",
-                Comments = request.AddDto.Comments,
-                //ApprovedById = request.AddDto.ApprovedById,
-                //DateApproved = request.AddDto.DateApproved,
+                Comments = request.AddDto.Comments
             };
             await _unitOfWork.Repository<LeaveRequest>().Add(data);
             await _unitOfWork.Commit();
@@ -71,7 +69,6 @@ public class LeaveRequestModCmdHandler : IRequestHandler<LeaveRequestModCmd, Lea
         try
         {
             var dRequested = request.ModDto.EndDate.Subtract(request.ModDto.StartDate);
-            oldData.EmployeeId = request.ModDto.EmployeeId;
             oldData.LeaveTypeId = request.ModDto.LeaveTypeId;
             oldData.StartDate = request.ModDto.StartDate;
             oldData.EndDate = request.ModDto.EndDate;
@@ -79,8 +76,6 @@ public class LeaveRequestModCmdHandler : IRequestHandler<LeaveRequestModCmd, Lea
             oldData.IsHalfDay = request.ModDto.IsHalfDay;
             oldData.Status = "0";
             oldData.Comments = request.ModDto.Comments;
-            //oldData.ApprovedById = request.ModDto.ApprovedById;
-            //oldData.DateApproved = request.ModDto.DateApproved;
             var data = await _unitOfWork.Repository<LeaveRequest>().Update(oldData);
             await _unitOfWork.Commit();
 

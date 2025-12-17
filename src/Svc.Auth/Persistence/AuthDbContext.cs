@@ -22,16 +22,31 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDb
         builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogin");
         builder.Entity<IdentityUserToken<string>>().ToTable("UserToken");
 
-        builder.Entity<AppUser>().HasIndex(p => p.EmployeeId).IsUnique();
-        builder.Entity<AppUser>().HasIndex(p => p.Id).IsUnique();
-        builder.Entity<AppRole>().HasIndex(p => p.Name).IsUnique();
-        builder.Entity<AppRole>().HasIndex(p => p.Id).IsUnique();
         builder.Entity<PerModule>().HasIndex(p => p.Key).IsUnique();
         builder.Entity<PerMenu>().HasIndex(p => p.Key).IsUnique();
         builder.Entity<PerApi>().HasIndex(p => p.Key).IsUnique();
         builder.Entity<UserPerModule>().HasKey(up => new { up.UserId, up.PerModuleId });
         builder.Entity<UserPerMenu>().HasKey(up => new { up.UserId, up.PerMenuId });
         builder.Entity<UserPerApi>().HasKey(up => new { up.UserId, up.PerApiId });
+        builder.Entity<AppUser>(en =>
+        {
+            en.HasIndex(e => e.EmployeeId).IsUnique();
+            en.HasIndex(e => e.Id).IsUnique();
+        });
+        builder.Entity<AppRole>(en =>
+        {
+            en.HasIndex(e => e.Name).IsUnique();
+            en.HasIndex(e => e.Id).IsUnique();
+        });
+
+        builder.Entity<RefreshToken>(en =>
+        {
+            en.HasKey(e => e.Id);
+            en.Property(e => e.UserId).HasMaxLength(300);
+            en.Property(e => e.Token).HasMaxLength(1000);
+            en.HasIndex(e => e.Token).IsUnique();
+            en.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     public DbSet<PerModule> PerModule { get; set; }

@@ -94,7 +94,6 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             }
 
             await _unitOfWork.Commit();
-
             var res = new EmpAddRes { Id = data.Id };
             return res;
         }

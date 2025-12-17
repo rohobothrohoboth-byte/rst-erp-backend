@@ -12,23 +12,26 @@ namespace Svc.Auth.Controllers;
 public class RegistrationController(IMediator mediator) : ControllerBase
 {
     [HttpPost("Step1")]
-    public async Task<IActionResult> Step1([FromBody] LoginDto dto)
+    public async Task<IActionResult> Step1([FromBody] RegisterStep1 dto)
     {
-        var result = await mediator.Send(new LoginCmd { Login = dto });
-        return Ok(result);
+        //var result = await mediator.Send(new LoginCmd { Login = dto });
+        //return Ok(result);
+        return Ok();
     }
 
     [HttpPost("Step2")]
-    public async Task<IActionResult> Step2([FromBody] LoginDto dto)
+    public async Task<IActionResult> Step2([FromBody] RegisterStep2 dto)
     {
-        var result = await mediator.Send(new LoginCmd { Login = dto });
-        return Ok(result);
+        //var result = await mediator.Send(new LoginCmd { Login = dto });
+        //return Ok(result);
+        return Ok();
     }
     
     [HttpPost("Step3")]
-    public async Task<IActionResult> Step3([FromBody] LoginDto dto)
+    public async Task<IActionResult> Step3([FromBody] RegisterStep3 dto)
     {
-        var result = await mediator.Send(new LoginCmd { Login = dto });
-        return Ok(result);
+        //var result = await mediator.Send(new LoginCmd { Login = dto });
+        //return Ok(result);
+        return Ok();
     }
 }

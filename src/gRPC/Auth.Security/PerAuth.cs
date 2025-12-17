@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 
 namespace Auth.Security;
@@ -8,7 +9,10 @@ public sealed class PerAuthAttribute : AuthorizeAttribute
     public PerAuthAttribute(string permission) { Policy = PerPolicy.Name(permission); }
 }
 
-public interface IPerValService { Task<bool> ValidateAsync(string accessToken, string permission); }
+public interface IPerValService
+{
+    Task<bool> Validate(string accessToken, string permission);
+}
 
 public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
 {
@@ -30,7 +34,7 @@ public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
 
         if (string.IsNullOrWhiteSpace(token)) { return; }
 
-        var allowed = await _validator.ValidateAsync(token, requirement.Permission);
+        var allowed = await _validator.Validate(token, requirement.Permission);
         if (allowed) { context.Succeed(requirement); }
     }
 }
@@ -38,10 +42,15 @@ public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
 public sealed class PerValService : IPerValService
 {
     private readonly IAuthClient _client;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public PerValService(IAuthClient client) { _client = client; }
+    public PerValService(IAuthClient client, IHttpContextAccessor httpContextAccessor)
+    {
+        _client = client;
+        _httpContextAccessor = httpContextAccessor;
+    }
 
-    public async Task<bool> ValidateAsync(string token, string permission)
+    public async Task<bool> Validate(string token, string permission)
     {
         var response = await _client.ValidateToken(token);
         if (!response) return false;
