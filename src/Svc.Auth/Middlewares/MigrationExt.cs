@@ -55,38 +55,4 @@ public static class MigrationExt
             await dbContext.SaveChangesAsync();
         }
     }
-
-    public static async Task ApplyPerMenuSeed(this IApplicationBuilder app)
-    {
-        using var scope = app.ApplicationServices.CreateScope();
-        await using var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-        if (!await dbContext.Database.CanConnectAsync()) { return; }
-
-        var dbPermissions = dbContext.PerModule.Select(x => x.Key).ToList();
-        var existingKeys = new HashSet<string>(dbPermissions, StringComparer.OrdinalIgnoreCase);
-        var seedList = PerMenuSeeder.GetPerMenu().ToList();
-        var newPermissions = seedList.Where(p => !existingKeys.Contains(p.Key)).ToList();
-        if (newPermissions.Any())
-        {
-            await dbContext.PerMenu.AddRangeAsync(newPermissions);
-            await dbContext.SaveChangesAsync();
-        }
-    }
-
-    public static async Task ApplyPerApiSeed(this IApplicationBuilder app)
-    {
-        using var scope = app.ApplicationServices.CreateScope();
-        await using var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-        if (!await dbContext.Database.CanConnectAsync()) { return; }
-
-        var dbPermissions = dbContext.PerModule.Select(x => x.Key).ToList();
-        var existingKeys = new HashSet<string>(dbPermissions, StringComparer.OrdinalIgnoreCase);
-        var seedList = PerApiSeeder.GetPerApi().ToList();
-        var newPermissions = seedList.Where(p => !existingKeys.Contains(p.Key)).ToList();
-        if (newPermissions.Any())
-        {
-            await dbContext.PerApi.AddRangeAsync(newPermissions);
-            await dbContext.SaveChangesAsync();
-        }
-    }
 }

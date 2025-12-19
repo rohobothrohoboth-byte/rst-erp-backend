@@ -163,3 +163,22 @@ public class Step5Dto
     public string GuaFileSize { get; set; } = default!;
     public string GuaFileType { get; set; } = default!;
 }
+
+public class BasicInfoDto
+{
+    public Guid EmployeeId { get; set; } = default!; //Employee
+    public string Photo { get; set; } = default!;
+    public string FullName { get; set; } = default!;
+    public string FullNameAm { get; set; } = default!;
+    public string Code { get; set; } = default!;
+    public string Gender { get; set; } = default!;
+    public string Nationality { get; set; } = default!;
+    public string EmploymentDate { get; set; } = default!;
+    public string EmploymentDateAm { get; set; } = default!;
+    public string JobGrade { get; set; } = default!;
+    public string Position { get; set; } = default!;
+    public string Department { get; set; } = default!;
+    public string Branch { get; set; } = default!;
+    public string EmploymentType { get; set; } = default!;
+    public string EmploymentNature { get; set; } = default!;
+}

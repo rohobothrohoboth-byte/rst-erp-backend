@@ -37,8 +37,4 @@
 		<Protobuf Include="..\gRPC\Contracts\auth.proto" GrpcServices="Server" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="Queries\" />
-	</ItemGroup>
-
 </Project>

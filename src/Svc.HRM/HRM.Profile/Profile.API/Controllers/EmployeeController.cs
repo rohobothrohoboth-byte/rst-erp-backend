@@ -13,7 +13,7 @@ namespace Profile.API.Controllers;
 /// Employees Management end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/hrm/profile/v{version:apiVersion}/Employee")]
 [ApiVersion("1.0")]

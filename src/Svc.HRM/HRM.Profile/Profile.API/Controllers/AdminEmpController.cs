@@ -13,7 +13,7 @@ namespace Profile.API.Controllers;
 /// Employees Management by ADMIN end points
 /// </summary>
 
-[Authorize(Roles = "admin")]
+//[Authorize(Roles = "admin")]
 [ApiController]
 [Route("api/hrm/profile/v{version:apiVersion}/AdminEmp")]
 [ApiVersion("1.0")]
@@ -42,5 +42,15 @@ public class AdminEmpController(IMediator med) : ControllerBase
         var command = new EmpAddStep1Cmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE successfully created."));
+    }
+    
+    [HttpGet("Step2/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Step2(Guid id)
+    {
+        var response = await med.Send(new Step2Qry { Id = id });
+        if (response == null) { throw new DomainException($"EMPLOYEE with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
     }
 }

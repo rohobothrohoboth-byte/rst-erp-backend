@@ -34,8 +34,6 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigration();
     await app.ApplyAdminRole();
     await app.ApplyPerModSeed();
-    //await app.ApplyPerMenuSeed();
-    //await app.ApplyPerApiSeed();
 }
 
 app.UseCors("AllowAll");

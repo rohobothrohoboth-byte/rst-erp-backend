@@ -12,6 +12,7 @@ namespace Profile.App.Queries;
 public class EmployeeAllQry : IRequest<List<EmployeeListDto>> { }
 public class EmployeeByIdQry : IRequest<EmployeeListDto?> { public Guid Id { get; set; } }
 public class Step5Qry : IRequest<Step5Dto?> { public Guid Id { get; set; } }
+public class Step2Qry : IRequest<BasicInfoDto?> { public Guid Id { get; set; } }
 
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
@@ -312,6 +313,59 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             c.GuaFileType = "";
         }
 
+        return c;
+    }
+}
+
+public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICorHRMM _corHRMM;
+    private readonly ICorMod _corMod;
+
+    public Step2QryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
+    {
+        _unitOfWork = unitOfWork;
+        _corHRMM = corHRMM;
+        _corMod = corMod;
+    }
+
+    public async Task<BasicInfoDto?> Handle(Step2Qry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
+        if (data == null) { return null; }
+        var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
+        var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
+        var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
+        var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(b => b.EmployeeId == request.Id);
+        var photo = "";
+
+        if (ePhoto != null)
+        {
+            var ePhotoB = await _unitOfWork.Repository<EmpPhotoBlob>().GetFoD(t => t.FileMetaDataId == ePhoto.FileMetaDataId);
+            photo = Convert.ToBase64String(ePhotoB!.Data);
+        }
+        
+        var c = new BasicInfoDto
+        {
+            EmployeeId = data.Id,
+            Photo = photo,
+            FullName = $"{per!.FirstName} {per.MiddleName} {per.LastName}",
+            FullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
+            Code = data.Code,
+            Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
+            Nationality = per.Nationality,
+            EmploymentDate = $"{data.EmploymentDate:MMMM dd, yyyy}",
+            EmploymentDateAm = data.EmploymentDate.ToEthiopianDateString("MMMM dd, yyyy"),
+            JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
+            Position = pos != null ? pos.Name : "NOT AVAILABLE",
+            Department = dept != null ? dept.Name : "NOT AVAILABLE",
+            Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
+            EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
+            EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
+        };
+        
         return c;
     }
 }
