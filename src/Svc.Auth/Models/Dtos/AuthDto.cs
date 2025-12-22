@@ -55,11 +55,6 @@ public class RefreshTokenDto
     public string Token { get; set; } = default!;
 }
 
-//public class RevokeTokenDto
-//{
-//    public string Token { get; set; } = default!;  // Access or Refresh token
-//}
-
 public class NameList
 {
     public Guid Id { get; set; }
@@ -77,13 +72,6 @@ public class ModuleListDto
     public Guid Id { get; set; }
     public string Key { get; set; } = default;
     public string Name { get; set; } = default;
-}
-
-public class AccessListDto
-{
-    public Guid MenuId { get; set; }
-    public string Menu { get; set; } = default;
-    public List<NameList> AccessList { get; set; } = default;
 }
 
 

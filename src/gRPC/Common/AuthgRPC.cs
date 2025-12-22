@@ -2,7 +2,7 @@
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 
-namespace Auth.Security;
+namespace Common;
 
 public interface IAuthClient
 {
@@ -16,7 +16,7 @@ public class AuthClient : IAuthClient
 
     public AuthClient(IConfiguration config)
     {
-        _authUrl = config["AuthUrl"] ?? throw new InvalidOperationException("ProductServiceAddress not configured");
+        _authUrl = config["AuthUrl"] ?? throw new InvalidOperationException("AUTH Service Address not configured");
     }
 
     public async Task<GetUserResponse> GetUser(string token, CancellationToken ct = default)

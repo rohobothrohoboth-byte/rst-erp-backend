@@ -1,5 +1,5 @@
 ﻿using Asp.Versioning;
-using Auth.Security;
+using Common;
 using Cor.HRMM.Helpers;
 using Cor.HRMM.Queries;
 using MediatR;

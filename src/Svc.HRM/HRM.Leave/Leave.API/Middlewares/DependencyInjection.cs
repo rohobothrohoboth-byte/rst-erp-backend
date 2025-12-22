@@ -2,7 +2,7 @@
 using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
-using Auth.Security;
+using Common;
 using Leave.App.Interfaces;
 using Leave.App.Services;
 using Leave.Utility.Extensions;
@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace Leave.API.Middlewares;
 
@@ -109,19 +109,9 @@ public static class DependencyInjection
                 BearerFormat = "JWT"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
             });
         });
 

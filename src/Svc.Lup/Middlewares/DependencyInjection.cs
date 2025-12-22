@@ -2,12 +2,12 @@
 using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
-using Auth.Security;
+using Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Svc.Lup.Extensions;
 using Svc.Lup.Interfaces;
 using Svc.Lup.Persistence;
@@ -94,19 +94,9 @@ public static class DependencyInjection
                 BearerFormat = "JWT"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
             });
         });
 

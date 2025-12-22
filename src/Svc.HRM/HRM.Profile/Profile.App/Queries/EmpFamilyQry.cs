@@ -1,6 +1,6 @@
-﻿using MediatR;
+﻿using Common;
+using MediatR;
 using Profile.App.Interfaces;
-using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 using Profile.Domain.Enums;
@@ -14,12 +14,12 @@ public class EmpFamilyByIdQry : IRequest<EmpFamilyListDto?> { public Guid Id { g
 public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpFamilyListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILup _lup;
+    private readonly ILupClient _lupClient;
 
-    public EmpFamilyAllQryHandler(IUnitOfWork unitOfWork, ILup lup)
+    public EmpFamilyAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
-        _lup = lup;
+        _lupClient = lupClient;
     }
 
     public async Task<List<EmpFamilyListDto>> Handle(EmpFamilyAllQry request, CancellationToken cancellationToken)
@@ -27,12 +27,14 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
         var dbData = await _unitOfWork.Repository<EmpFamily>().Find(e => e.EmployeeId == request.Id);
         var dataL = new List<EmpFamilyListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var reL = await _lup.RelationList(cancellationToken);
+        var rel = await _lupClient.GetRelList(cancellationToken);
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
-            var re = reL!.FirstOrDefault(t => t.Id == data.RelationId);
+            var reV = rel.Res.FirstOrDefault(r => r.Id == data.RelationId.ToString());
+            var re = "NOT AVAILABLE";
+            if (reV.Id != null) { re = reV.Name; }
             var c = new EmpFamilyListDto
             {
                 Id = data.Id,
@@ -44,7 +46,7 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
                 FamilyName = $"{per.FirstName} {per.MiddleName} {per.LastName}",
                 FamilyNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
                 GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-                Relation = re != null ? re.Name : "NOT AVAILABLE",
+                Relation = re,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -60,12 +62,12 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
 public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFamilyListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILup _lup;
+    private readonly ILupClient _lupClient;
 
-    public EmpFamilyByIdQryHandler(IUnitOfWork unitOfWork, ILup lup)
+    public EmpFamilyByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
-        _lup = lup;
+        _lupClient = lupClient;
     }
 
     public async Task<EmpFamilyListDto?> Handle(EmpFamilyByIdQry request, CancellationToken cancellationToken)
@@ -74,7 +76,7 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var emp = await _unitOfWork.Repository<Employee>().GetById(data.EmployeeId);
-        var re = await _lup.Relation(data.RelationId, cancellationToken);
+        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmpFamilyListDto
         {
@@ -87,7 +89,7 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
             FamilyName = $"{per.FirstName} {per.MiddleName} {per.LastName}",
             FamilyNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            Relation = re != null ? re.Name : "NOT AVAILABLE",
+            Relation = re.Res.Name != null ? re.Res.Name : "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

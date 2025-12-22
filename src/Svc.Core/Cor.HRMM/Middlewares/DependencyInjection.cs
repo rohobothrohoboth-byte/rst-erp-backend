@@ -1,6 +1,6 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.Conventions;
-using Auth.Security;
+using Common;
 using Cor.HRMM.Extensions;
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Persistence;
@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
 
@@ -40,6 +40,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<DapperContext>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<ILupClient, LupClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
@@ -58,7 +59,7 @@ public static class DependencyInjection
         var corModuleUrl = builder.Configuration["Services:Cor.Module"];
 
         builder.Services
-            .AddHttpClient<ILupClient, LupClient>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); })
+            .AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); })
             .AddPolicyHandler(ResiliencePolicies.GetRetryPolicy())
             .AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy())
             .AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
@@ -119,19 +120,9 @@ public static class DependencyInjection
                 BearerFormat = "JWT"
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
             });
         });
 

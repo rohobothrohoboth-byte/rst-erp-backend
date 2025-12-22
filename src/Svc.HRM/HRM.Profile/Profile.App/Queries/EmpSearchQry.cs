@@ -16,7 +16,7 @@ public class SearchByCodeQryHandler : IRequestHandler<SearchByCodeQry, EmpSearch
     private readonly ICorHRMM _corHRMM;
     private readonly ICorMod _corMod;
 
-    public SearchByCodeQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
+    public SearchByCodeQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;

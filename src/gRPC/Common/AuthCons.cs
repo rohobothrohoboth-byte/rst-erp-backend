@@ -1,4 +1,4 @@
-﻿namespace Auth.Security;
+﻿namespace Common;
 
 public static class JwtCons
 {

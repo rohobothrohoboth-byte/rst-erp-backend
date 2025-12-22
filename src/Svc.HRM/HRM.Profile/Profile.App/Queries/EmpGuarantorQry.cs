@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Common;
+using MediatR;
 using Profile.App.Interfaces;
 using Profile.App.Services;
 using Profile.Domain.DTOs;
@@ -12,13 +13,13 @@ public class EmpGuarantorByIdQry : IRequest<EmpGuarantorListDto?> { public Guid 
 public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, EmpGuarantorListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILup _lup;
+    private readonly ILupClient _lupClient;
     private readonly IMediator _med;
 
-    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ILup lup, IMediator med)
+    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient, IMediator med)
     {
         _unitOfWork = unitOfWork;
-        _lup = lup;
+        _lupClient = lupClient;
         _med = med;
     }
 
@@ -28,7 +29,7 @@ public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, E
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var add = await _med.Send(new AddressNameByIdQry { Id = data.AddressId }, cancellationToken);
-        var re = await _lup.Relation(data.RelationId, cancellationToken);
+        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmpGuarantorListDto
         {
@@ -43,7 +44,7 @@ public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, E
             GuarantorNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
             Address = add != null ? add.Name : "NOT AVAILABLE",
-            Relation = re != null ? re.Name : "NOT AVAILABLE",
+            Relation = re.Res.Name != null ? re.Res.Name : "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

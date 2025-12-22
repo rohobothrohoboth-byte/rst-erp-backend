@@ -13,12 +13,12 @@ public class PositionEduByIdQry : IRequest<PositionEduListDto?> { public Guid Id
 public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<PositionEduListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILup _lup;
 
-    public PositionEduAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    public PositionEduAllQryHandler(IUnitOfWork unitOfWork, ILup lup)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _lup = lup;
     }
 
     public async Task<List<PositionEduListDto>> Handle(PositionEduAllQry request, CancellationToken cancellationToken)
@@ -28,7 +28,7 @@ public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<
         var nData = dbData.ToList();
         if (nData.Count <= 0) return dataL;
 
-        var eduLevelL = await _lupClient.EducationLevelList(cancellationToken);
+        var eduLevelL = await _lup.EducationLevelList(cancellationToken);
         var eduQualL = await _unitOfWork.Repository<EducationQual>().GetAll();
 
         foreach (var data in dbData)
@@ -58,19 +58,19 @@ public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<
 public class PositionEduByIdQryHandler : IRequestHandler<PositionEduByIdQry, PositionEduListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILup _lup;
 
-    public PositionEduByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    public PositionEduByIdQryHandler(IUnitOfWork unitOfWork, ILup lup)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _lup = lup;
     }
 
     public async Task<PositionEduListDto?> Handle(PositionEduByIdQry request, CancellationToken cancellationToken)
     {
         var data = await _unitOfWork.Repository<PositionEducation>().GetById(request.Id);
         if (data == null) { return null; }
-        var eduLevel = await _lupClient.EducationLevel(data.EducationLevelId, cancellationToken);
+        var eduLevel = await _lup.EducationLevel(data.EducationLevelId, cancellationToken);
         var eduQual = await _unitOfWork.Repository<EducationQual>().GetById(data.EducationQualId);
 
         var c = new PositionEduListDto

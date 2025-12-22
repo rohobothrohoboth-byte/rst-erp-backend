@@ -1,5 +1,6 @@
 using Scalar.AspNetCore;
 using Serilog;
+using Svc.Lup.gRPCService;
 using Svc.Lup.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.MapGrpcService<LupListService>();
 if (app.Environment.IsDevelopment())
 {
     app.MapSwagger("/openapi/{documentName}.json");

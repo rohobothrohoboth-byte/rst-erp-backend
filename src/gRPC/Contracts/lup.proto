@@ -1,0 +1,29 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package lup;
+
+service LupService {
+  rpc GetRel (GetRelRqst) returns (GetRelRes);
+  rpc GetRelList (GetRelListRqst) returns (GetRelListRes);
+}
+
+message NameList {
+  string Id = 1;
+  string Name = 2;  
+}
+
+message GetRelListRqst {}
+
+message GetRelListRes {
+  repeated NameList Res = 1;
+}
+
+message GetRelRqst {
+  string Id = 1;
+}
+
+message GetRelRes {
+  NameList Res = 1;
+}

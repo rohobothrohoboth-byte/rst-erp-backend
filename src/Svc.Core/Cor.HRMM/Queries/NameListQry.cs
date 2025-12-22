@@ -1,4 +1,4 @@
-﻿using Auth.Security;
+﻿using Common;
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;

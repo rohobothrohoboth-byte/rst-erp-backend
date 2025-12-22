@@ -1,4 +1,5 @@
-﻿using EthiopianCalendar;
+﻿using Common;
+using EthiopianCalendar;
 using MediatR;
 using Profile.App.Helpers;
 using Profile.App.Interfaces;
@@ -132,14 +133,14 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorHRMM _corHRMM;
     private readonly ICorMod _corMod;
-    private readonly ILup _lup;
+    private readonly ILupClient _lupClient;
 
-    public Step5QryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILup lup)
+    public Step5QryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
         _corMod = corMod;
-        _lup = lup;
+        _lupClient = lupClient;
     }
 
     public async Task<Step5Dto?> Handle(Step5Qry request, CancellationToken cancellationToken)
@@ -147,10 +148,10 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
+        var rel = await _lupClient.GetRelList(cancellationToken);
         var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
         var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
         var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
-        var reL = await _lup.RelationList(cancellationToken);
         var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(b => b.EmployeeId == request.Id);
         var photo = "";
 
@@ -230,13 +231,17 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         if (eCon != null)
         {
             var con = await _unitOfWork.Repository<Person>().GetById(eCon.PersonId);
-            var re = reL!.FirstOrDefault(t => t.Id == eCon.RelationId);
-
+            var reV = rel.Res.FirstOrDefault(r => r.Id == eCon.RelationId.ToString());
+            var re = "NOT AVAILABLE";
+            if (reV.Id != null)
+            {
+                re = reV.Name;
+            }
             c.ConFullName = $"{con!.FirstName} {con.MiddleName} {con.LastName}";
             c.ConFullNameAm = $"{con.FirstNameAm} {con.MiddleNameAm} {con.LastNameAm}";
             c.ConNationality = con.Nationality;
             c.ConGender = ((Gender)Enum.Parse(typeof(Gender), con.Gender)).ToDisplayName();
-            c.ConRelation = re != null ? re.Name : "NOT AVAILABLE";
+            c.ConRelation = re;
 
             var address = await _unitOfWork.Repository<Address>().GetById(eCon.AddressId);
             if (address != null)
@@ -264,13 +269,17 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         if (eGua != null)
         {
             var gua = await _unitOfWork.Repository<Person>().GetById(eGua.PersonId);
-            var re = reL!.FirstOrDefault(t => t.Id == eGua.RelationId);
-
+            var reV = rel.Res.FirstOrDefault(r => r.Id == eGua.RelationId.ToString());
+            var re = "NOT AVAILABLE";
+            if (reV.Id != null)
+            {
+                re = reV.Name;
+            }
             c.GuaFullName = $"{gua!.FirstName} {gua.MiddleName} {gua.LastName}";
             c.GuaFullNameAm = $"{gua.FirstNameAm} {gua.MiddleNameAm} {gua.LastNameAm}";
             c.GuaNationality = gua.Nationality;
             c.GuaGender = ((Gender)Enum.Parse(typeof(Gender), gua.Gender)).ToDisplayName();
-            c.GuaRelation = re != null ? re.Name : "NOT AVAILABLE";
+            c.GuaRelation = re;
 
             var address = await _unitOfWork.Repository<Address>().GetById(eGua.AddressId);
             if (address != null)
@@ -346,7 +355,7 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
             var ePhotoB = await _unitOfWork.Repository<EmpPhotoBlob>().GetFoD(t => t.FileMetaDataId == ePhoto.FileMetaDataId);
             photo = Convert.ToBase64String(ePhotoB!.Data);
         }
-        
+
         var c = new BasicInfoDto
         {
             EmployeeId = data.Id,
@@ -365,7 +374,7 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
             EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
             EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
         };
-        
+
         return c;
     }
 }

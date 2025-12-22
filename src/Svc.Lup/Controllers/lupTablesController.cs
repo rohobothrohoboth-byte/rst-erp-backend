@@ -11,7 +11,7 @@ namespace Svc.Lup.Controllers;
 /// <para>Will be converted to list in UI</para>
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/lup/v{version:apiVersion}")]
 [ApiVersion("1.0")]

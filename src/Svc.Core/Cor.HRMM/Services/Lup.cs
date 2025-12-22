@@ -2,7 +2,7 @@
 
 namespace Cor.HRMM.Services;
 
-public class LupClient(HttpClient http) : ILupClient
+public class Lup(HttpClient http) : ILup
 {
     public async Task<LupListDto?> EducationLevel(Guid id, CancellationToken ct = default)
     {

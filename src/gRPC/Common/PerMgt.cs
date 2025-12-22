@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
-namespace Auth.Security;
+namespace Common;
 
 public sealed class PerReq : IAuthorizationRequirement
 {
