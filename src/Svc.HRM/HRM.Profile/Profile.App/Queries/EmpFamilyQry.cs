@@ -14,12 +14,12 @@ public class EmpFamilyByIdQry : IRequest<EmpFamilyListDto?> { public Guid Id { g
 public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpFamilyListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILupClient _gRPC;
 
-    public EmpFamilyAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    public EmpFamilyAllQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
     }
 
     public async Task<List<EmpFamilyListDto>> Handle(EmpFamilyAllQry request, CancellationToken cancellationToken)
@@ -27,7 +27,7 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
         var dbData = await _unitOfWork.Repository<EmpFamily>().Find(e => e.EmployeeId == request.Id);
         var dataL = new List<EmpFamilyListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var rel = await _lupClient.GetRelList(cancellationToken);
+        var rel = await _gRPC.GetRelList(cancellationToken);
 
         foreach (var data in dbData)
         {
@@ -62,12 +62,12 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
 public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFamilyListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILupClient _gRPC;
 
-    public EmpFamilyByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
+    public EmpFamilyByIdQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
     }
 
     public async Task<EmpFamilyListDto?> Handle(EmpFamilyByIdQry request, CancellationToken cancellationToken)
@@ -76,7 +76,7 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var emp = await _unitOfWork.Repository<Employee>().GetById(data.EmployeeId);
-        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
+        var re = await _gRPC.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmpFamilyListDto
         {

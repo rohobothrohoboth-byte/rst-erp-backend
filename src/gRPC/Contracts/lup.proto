@@ -5,25 +5,33 @@ option csharp_namespace = "Contracts";
 package lup;
 
 service LupService {
-  rpc GetRel (GetRelRqst) returns (GetRelRes);
-  rpc GetRelList (GetRelListRqst) returns (GetRelListRes);
+  rpc GetEduLevel (LupRqst) returns (LupRes);
+  rpc GetListEduLevel (LupListRqst) returns (LupListRes);
+  rpc GetRel (LupRqst) returns (LupRes);
+  rpc GetRelList (LupListRqst) returns (LupListRes);
 }
 
-message NameList {
+message LupList {
   string Id = 1;
   string Name = 2;  
 }
 
-message GetRelListRqst {}
-
-message GetRelListRes {
-  repeated NameList Res = 1;
+message LupListAm {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
 }
 
-message GetRelRqst {
+message LupListRqst {}
+
+message LupListRes { 
+  repeated LupList Res = 1; 
+}
+
+message LupRqst {
   string Id = 1;
 }
 
-message GetRelRes {
-  NameList Res = 1;
+message LupRes { 
+  LupList Res = 1;
 }

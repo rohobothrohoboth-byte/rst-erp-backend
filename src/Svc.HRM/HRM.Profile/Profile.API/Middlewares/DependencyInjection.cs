@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Profile.App.Interfaces;
-using Profile.App.Services;
 using Profile.Utility.Extensions;
 using Profile.Utility.Persistence;
 using Profile.Utility.Repos;
@@ -41,6 +40,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ILupClient, LupClient>();
+        builder.Services.AddScoped<ICorModClient, CorModClient>();
+        builder.Services.AddScoped<ICorHrmmClient, CorHrmmClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
@@ -49,19 +50,6 @@ public static class DependencyInjection
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();
         builder.Services.AddGrpc();
-        return builder;
-    }
-
-    public static WebApplicationBuilder AddHttpClientServices(this WebApplicationBuilder builder)
-    {
-        var gatewayUrl = builder.Configuration["Services:Gateway"];
-        var corHRMMUrl = builder.Configuration["Services:CorHRMM"];
-        var corModuleUrl = builder.Configuration["Services:CorModule"];
-
-        builder.Services.AddHttpClient<ICorHRMM, CorHRMM>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corHRMMUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
-        builder.Services.AddHttpClient<ICorMod, CorMod>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
         return builder;
     }
 

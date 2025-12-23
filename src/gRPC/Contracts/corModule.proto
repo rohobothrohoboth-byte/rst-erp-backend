@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package corModule;
+
+service CorModuleService {
+  rpc GetDept (CorModuleRqst) returns (CorModuleResAm);
+  rpc GetListDept (CorModuleListRqst) returns (CorModuleListResAm);
+}
+
+message CorModList {
+  string Id = 1;
+  string Name = 2;  
+}
+
+message CorModListAm {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+}
+
+message CorModuleListRqst {}
+
+message CorModuleRqst {
+  string Id = 1;
+}
+
+message CorModuleResAm { 
+  CorModListAm Res = 1;
+}
+
+message CorModuleRes { 
+  CorModList Res = 1;
+}
+
+message CorModuleListResAm { 
+  repeated CorModListAm Res = 1; 
+}
+
+message CorModuleListRes { 
+  repeated CorModList Res = 1; 
+}

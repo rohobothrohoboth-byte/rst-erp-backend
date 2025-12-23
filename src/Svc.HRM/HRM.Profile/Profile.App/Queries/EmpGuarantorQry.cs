@@ -1,7 +1,6 @@
 ﻿using Common;
 using MediatR;
 using Profile.App.Interfaces;
-using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 using Profile.Domain.Enums;
@@ -13,13 +12,13 @@ public class EmpGuarantorByIdQry : IRequest<EmpGuarantorListDto?> { public Guid 
 public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, EmpGuarantorListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILupClient _gRPC;
     private readonly IMediator _med;
 
-    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient, IMediator med)
+    public EmpGuarantorByIdQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC, IMediator med)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
         _med = med;
     }
 
@@ -29,7 +28,7 @@ public class EmpGuarantorByIdQryHandler : IRequestHandler<EmpGuarantorByIdQry, E
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var add = await _med.Send(new AddressNameByIdQry { Id = data.AddressId }, cancellationToken);
-        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
+        var re = await _gRPC.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmpGuarantorListDto
         {

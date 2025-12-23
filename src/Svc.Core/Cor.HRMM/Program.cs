@@ -1,3 +1,4 @@
+using Cor.HRMM.gRPCService;
 using Cor.HRMM.Middlewares;
 using Scalar.AspNetCore;
 using Serilog;
@@ -13,7 +14,6 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.AddApiServices()
-    .AddHttpClientServices()
     .AddErrorHandling()
     .AddSwaggerService()
     .AddAuthService();
@@ -23,6 +23,7 @@ app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.MapGrpcService<CorHrmmListService>();
 
 if (app.Environment.IsDevelopment())
 {

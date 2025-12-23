@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Common;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -7,7 +8,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Svc.Auth.Constants;
 
 namespace Svc.Auth.Services;
 

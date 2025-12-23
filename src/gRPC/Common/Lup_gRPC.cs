@@ -6,44 +6,53 @@ namespace Common;
 
 public interface ILupClient
 {
-    Task<GetRelListRes> GetRelList(CancellationToken ct = default);
-    Task<GetRelRes> GetRel(string id, CancellationToken ct = default);
+    Task<LupListRes> GetListEduLevel(CancellationToken ct = default);
+    Task<LupRes> GetEduLevel(string id, CancellationToken ct = default);
+    Task<LupListRes> GetRelList(CancellationToken ct = default);
+    Task<LupRes> GetRel(string id, CancellationToken ct = default);
 }
 
 
 public class LupClient : ILupClient
 {
-    private readonly string _lupUrl;
+    private readonly string _servUrl;
 
     public LupClient(IConfiguration config)
     {
-        _lupUrl = config["LupUrl"] ?? throw new InvalidOperationException("Lup Service Address not configured");
+        _servUrl = config["LupUrl"] ?? throw new InvalidOperationException("Lup Service Address not configured");
     }
 
-    public async Task<GetRelListRes> GetRelList(CancellationToken ct = default)
+    public async Task<LupListRes> GetListEduLevel(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_lupUrl);
+        using var channel = GrpcChannel.ForAddress(_servUrl);
         var client = new LupService.LupServiceClient(channel);
-        var req = new GetRelListRqst();
+        var req = new LupListRqst();
+        return await client.GetListEduLevelAsync(req);
+    }
+
+    public async Task<LupRes> GetEduLevel(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new LupService.LupServiceClient(channel);
+        var req = new LupRqst { Id = id };
+        return await client.GetEduLevelAsync(req);
+    }
+
+    public async Task<LupListRes> GetRelList(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new LupService.LupServiceClient(channel);
+        var req = new LupListRqst();
         return await client.GetRelListAsync(req);
     }
 
-    public async Task<GetRelRes> GetRel(string id, CancellationToken ct = default)
+    public async Task<LupRes> GetRel(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_lupUrl);
+        using var channel = GrpcChannel.ForAddress(_servUrl);
         var client = new LupService.LupServiceClient(channel);
-        var req = new GetRelRqst { Id = id };
+        var req = new LupRqst { Id = id };
         return await client.GetRelAsync(req);
     }
-
-    //public async Task<bool> ValidateToken(string token, CancellationToken ct = default)
-    //{
-    //    using var channel = GrpcChannel.ForAddress(_authUrl);
-    //    var client = new AuthValidator.AuthValidatorClient(channel);
-    //    var request = new ValidateTokenRequest { Token = token };
-    //    var res = await client.ValidateTokenAsync(request);
-    //    return res.IsValid;
-    //}
 
 
 

@@ -12,7 +12,6 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.AddApiServices()
-    .AddHttpClientServices()
     .AddErrorHandling()
     .AddSwaggerService()
     .AddAuthService();

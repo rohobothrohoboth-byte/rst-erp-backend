@@ -2,7 +2,6 @@
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Models.Enums;
-using Cor.HRMM.Services;
 using MediatR;
 
 namespace Cor.HRMM.Queries;

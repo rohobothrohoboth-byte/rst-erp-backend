@@ -5,7 +5,6 @@ using Cor.HRMM.Extensions;
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Persistence;
 using Cor.HRMM.Repos;
-using Cor.HRMM.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +40,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ILupClient, LupClient>();
+        builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
@@ -51,30 +51,7 @@ public static class DependencyInjection
         builder.Services.AddGrpc();
         return builder;
     }
-
-    public static WebApplicationBuilder AddHttpClientServices(this WebApplicationBuilder builder)
-    {
-        var gatewayUrl = builder.Configuration["Services:Gateway"];
-        var lupUrl = builder.Configuration["Services:Lup"];
-        var corModuleUrl = builder.Configuration["Services:Cor.Module"];
-
-        builder.Services
-            .AddHttpClient<ILup, Lup>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), lupUrl); })
-            .AddPolicyHandler(ResiliencePolicies.GetRetryPolicy())
-            .AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy())
-            .AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
-        builder.Services
-            .AddHttpClient<ICoreModuleClient, CoreModuleClient>(c =>
-            {
-                c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModuleUrl);
-            }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy())
-            .AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy())
-            .AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
-        return builder;
-    }
-
+        
     public static WebApplicationBuilder AddErrorHandling(this WebApplicationBuilder builder)
     {
         builder.Services.AddProblemDetails(options =>

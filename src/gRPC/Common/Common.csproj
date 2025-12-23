@@ -7,10 +7,15 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Contracts\Contracts.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Protobuf Include="..\Contracts\lup.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\auth.proto" GrpcServices="Both" />
+		<Protobuf Include="..\Contracts\corModule.proto" GrpcServices="Both" />
+		<Protobuf Include="..\Contracts\corHrmm.proto" GrpcServices="Both" />
 	</ItemGroup>
 
 </Project>

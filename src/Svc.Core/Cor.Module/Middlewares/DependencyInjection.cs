@@ -39,6 +39,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<DapperContext>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<ICorHrmmClient, CorHrmmClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();

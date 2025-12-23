@@ -1,3 +1,4 @@
+using Cor.Module.gRPCService;
 using Cor.Module.Middlewares;
 using Scalar.AspNetCore;
 using Serilog;
@@ -21,7 +22,7 @@ app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
-
+app.MapGrpcService<CorModListService>();
 if (app.Environment.IsDevelopment())
 {
     app.MapSwagger("/openapi/{documentName}.json");

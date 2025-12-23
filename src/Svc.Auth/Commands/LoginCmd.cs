@@ -1,6 +1,6 @@
-﻿using MediatR;
+﻿using Common;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Svc.Auth.Constants;
 using Svc.Auth.Helpers;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;

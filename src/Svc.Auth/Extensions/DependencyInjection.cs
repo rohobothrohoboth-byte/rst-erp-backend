@@ -1,17 +1,17 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.Conventions;
+using Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Svc.Auth.Constants;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Entities;
 using Svc.Auth.Persistence;
+using Svc.Auth.Repos;
 using Svc.Auth.Services;
 using System.Reflection;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Svc.Auth.Repos;
 
 namespace Svc.Auth.Extensions;
 

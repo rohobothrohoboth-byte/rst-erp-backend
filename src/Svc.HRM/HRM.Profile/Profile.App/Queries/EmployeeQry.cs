@@ -3,7 +3,6 @@ using EthiopianCalendar;
 using MediatR;
 using Profile.App.Helpers;
 using Profile.App.Interfaces;
-using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 using Profile.Domain.Enums;
@@ -18,10 +17,10 @@ public class Step2Qry : IRequest<BasicInfoDto?> { public Guid Id { get; set; } }
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
-    private readonly ICorMod _corMod;
+    private readonly ICorHrmmClient _corHRMM;
+    private readonly ICorModClient _corMod;
 
-    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
+    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
@@ -33,17 +32,17 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
         var dbData = await _unitOfWork.Repository<Employee>().GetAll();
         var dataL = new List<EmployeeListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var deL = await _corMod.DeptList(cancellationToken);
-        var jgL = await _corHRMM.JobGradeList(cancellationToken);
-        var poL = await _corHRMM.PositionList(cancellationToken);
+        var deL = await _corMod.GetListDept(cancellationToken);
+        var jgL = await _corHRMM.GetListJobGrade(cancellationToken);
+        var poL = await _corHRMM.GetListPosition(cancellationToken);
         var ePhotoL = await _unitOfWork.Repository<EmpPhoto>().GetAll();
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
-            var dept = deL!.FirstOrDefault(t => t.Id == data.DepartmentId);
-            var jg = jgL!.FirstOrDefault(t => t.Id == data.JobGradeId);
-            var pos = poL!.FirstOrDefault(t => t.Id == data.PositionId);
+            var dept = deL.Res.FirstOrDefault(t => t.Id == data.DepartmentId.ToString());
+            var jg = jgL.Res.FirstOrDefault(t => t.Id == data.JobGradeId.ToString());
+            var pos = poL.Res.FirstOrDefault(t => t.Id == data.PositionId.ToString());
             var photo = "";
             if (ePhotoL.Any())
             {
@@ -62,10 +61,10 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 EmpFullNameAm = per != null ? $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}" : "NOT AVAILABLE",
                 Code = data.Code,
                 Gender = ((Gender)Enum.Parse(typeof(Gender), per!.Gender)).ToDisplayName(),
-                Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
-                Department = dept != null ? dept.Name : "NOT AVAILABLE",
-                Position = pos != null ? pos.Name : "NOT AVAILABLE",
-                JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
+                Branch = dept.NameAm != null ? dept.NameAm : "NOT AVAILABLE",
+                Department = dept.Name != null ? dept.Name : "NOT AVAILABLE",
+                Position = pos.Name != null ? pos.Name : "NOT AVAILABLE",
+                JobGrade = jg.Name != null ? jg.Name : "NOT AVAILABLE",
                 EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
                 EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
                 Photo = photo,
@@ -84,10 +83,10 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
 public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
-    private readonly ICorMod _corMod;
+    private readonly ICorHrmmClient _corHRMM;
+    private readonly ICorModClient _corMod;
 
-    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
+    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
@@ -99,9 +98,9 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
         var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
-        var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
-        var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var dept = await _corMod.GetDept(data.DepartmentId.ToString(), cancellationToken);
+        var jg = await _corHRMM.GetJobGrade(data.JobGradeId.ToString(), cancellationToken);
+        var pos = await _corHRMM.GetPosition(data.PositionId.ToString(), cancellationToken);
         var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(t => t.EmployeeId == request.Id);
         var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.FileMetaDataId);
 
@@ -112,10 +111,10 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             EmpFullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             Code = data.Code,
             Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
-            Department = dept != null ? dept.Name : "NOT AVAILABLE",
-            Position = pos != null ? pos.Name : "NOT AVAILABLE",
-            JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
+            Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
+            Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
+            Position = pos.Res.Name != null ? pos.Res.Name : "NOT AVAILABLE",
+            JobGrade = jg.Res.Name != null ? jg.Res.Name : "NOT AVAILABLE",
             EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
             EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
             Photo = Convert.ToBase64String(ePhotoB!.Data),
@@ -131,16 +130,16 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
 public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
-    private readonly ICorMod _corMod;
-    private readonly ILupClient _lupClient;
+    private readonly ICorHrmmClient _corHRMM;
+    private readonly ICorModClient _corMod;
+    private readonly ILupClient _gRPC;
 
-    public Step5QryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod, ILupClient lupClient)
+    public Step5QryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod, ILupClient gRPC)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
         _corMod = corMod;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
     }
 
     public async Task<Step5Dto?> Handle(Step5Qry request, CancellationToken cancellationToken)
@@ -148,10 +147,10 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var rel = await _lupClient.GetRelList(cancellationToken);
-        var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
-        var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
-        var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var rel = await _gRPC.GetRelList(cancellationToken);
+        var dept = await _corMod.GetDept(data.DepartmentId.ToString(), cancellationToken);
+        var jg = await _corHRMM.GetJobGrade(data.JobGradeId.ToString(), cancellationToken);
+        var pos = await _corHRMM.GetPosition(data.PositionId.ToString(), cancellationToken);
         var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(b => b.EmployeeId == request.Id);
         var photo = "";
 
@@ -177,10 +176,10 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             Nationality = per.Nationality,
             EmploymentDate = $"{data.EmploymentDate:MMMM dd, yyyy}",
             EmploymentDateAm = data.EmploymentDate.ToEthiopianDateString("MMMM dd, yyyy"),
-            JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
-            Position = pos != null ? pos.Name : "NOT AVAILABLE",
-            Department = dept != null ? dept.Name : "NOT AVAILABLE",
-            Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
+            JobGrade = jg.Res.Name != null ? jg.Res.Name : "NOT AVAILABLE",
+            Position = pos.Res.Name != null ? pos.Res.Name : "NOT AVAILABLE",
+            Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
+            Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
             EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
             EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
         };
@@ -329,10 +328,10 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
 public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHRMM _corHRMM;
-    private readonly ICorMod _corMod;
+    private readonly ICorHrmmClient _corHRMM;
+    private readonly ICorModClient _corMod;
 
-    public Step2QryHandler(IUnitOfWork unitOfWork, ICorHRMM corHRMM, ICorMod corMod)
+    public Step2QryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _unitOfWork = unitOfWork;
         _corHRMM = corHRMM;
@@ -344,9 +343,9 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
         var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var dept = await _corMod.Dept(data.DepartmentId, cancellationToken);
-        var jg = await _corHRMM.JobGrade(data.JobGradeId, cancellationToken);
-        var pos = await _corHRMM.Position(data.PositionId, cancellationToken);
+        var dept = await _corMod.GetDept(data.DepartmentId.ToString(), cancellationToken);
+        var jg = await _corHRMM.GetJobGrade(data.JobGradeId.ToString(), cancellationToken);
+        var pos = await _corHRMM.GetPosition(data.PositionId.ToString(), cancellationToken);
         var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(b => b.EmployeeId == request.Id);
         var photo = "";
 
@@ -367,10 +366,10 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
             Nationality = per.Nationality,
             EmploymentDate = $"{data.EmploymentDate:MMMM dd, yyyy}",
             EmploymentDateAm = data.EmploymentDate.ToEthiopianDateString("MMMM dd, yyyy"),
-            JobGrade = jg != null ? jg.Name : "NOT AVAILABLE",
-            Position = pos != null ? pos.Name : "NOT AVAILABLE",
-            Department = dept != null ? dept.Name : "NOT AVAILABLE",
-            Branch = dept != null ? dept.NameAm : "NOT AVAILABLE",
+            JobGrade = jg.Res.Name != null ? jg.Res.Name : "NOT AVAILABLE",
+            Position = pos.Res != null ? pos.Res.Name : "NOT AVAILABLE",
+            Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
+            Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
             EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
             EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
         };

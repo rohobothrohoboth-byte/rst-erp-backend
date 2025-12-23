@@ -14,13 +14,13 @@ public class EmContactAllQryHandler : IRequestHandler<EmContactAllQry, List<EmCo
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
-    private readonly ILupClient _lupClient;
+    private readonly ILupClient _gRPC;
 
-    public EmContactAllQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient, IMediator med)
+    public EmContactAllQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC, IMediator med)
     {
         _unitOfWork = unitOfWork;
         _med = med;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
     }
 
     public async Task<List<EmContactListDto>> Handle(EmContactAllQry request, CancellationToken cancellationToken)
@@ -28,7 +28,7 @@ public class EmContactAllQryHandler : IRequestHandler<EmContactAllQry, List<EmCo
         var dbData = await _unitOfWork.Repository<EmergencyContact>().Find(e => e.EmployeeId == request.Id);
         var dataL = new List<EmContactListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var rel = await _lupClient.GetRelList(cancellationToken);
+        var rel = await _gRPC.GetRelList(cancellationToken);
 
         foreach (var data in dbData)
         {
@@ -69,13 +69,13 @@ public class EmContactAllQryHandler : IRequestHandler<EmContactAllQry, List<EmCo
 public class EmContactByIdQryHandler : IRequestHandler<EmContactByIdQry, EmContactListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _lupClient;
+    private readonly ILupClient _gRPC;
     private readonly IMediator _med;
 
-    public EmContactByIdQryHandler(IUnitOfWork unitOfWork, ILupClient lupClient, IMediator med)
+    public EmContactByIdQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC, IMediator med)
     {
         _unitOfWork = unitOfWork;
-        _lupClient = lupClient;
+        _gRPC = gRPC;
         _med = med;
     }
 
@@ -85,7 +85,7 @@ public class EmContactByIdQryHandler : IRequestHandler<EmContactByIdQry, EmConta
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var add = await _med.Send(new AddressNameByIdQry { Id = data.AddressId }, cancellationToken);
-        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
+        var re = await _gRPC.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmContactListDto
         {

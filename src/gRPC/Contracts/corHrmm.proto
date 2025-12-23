@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package corHrmm;
+
+service CorHrmmService {
+  rpc GetJobGrade (CorHrmmRqst) returns (CorHrmmRes);
+  rpc GetListJobGrade (CorHrmmListRqst) returns (CorHrmmListRes);
+  rpc GetPosition (CorHrmmRqst) returns (CorHrmmRes);
+  rpc GetListPosition (CorHrmmListRqst) returns (CorHrmmListRes);
+}
+
+message CorHrmmList {
+  string Id = 1;
+  string Name = 2;  
+}
+
+message CorHrmmListAm {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+}
+
+message CorHrmmListRqst {}
+
+message CorHrmmRqst {
+  string Id = 1;
+}
+
+message CorHrmmListRes { 
+  repeated CorHrmmList Res = 1; 
+}
+
+message CorHrmmListResAm { 
+  repeated CorHrmmListAm Res = 1; 
+}
+
+message CorHrmmRes { 
+  CorHrmmList Res = 1;
+}
+
+message CorHrmmResAm { 
+  CorHrmmListAm Res = 1;
+}
