@@ -17,7 +17,7 @@ namespace Svc.Auth.Controllers;
 [ApiVersion("1.0")]
 public class PermissionController(IMediator med) : ControllerBase
 {
-    [HttpPost("AllRole")]
+    [HttpGet("AllRole")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllRole()
     {

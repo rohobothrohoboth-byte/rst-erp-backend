@@ -15,7 +15,7 @@ namespace Svc.Auth.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/hrm/leave/v{version:apiVersion}/PerApi")]
+[Route("api/auth/v{version:apiVersion}/PerApi")]
 [ApiVersion("1.0")]
 public class PerApiController(IMediator med) : ControllerBase
 {

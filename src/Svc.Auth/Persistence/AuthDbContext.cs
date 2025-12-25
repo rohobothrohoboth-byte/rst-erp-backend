@@ -49,13 +49,11 @@ public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDb
         {
             en.HasIndex(e => e.Id).IsUnique();
             en.HasIndex(e => e.Key).IsUnique();
-            en.HasIndex(e => e.PerModuleId).IsUnique();
         });
         builder.Entity<PerApi>(en =>
         {
             en.HasIndex(e => e.Id).IsUnique();
             en.HasIndex(e => e.Key).IsUnique();
-            en.HasIndex(e => e.PerMenuId).IsUnique();
         });
     }
 
