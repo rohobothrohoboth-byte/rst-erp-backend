@@ -7,6 +7,7 @@ namespace Svc.Auth.Queries;
 
 public class PerMenuAllQry : IRequest<List<ModPerMenuListDto>> { }
 public class PerMenuByIdQry : IRequest<PerMenuListDto?> { public Guid Id { get; set; } }
+public class PerMenuByKeyQry : IRequest<NameList?> { public string Key { get; set; } = default!; }
 public class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
 
 public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<ModPerMenuListDto>>
@@ -56,6 +57,23 @@ public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuList
             Key = data.Key,
             Name = data.Desc,
             Module = mod.Desc
+        };
+        return c;
+    }
+}
+
+public class PerMenuByKeyQryHandler : IRequestHandler<PerMenuByKeyQry, NameList?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public PerMenuByKeyQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public async Task<NameList?> Handle(PerMenuByKeyQry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<PerMenu>().GetFoD(p => p.Key == request.Key);
+        if (data == null) { return null; }
+        var c = new NameList
+        {
+            Id = data.Id,
+            Name = data.Desc
         };
         return c;
     }

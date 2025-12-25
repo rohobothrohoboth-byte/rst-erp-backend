@@ -16,17 +16,17 @@ public class PerApiAllQryHandler : IRequestHandler<PerApiAllQry, List<MenuPerApi
 
     public async Task<List<MenuPerApiListDto>> Handle(PerApiAllQry request, CancellationToken cancellationToken)
     {
-        var allMenu = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
+        var allMenu = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
         var dataL = new List<MenuPerApiListDto>();
         foreach (var mod in allMenu)
         {
-            var modId = mod.Id;
+            var menuId = mod.Id;
             var m = new MenuPerApiListDto
             {
-                PerMenuId = modId,
+                PerMenuId = menuId,
                 PerMenu = mod.Desc
             };
-            var dbData = (await _unitOfWork.Repository<PerApi>().Find(p => p.PerMenuId == modId)).ToList();
+            var dbData = (await _unitOfWork.Repository<PerApi>().Find(p => p.PerMenuId == menuId)).ToList();
             if (dbData.Count > 0)
             {
                 var perL = dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
@@ -42,12 +42,11 @@ public class PerApiByIdQryHandler : IRequestHandler<PerApiByIdQry, PerApiListDto
 {
     private readonly IUnitOfWork _unitOfWork;
     public PerApiByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
     public async Task<PerApiListDto?> Handle(PerApiByIdQry request, CancellationToken cancellationToken)
     {
         var data = await _unitOfWork.Repository<PerApi>().GetById(request.Id);
         if (data == null) { return null; }
-        var menu = await _unitOfWork.Repository<PerModule>().GetById(data.PerMenuId);
+        var menu = await _unitOfWork.Repository<PerMenu>().GetById(data.PerMenuId);
         if (menu == null) { return null; }
         var c = new PerApiListDto
         {
@@ -68,11 +67,11 @@ public class PerApiByMenuIdQryHandler : IRequestHandler<PerApiByMenuIdQry, MenuP
 
     public async Task<MenuPerApiListDto?> Handle(PerApiByMenuIdQry request, CancellationToken cancellationToken)
     {
-        var mod = await _unitOfWork.Repository<PerModule>().GetById(request.Id);
+        var mod = await _unitOfWork.Repository<PerMenu>().GetById(request.Id);
         if (mod == null) { return null; }
-        var allMod = (await _unitOfWork.Repository<PerApi>().Find(p => p.PerMenuId == request.Id)).ToList();
-        if (allMod.Count <= 0) { return null; }
-        var perL = allMod.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
+        var allMenu = (await _unitOfWork.Repository<PerApi>().Find(p => p.PerMenuId == request.Id)).ToList();
+        if (allMenu.Count <= 0) { return null; }
+        var perL = allMenu.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
 
         var dataL = new MenuPerApiListDto
         {

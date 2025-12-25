@@ -11,6 +11,7 @@ public class PerApiListDto
 {
     public Guid Id { get; set; }
     public Guid PerMenuId { get; set; } // PerMenu
+    public string PerMenuKey { get; set; } = default; // PerMenu
     public string Key { get; set; } = default;
     public string Name { get; set; } = default;
     public string PerMenu { get; set; } = default; // PerMenu
@@ -18,14 +19,14 @@ public class PerApiListDto
 
 public class PerApiAddDto
 {
-    public Guid PerMenuId { get; set; } // PerMenu
+    public string PerMenuKey { get; set; } = default!; // PerMenu
     public string Key { get; set; } = default!;
     public string Desc { get; set; } = default!;
 }
 
 public class PerApiModDto
 {
-    public Guid PerMenuId { get; set; } // PerMenu
+    public string PerMenuKey { get; set; } = default!; // PerMenu
     public Guid Id { get; set; }
     public string Key { get; set; } = default!;
     public string Desc { get; set; } = default!;

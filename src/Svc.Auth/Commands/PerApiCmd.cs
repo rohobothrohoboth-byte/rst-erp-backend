@@ -23,19 +23,23 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
         await _unitOfWork.Begin();
         try
         {
-            var data = new PerApi
-            {
-                PerMenuId = request.AddDto.PerMenuId,
-                Key = request.AddDto.Key,
-                Desc = request.AddDto.Desc
-            };
-            await _unitOfWork.Repository<PerApi>().Add(data);
-            await _unitOfWork.Commit();
-
             var res = new PerApiListDto();
-            var response = await _med.Send(new PerApiByIdQry { Id = data.Id }, cancellationToken);
-            if (response == null) { return res; }
-            res = response;
+            var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.AddDto.PerMenuKey }, cancellationToken);
+            if (pMenu != null)
+            {
+                var data = new PerApi
+                {
+                    PerMenuId = pMenu.Id,
+                    Key = request.AddDto.Key,
+                    Desc = request.AddDto.Desc
+                };
+                await _unitOfWork.Repository<PerApi>().Add(data);
+                await _unitOfWork.Commit();
+                var response = await _med.Send(new PerApiByIdQry { Id = data.Id }, cancellationToken);
+                if (response == null) { return res; }
+                res = response;
+            }            
+
             return res;
         }
         catch
@@ -57,11 +61,13 @@ public class PerApiModCmdHandler : IRequestHandler<PerApiModCmd, PerApiListDto>
     {
         var oldData = await _unitOfWork.Repository<PerApi>().GetById(request.ModDto.Id);
         if (oldData == null) { throw new DomainException($"ACCESS PERMISSION with Id {request.ModDto.Id} NOT FOUND."); }
+        var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.ModDto.PerMenuKey }, cancellationToken);
+        if (pMenu == null) { throw new DomainException($"MENU PERMISSION with Key {request.ModDto.PerMenuKey} NOT FOUND."); }
 
         await _unitOfWork.Begin();
         try
         {
-            oldData.PerMenuId = request.ModDto.PerMenuId;
+            oldData.PerMenuId = pMenu.Id;
             oldData.Key = request.ModDto.Key;
             oldData.Desc = request.ModDto.Desc;
             var data = await _unitOfWork.Repository<PerApi>().Update(oldData);
