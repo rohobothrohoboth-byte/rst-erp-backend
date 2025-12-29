@@ -13,6 +13,7 @@ public class EmployeeAllQry : IRequest<List<EmployeeListDto>> { }
 public class EmployeeByIdQry : IRequest<EmployeeListDto?> { public Guid Id { get; set; } }
 public class Step5Qry : IRequest<Step5Dto?> { public Guid Id { get; set; } }
 public class Step2Qry : IRequest<BasicInfoDto?> { public Guid Id { get; set; } }
+public class EmpCodeByIdQry : IRequest<string?> { public Guid Id { get; set; } }
 
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
@@ -375,5 +376,17 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
         };
 
         return c;
+    }
+}
+
+public class EmpCodeByIdQryHandler : IRequestHandler<EmpCodeByIdQry, string?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public EmpCodeByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public async Task<string?> Handle(EmpCodeByIdQry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
+        if (data == null) { return null; }
+        return data.Code;
     }
 }

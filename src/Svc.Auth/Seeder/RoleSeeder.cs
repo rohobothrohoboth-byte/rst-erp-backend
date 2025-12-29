@@ -37,14 +37,14 @@ public class RoleSeeder
         const string adminUn = "Admin";
         const string adminPw = "Admin123!";
 
-        var admin = await userManager.FindByEmailAsync(adminUn);
+        var admin = await userManager.FindByNameAsync(adminUn);
 
         if (admin == null)
         {
             admin = new AppUser
             {
                 UserName = adminUn,
-                Email = adminUn,
+                IsActive = true,
                 EmailConfirmed = true
             };
 

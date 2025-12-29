@@ -11,7 +11,7 @@ namespace Svc.Auth.Controllers;
 /// AUTHORIZATION Permissions access end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/auth/v{version:apiVersion}/Permission")]
 [ApiVersion("1.0")]

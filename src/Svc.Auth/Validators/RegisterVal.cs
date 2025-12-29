@@ -3,7 +3,7 @@ using Svc.Auth.Models.Dtos;
 
 namespace Svc.Auth.Validators;
 
-public class RegisterStp1Val : AbstractValidator<RegisterStep1>
+public class RegisterStp1Val : AbstractValidator<RegStep1>
 {
     public RegisterStp1Val()
     {
@@ -15,20 +15,20 @@ public class RegisterStp1Val : AbstractValidator<RegisterStep1>
 }
 
 
-public class RegisterStp2Val : AbstractValidator<RegisterStep2>
+public class RegisterStp2Val : AbstractValidator<RegStep2>
 {
     public RegisterStp2Val()
     {
-        RuleFor(x => x.EmployeeId).NotEmpty().WithMessage("Employee Id is not found.");
+        RuleFor(x => x.UserId).NotEmpty().WithMessage("Employee Id is not found.");
         RuleFor(x => x.PerMenus).NotEmpty().WithMessage("At least one MENU PERMISSION must be provided.");
     }
 }
 
-public class RegisterStp3Val : AbstractValidator<RegisterStep3>
+public class RegisterStp3Val : AbstractValidator<RegStep3>
 {
     public RegisterStp3Val()
     {
-        RuleFor(x => x.EmployeeId).NotEmpty().WithMessage("Employee Id is not found.");
+        RuleFor(x => x.UserId).NotEmpty().WithMessage("Employee Id is not found.");
         RuleFor(x => x.PerAccess).NotEmpty().WithMessage("At least one ACCESS PERMISSION must be provided.");
     }
 }

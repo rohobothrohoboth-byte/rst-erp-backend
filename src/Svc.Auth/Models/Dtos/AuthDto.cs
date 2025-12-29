@@ -1,25 +1,5 @@
 ﻿namespace Svc.Auth.Models.Dtos;
 
-public class RegisterStep1
-{
-    public Guid EmployeeId { get; set; }
-    public string Password { get; set; } = default!;
-    public Guid RoleId { get; set; }
-    public List<Guid> PerModules { get; set; } = default!;
-}
-
-public class RegisterStep2
-{
-    public Guid EmployeeId { get; set; }
-    public List<Guid> PerMenus { get; set; } = default!;
-}
-
-public class RegisterStep3
-{
-    public Guid EmployeeId { get; set; }
-    public List<Guid> PerAccess { get; set; } = default!;
-}
-
 public class LoginDto
 {
     public string Username { get; set; } = "";

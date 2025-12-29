@@ -1,3 +1,4 @@
+using Profile.API.gRPCService;
 using Profile.API.Middlewares;
 using Scalar.AspNetCore;
 using Serilog;
@@ -21,6 +22,7 @@ app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.MapGrpcService<HrmProService>();
 if (app.Environment.IsDevelopment())
 {
     //app.UseDeveloperExceptionPage();

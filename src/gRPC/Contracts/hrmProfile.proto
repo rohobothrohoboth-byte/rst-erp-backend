@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package hrmProfile;
+
+service HrmProfileService {
+  rpc GetEmpCode (HrmProRqst) returns (HrmProResCode);
+}
+
+message HrmProList {
+  string Id = 1;
+  string Name = 2;  
+}
+
+message HrmProListAm {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+}
+
+message HrmProListRqst {}
+
+message HrmProRqst {
+  string Id = 1;
+}
+
+message HrmProListRes { 
+  repeated HrmProList Res = 1; 
+}
+
+message HrmProListResAm { 
+  repeated HrmProListAm Res = 1; 
+}
+
+message HrmProRes { 
+  HrmProList Res = 1;
+}
+
+message HrmProResAm { 
+  HrmProListAm Res = 1;
+}
+
+message HrmProResCode { 
+  string Code = 1;
+}

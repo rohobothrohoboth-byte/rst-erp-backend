@@ -13,7 +13,7 @@ namespace Svc.Auth.Controllers;
 /// Menu Permission management end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/auth/v{version:apiVersion}/PerMenu")]
 [ApiVersion("1.0")]

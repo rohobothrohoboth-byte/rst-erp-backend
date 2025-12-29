@@ -16,6 +16,7 @@
 		<Protobuf Include="..\Contracts\auth.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\corModule.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\corHrmm.proto" GrpcServices="Both" />
+		<Protobuf Include="..\Contracts\hrmProfile.proto" GrpcServices="Both" />
 	</ItemGroup>
 
 </Project>

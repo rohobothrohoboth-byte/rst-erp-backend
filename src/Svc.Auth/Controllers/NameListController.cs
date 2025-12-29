@@ -11,7 +11,7 @@ namespace Svc.Auth.Controllers;
 /// End point to get the list of Names and Ids of Svc.Auth entities
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/auth/v{version:apiVersion}/Names")]
 [ApiVersion("1.0")]

@@ -33,10 +33,11 @@ public static class DependencyInjection
                 option.GroupNameFormat = "'v'V";
                 option.SubstituteApiVersionInUrl = true;
             });
-        
+
         builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("authMgrCon")));
         builder.Services.AddScoped<DapperContext>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
         builder.Services.AddScoped(typeof(IAuthMngrRepo<>), typeof(AuthMngrRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
@@ -44,7 +45,7 @@ public static class DependencyInjection
         builder.Services.AddGrpc();
         return builder;
     }
-    
+
     public static WebApplicationBuilder AddErrorHandling(this WebApplicationBuilder builder)
     {
         builder.Services.AddProblemDetails(options =>
@@ -92,7 +93,7 @@ public static class DependencyInjection
             c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
-            });            
+            });
         });
 
         return builder;
@@ -100,7 +101,14 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
     {
-        builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AuthDbContext>();
+        builder.Services.AddIdentity<AppUser, AppRole>(o =>
+        {
+            o.Password.RequireDigit = false;
+            o.Password.RequireLowercase = false;
+            o.Password.RequireUppercase = false;
+            o.Password.RequireNonAlphanumeric = false;
+            o.Password.RequiredLength = 6;
+        }).AddEntityFrameworkStores<AuthDbContext>();
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddAuthentication(options =>
         {

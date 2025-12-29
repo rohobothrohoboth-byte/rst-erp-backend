@@ -13,7 +13,7 @@ namespace Svc.Auth.Controllers;
 /// API Permission management end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/auth/v{version:apiVersion}/PerApi")]
 [ApiVersion("1.0")]

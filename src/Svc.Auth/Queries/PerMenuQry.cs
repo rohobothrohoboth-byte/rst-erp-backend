@@ -5,39 +5,70 @@ using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Queries;
 
-public class PerMenuAllQry : IRequest<List<ModPerMenuListDto>> { }
+//public class PerMenuAllQry : IRequest<List<ModPerMenuListDto>> { }
+public class PerMenuAllQry : IRequest<List<PerMenuListDto>> { }
 public class PerMenuByIdQry : IRequest<PerMenuListDto?> { public Guid Id { get; set; } }
 public class PerMenuByKeyQry : IRequest<NameList?> { public string Key { get; set; } = default!; }
 public class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
 
-public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<ModPerMenuListDto>>
+public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     public PerMenuAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
-    public async Task<List<ModPerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
+    public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
     {
+        var allMenuPer = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
         var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
-        var dataL = new List<ModPerMenuListDto>();
-        foreach (var mod in allMod)
+        var dataL = new List<PerMenuListDto>();
+        foreach (var per in allMenuPer)
         {
-            var modId = mod.Id;
-            var m = new ModPerMenuListDto
+            var mod = allMod.Find(m => m.Id == per.PerModuleId);
+            if (mod != null)
             {
-                PerModuleId = modId,
-                PerModule = mod.Desc
-            };
-            var dbData = (await _unitOfWork.Repository<PerMenu>().Find(p => p.PerModuleId == modId)).ToList();
-            if (dbData.Count > 0)
-            {
-                var perL = dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
-                m.PerMenuList = perL;
-            }
-            dataL.Add(m);
+                var m = new PerMenuListDto
+                {
+                    Id = per.Id,
+                    PerModuleId = per.PerModuleId,
+                    Key = per.Key,
+                    Name = per.Desc,
+                    Module = mod.Desc
+                };
+                dataL.Add(m);
+            }            
         }
         return dataL;
     }
 }
+
+//public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<ModPerMenuListDto>>
+//{
+//    private readonly IUnitOfWork _unitOfWork;
+//    public PerMenuAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+//    public async Task<List<ModPerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
+//    {
+//        var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
+//        var dataL = new List<ModPerMenuListDto>();
+//        foreach (var mod in allMod)
+//        {
+//            var modId = mod.Id;
+//            var m = new ModPerMenuListDto
+//            {
+//                PerModuleId = modId,
+//                PerModule = mod.Desc
+//            };
+//            var dbData = (await _unitOfWork.Repository<PerMenu>().Find(p => p.PerModuleId == modId)).ToList();
+//            if (dbData.Count > 0)
+//            {
+//                var perL = dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
+//                m.PerMenuList = perL;
+//            }
+//            dataL.Add(m);
+//        }
+//        return dataL;
+//    }
+//}
 
 public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuListDto?>
 {
