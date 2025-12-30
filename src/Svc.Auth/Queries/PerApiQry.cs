@@ -5,39 +5,10 @@ using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Queries;
 
-//public class PerApiAllQry : IRequest<List<MenuPerApiListDto>> { }
 public class PerApiAllQry : IRequest<List<PerApiListDto>> { }
 public class PerApiByIdQry : IRequest<PerApiListDto?> { public Guid Id { get; set; } }
 public class PerApiByMenuIdQry : IRequest<MenuPerApiListDto?> { public Guid Id { get; set; } }
-
-//public class PerApiAllQryHandler : IRequestHandler<PerApiAllQry, List<MenuPerApiListDto>>
-//{
-//    private readonly IUnitOfWork _unitOfWork;
-//    public PerApiAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-//    public async Task<List<MenuPerApiListDto>> Handle(PerApiAllQry request, CancellationToken cancellationToken)
-//    {
-//        var allMenu = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
-//        var dataL = new List<MenuPerApiListDto>();
-//        foreach (var mod in allMenu)
-//        {
-//            var menuId = mod.Id;
-//            var m = new MenuPerApiListDto
-//            {
-//                PerMenuId = menuId,
-//                PerMenu = mod.Desc
-//            };
-//            var dbData = (await _unitOfWork.Repository<PerApi>().Find(p => p.PerMenuId == menuId)).ToList();
-//            if (dbData.Count > 0)
-//            {
-//                var perL = dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
-//                m.PerApiList = perL;
-//            }
-//            dataL.Add(m);
-//        }
-//        return dataL;
-//    }
-//}
+public class PerApiByUserIdQry : IRequest<List<MenuPerApiListDto>> { public string Id { get; set; } = default!; }
 
 
 public class PerApiAllQryHandler : IRequestHandler<PerApiAllQry, List<PerApiListDto>>
@@ -113,5 +84,30 @@ public class PerApiByMenuIdQryHandler : IRequestHandler<PerApiByMenuIdQry, MenuP
             PerApiList = perL
         };
         return dataL;
+    }
+}
+
+public class PerApiByUserIdQryHandler : IRequestHandler<PerApiByUserIdQry, List<MenuPerApiListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
+    public PerApiByUserIdQryHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<List<MenuPerApiListDto>> Handle(PerApiByUserIdQry request, CancellationToken cancellationToken)
+    {
+        var aPerApi = new List<MenuPerApiListDto>();
+        var uPerMenu = (await _unitOfWork.Repository<UserPerMenu>().Find(p => p.UserId == request.Id)).ToList();
+        if (uPerMenu.Count <= 0) { return aPerApi; }
+
+        foreach (var per in uPerMenu)
+        {
+            var menu = await _med.Send(new PerApiByMenuIdQry { Id = per.PerMenuId }, cancellationToken);
+            if (menu != null)
+            {
+                aPerApi.Add(menu);
+            }
+        }
+
+        return aPerApi;
     }
 }

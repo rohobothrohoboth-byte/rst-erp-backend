@@ -14,7 +14,7 @@ namespace Leave.API.Controllers;
 /// LEAVE TYPE management end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/hrm/leave/v{version:apiVersion}/LeaveType")]
 [ApiVersion("1.0")]

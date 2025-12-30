@@ -33,7 +33,7 @@ public class RegistrationController(IMediator med) : ControllerBase
 
         var command = new RegStep1Cmd { Reg = dto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT successfully created."));
+        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT : Step 1, successfully created."));
     }
 
     [HttpPost("Step2")]
@@ -50,7 +50,7 @@ public class RegistrationController(IMediator med) : ControllerBase
 
         var command = new RegStep2Cmd { Reg = dto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT successfully created."));
+        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT : Step 2, successfully created."));
     }
 
     [HttpPost("Step3")]
@@ -67,6 +67,6 @@ public class RegistrationController(IMediator med) : ControllerBase
 
         var command = new RegStep3Cmd { Reg = dto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT successfully created."));
+        return Ok(ApiResponse<object>.Ok(response, "USER ACCOUNT : Step 3, successfully created."));
     }
 }

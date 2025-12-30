@@ -5,11 +5,11 @@ using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Queries;
 
-//public class PerMenuAllQry : IRequest<List<ModPerMenuListDto>> { }
 public class PerMenuAllQry : IRequest<List<PerMenuListDto>> { }
 public class PerMenuByIdQry : IRequest<PerMenuListDto?> { public Guid Id { get; set; } }
 public class PerMenuByKeyQry : IRequest<NameList?> { public string Key { get; set; } = default!; }
 public class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
+public class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public string Id { get; set; } = default!; }
 
 public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
@@ -18,9 +18,10 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
 
     public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
     {
-        var allMenuPer = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
-        var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
         var dataL = new List<PerMenuListDto>();
+        var allMenuPer = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
+        if (allMenuPer.Count <= 0) { return dataL; }
+        var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
         foreach (var per in allMenuPer)
         {
             var mod = allMod.Find(m => m.Id == per.PerModuleId);
@@ -35,40 +36,11 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
                     Module = mod.Desc
                 };
                 dataL.Add(m);
-            }            
+            }
         }
         return dataL;
     }
 }
-
-//public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<ModPerMenuListDto>>
-//{
-//    private readonly IUnitOfWork _unitOfWork;
-//    public PerMenuAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-//    public async Task<List<ModPerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
-//    {
-//        var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
-//        var dataL = new List<ModPerMenuListDto>();
-//        foreach (var mod in allMod)
-//        {
-//            var modId = mod.Id;
-//            var m = new ModPerMenuListDto
-//            {
-//                PerModuleId = modId,
-//                PerModule = mod.Desc
-//            };
-//            var dbData = (await _unitOfWork.Repository<PerMenu>().Find(p => p.PerModuleId == modId)).ToList();
-//            if (dbData.Count > 0)
-//            {
-//                var perL = dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
-//                m.PerMenuList = perL;
-//            }
-//            dataL.Add(m);
-//        }
-//        return dataL;
-//    }
-//}
 
 public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuListDto?>
 {
@@ -130,5 +102,30 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
             PerMenuList = perL
         };
         return dataL;
+    }
+}
+
+public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, List<ModPerMenuListDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _med;
+    public PerMenuByUserIdQryHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<List<ModPerMenuListDto>> Handle(PerMenuByUserIdQry request, CancellationToken cancellationToken)
+    {
+        var aPerMenu = new List<ModPerMenuListDto>();
+        var uPerModule = (await _unitOfWork.Repository<UserPerModule>().Find(p => p.UserId == request.Id)).ToList();
+        if (uPerModule.Count <= 0) { return aPerMenu; }
+
+        foreach (var per in uPerModule)
+        {
+            var menu = await _med.Send(new PerMenuByModIdQry { Id = per.PerModuleId }, cancellationToken);
+            if (menu != null)
+            {
+                aPerMenu.Add(menu);
+            }
+        }
+
+        return aPerMenu;
     }
 }

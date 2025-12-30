@@ -125,7 +125,7 @@ public class NameListController(IMediator med) : ControllerBase
     }
 
 
-    [PerAuth("CreateOrder")]
+    
     [HttpGet("GetUser/{token}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Leave.App.Commands;
 using Leave.App.Helpers;
 using Leave.Domain.DTOs;
@@ -13,13 +14,14 @@ namespace Leave.API.Controllers;
 /// LEAVE REQUEST management end points
 /// </summary>
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/hrm/leave/v{version:apiVersion}/LeaveRequest")]
 [ApiVersion("1.0")]
 public class LeaveReqController(IMediator med) : ControllerBase
 {
     [HttpPost("NewReq")]
+    //[PerAuth("leave.req")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> NewReq([FromBody] LeaveRequestAddDto addDto)
     {

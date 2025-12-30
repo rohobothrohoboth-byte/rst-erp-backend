@@ -13,7 +13,6 @@ public class RegStep2Cmd : IRequest<RegRes> { public RegStep2 Reg { get; set; } 
 public class RegStep3Cmd : IRequest<RegRes> { public RegStep3 Reg { get; set; } = default!; }
 
 
-
 public class RegStep1CmdHandler : IRequestHandler<RegStep1Cmd, RegRes?>
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -75,6 +74,78 @@ public class RegStep1CmdHandler : IRequestHandler<RegStep1Cmd, RegRes?>
             await _unitOfWork.Commit();
 
             var res = new RegRes { UserId = userid };
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class RegStep2CmdHandler : IRequestHandler<RegStep2Cmd, RegRes?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public RegStep2CmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<RegRes?> Handle(RegStep2Cmd request, CancellationToken cancellationToken)
+    {
+        var selPer = request.Reg.PerMenus;
+        if (selPer.Count <= 0) { throw new DomainException($"NO MENU Permission selected"); }
+        await _unitOfWork.Begin();
+
+        try
+        {
+            var userId = request.Reg.UserId;
+            foreach (var per in selPer)
+            {
+                var userMod = new UserPerMenu
+                {
+                    UserId = userId,
+                    PerMenuId = per
+                };
+                await _unitOfWork.Repository<UserPerMenu>().Add(userMod);
+            }
+            await _unitOfWork.Commit();
+
+            var res = new RegRes { UserId = userId };
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class RegStep3CmdHandler : IRequestHandler<RegStep3Cmd, RegRes?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public RegStep3CmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<RegRes?> Handle(RegStep3Cmd request, CancellationToken cancellationToken)
+    {
+        var selPer = request.Reg.PerAccess;
+        if (selPer.Count <= 0) { throw new DomainException($"NO ACCESS Permission selected"); }
+        await _unitOfWork.Begin();
+
+        try
+        {
+            var userId = request.Reg.UserId;
+            foreach (var per in selPer)
+            {
+                var userMod = new UserPerApi
+                {
+                    UserId = userId,
+                    PerApiId = per
+                };
+                await _unitOfWork.Repository<UserPerApi>().Add(userMod);
+            }
+            await _unitOfWork.Commit();
+
+            var res = new RegRes { UserId = userId };
             return res;
         }
         catch

@@ -22,7 +22,7 @@ public class PermissionController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllRole()
     {
         var response = await med.Send(new RoleAllQry());
-        return Ok(ApiResponse<object>.Ok(response));
+        return Ok(response);
     }
 
     [HttpGet("GetRole/{id}")]
@@ -52,7 +52,31 @@ public class PermissionController(IMediator med) : ControllerBase
         if (response == null) { throw new DomainException($"MODULE with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
-    
+
+    /// <summary>
+    /// Get List of Menu Permission by providing User Id
+    /// </summary>
+    [HttpGet("GetPerMenuByUser/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPerMenuByUser(string id)
+    {
+        var response = await med.Send(new PerMenuByUserIdQry { Id = id });
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+    /// <summary>
+    /// Get List of Access Permission by providing User Id
+    /// </summary>
+    [HttpGet("GetPerApiByUser/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPerApiByUser(string id)
+    {
+        var response = await med.Send(new PerApiByUserIdQry { Id = id });
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     /// <summary>
     /// Get List of Menu Permission by providing Module Id
     /// </summary>
