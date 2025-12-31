@@ -6,6 +6,8 @@ package hrmProfile;
 
 service HrmProfileService {
   rpc GetEmpCode (HrmProRqst) returns (HrmProResCode);
+  rpc GetEmp (HrmProRqst) returns (HrmProRes);
+  rpc GetListEmp (HrmProListRqst) returns (HrmProListRes);
 }
 
 message HrmProList {

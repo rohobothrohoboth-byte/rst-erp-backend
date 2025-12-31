@@ -7,6 +7,8 @@ package corModule;
 service CorModuleService {
   rpc GetDept (CorModuleRqst) returns (CorModuleResAm);
   rpc GetListDept (CorModuleListRqst) returns (CorModuleListResAm);
+  rpc GetFiscalYear (CorModuleRqst) returns (CorModuleRes);
+  rpc GetListFiscalYear (CorModuleListRqst) returns (CorModuleListRes);
 }
 
 message CorModList {

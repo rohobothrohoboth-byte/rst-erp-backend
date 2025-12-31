@@ -1,10 +1,7 @@
-﻿using System.Reflection;
-using System.Text;
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Common;
 using Leave.App.Interfaces;
-using Leave.App.Services;
 using Leave.Utility.Extensions;
 using Leave.Utility.Persistence;
 using Leave.Utility.Repos;
@@ -13,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Reflection;
+using System.Text;
 
 namespace Leave.API.Middlewares;
 
@@ -41,6 +40,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
+        builder.Services.AddScoped<ICorModClient, CorModClient>();
+        builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
         builder.Services.AddScoped(typeof(IHrmLeaveRepo<>), typeof(HrmLeaveRepo<>));
@@ -48,20 +49,6 @@ public static class DependencyInjection
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();
         builder.Services.AddGrpc();
-        return builder;
-    }
-
-    public static WebApplicationBuilder AddHttpClientServices(this WebApplicationBuilder builder)
-    {
-
-        var gatewayUrl = builder.Configuration["Services:Gateway"];
-        var corModUrl = builder.Configuration["Services:CorMod"];
-        var hrmProUrl = builder.Configuration["Services:HrmProfile"];
-
-        builder.Services.AddHttpClient<ICorMod, CorMod>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), corModUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
-        builder.Services.AddHttpClient<IHrmProfile, HrmProfile>(c => { c.BaseAddress = new Uri(new Uri(gatewayUrl!), hrmProUrl); }).AddPolicyHandler(ResiliencePolicies.GetRetryPolicy()).AddPolicyHandler(ResiliencePolicies.GetTimeoutPolicy()).AddPolicyHandler(ResiliencePolicies.GetCircuitBreakerPolicy());
-
         return builder;
     }
 

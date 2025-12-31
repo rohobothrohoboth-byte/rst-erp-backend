@@ -1,5 +1,5 @@
-﻿using Leave.App.Interfaces;
-using Leave.App.Services;
+﻿using Common;
+using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
 using Leave.Domain.Enums;
@@ -13,9 +13,9 @@ public class LeaveLedgerByIdQry : IRequest<LeaveLedgerListDto?> { public Guid Id
 public class LeaveLedgerAllQryHandler : IRequestHandler<LeaveLedgerAllQry, List<LeaveLedgerListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfile _hrmPro;
+    private readonly IHrmProfileClient _hrmPro;
 
-    public LeaveLedgerAllQryHandler(IUnitOfWork unitOfWork, IHrmProfile hrmPro)
+    public LeaveLedgerAllQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
     {
         _unitOfWork = unitOfWork;
         _hrmPro = hrmPro;
@@ -25,12 +25,12 @@ public class LeaveLedgerAllQryHandler : IRequestHandler<LeaveLedgerAllQry, List<
     {
         var dbData = await _unitOfWork.Repository<LeaveLedger>().GetAll();
         var dataL = new List<LeaveLedgerListDto>();
-        var empL = await _hrmPro.EmpList(cancellationToken);
+        var empL = await _hrmPro.GetListEmp(cancellationToken);
         var lpoL = await _unitOfWork.Repository<LeavePolicy>().GetAll();
 
         foreach (var data in dbData)
         {
-            var emp = empL!.FirstOrDefault(t => t.Id == data.EmployeeId);
+            var emp = empL.Res.FirstOrDefault(t => t.Id == data.EmployeeId.ToString());
             var lpo = lpoL.FirstOrDefault(t => t.Id == data.LeavePolicyId);
 
             var c = new LeaveLedgerListDto
@@ -58,9 +58,9 @@ public class LeaveLedgerAllQryHandler : IRequestHandler<LeaveLedgerAllQry, List<
 public class LeaveLedgerByIdQryHandler : IRequestHandler<LeaveLedgerByIdQry, LeaveLedgerListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfile _hrmPro;
+    private readonly IHrmProfileClient _hrmPro;
 
-    public LeaveLedgerByIdQryHandler(IUnitOfWork unitOfWork, IHrmProfile hrmPro)
+    public LeaveLedgerByIdQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
     {
         _unitOfWork = unitOfWork;
         _hrmPro = hrmPro;
@@ -70,7 +70,7 @@ public class LeaveLedgerByIdQryHandler : IRequestHandler<LeaveLedgerByIdQry, Lea
     {
         var data = await _unitOfWork.Repository<LeaveLedger>().GetById(request.Id);
         if (data == null) { return null; }
-        var emp = await _hrmPro.Emp(data.EmployeeId, cancellationToken);
+        var emp = await _hrmPro.GetEmp(data.EmployeeId.ToString(), cancellationToken);
         var lpo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
 
         var c = new LeaveLedgerListDto
@@ -81,7 +81,7 @@ public class LeaveLedgerByIdQryHandler : IRequestHandler<LeaveLedgerByIdQry, Lea
             EntryType = ((LedgerEntryType)Enum.Parse(typeof(LedgerEntryType), data.EntryType)).ToDisplayName(),
             SourceType = ((LedgerSourceType)Enum.Parse(typeof(LedgerSourceType), data.SourceType)).ToDisplayName(),
             BalanceAfter = $"{data.BalanceAfter:#,##0.##} days",
-            EmployeeName = emp != null ? emp.Name : "NOT AVAILABLE",
+            EmployeeName = emp.Res.Name != null ? emp.Res.Name : "NOT AVAILABLE",
             LeavePolicy = lpo != null ? lpo.Name : "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,

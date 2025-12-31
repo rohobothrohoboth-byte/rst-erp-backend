@@ -1,5 +1,5 @@
-﻿using Leave.App.Interfaces;
-using Leave.App.Services;
+﻿using Common;
+using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
 using MediatR;
@@ -12,9 +12,9 @@ public class EmpLeavePolicyByIdQry : IRequest<EmpLeavePolicyListDto?> { public G
 public class EmpLeavePolicyAllQryHandler : IRequestHandler<EmpLeavePolicyAllQry, List<EmpLeavePolicyListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfile _hrmPro;
+    private readonly IHrmProfileClient _hrmPro;
 
-    public EmpLeavePolicyAllQryHandler(IUnitOfWork unitOfWork, IHrmProfile hrmPro)
+    public EmpLeavePolicyAllQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
     {
         _unitOfWork = unitOfWork;
         _hrmPro = hrmPro;
@@ -24,12 +24,12 @@ public class EmpLeavePolicyAllQryHandler : IRequestHandler<EmpLeavePolicyAllQry,
     {
         var dbData = await _unitOfWork.Repository<EmpLeavePolicy>().GetAll();
         var dataL = new List<EmpLeavePolicyListDto>();
-        var empL = await _hrmPro.EmpList(cancellationToken);
+        var empL = await _hrmPro.GetListEmp(cancellationToken);
         var leaP = await _unitOfWork.Repository<LeavePolicy>().GetAll();
 
         foreach (var data in dbData)
         {
-            var emp = empL!.FirstOrDefault(t => t.Id == data.EmployeeId);
+            var emp = empL.Res.FirstOrDefault(t => t.Id == data.EmployeeId.ToString());
             var lea = leaP.FirstOrDefault(t => t.Id == data.LeavePolicyId);
             var c = new EmpLeavePolicyListDto
             {
@@ -53,9 +53,9 @@ public class EmpLeavePolicyAllQryHandler : IRequestHandler<EmpLeavePolicyAllQry,
 public class EmpLeavePolicyByIdQryHandler : IRequestHandler<EmpLeavePolicyByIdQry, EmpLeavePolicyListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfile _hrmPro;
+    private readonly IHrmProfileClient _hrmPro;
 
-    public EmpLeavePolicyByIdQryHandler(IUnitOfWork unitOfWork, IHrmProfile hrmPro)
+    public EmpLeavePolicyByIdQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
     {
         _unitOfWork = unitOfWork;
         _hrmPro = hrmPro;
@@ -65,7 +65,7 @@ public class EmpLeavePolicyByIdQryHandler : IRequestHandler<EmpLeavePolicyByIdQr
     {
         var data = await _unitOfWork.Repository<EmpLeavePolicy>().GetById(request.Id);
         if (data == null) { return null; }
-        var emp = await _hrmPro.Emp(data.EmployeeId, cancellationToken);
+        var emp = await _hrmPro.GetEmp(data.EmployeeId.ToString(), cancellationToken);
         var lea = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
 
         var c = new EmpLeavePolicyListDto
@@ -73,7 +73,7 @@ public class EmpLeavePolicyByIdQryHandler : IRequestHandler<EmpLeavePolicyByIdQr
             Id = data.Id,
             EmployeeId = data.EmployeeId,
             LeavePolicyId = data.LeavePolicyId,
-            EmployeeName = emp != null ? emp.Name : "NOT AVAILABLE",
+            EmployeeName = emp.Res.Name != null ? emp.Res.Name : "NOT AVAILABLE",
             LeavePolicy = lea != null ? lea.Name : "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,

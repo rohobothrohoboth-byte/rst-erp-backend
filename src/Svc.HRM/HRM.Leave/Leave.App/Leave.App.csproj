@@ -7,6 +7,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\gRPC\Common\Common.csproj" />
 		<ProjectReference Include="..\Leave.Domain\Leave.Domain.csproj" />
 	</ItemGroup>
 
