@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Leave.App.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,11 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class NameListController(IMediator med) : ControllerBase
 {
-    //[HttpGet("AllBenefitSetName")]
-    //[ProducesResponseType(StatusCodes.Status200OK)]
-    //public async Task<IActionResult> AllBenefitSetName()
-    //{
-    //    var res = await med.Send(new BenefitSetNameAllQry());
-    //    return Ok(res);
-    //}
+    [HttpGet("AllLeaveTypeName")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllLeaveTypeName()
+    {
+        var res = await med.Send(new LeaveTypeNameAllQry());
+        return Ok(res);
+    }
 }
