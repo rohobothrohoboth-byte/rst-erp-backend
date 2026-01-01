@@ -20,7 +20,7 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
         builder.AddServiceDefaults();
-        builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); }); });
+        builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.WithOrigins("http://localhost:1211").AllowAnyMethod().AllowAnyHeader().AllowCredentials(); }); });
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddControllers();
         builder.Services.AddApiVersioning(option =>

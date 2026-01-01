@@ -4,6 +4,7 @@ using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cor.Module.Controllers;
@@ -12,7 +13,7 @@ namespace Cor.Module.Controllers;
 /// Company management end points
 /// </summary>
 
-//[Authorize]
+[Authorize(Roles = "admin")]
 [ApiController]
 [Route("api/core/module/v{version:apiVersion}/Company")]
 [ApiVersion("1.0")]
@@ -23,10 +24,9 @@ public class CompanyController(IMediator med) : ControllerBase
     public async Task<IActionResult> AllCompany()
     {
         var response = await med.Send(new AllCompsQry());
-        //return Ok(response);
         return Ok(ApiResponse<object>.Ok(response));
     }
-    
+
     [HttpGet("GetCompany/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,7 +36,7 @@ public class CompanyController(IMediator med) : ControllerBase
         if (response == null) { throw new DomainException($"COMPANY with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
-    
+
     [HttpPost("AddCompany")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
