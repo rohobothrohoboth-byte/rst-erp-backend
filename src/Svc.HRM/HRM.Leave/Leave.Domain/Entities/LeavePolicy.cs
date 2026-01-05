@@ -7,6 +7,7 @@ public class LeavePolicy : BaseEntity
     public double MinDurPerReq { get; set; } = default!;
     public double MaxDurPerReq { get; set; } = default!;
     public bool HolidaysAsLeave { get; set; } = false;
+    public string Gender { get; set; } = default!; // enum.PolicyGender
     public Guid LeaveTypeId { get; set; }
 
     //******************************************//

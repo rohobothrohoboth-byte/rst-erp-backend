@@ -38,14 +38,18 @@ public enum LedgerSourceType
 
 public enum AccrualFrequency
 {
+    [Display(Name = "Annual")]
+    Annual,
+    [Display(Name = "BiAnnual")]
+    BiAnnual,
+    [Display(Name = "Quarterly")]
+    Quarterly,
     [Display(Name = "Monthly")]
-    Monthly = 0,
-    [Display(Name = "Yearly")]
-    Yearly = 1,
+    Monthly,
     [Display(Name = "Daily")]
-    Daily = 2,
+    Daily,
     [Display(Name = "None")]
-    None = 3
+    None
 }
 
 public enum LedgerEntryType
@@ -58,4 +62,24 @@ public enum LedgerEntryType
     Approval = 3,
     [Display(Name = "Deduction")]
     Deduction = 4
+}
+
+public enum LeaveCondition 
+{
+    [Display(Name = "With Half Salary")]
+    HalfSalary,
+    [Display(Name = "With Full Salary")]
+    FullSlary,
+    [Display(Name = "With No Salary")]
+    NoSalary
+}
+
+public enum PolicyGender
+{
+    [Display(Name = "Male")]
+    Male,
+    [Display(Name = "Female")]
+    Female,
+    [Display(Name = "Male/Female")]
+    Both
 }
