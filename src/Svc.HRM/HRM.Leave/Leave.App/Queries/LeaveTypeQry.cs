@@ -1,6 +1,7 @@
 ﻿using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
+using Leave.Domain.Enums;
 using MediatR;
 
 namespace Leave.App.Queries;
@@ -24,8 +25,16 @@ public class LeaveTypeAllQryHandler : IRequestHandler<LeaveTypeAllQry, List<Leav
             {
                 Id = data.Id,
                 Name = data.Name,
-                IsPaid = data.IsPaid,
-                IsPaidStr = data.IsPaid.ToString(),
+                LeaveCategory = data.LeaveCategory,
+                RequiresApproval = data.RequiresApproval,
+                AllowHalfDay = data.AllowHalfDay,
+                HolidaysAsLeave = data.HolidaysAsLeave,
+                IsActive = data.IsActive,
+                LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
+                RequiresApprovalStr = data.RequiresApproval.ToString(),
+                AllowHalfDayStr = data.AllowHalfDay.ToString(),
+                HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
+                IsActiveStr = data.IsActive.ToString(),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -52,8 +61,16 @@ public class LeaveTypeByIdQryHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTy
         {
             Id = data.Id,
             Name = data.Name,
-            IsPaid = data.IsPaid,
-            IsPaidStr = data.IsPaid.ToString(),
+            LeaveCategory = data.LeaveCategory,
+            RequiresApproval = data.RequiresApproval,
+            AllowHalfDay = data.AllowHalfDay,
+            HolidaysAsLeave = data.HolidaysAsLeave,
+            IsActive = data.IsActive,
+            LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
+            RequiresApprovalStr = data.RequiresApproval.ToString(),
+            AllowHalfDayStr = data.AllowHalfDay.ToString(),
+            HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
+            IsActiveStr = data.IsActive.ToString(),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

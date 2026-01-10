@@ -2,14 +2,14 @@
 
 public class LeaveBalance : BaseEntity
 {
-    public Guid EmployeeId { get; set; }
-    public Guid FiscalYearId { get; set; }
-    public Guid LeavePolicyId { get; set; }
     public double Balance { get; set; }
-    public double Carried { get; set; }
-    public DateTime? CarriedExpireDate { get; set; }
+    public DateTime AsOf { get; set; } = DateTime.UtcNow;
+    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
+    public Guid LeaveTypeId { get; set; } // LeaveType
+    public Guid? LeaveLedgerId { get; set; } // LeaveLedger
 
     //******************************************//
 
-    public LeavePolicy LeavePolicy { get; set; } = null!;
+    public LeaveType LeaveType { get; set; } = null!;
+    public LeaveLedger LeaveLedger { get; set; } = null!;
 }

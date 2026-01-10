@@ -26,7 +26,11 @@ public class LeaveTypeAddCmdHandler : IRequestHandler<LeaveTypeAddCmd, LeaveType
             var data = new LeaveType
             {
                 Name = request.AddDto.Name,
-                IsPaid = request.AddDto.IsPaid
+                LeaveCategory = request.AddDto.LeaveCategory,
+                RequiresApproval = request.AddDto.RequiresApproval,
+                AllowHalfDay = request.AddDto.AllowHalfDay,
+                HolidaysAsLeave = request.AddDto.HolidaysAsLeave,
+                IsActive = true
             };
             await _unitOfWork.Repository<LeaveType>().Add(data);
             await _unitOfWork.Commit();
@@ -61,7 +65,11 @@ public class LeaveTypeModCmdHandler : IRequestHandler<LeaveTypeModCmd, LeaveType
         try
         {
             oldData.Name = request.ModDto.Name;
-            oldData.IsPaid = request.ModDto.IsPaid;
+            oldData.LeaveCategory = request.ModDto.LeaveCategory;
+            oldData.RequiresApproval = request.ModDto.RequiresApproval;
+            oldData.AllowHalfDay = request.ModDto.AllowHalfDay;
+            oldData.HolidaysAsLeave = request.ModDto.HolidaysAsLeave;
+            oldData.IsActive = request.ModDto.IsActive;
             var data = await _unitOfWork.Repository<LeaveType>().Update(oldData);
             await _unitOfWork.Commit();
 

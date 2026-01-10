@@ -2,7 +2,6 @@
 
 public class MenuPerApiListDto
 {
-    public Guid PerMenuId { get; set; } // PerMenu
     public string PerMenu { get; set; } = default; // PerMenu
     public List<NameList> PerApiList { get; set; } = default;
 }
@@ -10,8 +9,6 @@ public class MenuPerApiListDto
 public class PerApiListDto
 {
     public Guid Id { get; set; }
-    public Guid PerMenuId { get; set; } // PerMenu
-    public string PerMenuKey { get; set; } = default; // PerMenu
     public string Key { get; set; } = default;
     public string Name { get; set; } = default;
     public string PerMenu { get; set; } = default; // PerMenu

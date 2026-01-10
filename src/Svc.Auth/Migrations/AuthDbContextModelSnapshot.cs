@@ -274,14 +274,32 @@ namespace Svc.Auth.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Desc")
+                    b.Property<string>("Icon")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsChild")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Parent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Path")
                         .IsRequired()
                         .HasColumnType("text");
 

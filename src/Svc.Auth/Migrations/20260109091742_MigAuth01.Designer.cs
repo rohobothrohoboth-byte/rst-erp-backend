@@ -12,7 +12,7 @@ using Svc.Auth.Persistence;
 namespace Svc.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20251217120212_MigAuth01")]
+    [Migration("20260109091742_MigAuth01")]
     partial class MigAuth01
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Svc.Auth.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.11")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
@@ -249,10 +249,18 @@ namespace Svc.Auth.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("PerMenuId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.HasIndex("Key")
                         .IsUnique();
+
+                    b.HasIndex("PerMenuId");
 
                     b.ToTable("PerApi");
                 });
@@ -269,9 +277,12 @@ namespace Svc.Auth.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Desc")
+                    b.Property<string>("Icon")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsChild")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -280,10 +291,33 @@ namespace Svc.Auth.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Parent")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PerModuleId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.HasIndex("Key")
                         .IsUnique();
+
+                    b.HasIndex("PerModuleId");
 
                     b.ToTable("PerMenu");
                 });
@@ -537,6 +571,28 @@ namespace Svc.Auth.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Svc.Auth.Models.Entities.PerApi", b =>
+                {
+                    b.HasOne("Svc.Auth.Models.Entities.PerMenu", "PerMenu")
+                        .WithMany()
+                        .HasForeignKey("PerMenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PerMenu");
+                });
+
+            modelBuilder.Entity("Svc.Auth.Models.Entities.PerMenu", b =>
+                {
+                    b.HasOne("Svc.Auth.Models.Entities.PerModule", "PerModule")
+                        .WithMany()
+                        .HasForeignKey("PerModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PerModule");
                 });
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.RefreshToken", b =>

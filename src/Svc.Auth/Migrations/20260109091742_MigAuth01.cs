@@ -16,38 +16,6 @@ namespace Svc.Auth.Migrations
                 .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");
 
             migrationBuilder.CreateTable(
-                name: "PerApi",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Key = table.Column<string>(type: "text", nullable: false),
-                    Desc = table.Column<string>(type: "text", nullable: false),
-                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PerApi", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PerMenu",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Key = table.Column<string>(type: "text", nullable: false),
-                    Desc = table.Column<string>(type: "text", nullable: false),
-                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PerMenu", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PerModule",
                 columns: table => new
                 {
@@ -100,6 +68,34 @@ namespace Svc.Auth.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PerMenu",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Key = table.Column<string>(type: "text", nullable: false),
+                    Label = table.Column<string>(type: "text", nullable: false),
+                    Path = table.Column<string>(type: "text", nullable: false),
+                    Icon = table.Column<string>(type: "text", nullable: false),
+                    IsChild = table.Column<bool>(type: "boolean", nullable: false),
+                    Parent = table.Column<string>(type: "text", nullable: false),
+                    Order = table.Column<int>(type: "integer", nullable: false),
+                    PerModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PerMenu", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PerMenu_PerModule_PerModuleId",
+                        column: x => x.PerModuleId,
+                        principalTable: "PerModule",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -246,6 +242,29 @@ namespace Svc.Auth.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PerApi",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Key = table.Column<string>(type: "text", nullable: false),
+                    Desc = table.Column<string>(type: "text", nullable: false),
+                    PerMenuId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PerApi", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PerApi_PerMenu_PerMenuId",
+                        column: x => x.PerMenuId,
+                        principalTable: "PerMenu",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RefreshToken",
                 columns: table => new
                 {
@@ -272,34 +291,6 @@ namespace Svc.Auth.Migrations
                         name: "FK_RefreshToken_AppUser_UserId",
                         column: x => x.UserId,
                         principalTable: "AppUser",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserPerApi",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    PerApiId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserPerApi", x => new { x.UserId, x.PerApiId });
-                    table.ForeignKey(
-                        name: "FK_UserPerApi_AppUser_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AppUser",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UserPerApi_PerApi_PerApiId",
-                        column: x => x.PerApiId,
-                        principalTable: "PerApi",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -360,6 +351,34 @@ namespace Svc.Auth.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "UserPerApi",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    PerApiId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPerApi", x => new { x.UserId, x.PerApiId });
+                    table.ForeignKey(
+                        name: "FK_UserPerApi_AppUser_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUser",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserPerApi_PerApi_PerApiId",
+                        column: x => x.PerApiId,
+                        principalTable: "PerApi",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AppRole_Id",
                 table: "AppRole",
@@ -379,9 +398,26 @@ namespace Svc.Auth.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_PerApi_Id",
+                table: "PerApi",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PerApi_Key",
                 table: "PerApi",
                 column: "Key",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PerApi_PerMenuId",
+                table: "PerApi",
+                column: "PerMenuId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PerMenu_Id",
+                table: "PerMenu",
+                column: "Id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -389,6 +425,11 @@ namespace Svc.Auth.Migrations
                 table: "PerMenu",
                 column: "Key",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PerMenu_PerModuleId",
+                table: "PerMenu",
+                column: "PerModuleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PerModule_Key",
@@ -520,19 +561,19 @@ namespace Svc.Auth.Migrations
                 name: "PerApi");
 
             migrationBuilder.DropTable(
-                name: "PerMenu");
-
-            migrationBuilder.DropTable(
                 name: "AppUser");
-
-            migrationBuilder.DropTable(
-                name: "PerModule");
 
             migrationBuilder.DropTable(
                 name: "Role");
 
             migrationBuilder.DropTable(
+                name: "PerMenu");
+
+            migrationBuilder.DropTable(
                 name: "User");
+
+            migrationBuilder.DropTable(
+                name: "PerModule");
         }
     }
 }

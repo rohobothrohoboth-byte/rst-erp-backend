@@ -45,7 +45,7 @@ public class PerMenuNameAllQryHandler : IRequestHandler<PerMenuNameAllQry, List<
     public async Task<List<NameList>> Handle(PerMenuNameAllQry request, CancellationToken cancellationToken)
     {
         var dbData = await _unitOfWork.Repository<PerMenu>().GetAll();
-        return dbData.Select(data => new NameList { Id = data.Id, Name = data.Desc }).ToList();
+        return dbData.Select(data => new NameList { Id = data.Id, Name = data.Label }).ToList();
     }
 }
 
@@ -57,7 +57,7 @@ public class PerMenuNameByIdQryHandler : IRequestHandler<PerMenuNameByIdQry, Nam
     {
         var nData = await _unitOfWork.Repository<PerMenu>().GetById(request.Id);
         if (nData == null) { return null; }
-        var c = new NameList { Id = nData.Id, Name = nData.Desc };
+        var c = new NameList { Id = nData.Id, Name = nData.Label };
         return c;
     }
 }

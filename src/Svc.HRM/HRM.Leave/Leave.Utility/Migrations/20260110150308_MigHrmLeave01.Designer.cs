@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leave.Utility.Migrations
 {
     [DbContext(typeof(HrmLeaveDbContext))]
-    [Migration("20260105065718_MigHrmLeave02")]
-    partial class MigHrmLeave02
+    [Migration("20260110150308_MigHrmLeave01")]
+    partial class MigHrmLeave01
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,71 +32,39 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("AccruedAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("EmployeeCountProcessed")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ExecutedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("PeriodEnd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("PeriodStart")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.Property<double>("TotalDaysAccrued")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AccrualHistory");
-                });
-
-            modelBuilder.Entity("Leave.Domain.Entities.ApprovalStep", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ApprovedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Comments")
+                    b.Property<string>("Frequency")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("LeaveRequestId")
+                    b.Property<Guid>("LeaveLedgerId")
                         .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -104,14 +72,19 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
-                    b.Property<int>("StepOrder")
-                        .HasColumnType("integer");
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeaveRequestId");
+                    b.HasIndex("LeaveLedgerId");
 
-                    b.ToTable("ApprovalStep");
+                    b.HasIndex("LeavePolicyId");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("AccrualHistory");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.Attachment", b =>
@@ -194,64 +167,22 @@ namespace Leave.Utility.Migrations
                     b.ToTable("AttachmentBlob");
                 });
 
-            modelBuilder.Entity("Leave.Domain.Entities.AuditLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ChangedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("EntityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("EntityName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Operation")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AuditLog");
-                });
-
             modelBuilder.Entity("Leave.Domain.Entities.EmpLeavePolicy", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<double>("AssignedEntitlement")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("EmployeeId")
@@ -263,6 +194,13 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("LeavePolicyId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
@@ -273,7 +211,152 @@ namespace Leave.Utility.Migrations
 
                     b.HasIndex("LeavePolicyId");
 
+                    b.HasIndex("LeaveTypeId");
+
                     b.ToTable("EmpLeavePolicy");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.EncashmentAppAction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ActionAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ApprovedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeaveEncashmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveEncashmentId");
+
+                    b.ToTable("EncashmentAppAction");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppAction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ActionAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ApprovedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeaveRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveRequestId");
+
+                    b.ToTable("LeaveAppAction");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppChain", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsFinal")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("LeaveAppChain");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveBalance", b =>
@@ -282,14 +365,11 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("AsOf")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<double>("Balance")
                         .HasColumnType("double precision");
-
-                    b.Property<double>("Carried")
-                        .HasColumnType("double precision");
-
-                    b.Property<DateTime?>("CarriedExpireDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -300,13 +380,13 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("FiscalYearId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("LeavePolicyId")
+                    b.Property<Guid?>("LeaveLedgerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("RowVersion")
@@ -317,9 +397,66 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeavePolicyId");
+                    b.HasIndex("LeaveLedgerId");
+
+                    b.HasIndex("LeaveTypeId");
 
                     b.ToTable("LeaveBalance");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveEncashment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentAppStep")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("DaysEncashed")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("RatePerDay")
+                        .HasColumnType("double precision");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("TotalAmount")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeavePolicyId");
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.ToTable("LeaveEncashment");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveLedger", b =>
@@ -329,9 +466,6 @@ namespace Leave.Utility.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<double>("Amount")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("BalanceAfter")
                         .HasColumnType("double precision");
 
                     b.Property<DateTime>("Date")
@@ -353,7 +487,13 @@ namespace Leave.Utility.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("LeavePolicyId")
+                    b.Property<Guid?>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReferenceId")
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("RowVersion")
@@ -370,6 +510,8 @@ namespace Leave.Utility.Migrations
 
                     b.HasIndex("LeavePolicyId");
 
+                    b.HasIndex("LeaveTypeId");
+
                     b.ToTable("LeaveLedger");
                 });
 
@@ -378,6 +520,13 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("AllowEncashment")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -389,20 +538,11 @@ namespace Leave.Utility.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("HolidaysAsLeave")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("LeaveTypeId")
                         .HasColumnType("uuid");
-
-                    b.Property<double>("MaxDurPerReq")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("MinDurPerReq")
-                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -424,17 +564,21 @@ namespace Leave.Utility.Migrations
                     b.ToTable("LeavePolicy");
                 });
 
-            modelBuilder.Entity("Leave.Domain.Entities.LeavePolicyAccrual", b =>
+            modelBuilder.Entity("Leave.Domain.Entities.LeavePolicyConfig", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccrualFrequency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<double>("AccrualRate")
                         .HasColumnType("double precision");
 
-                    b.Property<int>("CarryoverExpiryDays")
-                        .HasColumnType("integer");
+                    b.Property<double>("AnnualEntitlement")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -442,20 +586,28 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<double>("Entitlement")
-                        .HasColumnType("double precision");
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Frequency")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("LeaveAppChainId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("LeavePolicyId")
                         .HasColumnType("uuid");
 
-                    b.Property<double>("MaxCarryoverDays")
+                    b.Property<double>("MaxCarryOverDays")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("MaxDaysPerReq")
                         .HasColumnType("double precision");
 
                     b.Property<int>("MinServiceMonths")
@@ -469,9 +621,11 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LeaveAppChainId");
+
                     b.HasIndex("LeavePolicyId");
 
-                    b.ToTable("LeavePolicyAccrual");
+                    b.ToTable("LeavePolicyConfig");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveRequest", b =>
@@ -486,6 +640,9 @@ namespace Leave.Utility.Migrations
                     b.Property<string>("Comments")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("CurrentAppStep")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -549,11 +706,18 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("HolidaysAsLeave")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("boolean");
+                    b.Property<string>("LeaveCategory")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -573,15 +737,31 @@ namespace Leave.Utility.Migrations
                     b.ToTable("LeaveType");
                 });
 
-            modelBuilder.Entity("Leave.Domain.Entities.ApprovalStep", b =>
+            modelBuilder.Entity("Leave.Domain.Entities.AccrualHistory", b =>
                 {
-                    b.HasOne("Leave.Domain.Entities.LeaveRequest", "LeaveRequest")
+                    b.HasOne("Leave.Domain.Entities.LeaveLedger", "LeaveLedger")
                         .WithMany()
-                        .HasForeignKey("LeaveRequestId")
+                        .HasForeignKey("LeaveLedgerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("LeaveRequest");
+                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
+                        .WithMany()
+                        .HasForeignKey("LeavePolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveLedger");
+
+                    b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.Attachment", b =>
@@ -614,18 +794,84 @@ namespace Leave.Utility.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("LeavePolicy");
-                });
-
-            modelBuilder.Entity("Leave.Domain.Entities.LeaveBalance", b =>
-                {
-                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
                         .WithMany()
-                        .HasForeignKey("LeavePolicyId")
+                        .HasForeignKey("LeaveTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.EncashmentAppAction", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeaveEncashment", "LeaveEncashment")
+                        .WithMany()
+                        .HasForeignKey("LeaveEncashmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveEncashment");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppAction", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeaveRequest", "LeaveRequest")
+                        .WithMany()
+                        .HasForeignKey("LeaveRequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveRequest");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppChain", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveBalance", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeaveLedger", "LeaveLedger")
+                        .WithMany()
+                        .HasForeignKey("LeaveLedgerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveLedger");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveEncashment", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
+                        .WithMany()
+                        .HasForeignKey("LeavePolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveLedger", b =>
@@ -633,10 +879,17 @@ namespace Leave.Utility.Migrations
                     b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
                         .WithMany()
                         .HasForeignKey("LeavePolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeavePolicy", b =>
@@ -650,13 +903,21 @@ namespace Leave.Utility.Migrations
                     b.Navigation("LeaveType");
                 });
 
-            modelBuilder.Entity("Leave.Domain.Entities.LeavePolicyAccrual", b =>
+            modelBuilder.Entity("Leave.Domain.Entities.LeavePolicyConfig", b =>
                 {
+                    b.HasOne("Leave.Domain.Entities.LeaveAppChain", "LeaveAppChain")
+                        .WithMany()
+                        .HasForeignKey("LeaveAppChainId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
                         .WithMany()
                         .HasForeignKey("LeavePolicyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("LeaveAppChain");
 
                     b.Navigation("LeavePolicy");
                 });

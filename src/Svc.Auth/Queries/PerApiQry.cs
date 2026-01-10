@@ -19,7 +19,7 @@ public class PerApiAllQryHandler : IRequestHandler<PerApiAllQry, List<PerApiList
     public async Task<List<PerApiListDto>> Handle(PerApiAllQry request, CancellationToken cancellationToken)
     {
         var allApiPer = (await _unitOfWork.Repository<PerApi>().GetAll()).ToList();
-        var allMenuPer =(await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
+        var allMenuPer = (await _unitOfWork.Repository<PerMenu>().GetAll()).ToList();
         var dataL = new List<PerApiListDto>();
         foreach (var per in allApiPer)
         {
@@ -31,9 +31,7 @@ public class PerApiAllQryHandler : IRequestHandler<PerApiAllQry, List<PerApiList
                     Id = per.Id,
                     Key = per.Key,
                     Name = per.Desc,
-                    PerMenuKey = mPer.Key,
-                    PerMenuId = per.PerMenuId,
-                    PerMenu = mPer.Desc
+                    PerMenu = mPer.Label
                 };
                 dataL.Add(m);
             }
@@ -55,10 +53,9 @@ public class PerApiByIdQryHandler : IRequestHandler<PerApiByIdQry, PerApiListDto
         var c = new PerApiListDto
         {
             Id = data.Id,
-            PerMenuId = data.PerMenuId,
             Key = data.Key,
             Name = data.Desc,
-            PerMenu = menu.Desc
+            PerMenu = menu.Label
         };
         return c;
     }
@@ -77,12 +74,7 @@ public class PerApiByMenuIdQryHandler : IRequestHandler<PerApiByMenuIdQry, MenuP
         if (allMenu.Count <= 0) { return null; }
         var perL = allMenu.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
 
-        var dataL = new MenuPerApiListDto
-        {
-            PerMenuId = mod.Id,
-            PerMenu = mod.Desc,
-            PerApiList = perL
-        };
+        var dataL = new MenuPerApiListDto { PerMenu = mod.Label, PerApiList = perL };
         return dataL;
     }
 }

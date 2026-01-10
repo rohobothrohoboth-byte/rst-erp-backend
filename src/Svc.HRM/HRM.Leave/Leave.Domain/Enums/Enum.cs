@@ -2,38 +2,32 @@
 
 namespace Leave.Domain.Enums;
 
-public enum LeaveRequestStatus
+public enum Status
 {
-    [Display(Name = "Draft")]
-    Draft = 0,
     [Display(Name = "Pending")]
-    Pending = 1,
+    Pending,
     [Display(Name = "Approved")]
-    Approved = 2,
-    [Display(Name = "ApprovedPartial")]
-    ApprovedPartial = 3,
+    Approved,
     [Display(Name = "Rejected")]
-    Rejected = 4,
+    Rejected,
     [Display(Name = "Cancelled")]
-    Cancelled = 5,
-    [Display(Name = "Withdrawn")]
-    Withdrawn = 6,
-    [Display(Name = "AutoApproved")]
-    AutoApproved = 7
+    Cancelled
 }
 
-public enum LedgerSourceType
+public enum LedgerSource
 {
     [Display(Name = "Accrual")]
-    Accrual = 0,
-    [Display(Name = "Request")]
-    Request = 1,
+    Accrual,
+    [Display(Name = "Leave Approved")]
+    LeaveApproved,
     [Display(Name = "Adjustment")]
-    Adjustment = 2,
+    Adjustment,
     [Display(Name = "Encashment")]
-    Encashment = 3,
-    [Display(Name = "Reconciliation")]
-    Reconciliation = 4
+    Encashment,
+    [Display(Name = "Carry Over")]
+    CarryOver,
+    [Display(Name = "Expiry")]
+    Expiry,
 }
 
 public enum AccrualFrequency
@@ -55,16 +49,46 @@ public enum AccrualFrequency
 public enum LedgerEntryType
 {
     [Display(Name = "Accrual")]
-    Accrual = 1,
+    Accrual,
     [Display(Name = "Request")]
-    Request = 2,
+    Request,
     [Display(Name = "Approval")]
-    Approval = 3,
+    Approval,
     [Display(Name = "Deduction")]
-    Deduction = 4
+    Deduction
 }
 
-public enum LeaveCondition 
+public enum PolicyGender
+{
+    [Display(Name = "Male")]
+    Male,
+    [Display(Name = "Female")]
+    Female,
+    [Display(Name = "Male & Female")]
+    Both
+}
+
+public enum AccuralSource
+{
+    [Display(Name = "SYSTEM")]
+    Sys,
+    [Display(Name = "MANUAL")]
+    Manual
+}
+
+public enum EmpLeavePolReason
+{
+    [Display(Name = "Employee Onboarding")]
+    OnBoard,
+    [Display(Name = "Promotion")]
+    Porm,
+    [Display(Name = "Transfer")]
+    Tra,
+    [Display(Name = "Policy Migration")]
+    PolChange
+}
+
+public enum LeaveCondition
 {
     [Display(Name = "With Half Salary")]
     HalfSalary,
@@ -74,12 +98,22 @@ public enum LeaveCondition
     NoSalary
 }
 
-public enum PolicyGender
+public enum ApprovalRole
 {
-    [Display(Name = "Male")]
-    Male,
-    [Display(Name = "Female")]
-    Female,
-    [Display(Name = "Male/Female")]
-    Both
+    [Display(Name = "Manager")]
+    Manager,
+    [Display(Name = "HR")]
+    Hr,
+    [Display(Name = "Director")]
+    Director
+}
+
+public enum LeaveCategory
+{
+    [Display(Name = "Paid")]
+    Paid,
+    [Display(Name = "Unpaid")]
+    Unpaid,
+    [Display(Name = "Special")]
+    Special
 }

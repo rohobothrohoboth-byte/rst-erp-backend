@@ -27,7 +27,12 @@ public class PerMenuAddCmdHandler : IRequestHandler<PerMenuAddCmd, PerMenuListDt
             {
                 PerModuleId = request.AddDto.PerModuleId,
                 Key = request.AddDto.Key,
-                Desc = request.AddDto.Desc
+                Label = request.AddDto.Label,
+                Path = request.AddDto.Path,
+                Icon = request.AddDto.Icon,
+                IsChild = request.AddDto.IsChild,
+                Parent = request.AddDto.Parent,
+                Order = request.AddDto.Order
             };
             await _unitOfWork.Repository<PerMenu>().Add(data);
             await _unitOfWork.Commit();
@@ -63,7 +68,12 @@ public class PerMenuModCmdHandler : IRequestHandler<PerMenuModCmd, PerMenuListDt
         {
             oldData.PerModuleId = request.ModDto.PerModuleId;
             oldData.Key = request.ModDto.Key;
-            oldData.Desc = request.ModDto.Desc;
+            oldData.Label = request.ModDto.Label;
+            oldData.Path = request.ModDto.Path;
+            oldData.Icon = request.ModDto.Icon;
+            oldData.IsChild = request.ModDto.IsChild;
+            oldData.Parent = request.ModDto.Parent;
+            oldData.Order = request.ModDto.Order;
             var data = await _unitOfWork.Repository<PerMenu>().Update(oldData);
             await _unitOfWork.Commit();
 

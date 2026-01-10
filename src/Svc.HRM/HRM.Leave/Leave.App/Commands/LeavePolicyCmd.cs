@@ -27,9 +27,9 @@ public class LeavePolicyAddCmdHandler : IRequestHandler<LeavePolicyAddCmd, Leave
             {
                 Name = request.AddDto.Name,
                 RequiresAttachment = request.AddDto.RequiresAttachment,
-                MinDurPerReq = request.AddDto.MinDurPerReq,
-                MaxDurPerReq = request.AddDto.MaxDurPerReq,
-                HolidaysAsLeave = request.AddDto.HolidaysAsLeave,
+                //MinDurPerReq = request.AddDto.MinDurPerReq,
+                //MaxDurPerReq = request.AddDto.MaxDurPerReq,
+                //HolidaysAsLeave = request.AddDto.HolidaysAsLeave,
                 LeaveTypeId = request.AddDto.LeaveTypeId
             };
             await _unitOfWork.Repository<LeavePolicy>().Add(data);
@@ -66,9 +66,9 @@ public class LeavePolicyModCmdHandler : IRequestHandler<LeavePolicyModCmd, Leave
         {
             oldData.Name = request.ModDto.Name;
             oldData.RequiresAttachment = request.ModDto.RequiresAttachment;
-            oldData.MinDurPerReq = request.ModDto.MinDurPerReq;
-            oldData.MaxDurPerReq = request.ModDto.MaxDurPerReq;
-            oldData.HolidaysAsLeave = request.ModDto.HolidaysAsLeave;
+            //oldData.MinDurPerReq = request.ModDto.MinDurPerReq;
+            //oldData.MaxDurPerReq = request.ModDto.MaxDurPerReq;
+            //oldData.HolidaysAsLeave = request.ModDto.HolidaysAsLeave;
             oldData.LeaveTypeId = request.ModDto.LeaveTypeId;
             var data = await _unitOfWork.Repository<LeavePolicy>().Update(oldData);
             await _unitOfWork.Commit();

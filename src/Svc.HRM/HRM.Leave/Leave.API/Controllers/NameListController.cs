@@ -23,4 +23,7 @@ public class NameListController(IMediator med) : ControllerBase
         var res = await med.Send(new LeaveTypeNameAllQry());
         return Ok(res);
     }
+
+
+
 }

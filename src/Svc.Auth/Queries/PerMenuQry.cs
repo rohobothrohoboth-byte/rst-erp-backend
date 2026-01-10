@@ -30,9 +30,8 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
                 var m = new PerMenuListDto
                 {
                     Id = per.Id,
-                    PerModuleId = per.PerModuleId,
                     Key = per.Key,
-                    Name = per.Desc,
+                    Name = per.Label,
                     Module = mod.Desc
                 };
                 dataL.Add(m);
@@ -56,9 +55,8 @@ public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuList
         var c = new PerMenuListDto
         {
             Id = data.Id,
-            PerModuleId = data.PerModuleId,
             Key = data.Key,
-            Name = data.Desc,
+            Name = data.Label,
             Module = mod.Desc
         };
         return c;
@@ -73,11 +71,7 @@ public class PerMenuByKeyQryHandler : IRequestHandler<PerMenuByKeyQry, NameList?
     {
         var data = await _unitOfWork.Repository<PerMenu>().GetFoD(p => p.Key == request.Key);
         if (data == null) { return null; }
-        var c = new NameList
-        {
-            Id = data.Id,
-            Name = data.Desc
-        };
+        var c = new NameList { Id = data.Id, Name = data.Label };
         return c;
     }
 }
@@ -93,14 +87,9 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
         if (mod == null) { return null; }
         var allMod = (await _unitOfWork.Repository<PerMenu>().Find(p => p.PerModuleId == request.Id)).ToList();
         if (allMod.Count <= 0) { return null; }
-        var perL = allMod.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
+        var perL = allMod.Select(data => new NameList { Id = data.Id, Name = data.Label, }).ToList();
 
-        var dataL = new ModPerMenuListDto
-        {
-            PerModuleId = mod.Id,
-            PerModule = mod.Desc,
-            PerMenuList = perL
-        };
+        var dataL = new ModPerMenuListDto { PerModule = mod.Desc, PerMenuList = perL };
         return dataL;
     }
 }

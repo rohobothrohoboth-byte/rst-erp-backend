@@ -32,30 +32,25 @@ public class LeaveRequestAllQryHandler : IRequestHandler<LeaveRequestAllQry, Lis
         foreach (var data in dbData)
         {
             var emp = empL.Res.FirstOrDefault(t => t.Id == data.EmployeeId.ToString());
-            var app = "";
-            if (data.ApprovedById != null)
-            {
-                var aEmpId = (Guid)data.ApprovedById;
-                var aEmp = empL.Res.FirstOrDefault(t => t.Id == aEmpId.ToString());
-                app = aEmp != null ? aEmp.Name : "NOT AVAILABLE";
-            }
+            //var app = "";
+            //if (data.ApprovedById != null)
+            //{
+            //    var aEmpId = (Guid)data.ApprovedById;
+            //    var aEmp = empL.Res.FirstOrDefault(t => t.Id == aEmpId.ToString());
+            //    app = aEmp != null ? aEmp.Name : "NOT AVAILABLE";
+            //}
 
             var lvt = lvtL.FirstOrDefault(t => t.Id == data.LeaveTypeId);
             var c = new LeaveRequestListDto
             {
                 Id = data.Id,
-                ApprovedById = data.ApprovedById,
-                EmployeeId = data.EmployeeId,
                 LeaveTypeId = data.LeaveTypeId,
                 StartDate = data.StartDate,
                 EndDate = data.EndDate,
                 DateRequested = data.DateAdd,
-                DateApproved = data.DateApproved,
-                Comments = data.Comments,
                 DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
                 IsHalfDayStr = data.IsHalfDay.ToString(),
-                StatusStr = ((LeaveRequestStatus)Enum.Parse(typeof(LeaveRequestStatus), data.Status)).ToDisplayName(),
-                ApprovedBy = app,
+                StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
                 Employee = emp != null ? emp.Name : "NOT AVAILABLE",
                 LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
@@ -87,29 +82,24 @@ public class LeaveRequestByIdQryHandler : IRequestHandler<LeaveRequestByIdQry, L
         if (data == null) { return null; }
         var emp = await _hrmPro.GetEmp(data.EmployeeId.ToString(), cancellationToken);
         var lvt = await _unitOfWork.Repository<LeaveType>().GetById(data.LeaveTypeId);
-        var app = "";
-        if (data.ApprovedById != null)
-        {
-            var appEmpId = (Guid)data.ApprovedById;
-            var appEmp = await _hrmPro.GetEmp(appEmpId.ToString(), cancellationToken);
-            app = appEmp.Res.Name != null ? appEmp.Res.Name : "NOT AVAILABLE";
-        }
+        //var app = "";
+        //if (data.ApprovedById != null)
+        //{
+        //    var appEmpId = (Guid)data.ApprovedById;
+        //    var appEmp = await _hrmPro.GetEmp(appEmpId.ToString(), cancellationToken);
+        //    app = appEmp.Res.Name != null ? appEmp.Res.Name : "NOT AVAILABLE";
+        //}
 
         var c = new LeaveRequestListDto
         {
             Id = data.Id,
-            ApprovedById = data.ApprovedById,
-            EmployeeId = data.EmployeeId,
             LeaveTypeId = data.LeaveTypeId,
             StartDate = data.StartDate,
             EndDate = data.EndDate,
             DateRequested = data.DateAdd,
-            DateApproved = data.DateApproved,
-            Comments = data.Comments,
             DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
             IsHalfDayStr = data.IsHalfDay.ToString(),
-            StatusStr = ((LeaveRequestStatus)Enum.Parse(typeof(LeaveRequestStatus), data.Status)).ToDisplayName(),
-            ApprovedBy = app,
+            StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
             Employee = emp.Res.Name != null ? emp.Res.Name : "NOT AVAILABLE",
             LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
@@ -144,29 +134,24 @@ public class LeaveRequestMyQryHandler : IRequestHandler<LeaveRequestMyQry, List<
         foreach (var data in myReq)
         {
             var lvt = lvtL.FirstOrDefault(l => l.Id == data.LeaveTypeId);
-            var app = "";
-            if (data.ApprovedById != null)
-            {
-                var appEmpId = (Guid)data.ApprovedById;
-                var appEmp = empL.Res.FirstOrDefault(e => e.Id == appEmpId.ToString());
-                app = appEmp.Name ?? "NOT AVAILABLE";
-            }
+            //var app = "";
+            //if (data.ApprovedById != null)
+            //{
+            //    var appEmpId = (Guid)data.ApprovedById;
+            //    var appEmp = empL.Res.FirstOrDefault(e => e.Id == appEmpId.ToString());
+            //    app = appEmp.Name ?? "NOT AVAILABLE";
+            //}
 
             var c = new LeaveRequestListDto
             {
                 Id = data.Id,
-                ApprovedById = data.ApprovedById,
-                EmployeeId = data.EmployeeId,
                 LeaveTypeId = data.LeaveTypeId,
                 StartDate = data.StartDate,
                 EndDate = data.EndDate,
                 DateRequested = data.DateAdd,
-                DateApproved = data.DateApproved,
-                Comments = data.Comments,
                 DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
                 IsHalfDayStr = data.IsHalfDay.ToString(),
-                StatusStr = ((LeaveRequestStatus)Enum.Parse(typeof(LeaveRequestStatus), data.Status)).ToDisplayName(),
-                ApprovedBy = app,
+                StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
                 Employee = emp != null ? emp : "NOT AVAILABLE",
                 LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
