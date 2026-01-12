@@ -7,8 +7,6 @@ public class LeaveEncashment : BaseEntity
     public double TotalAmount { get; set; }
     public string Status { get; set; } = default!; // enum.Status (0/1)
     public int CurrentAppStep { get; set; } = 0;
-    //public string PayrollBatchRef { get; set; } = default!;
-    //public bool ExportedToPayroll { get; set; }
     public Guid EmployeeId { get; set; } // HRM.Profile.Employee
     public Guid LeaveTypeId { get; set; } // LeaveType
     public Guid? LeavePolicyId { get; set; } // LeavePolicy

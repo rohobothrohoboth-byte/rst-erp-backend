@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leave.Utility.Migrations
 {
     [DbContext(typeof(HrmLeaveDbContext))]
-    [Migration("20260110150308_MigHrmLeave01")]
+    [Migration("20260112145333_MigHrmLeave01")]
     partial class MigHrmLeave01
     {
         /// <inheritdoc />
@@ -78,11 +78,16 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeaveLedgerId");
 
                     b.HasIndex("LeavePolicyId");
 
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "LeavePolicyId", "LeaveLedgerId");
 
                     b.ToTable("AccrualHistory");
                 });
@@ -127,6 +132,9 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeaveRequestId");
 
                     b.ToTable("Attachment");
@@ -164,6 +172,9 @@ namespace Leave.Utility.Migrations
 
                     b.HasIndex("AttachmentId");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.ToTable("AttachmentBlob");
                 });
 
@@ -191,7 +202,7 @@ namespace Leave.Utility.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("LeavePolicyId")
+                    b.Property<Guid>("LeavePolicyConfigId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("LeaveTypeId")
@@ -209,9 +220,14 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeavePolicyId");
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LeavePolicyConfigId");
 
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "LeavePolicyConfigId");
 
                     b.ToTable("EmpLeavePolicy");
                 });
@@ -262,7 +278,10 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeaveEncashmentId");
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LeaveEncashmentId", "ApprovedById");
 
                     b.ToTable("EncashmentAppAction");
                 });
@@ -313,7 +332,10 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeaveRequestId");
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LeaveRequestId", "ApprovedById");
 
                     b.ToTable("LeaveAppAction");
                 });
@@ -330,13 +352,65 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LeavePolicyId");
+
+                    b.ToTable("LeaveAppChain");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsFinal")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("LeaveTypeId")
+                    b.Property<Guid>("LeaveAppChainId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Role")
@@ -349,14 +423,21 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
+                    b.Property<string>("StepName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("StepOrder")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeaveTypeId");
+                    b.HasIndex("Id")
+                        .IsUnique();
 
-                    b.ToTable("LeaveAppChain");
+                    b.HasIndex("LeaveAppChainId");
+
+                    b.ToTable("LeaveAppStep");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveBalance", b =>
@@ -397,9 +478,14 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeaveLedgerId");
 
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "LeaveLedgerId");
 
                     b.ToTable("LeaveBalance");
                 });
@@ -452,9 +538,14 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeavePolicyId");
 
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "LeavePolicyId");
 
                     b.ToTable("LeaveEncashment");
                 });
@@ -508,9 +599,14 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeavePolicyId");
 
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "LeavePolicyId", "ReferenceId");
 
                     b.ToTable("LeaveLedger");
                 });
@@ -534,10 +630,6 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -557,7 +649,17 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Id")
+                        .IsUnique();
 
                     b.HasIndex("LeaveTypeId");
 
@@ -586,11 +688,8 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("EffectiveFrom")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("FiscalYearId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -621,9 +720,14 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeaveAppChainId");
 
                     b.HasIndex("LeavePolicyId");
+
+                    b.HasIndex("FiscalYearId", "LeavePolicyId", "LeaveAppChainId");
 
                     b.ToTable("LeavePolicyConfig");
                 });
@@ -686,7 +790,12 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id")
+                        .IsUnique();
+
                     b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("EmployeeId", "LeaveTypeId", "ApprovedById", "Status");
 
                     b.ToTable("LeaveRequest");
                 });
@@ -721,7 +830,8 @@ namespace Leave.Utility.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<bool>("RequiresApproval")
                         .HasColumnType("boolean");
@@ -734,7 +844,120 @@ namespace Leave.Utility.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("LeaveCategory", "IsActive");
+
                     b.ToTable("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.PolicyAssignmentRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LeaveTypeId");
+
+                    b.HasIndex("LeavePolicyId", "LeaveTypeId");
+
+                    b.ToTable("PolicyAssignmentRule");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.PolicyRuleCondition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Operator")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PolicyAssignmentRuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("PolicyAssignmentRuleId");
+
+                    b.ToTable("PolicyRuleCondition");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.AccrualHistory", b =>
@@ -788,9 +1011,9 @@ namespace Leave.Utility.Migrations
 
             modelBuilder.Entity("Leave.Domain.Entities.EmpLeavePolicy", b =>
                 {
-                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
+                    b.HasOne("Leave.Domain.Entities.LeavePolicyConfig", "LeavePolicyConfig")
                         .WithMany()
-                        .HasForeignKey("LeavePolicyId")
+                        .HasForeignKey("LeavePolicyConfigId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -800,7 +1023,7 @@ namespace Leave.Utility.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("LeavePolicy");
+                    b.Navigation("LeavePolicyConfig");
 
                     b.Navigation("LeaveType");
                 });
@@ -829,13 +1052,24 @@ namespace Leave.Utility.Migrations
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveAppChain", b =>
                 {
-                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
                         .WithMany()
-                        .HasForeignKey("LeaveTypeId")
+                        .HasForeignKey("LeavePolicyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("LeaveType");
+                    b.Navigation("LeavePolicy");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppStep", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeaveAppChain", "LeaveAppChain")
+                        .WithMany("Steps")
+                        .HasForeignKey("LeaveAppChainId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeaveAppChain");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveBalance", b =>
@@ -931,6 +1165,41 @@ namespace Leave.Utility.Migrations
                         .IsRequired();
 
                     b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.PolicyAssignmentRule", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.LeavePolicy", "LeavePolicy")
+                        .WithMany()
+                        .HasForeignKey("LeavePolicyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.PolicyRuleCondition", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.PolicyAssignmentRule", "PolicyAssignmentRule")
+                        .WithMany()
+                        .HasForeignKey("PolicyAssignmentRuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PolicyAssignmentRule");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.LeaveAppChain", b =>
+                {
+                    b.Navigation("Steps");
                 });
 #pragma warning restore 612, 618
         }

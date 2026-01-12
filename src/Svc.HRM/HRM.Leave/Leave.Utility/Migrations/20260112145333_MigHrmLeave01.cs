@@ -19,7 +19,7 @@ namespace Leave.Utility.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     LeaveCategory = table.Column<string>(type: "text", nullable: false),
                     RequiresApproval = table.Column<bool>(type: "boolean", nullable: false),
                     AllowHalfDay = table.Column<bool>(type: "boolean", nullable: false),
@@ -36,40 +36,15 @@ namespace Leave.Utility.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LeaveAppChain",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StepOrder = table.Column<int>(type: "integer", nullable: false),
-                    Role = table.Column<string>(type: "text", nullable: false),
-                    IsFinal = table.Column<bool>(type: "boolean", nullable: false),
-                    LeaveTypeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LeaveAppChain", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_LeaveAppChain_LeaveType_LeaveTypeId",
-                        column: x => x.LeaveTypeId,
-                        principalTable: "LeaveType",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "LeavePolicy",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Code = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    Gender = table.Column<string>(type: "text", nullable: false),
                     AllowEncashment = table.Column<bool>(type: "boolean", nullable: false),
                     RequiresAttachment = table.Column<bool>(type: "boolean", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
                     LeaveTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -120,16 +95,14 @@ namespace Leave.Utility.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EmpLeavePolicy",
+                name: "LeaveAppChain",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    EffectiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AssignedEntitlement = table.Column<double>(type: "double precision", nullable: false),
-                    Reason = table.Column<string>(type: "text", nullable: false),
-                    EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LeaveTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     LeavePolicyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EffectiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EffectiveTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -137,17 +110,11 @@ namespace Leave.Utility.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EmpLeavePolicy", x => x.Id);
+                    table.PrimaryKey("PK_LeaveAppChain", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EmpLeavePolicy_LeavePolicy_LeavePolicyId",
+                        name: "FK_LeaveAppChain_LeavePolicy_LeavePolicyId",
                         column: x => x.LeavePolicyId,
                         principalTable: "LeavePolicy",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_EmpLeavePolicy_LeaveType_LeaveTypeId",
-                        column: x => x.LeaveTypeId,
-                        principalTable: "LeaveType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -223,21 +190,18 @@ namespace Leave.Utility.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LeavePolicyConfig",
+                name: "PolicyAssignmentRule",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    AnnualEntitlement = table.Column<double>(type: "double precision", nullable: false),
-                    AccrualFrequency = table.Column<string>(type: "text", nullable: false),
-                    AccrualRate = table.Column<double>(type: "double precision", nullable: false),
-                    MaxDaysPerReq = table.Column<double>(type: "double precision", nullable: false),
-                    MaxCarryOverDays = table.Column<double>(type: "double precision", nullable: false),
-                    MinServiceMonths = table.Column<int>(type: "integer", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Priority = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     EffectiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EffectiveTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     LeavePolicyId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LeaveAppChainId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeaveTypeId = table.Column<Guid>(type: "uuid", nullable: false),
                     DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -245,17 +209,17 @@ namespace Leave.Utility.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LeavePolicyConfig", x => x.Id);
+                    table.PrimaryKey("PK_PolicyAssignmentRule", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LeavePolicyConfig_LeaveAppChain_LeaveAppChainId",
-                        column: x => x.LeaveAppChainId,
-                        principalTable: "LeaveAppChain",
+                        name: "FK_PolicyAssignmentRule_LeavePolicy_LeavePolicyId",
+                        column: x => x.LeavePolicyId,
+                        principalTable: "LeavePolicy",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_LeavePolicyConfig_LeavePolicy_LeavePolicyId",
-                        column: x => x.LeavePolicyId,
-                        principalTable: "LeavePolicy",
+                        name: "FK_PolicyAssignmentRule_LeaveType_LeaveTypeId",
+                        column: x => x.LeaveTypeId,
+                        principalTable: "LeaveType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -310,6 +274,72 @@ namespace Leave.Utility.Migrations
                         name: "FK_LeaveAppAction_LeaveRequest_LeaveRequestId",
                         column: x => x.LeaveRequestId,
                         principalTable: "LeaveRequest",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LeaveAppStep",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StepOrder = table.Column<int>(type: "integer", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false),
+                    StepName = table.Column<string>(type: "text", nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsFinal = table.Column<bool>(type: "boolean", nullable: false),
+                    EffectiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EffectiveTo = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LeaveAppChainId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LeaveAppStep", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LeaveAppStep_LeaveAppChain_LeaveAppChainId",
+                        column: x => x.LeaveAppChainId,
+                        principalTable: "LeaveAppChain",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LeavePolicyConfig",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AnnualEntitlement = table.Column<double>(type: "double precision", nullable: false),
+                    AccrualFrequency = table.Column<string>(type: "text", nullable: false),
+                    AccrualRate = table.Column<double>(type: "double precision", nullable: false),
+                    MaxDaysPerReq = table.Column<double>(type: "double precision", nullable: false),
+                    MaxCarryOverDays = table.Column<double>(type: "double precision", nullable: false),
+                    MinServiceMonths = table.Column<int>(type: "integer", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    FiscalYearId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeavePolicyId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeaveAppChainId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LeavePolicyConfig", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LeavePolicyConfig_LeaveAppChain_LeaveAppChainId",
+                        column: x => x.LeaveAppChainId,
+                        principalTable: "LeaveAppChain",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_LeavePolicyConfig_LeavePolicy_LeavePolicyId",
+                        column: x => x.LeavePolicyId,
+                        principalTable: "LeavePolicy",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -417,6 +447,31 @@ namespace Leave.Utility.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PolicyRuleCondition",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Field = table.Column<string>(type: "text", nullable: false),
+                    Operator = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false),
+                    PolicyAssignmentRuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PolicyRuleCondition", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PolicyRuleCondition_PolicyAssignmentRule_PolicyAssignmentRu~",
+                        column: x => x.PolicyAssignmentRuleId,
+                        principalTable: "PolicyAssignmentRule",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AttachmentBlob",
                 columns: table => new
                 {
@@ -439,6 +494,50 @@ namespace Leave.Utility.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "EmpLeavePolicy",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EffectiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AssignedEntitlement = table.Column<double>(type: "double precision", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    EmployeeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeaveTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeavePolicyConfigId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateAdd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMod = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmpLeavePolicy", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmpLeavePolicy_LeavePolicyConfig_LeavePolicyConfigId",
+                        column: x => x.LeavePolicyConfigId,
+                        principalTable: "LeavePolicyConfig",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EmpLeavePolicy_LeaveType_LeaveTypeId",
+                        column: x => x.LeaveTypeId,
+                        principalTable: "LeaveType",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccrualHistory_EmployeeId_LeaveTypeId_LeavePolicyId_LeaveLe~",
+                table: "AccrualHistory",
+                columns: new[] { "EmployeeId", "LeaveTypeId", "LeavePolicyId", "LeaveLedgerId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccrualHistory_Id",
+                table: "AccrualHistory",
+                column: "Id",
+                unique: true);
+
             migrationBuilder.CreateIndex(
                 name: "IX_AccrualHistory_LeaveLedgerId",
                 table: "AccrualHistory",
@@ -455,6 +554,12 @@ namespace Leave.Utility.Migrations
                 column: "LeaveTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Attachment_Id",
+                table: "Attachment",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Attachment_LeaveRequestId",
                 table: "Attachment",
                 column: "LeaveRequestId");
@@ -465,9 +570,26 @@ namespace Leave.Utility.Migrations
                 column: "AttachmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EmpLeavePolicy_LeavePolicyId",
+                name: "IX_AttachmentBlob_Id",
+                table: "AttachmentBlob",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpLeavePolicy_EmployeeId_LeaveTypeId_LeavePolicyConfigId",
                 table: "EmpLeavePolicy",
-                column: "LeavePolicyId");
+                columns: new[] { "EmployeeId", "LeaveTypeId", "LeavePolicyConfigId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpLeavePolicy_Id",
+                table: "EmpLeavePolicy",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmpLeavePolicy_LeavePolicyConfigId",
+                table: "EmpLeavePolicy",
+                column: "LeavePolicyConfigId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmpLeavePolicy_LeaveTypeId",
@@ -475,19 +597,59 @@ namespace Leave.Utility.Migrations
                 column: "LeaveTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EncashmentAppAction_LeaveEncashmentId",
+                name: "IX_EncashmentAppAction_Id",
                 table: "EncashmentAppAction",
-                column: "LeaveEncashmentId");
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_LeaveAppAction_LeaveRequestId",
+                name: "IX_EncashmentAppAction_LeaveEncashmentId_ApprovedById",
+                table: "EncashmentAppAction",
+                columns: new[] { "LeaveEncashmentId", "ApprovedById" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveAppAction_Id",
                 table: "LeaveAppAction",
-                column: "LeaveRequestId");
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_LeaveAppChain_LeaveTypeId",
+                name: "IX_LeaveAppAction_LeaveRequestId_ApprovedById",
+                table: "LeaveAppAction",
+                columns: new[] { "LeaveRequestId", "ApprovedById" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveAppChain_Id",
                 table: "LeaveAppChain",
-                column: "LeaveTypeId");
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveAppChain_LeavePolicyId",
+                table: "LeaveAppChain",
+                column: "LeavePolicyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveAppStep_Id",
+                table: "LeaveAppStep",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveAppStep_LeaveAppChainId",
+                table: "LeaveAppStep",
+                column: "LeaveAppChainId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveBalance_EmployeeId_LeaveTypeId_LeaveLedgerId",
+                table: "LeaveBalance",
+                columns: new[] { "EmployeeId", "LeaveTypeId", "LeaveLedgerId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveBalance_Id",
+                table: "LeaveBalance",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LeaveBalance_LeaveLedgerId",
@@ -500,6 +662,17 @@ namespace Leave.Utility.Migrations
                 column: "LeaveTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LeaveEncashment_EmployeeId_LeaveTypeId_LeavePolicyId",
+                table: "LeaveEncashment",
+                columns: new[] { "EmployeeId", "LeaveTypeId", "LeavePolicyId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveEncashment_Id",
+                table: "LeaveEncashment",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LeaveEncashment_LeavePolicyId",
                 table: "LeaveEncashment",
                 column: "LeavePolicyId");
@@ -508,6 +681,17 @@ namespace Leave.Utility.Migrations
                 name: "IX_LeaveEncashment_LeaveTypeId",
                 table: "LeaveEncashment",
                 column: "LeaveTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveLedger_EmployeeId_LeaveTypeId_LeavePolicyId_ReferenceId",
+                table: "LeaveLedger",
+                columns: new[] { "EmployeeId", "LeaveTypeId", "LeavePolicyId", "ReferenceId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveLedger_Id",
+                table: "LeaveLedger",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LeaveLedger_LeavePolicyId",
@@ -520,9 +704,32 @@ namespace Leave.Utility.Migrations
                 column: "LeaveTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LeavePolicy_Code",
+                table: "LeavePolicy",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeavePolicy_Id",
+                table: "LeavePolicy",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LeavePolicy_LeaveTypeId",
                 table: "LeavePolicy",
                 column: "LeaveTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeavePolicyConfig_FiscalYearId_LeavePolicyId_LeaveAppChainId",
+                table: "LeavePolicyConfig",
+                columns: new[] { "FiscalYearId", "LeavePolicyId", "LeaveAppChainId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeavePolicyConfig_Id",
+                table: "LeavePolicyConfig",
+                column: "Id",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LeavePolicyConfig_LeaveAppChainId",
@@ -535,9 +742,64 @@ namespace Leave.Utility.Migrations
                 column: "LeavePolicyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LeaveRequest_EmployeeId_LeaveTypeId_ApprovedById_Status",
+                table: "LeaveRequest",
+                columns: new[] { "EmployeeId", "LeaveTypeId", "ApprovedById", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveRequest_Id",
+                table: "LeaveRequest",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LeaveRequest_LeaveTypeId",
                 table: "LeaveRequest",
                 column: "LeaveTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveType_LeaveCategory_IsActive",
+                table: "LeaveType",
+                columns: new[] { "LeaveCategory", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeaveType_Name",
+                table: "LeaveType",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyAssignmentRule_Code",
+                table: "PolicyAssignmentRule",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyAssignmentRule_Id",
+                table: "PolicyAssignmentRule",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyAssignmentRule_LeavePolicyId_LeaveTypeId",
+                table: "PolicyAssignmentRule",
+                columns: new[] { "LeavePolicyId", "LeaveTypeId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyAssignmentRule_LeaveTypeId",
+                table: "PolicyAssignmentRule",
+                column: "LeaveTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyRuleCondition_Id",
+                table: "PolicyRuleCondition",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PolicyRuleCondition_PolicyAssignmentRuleId",
+                table: "PolicyRuleCondition",
+                column: "PolicyAssignmentRuleId");
         }
 
         /// <inheritdoc />
@@ -559,13 +821,19 @@ namespace Leave.Utility.Migrations
                 name: "LeaveAppAction");
 
             migrationBuilder.DropTable(
+                name: "LeaveAppStep");
+
+            migrationBuilder.DropTable(
                 name: "LeaveBalance");
 
             migrationBuilder.DropTable(
-                name: "LeavePolicyConfig");
+                name: "PolicyRuleCondition");
 
             migrationBuilder.DropTable(
                 name: "Attachment");
+
+            migrationBuilder.DropTable(
+                name: "LeavePolicyConfig");
 
             migrationBuilder.DropTable(
                 name: "LeaveEncashment");
@@ -574,10 +842,13 @@ namespace Leave.Utility.Migrations
                 name: "LeaveLedger");
 
             migrationBuilder.DropTable(
-                name: "LeaveAppChain");
+                name: "PolicyAssignmentRule");
 
             migrationBuilder.DropTable(
                 name: "LeaveRequest");
+
+            migrationBuilder.DropTable(
+                name: "LeaveAppChain");
 
             migrationBuilder.DropTable(
                 name: "LeavePolicy");

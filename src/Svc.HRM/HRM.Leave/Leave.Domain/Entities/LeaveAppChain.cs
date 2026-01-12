@@ -2,12 +2,12 @@
 
 public class LeaveAppChain : BaseEntity
 {
-    public int StepOrder { get; set; } = 1;
-    public string Role { get; set; } = default!; // enum.ApprovalRole (0/1)
-    public bool IsFinal { get; set; }
-    public Guid LeaveTypeId { get; set; } // LeaveType
+    public Guid LeavePolicyId { get; set; }
+    public DateTime EffectiveFrom { get; set; }
+    public DateTime? EffectiveTo { get; set; }
+    public bool IsActive { get; set; } = true;
 
     //******************************************//
-
-    public LeaveType LeaveType { get; set; } = null!;
+    public LeavePolicy LeavePolicy { get; set; } = null!;
+    public ICollection<LeaveAppStep> Steps { get; set; } = [];
 }

@@ -89,7 +89,7 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
         if (allMod.Count <= 0) { return null; }
         var perL = allMod.Select(data => new NameList { Id = data.Id, Name = data.Label, }).ToList();
 
-        var dataL = new ModPerMenuListDto { PerModule = mod.Desc, PerMenuList = perL };
+        var dataL = new ModPerMenuListDto { PerModuleId = mod.Id, PerModule = mod.Desc, PerMenuList = perL };
         return dataL;
     }
 }

@@ -117,3 +117,21 @@ public enum LeaveCategory
     [Display(Name = "Special")]
     Special
 }
+
+public enum ConditionOperator
+{
+    Equals,
+    NotEquals,
+    In,
+    GreaterThan,
+    LessThan,
+    GreaterOrEqual,
+    LessOrEqual
+}
+
+public enum PolicyStatus
+{
+    Draft,
+    Active,
+    Inactive
+}

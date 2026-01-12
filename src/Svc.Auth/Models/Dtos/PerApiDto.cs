@@ -2,6 +2,7 @@
 
 public class MenuPerApiListDto
 {
+    public Guid PerModuleId { get; set; }
     public string PerMenu { get; set; } = default; // PerMenu
     public List<NameList> PerApiList { get; set; } = default;
 }
