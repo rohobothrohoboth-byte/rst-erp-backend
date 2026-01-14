@@ -17,7 +17,7 @@
     <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.1" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
     <PackageVersion Include="Dapper" Version="2.1.66" />
-    <PackageVersion Include="EthiopianCalendar" Version="2.1.1" />
+    <PackageVersion Include="EthiopianCalendar" Version="2.1.2" />
     <PackageVersion Include="MediatR" Version="14.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />

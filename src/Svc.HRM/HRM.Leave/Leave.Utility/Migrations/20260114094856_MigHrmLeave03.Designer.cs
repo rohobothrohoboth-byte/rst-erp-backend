@@ -3,6 +3,7 @@ using System;
 using Leave.Utility.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leave.Utility.Migrations
 {
     [DbContext(typeof(HrmLeaveDbContext))]
-    partial class HrmLeaveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260114094856_MigHrmLeave03")]
+    partial class MigHrmLeave03
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -883,9 +886,8 @@ namespace Leave.Utility.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Priority")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -902,8 +904,6 @@ namespace Leave.Utility.Migrations
                         .IsUnique();
 
                     b.HasIndex("LeaveTypeId");
-
-                    b.HasIndex("Priority");
 
                     b.HasIndex("LeavePolicyId", "LeaveTypeId");
 

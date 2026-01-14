@@ -27,7 +27,6 @@ public class LeavePolicyAllQryHandler : IRequestHandler<LeavePolicyAllQry, List<
             {
                 Id = data.Id,
                 Name = data.Name,
-                LeaveTypeId = data.LeaveTypeId,
                 RequiresAttachment = data.RequiresAttachment,
                 //MinDurPerReq = data.MinDurPerReq,
                 //MaxDurPerReq = data.MaxDurPerReq,
@@ -65,7 +64,6 @@ public class LeavePolicyByIdQryHandler : IRequestHandler<LeavePolicyByIdQry, Lea
         {
             Id = data.Id,
             Name = data.Name,
-            LeaveTypeId = data.LeaveTypeId,
             RequiresAttachment = data.RequiresAttachment,
             //MinDurPerReq = data.MinDurPerReq,
             //MaxDurPerReq = data.MaxDurPerReq,

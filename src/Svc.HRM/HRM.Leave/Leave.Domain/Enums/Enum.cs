@@ -120,18 +120,38 @@ public enum LeaveCategory
 
 public enum ConditionOperator
 {
+    [Display(Name = "=")]
     Equals,
+    [Display(Name = "!=")]
     NotEquals,
+    [Display(Name = "In")]
     In,
+    [Display(Name = ">")]
     GreaterThan,
+    [Display(Name = "<")]
     LessThan,
+    [Display(Name = ">=")]
     GreaterOrEqual,
+    [Display(Name = "<=")]
     LessOrEqual
 }
 
 public enum PolicyStatus
 {
+    [Display(Name = "Draft")]
     Draft,
+    [Display(Name = "Active")]
     Active,
+    [Display(Name = "Inactive")]
     Inactive
+}
+
+public enum Priority
+{
+    [Display(Name = "High")]
+    High,
+    [Display(Name = "Medium")]
+    Medium,
+    [Display(Name = "Low")]
+    Low
 }

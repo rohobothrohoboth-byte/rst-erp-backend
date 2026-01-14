@@ -1,6 +1,4 @@
-﻿using EthiopianCalendar;
-
-namespace Leave.Domain.DTOs;
+﻿namespace Leave.Domain.DTOs;
 
 public class LeavePolicyConfigListDto : BaseDto
 {
@@ -10,10 +8,7 @@ public class LeavePolicyConfigListDto : BaseDto
     public double MaxDaysPerReq { get; set; }
     public double MaxCarryOverDays { get; set; }
     public int MinServiceMonths { get; set; }
-    public DateTime EffectiveFrom { get; set; }
-    public DateTime? EffectiveTo { get; set; }
-    public bool IsActive { get; set; }
-
+    public bool IsActive { get; set; } = true;
     public string AnnualEntitlementStr { get; set; } = default!;
     public string AccrualFrequencyStr { get; set; } = default!;
     public string AccrualRateStr { get; set; } = default!;
@@ -21,11 +16,8 @@ public class LeavePolicyConfigListDto : BaseDto
     public string MaxCarryOverDaysStr { get; set; } = default!;
     public string MinServiceMonthsStr { get; set; } = default!;
     public string IsActiveStr { get; set; } = default!;
-    public string LeavePolicy { get; set; } = default!;
-    public string EffectiveFromStr => $"{EffectiveFrom:MMMM dd, yyyy}";
-    public string EffectiveFromStrAm => EffectiveFrom.ToEthiopianDateString("MMMM dd, yyyy");
-    public string EffectiveToStr => EffectiveTo.HasValue ? $"{EffectiveTo:MMMM dd, yyyy}" : "";
-    public string EffectiveToStrAm => EffectiveTo.HasValue ? EffectiveTo.Value.ToEthiopianDateString("MMMM dd, yyyy") : "";
+    public string LeavePolicy { get; set; } = default!; // LeavePolicy
+    public string FiscalYear { get; set; } = default!; // Cor.Module.FiscalYear
 }
 
 public class LeavePolicyConfigAddDto
@@ -36,9 +28,10 @@ public class LeavePolicyConfigAddDto
     public double MaxDaysPerReq { get; set; }
     public double MaxCarryOverDays { get; set; }
     public int MinServiceMonths { get; set; }
-    public DateTime EffectiveFrom { get; set; }
-    public DateTime? EffectiveTo { get; set; }
+    public bool IsActive { get; set; } = true;
+    public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public Guid LeavePolicyId { get; set; } // LeavePolicy
+    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
 }
 
 public class LeavePolicyConfigModDto
@@ -50,9 +43,9 @@ public class LeavePolicyConfigModDto
     public double MaxDaysPerReq { get; set; }
     public double MaxCarryOverDays { get; set; }
     public int MinServiceMonths { get; set; }
-    public DateTime EffectiveFrom { get; set; }
-    public DateTime? EffectiveTo { get; set; }
     public bool IsActive { get; set; } = true;
+    public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public Guid LeavePolicyId { get; set; } // LeavePolicy
+    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
     public string RowVersion { get; set; } = default!;
 }

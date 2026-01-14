@@ -7,12 +7,19 @@ public class ModPerMenuListDto
     public List<NameList> PerMenuList { get; set; } = default;
 }
 
-public class PerMenuListDto
+public class PerMenuListDto : BaseDto
 {
-    public Guid Id { get; set; }
-    public string Key { get; set; } = default;
-    public string Name { get; set; } = default;
-    public string Module { get; set; } = default; // PerModule
+    public string Path { get; set; } = default!;
+    public string Icon { get; set; } = default!;
+    public string ParentKey { get; set; } = "";
+    public Guid PerModuleId { get; set; } // PerModule
+    public int Order { get; set; }
+    public bool IsChild { get; set; } = false!;
+    public string Key { get; set; } = default!;
+    public string Label { get; set; } = default!;
+    public string IsChildStr { get; set; } = default!;
+    public string Parent { get; set; } = default!;
+    public string Module { get; set; } = default!; // PerModule
 }
 
 public class PerMenuAddDto
@@ -23,7 +30,7 @@ public class PerMenuAddDto
     public string Path { get; set; } = default!;
     public string Icon { get; set; } = default!;
     public bool IsChild { get; set; } = false!;
-    public string Parent { get; set; } = "";
+    public string ParentKey { get; set; } = "";
     public int Order { get; set; }
 }
 
@@ -36,6 +43,6 @@ public class PerMenuModDto
     public string Path { get; set; } = default!;
     public string Icon { get; set; } = default!;
     public bool IsChild { get; set; } = false!;
-    public string Parent { get; set; } = "";
+    public string ParentKey { get; set; } = "";
     public int Order { get; set; }
 }

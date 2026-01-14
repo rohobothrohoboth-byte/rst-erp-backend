@@ -4,7 +4,7 @@ public class PolicyAssignmentRule : BaseEntity
 {
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
-    public int Priority { get; set; } // lower = higher priority
+    public string Priority { get; set; } = default!; // enum.Priority
     public bool IsActive { get; set; }
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }

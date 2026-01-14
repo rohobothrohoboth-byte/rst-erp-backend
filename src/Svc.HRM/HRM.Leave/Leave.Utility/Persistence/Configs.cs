@@ -87,6 +87,7 @@ public class LeaveAppStepConf : IEntityTypeConfiguration<LeaveAppStep>
     {
         b.HasKey(x => x.Id);
         b.HasIndex(x => x.Id).IsUnique();
+        b.HasIndex(x => x.StepName);
         b.HasIndex(x => new { x.LeaveAppChainId });
         b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
     }
@@ -178,6 +179,7 @@ public class PolicyAssignmentRuleConf : IEntityTypeConfiguration<PolicyAssignmen
         b.HasKey(x => x.Id);
         b.HasIndex(x => x.Code).IsUnique();
         b.HasIndex(x => x.Id).IsUnique();
+        b.HasIndex(x => x.Priority);
         b.HasIndex(x => new { x.LeavePolicyId, x.LeaveTypeId});
         b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
     }

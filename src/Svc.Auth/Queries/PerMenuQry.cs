@@ -14,7 +14,9 @@ public class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public str
 public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public PerMenuAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public PerMenuAllQryHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken cancellationToken)
     {
@@ -24,15 +26,37 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
         var allMod = (await _unitOfWork.Repository<PerModule>().GetAll()).ToList();
         foreach (var per in allMenuPer)
         {
+            var parName = "";
+            var parKey = "";
+            if (per.ParentId != null)
+            {
+                var par = await _med.Send(new PerMenuByIdQry { Id = (Guid)per.ParentId }, cancellationToken);
+                if (par != null)
+                {
+                    parName = par.Label;
+                    parKey = par.Key;
+                }
+            }
             var mod = allMod.Find(m => m.Id == per.PerModuleId);
             if (mod != null)
             {
                 var m = new PerMenuListDto
                 {
                     Id = per.Id,
+                    PerModuleId = mod.Id,
+                    Order = per.Order,
+                    IsChild = per.IsChild,
                     Key = per.Key,
-                    Name = per.Label,
-                    Module = mod.Desc
+                    Label = per.Label,
+                    IsChildStr = per.IsChild.ToString(),
+                    Parent = parName,
+                    Module = mod.Desc,
+                    Path = per.Path,
+                    Icon = per.Icon,
+                    ParentKey = parKey,
+                    IsDeleted = per.IsDeleted,
+                    DateAdd = per.DateAdd,
+                    DateMod = per.DateMod
                 };
                 dataL.Add(m);
             }
@@ -48,16 +72,34 @@ public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuList
 
     public async Task<PerMenuListDto?> Handle(PerMenuByIdQry request, CancellationToken cancellationToken)
     {
-        var data = await _unitOfWork.Repository<PerMenu>().GetById(request.Id);
-        if (data == null) { return null; }
-        var mod = await _unitOfWork.Repository<PerModule>().GetById(data.PerModuleId);
+        var per = await _unitOfWork.Repository<PerMenu>().GetById(request.Id);
+        if (per == null) { return null; }
+        var mod = await _unitOfWork.Repository<PerModule>().GetById(per.PerModuleId);
         if (mod == null) { return null; }
+        var parName = "";
+        var parKey = "";
+        if (per.ParentId != null)
+        {
+            parName = per.Label;
+            parKey = per.Key;
+        }
         var c = new PerMenuListDto
         {
-            Id = data.Id,
-            Key = data.Key,
-            Name = data.Label,
-            Module = mod.Desc
+            Id = per.Id,
+            PerModuleId = mod.Id,
+            Order = per.Order,
+            IsChild = per.IsChild,
+            Key = per.Key,
+            Label = per.Label,
+            IsChildStr = per.IsChild.ToString(),
+            Parent = parName,
+            Module = mod.Desc,
+            Path = per.Path,
+            Icon = per.Icon,
+            ParentKey = parKey,
+            IsDeleted = per.IsDeleted,
+            DateAdd = per.DateAdd,
+            DateMod = per.DateMod
         };
         return c;
     }
@@ -109,10 +151,7 @@ public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, Lis
         foreach (var per in uPerModule)
         {
             var menu = await _med.Send(new PerMenuByModIdQry { Id = per.PerModuleId }, cancellationToken);
-            if (menu != null)
-            {
-                aPerMenu.Add(menu);
-            }
+            if (menu != null) { aPerMenu.Add(menu); }
         }
 
         return aPerMenu;

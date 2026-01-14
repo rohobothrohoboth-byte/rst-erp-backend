@@ -23,6 +23,14 @@ public class PerMenuAddCmdHandler : IRequestHandler<PerMenuAddCmd, PerMenuListDt
         await _unitOfWork.Begin();
         try
         {
+            Guid? parentId = null;
+            if (request.AddDto.IsChild)
+            {
+                var pa = await _med.Send(new PerMenuByKeyQry { Key = request.AddDto.ParentKey }, cancellationToken);
+                if (pa != null) { parentId = pa.Id; }
+                else { throw new DomainException($"PARENT MENU with Parent key {request.AddDto.ParentKey} NOT FOUND."); }
+            }
+
             var data = new PerMenu
             {
                 PerModuleId = request.AddDto.PerModuleId,
@@ -31,7 +39,7 @@ public class PerMenuAddCmdHandler : IRequestHandler<PerMenuAddCmd, PerMenuListDt
                 Path = request.AddDto.Path,
                 Icon = request.AddDto.Icon,
                 IsChild = request.AddDto.IsChild,
-                Parent = request.AddDto.Parent,
+                ParentId = parentId,
                 Order = request.AddDto.Order
             };
             await _unitOfWork.Repository<PerMenu>().Add(data);
@@ -66,13 +74,19 @@ public class PerMenuModCmdHandler : IRequestHandler<PerMenuModCmd, PerMenuListDt
         await _unitOfWork.Begin();
         try
         {
+            Guid? parentId = null;
+            if (request.ModDto.IsChild)
+            {
+                var pa = await _med.Send(new PerMenuByKeyQry { Key = request.ModDto.ParentKey }, cancellationToken);
+                if (pa != null) { parentId = pa.Id; }
+            }
             oldData.PerModuleId = request.ModDto.PerModuleId;
             oldData.Key = request.ModDto.Key;
             oldData.Label = request.ModDto.Label;
             oldData.Path = request.ModDto.Path;
             oldData.Icon = request.ModDto.Icon;
             oldData.IsChild = request.ModDto.IsChild;
-            oldData.Parent = request.ModDto.Parent;
+            oldData.ParentId = parentId;
             oldData.Order = request.ModDto.Order;
             var data = await _unitOfWork.Repository<PerMenu>().Update(oldData);
             await _unitOfWork.Commit();
