@@ -28,7 +28,6 @@ public class LeavePolicyConfigAddDto
     public double MaxDaysPerReq { get; set; }
     public double MaxCarryOverDays { get; set; }
     public int MinServiceMonths { get; set; }
-    public bool IsActive { get; set; } = true;
     public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public Guid LeavePolicyId { get; set; } // LeavePolicy
     public Guid LeaveAppChainId { get; set; } // LeaveAppChain

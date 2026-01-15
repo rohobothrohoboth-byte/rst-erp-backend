@@ -1,6 +1,8 @@
-﻿using Leave.App.Interfaces;
+﻿using Leave.App.Helpers;
+using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
+using Leave.Domain.Enums;
 using MediatR;
 
 namespace Leave.App.Queries;
@@ -26,16 +28,15 @@ public class LeavePolicyAllQryHandler : IRequestHandler<LeavePolicyAllQry, List<
             var c = new LeavePolicyListDto
             {
                 Id = data.Id,
+                Code = data.Code,
                 Name = data.Name,
+                AllowEncashment = data.AllowEncashment,
                 RequiresAttachment = data.RequiresAttachment,
-                //MinDurPerReq = data.MinDurPerReq,
-                //MaxDurPerReq = data.MaxDurPerReq,
-                //HolidaysAsLeave = data.HolidaysAsLeave,
+                Status = data.Status,
                 LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
-                RequiresAttachmentStr = data.RequiresAttachment.ToString(),
-                //MinDurPerReqStr = $"{data.MinDurPerReq:#,##0.##} days",
-                //MaxDurPerReqStr = $"{data.MaxDurPerReq:#,##0.##} days",
-                //HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
+                StatusStr = ((PolicyStatus)Enum.Parse(typeof(PolicyStatus), data.Status)).ToDisplayName(),
+                AllowEncashmentStr = BoolToStr.FormatBool(data.AllowEncashment),
+                RequiresAttachmentStr = BoolToStr.FormatBool(data.RequiresAttachment),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -63,16 +64,15 @@ public class LeavePolicyByIdQryHandler : IRequestHandler<LeavePolicyByIdQry, Lea
         var c = new LeavePolicyListDto
         {
             Id = data.Id,
+            Code = data.Code,
             Name = data.Name,
+            AllowEncashment = data.AllowEncashment,
             RequiresAttachment = data.RequiresAttachment,
-            //MinDurPerReq = data.MinDurPerReq,
-            //MaxDurPerReq = data.MaxDurPerReq,
-            //HolidaysAsLeave = data.HolidaysAsLeave,
+            Status = data.Status,
             LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
-            RequiresAttachmentStr = data.RequiresAttachment.ToString(),
-            //MinDurPerReqStr = $"{data.MinDurPerReq:#,##0.##} days",
-            //MaxDurPerReqStr = $"{data.MaxDurPerReq:#,##0.##} days",
-            //HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
+            StatusStr = ((PolicyStatus)Enum.Parse(typeof(PolicyStatus), data.Status)).ToDisplayName(),
+            AllowEncashmentStr = BoolToStr.FormatBool(data.AllowEncashment),
+            RequiresAttachmentStr = BoolToStr.FormatBool(data.RequiresAttachment),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

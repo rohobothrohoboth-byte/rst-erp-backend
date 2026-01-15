@@ -1,4 +1,5 @@
-﻿using Leave.App.Interfaces;
+﻿using Leave.App.Helpers;
+using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
 using Leave.Domain.Enums;
@@ -31,10 +32,10 @@ public class LeaveTypeAllQryHandler : IRequestHandler<LeaveTypeAllQry, List<Leav
                 HolidaysAsLeave = data.HolidaysAsLeave,
                 IsActive = data.IsActive,
                 LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
-                RequiresApprovalStr = data.RequiresApproval.ToString(),
-                AllowHalfDayStr = data.AllowHalfDay.ToString(),
-                HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
-                IsActiveStr = data.IsActive.ToString(),
+                RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval),
+                AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay),
+                HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave),
+                IsActiveStr = BoolToStr.FormatBool(data.IsActive),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -67,10 +68,10 @@ public class LeaveTypeByIdQryHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTy
             HolidaysAsLeave = data.HolidaysAsLeave,
             IsActive = data.IsActive,
             LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
-            RequiresApprovalStr = data.RequiresApproval.ToString(),
-            AllowHalfDayStr = data.AllowHalfDay.ToString(),
-            HolidaysAsLeaveStr = data.HolidaysAsLeave.ToString(),
-            IsActiveStr = data.IsActive.ToString(),
+            RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval),
+            AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay),
+            HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave),
+            IsActiveStr = BoolToStr.FormatBool(data.IsActive),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
