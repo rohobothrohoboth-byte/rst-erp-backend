@@ -6,4 +6,9 @@ public static class BoolToStr
     {
         return t ? "YES" : "NO";
     }
+
+    public static string EnumToString<T>(T value) where T : Enum
+    {
+        return Convert.ToInt32(value).ToString();
+    }
 }

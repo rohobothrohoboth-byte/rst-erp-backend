@@ -2,7 +2,7 @@
 
 public class PolicyRuleCondition : BaseEntity
 {
-    public string Field { get; set; } = default!;
+    public string Field { get; set; } = default!; // enum.ConditionField
     public string Operator { get; set; } = default!; // enum.ConditionOperator
     public string Value { get; set; } = default!;
     public Guid PolicyAssignmentRuleId { get; set; } // PolicyAssignmentRule

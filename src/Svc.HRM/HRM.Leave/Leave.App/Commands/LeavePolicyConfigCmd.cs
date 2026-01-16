@@ -10,6 +10,7 @@ namespace Leave.App.Commands;
 public class LeavePolicyConfigAddCmd : IRequest<LeavePolicyConfigListDto> { public LeavePolicyConfigAddDto AddDto { get; set; } = default!; }
 public class LeavePolicyConfigModCmd : IRequest<LeavePolicyConfigListDto> { public LeavePolicyConfigModDto ModDto { get; set; } = default!; }
 public class LeavePolicyConfigDelCmd : IRequest { public Guid Id { get; set; } }
+public class LeavePolicyStatCmd : IRequest { public Guid Id { get; set; } }
 
 public class LeavePolicyConfigAddCmdHandler : IRequestHandler<LeavePolicyConfigAddCmd, LeavePolicyConfigListDto>
 {
@@ -38,6 +39,8 @@ public class LeavePolicyConfigAddCmdHandler : IRequestHandler<LeavePolicyConfigA
             };
             await _unitOfWork.Repository<LeavePolicyConfig>().Add(data);
             await _unitOfWork.Commit();
+
+            await _med.Send(new LeavePolicyStatCmd { Id = data.Id }, cancellationToken);
 
             var res = new LeavePolicyConfigListDto();
             var response = await _med.Send(new LeavePolicyConfigByIdQry { Id = data.Id }, cancellationToken);
@@ -109,6 +112,35 @@ public class LeavePolicyConfigDelCmdHandler : IRequestHandler<LeavePolicyConfigD
             if (data == null) { throw new DomainException($"LEAVE POLICY CONFIGURATION with id [{request.Id}] NOT FOUND."); }
             await _unitOfWork.Repository<LeavePolicyConfig>().Delete(request.Id);
             await _unitOfWork.Commit();
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class LeavePolicyStatHandler : IRequestHandler<LeavePolicyStatCmd>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public LeavePolicyStatHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task Handle(LeavePolicyStatCmd request, CancellationToken cancellationToken)
+    {
+        await _unitOfWork.Begin();
+        try
+        {
+            var data = (await _unitOfWork.Repository<LeavePolicyConfig>().Find(c => c.Id != request.Id)).ToList();
+            if (data.Count > 0)
+            {
+                foreach (var oldData in data)
+                {
+                    oldData.IsActive = false;
+                    var res = await _unitOfWork.Repository<LeavePolicyConfig>().Update(oldData);
+                }
+                await _unitOfWork.Commit();
+            }
         }
         catch
         {

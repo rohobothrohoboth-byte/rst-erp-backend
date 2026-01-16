@@ -14,22 +14,6 @@ public enum Status
     Cancelled
 }
 
-public enum LedgerSource
-{
-    [Display(Name = "Accrual")]
-    Accrual,
-    [Display(Name = "Leave Approved")]
-    LeaveApproved,
-    [Display(Name = "Adjustment")]
-    Adjustment,
-    [Display(Name = "Encashment")]
-    Encashment,
-    [Display(Name = "Carry Over")]
-    CarryOver,
-    [Display(Name = "Expiry")]
-    Expiry,
-}
-
 public enum AccrualFrequency
 {
     [Display(Name = "Annual")]
@@ -44,6 +28,94 @@ public enum AccrualFrequency
     Daily,
     [Display(Name = "None")]
     None
+}
+
+public enum ApprovalRole
+{
+    [Display(Name = "Manager")]
+    Manager,
+    [Display(Name = "HR")]
+    Hr,
+    [Display(Name = "Director")]
+    Director
+}
+
+public enum LeaveCategory
+{
+    [Display(Name = "Paid")]
+    Paid,
+    [Display(Name = "Unpaid")]
+    Unpaid,
+    [Display(Name = "Special")]
+    Special
+}
+
+public enum PolicyStatus
+{
+    [Display(Name = "Draft")]
+    Draft,
+    [Display(Name = "Active")]
+    Active,
+    [Display(Name = "Inactive")]
+    Inactive
+}
+
+public enum Priority
+{
+    [Display(Name = "High")]
+    High,
+    [Display(Name = "Medium")]
+    Medium,
+    [Display(Name = "Low")]
+    Low
+}
+
+public enum ConditionOperator
+{
+    [Display(Name = "=")]
+    Equals,
+    [Display(Name = "!=")]
+    NotEquals,
+    [Display(Name = "In")]
+    In,
+    [Display(Name = ">")]
+    GreaterThan,
+    [Display(Name = "<")]
+    LessThan,
+    [Display(Name = ">=")]
+    GreaterOrEqual,
+    [Display(Name = "<=")]
+    LessOrEqual
+}
+
+public enum ConditionField
+{
+    [Display(Name = "Employement Type")]
+    EmpType,
+    [Display(Name = "Employement Nature")]
+    EmpNat,
+    [Display(Name = "Gender")]
+    Gender,
+    [Display(Name = "Service Year")]
+    SerYear,
+    [Display(Name = "Disablity Status")]
+    Disable
+}
+
+public enum LedgerSource
+{
+    [Display(Name = "Accrual")]
+    Accrual,
+    [Display(Name = "Leave Approved")]
+    LeaveApproved,
+    [Display(Name = "Adjustment")]
+    Adjustment,
+    [Display(Name = "Encashment")]
+    Encashment,
+    [Display(Name = "Carry Over")]
+    CarryOver,
+    [Display(Name = "Expiry")]
+    Expiry,
 }
 
 public enum LedgerEntryType
@@ -96,62 +168,4 @@ public enum LeaveCondition
     FullSlary,
     [Display(Name = "With No Salary")]
     NoSalary
-}
-
-public enum ApprovalRole
-{
-    [Display(Name = "Manager")]
-    Manager,
-    [Display(Name = "HR")]
-    Hr,
-    [Display(Name = "Director")]
-    Director
-}
-
-public enum LeaveCategory
-{
-    [Display(Name = "Paid")]
-    Paid,
-    [Display(Name = "Unpaid")]
-    Unpaid,
-    [Display(Name = "Special")]
-    Special
-}
-
-public enum ConditionOperator
-{
-    [Display(Name = "=")]
-    Equals,
-    [Display(Name = "!=")]
-    NotEquals,
-    [Display(Name = "In")]
-    In,
-    [Display(Name = ">")]
-    GreaterThan,
-    [Display(Name = "<")]
-    LessThan,
-    [Display(Name = ">=")]
-    GreaterOrEqual,
-    [Display(Name = "<=")]
-    LessOrEqual
-}
-
-public enum PolicyStatus
-{
-    [Display(Name = "Draft")]
-    Draft,
-    [Display(Name = "Active")]
-    Active,
-    [Display(Name = "Inactive")]
-    Inactive
-}
-
-public enum Priority
-{
-    [Display(Name = "High")]
-    High,
-    [Display(Name = "Medium")]
-    Medium,
-    [Display(Name = "Low")]
-    Low
 }

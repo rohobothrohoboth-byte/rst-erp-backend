@@ -9,47 +9,47 @@ using Microsoft.AspNetCore.Mvc;
 namespace Leave.API.Controllers;
 
 /// <summary>
-/// LEAVE POLICY CONFIGURATION end points
+/// LEAVE POLICY ASSIGMENT RULE end points
 /// </summary>
 
 //[Authorize]
 [ApiController]
-[Route("api/hrm/leave/v{version:apiVersion}/LeavePolicyConfig")]
+[Route("api/hrm/leave/v{version:apiVersion}/PolicyAssignmentRule")]
 [ApiVersion("1.0")]
-public class LeavePolicyConfigController(IMediator med) : ControllerBase
+public class PolicyAssRuleController(IMediator med) : ControllerBase
 {
-    [HttpGet("ActivePolicyConfig")]
+    [HttpGet("ActivePolicyAssRule")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ActivePolicyConfig()
+    public async Task<IActionResult> ActivePolicyAssRule()
     {
-        var response = await med.Send(new ActivePolicyConfigQry());
+        var response = await med.Send(new ActiveAssignmentRulesQry());
         return Ok(ApiResponse<object>.Ok(response));
     }
 
-    [HttpGet("AllPolicyConfig/{id:guid}")]
+    [HttpGet("AllPolicyAssRule/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AllPolicyConfig(Guid id)
+    public async Task<IActionResult> AllPolicyAssRule(Guid id)
     {
-        var response = await med.Send(new PolicyConfigByPolicyIdQry { Id = id });
+        var response = await med.Send(new AssignmentRuleByPolicyIdQry { Id = id });
         return Ok(ApiResponse<object>.Ok(response));
     }
 
-    [HttpGet("GetPolicyConfig/{id:guid}")]
+    [HttpGet("GetPolicyAssRule/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPolicyConfig(Guid id)
+    public async Task<IActionResult> GetPolicyAssRule(Guid id)
     {
-        var response = await med.Send(new LeavePolicyConfigByIdQry { Id = id });
-        if (response == null) { throw new DomainException($"LEAVE POLICY CONFIGURATION with id [{id}] NOT FOUND."); }
+        var response = await med.Send(new PolicyAssignmentRuleByIdQry { Id = id });
+        if (response == null) { throw new DomainException($"LEAVE POLICY ASSIGMENT RULE with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
 
-    [HttpPost("AddPolicyConfig")]
+    [HttpPost("AddPolicyAssRule")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] LeavePolicyConfigAddDto addDto)
+    public async Task<IActionResult> Create([FromBody] PolicyAssignmentRuleAddDto addDto)
     {
         if (!ModelState.IsValid)
         {
@@ -57,17 +57,17 @@ public class LeavePolicyConfigController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new LeavePolicyConfigAddCmd { AddDto = addDto };
+        var command = new PolicyAssignmentRuleAddCmd { AddDto = addDto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "New LEAVE POLICY CONFIGURATION successfully created."));
+        return Ok(ApiResponse<object>.Ok(response, "New LEAVE POLICY ASSIGMENT RULE successfully created."));
     }
 
-    [HttpPut("ModPolicyConfig/{id:guid}")]
+    [HttpPut("ModPolicyAssRule/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] LeavePolicyConfigModDto modDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] PolicyAssignmentRuleModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -75,18 +75,18 @@ public class LeavePolicyConfigController(IMediator med) : ControllerBase
             throw new ValidationException(errors);
         }
 
-        var command = new LeavePolicyConfigModCmd { ModDto = modDto };
+        var command = new PolicyAssignmentRuleModCmd { ModDto = modDto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "Selected LEAVE POLICY CONFIGURATION successfully updated."));
+        return Ok(ApiResponse<object>.Ok(response, "Selected LEAVE POLICY ASSIGMENT RULE successfully updated."));
     }
 
-    [HttpDelete("DelPolicyConfig/{id:guid}")]
+    [HttpDelete("DelPolicyAssRule/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new LeavePolicyConfigDelCmd { Id = id };
+        var command = new PolicyAssignmentRuleDelCmd { Id = id };
         await med.Send(command);
-        return Ok(ApiResponse<string>.Ok(null!, $"LEAVE POLICY CONFIGURATION with Id {id} successfully deleted."));
+        return Ok(ApiResponse<string>.Ok(null!, $"LEAVE POLICY ASSIGMENT RULE with Id {id} successfully deleted."));
     }
 }

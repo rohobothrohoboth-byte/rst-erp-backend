@@ -20,12 +20,10 @@ public class PolicyAssignmentRuleAddDto
 {
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
-    public int Priority { get; set; } // lower = higher priority
-    public bool IsActive { get; set; }
+    public string Priority { get; set; } = default!; // enum.Priority
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public Guid LeavePolicyId { get; set; } // LeavePolicy
-    public Guid LeaveTypeId { get; set; } // LeaveType
 }
 
 public class PolicyAssignmentRuleModDto
@@ -33,11 +31,9 @@ public class PolicyAssignmentRuleModDto
     public Guid Id { get; set; }
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
-    public int Priority { get; set; } // lower = higher priority
+    public string Priority { get; set; } = default!; // enum.Priority
     public bool IsActive { get; set; }
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
-    public Guid LeavePolicyId { get; set; } // LeavePolicy
-    public Guid LeaveTypeId { get; set; } // LeaveType
     public string RowVersion { get; set; } = default!;
 }
