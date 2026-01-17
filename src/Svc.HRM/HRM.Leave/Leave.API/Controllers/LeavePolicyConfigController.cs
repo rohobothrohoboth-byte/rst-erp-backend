@@ -18,12 +18,12 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class LeavePolicyConfigController(IMediator med) : ControllerBase
 {
-    [HttpGet("ActivePolicyConfig")]
+    [HttpGet("ActivePolicyConfig/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ActivePolicyConfig()
+    public async Task<IActionResult> ActivePolicyConfig(Guid id)
     {
-        var response = await med.Send(new ActivePolicyConfigQry());
+        var response = await med.Send(new ActivePolicyConfigQry { Id = id });
         return Ok(ApiResponse<object>.Ok(response));
     }
 

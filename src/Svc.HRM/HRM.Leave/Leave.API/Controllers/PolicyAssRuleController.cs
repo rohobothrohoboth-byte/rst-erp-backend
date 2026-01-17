@@ -18,12 +18,12 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class PolicyAssRuleController(IMediator med) : ControllerBase
 {
-    [HttpGet("ActivePolicyAssRule")]
+    [HttpGet("ActivePolicyAssRule/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ActivePolicyAssRule()
+    public async Task<IActionResult> ActivePolicyAssRule(Guid id)
     {
-        var response = await med.Send(new ActiveAssignmentRulesQry());
+        var response = await med.Send(new ActiveAssignmentRulesQry { Id = id });
         return Ok(ApiResponse<object>.Ok(response));
     }
 

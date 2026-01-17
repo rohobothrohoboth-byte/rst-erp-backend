@@ -9,7 +9,7 @@ namespace Leave.App.Queries;
 
 public class LeaveAppChainByPolicyIdQry : IRequest<List<LeaveAppChainListDto>> { public Guid Id { get; set; } }
 public class LeaveAppChainByIdQry : IRequest<LeaveAppChainListDto?> { public Guid Id { get; set; } }
-public class ActiveLeaveAppChainQry : IRequest<LeaveAppChainListDto?> { }
+public class ActiveLeaveAppChainQry : IRequest<LeaveAppChainListDto?> { public Guid Id { get; set; } }
 
 public class LeaveAppChainByPolicyIdHandler : IRequestHandler<LeaveAppChainByPolicyIdQry, List<LeaveAppChainListDto>>
 {
@@ -92,7 +92,7 @@ public class ActiveLeaveAppChainHandler : IRequestHandler<ActiveLeaveAppChainQry
 
     public async Task<LeaveAppChainListDto?> Handle(ActiveLeaveAppChainQry request, CancellationToken cancellationToken)
     {
-        var data = await _unitOfWork.Repository<LeaveAppChain>().GetFoD(c => c.IsActive == true);
+        var data = await _unitOfWork.Repository<LeaveAppChain>().GetFoD(c => c.IsActive == true && c.LeavePolicyId == request.Id);
         if (data == null) { return null; }
         var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
 

@@ -144,7 +144,7 @@ public class LeavePolicyConfigConf : IEntityTypeConfiguration<LeavePolicyConfig>
     {
         b.HasKey(x => x.Id);
         b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => new { x.FiscalYearId, x.LeavePolicyId, x.LeaveAppChainId });
+        b.HasIndex(x => new { x.FiscalYearId, x.LeavePolicyId });
         b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
     }
 }

@@ -30,7 +30,6 @@ public class LeavePolicyConfigAddDto
     public int MinServiceMonths { get; set; }
     public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public Guid LeavePolicyId { get; set; } // LeavePolicy
-    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
 }
 
 public class LeavePolicyConfigModDto
@@ -44,7 +43,5 @@ public class LeavePolicyConfigModDto
     public int MinServiceMonths { get; set; }
     public bool IsActive { get; set; } = true;
     public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
-    public Guid LeavePolicyId { get; set; } // LeavePolicy
-    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
     public string RowVersion { get; set; } = default!;
 }

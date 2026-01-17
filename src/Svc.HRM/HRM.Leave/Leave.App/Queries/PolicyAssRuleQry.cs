@@ -9,7 +9,7 @@ namespace Leave.App.Queries;
 
 public class AssignmentRuleByPolicyIdQry : IRequest<List<PolicyAssignmentRuleListDto>> { public Guid Id { get; set; } }
 public class PolicyAssignmentRuleByIdQry : IRequest<PolicyAssignmentRuleListDto?> { public Guid Id { get; set; } }
-public class ActiveAssignmentRulesQry : IRequest<List<PolicyAssignmentRuleListDto>> { }
+public class ActiveAssignmentRulesQry : IRequest<List<PolicyAssignmentRuleListDto>> { public Guid Id { get; set; } }
 
 public class AssignmentRuleByPolicyIdHandler : IRequestHandler<AssignmentRuleByPolicyIdQry, List<PolicyAssignmentRuleListDto>>
 {
@@ -108,7 +108,7 @@ public class ActiveAssignmentRulesHandler : IRequestHandler<ActiveAssignmentRule
 
     public async Task<List<PolicyAssignmentRuleListDto>> Handle(ActiveAssignmentRulesQry request, CancellationToken cancellationToken)
     {
-        var dbData = (await _unitOfWork.Repository<PolicyAssignmentRule>().Find(c => c.IsActive == true)).ToList();
+        var dbData = (await _unitOfWork.Repository<PolicyAssignmentRule>().Find(c => c.IsActive == true && c.LeavePolicyId == request.Id)).ToList();
         var dataL = new List<PolicyAssignmentRuleListDto>();
         if (dbData.Count <= 0) { return dataL; }
         var lvPoL = await _unitOfWork.Repository<LeavePolicy>().GetAll();

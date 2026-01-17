@@ -11,10 +11,8 @@ public class LeavePolicyConfig : BaseEntity
     public bool IsActive { get; set; } = true;
     public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public Guid LeavePolicyId { get; set; } // LeavePolicy
-    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
 
     //******************************************//
 
     public LeavePolicy LeavePolicy { get; set; } = null!;
-    public LeaveAppChain LeaveAppChain { get; set; } = null!;
 }

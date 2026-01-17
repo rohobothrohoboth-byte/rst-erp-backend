@@ -34,8 +34,7 @@ public class LeavePolicyConfigAddCmdHandler : IRequestHandler<LeavePolicyConfigA
                 MinServiceMonths = request.AddDto.MinServiceMonths,
                 IsActive = true,
                 FiscalYearId = request.AddDto.FiscalYearId,
-                LeavePolicyId = request.AddDto.LeavePolicyId,
-                LeaveAppChainId = request.AddDto.LeaveAppChainId
+                LeavePolicyId = request.AddDto.LeavePolicyId
             };
             await _unitOfWork.Repository<LeavePolicyConfig>().Add(data);
             await _unitOfWork.Commit();
@@ -79,8 +78,6 @@ public class LeavePolicyConfigModCmdHandler : IRequestHandler<LeavePolicyConfigM
             oldData.MinServiceMonths = request.ModDto.MinServiceMonths;
             oldData.IsActive = request.ModDto.IsActive;
             oldData.FiscalYearId = request.ModDto.FiscalYearId;
-            oldData.LeavePolicyId = request.ModDto.LeavePolicyId;
-            oldData.LeaveAppChainId = request.ModDto.LeaveAppChainId;
             var data = await _unitOfWork.Repository<LeavePolicyConfig>().Update(oldData);
             await _unitOfWork.Commit();
 

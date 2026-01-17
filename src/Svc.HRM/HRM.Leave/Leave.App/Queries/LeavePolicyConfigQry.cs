@@ -10,7 +10,7 @@ namespace Leave.App.Queries;
 
 public class PolicyConfigByPolicyIdQry : IRequest<List<LeavePolicyConfigListDto>> { public Guid Id { get; set; } }
 public class LeavePolicyConfigByIdQry : IRequest<LeavePolicyConfigListDto?> { public Guid Id { get; set; } }
-public class ActivePolicyConfigQry : IRequest<LeavePolicyConfigListDto?> { }
+public class ActivePolicyConfigQry : IRequest<LeavePolicyConfigListDto?> { public Guid Id { get; set; } }
 
 public class PolicyConfigByPolicyIdHandler : IRequestHandler<PolicyConfigByPolicyIdQry, List<LeavePolicyConfigListDto>>
 {
@@ -124,7 +124,7 @@ public class ActivePolicyConfigHandler : IRequestHandler<ActivePolicyConfigQry, 
 
     public async Task<LeavePolicyConfigListDto?> Handle(ActivePolicyConfigQry request, CancellationToken cancellationToken)
     {
-        var data = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(c => c.IsActive == true);
+        var data = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(c => c.IsActive == true && c.LeavePolicyId == request.Id);
         if (data == null) { return null; }
         var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
         var fy = await _corModClient.GetFiscalYear(data.FiscalYearId.ToString(), cancellationToken);

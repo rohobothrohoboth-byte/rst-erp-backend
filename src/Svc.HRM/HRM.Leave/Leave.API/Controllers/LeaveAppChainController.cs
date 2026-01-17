@@ -18,12 +18,12 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class LeaveAppChainController(IMediator med) : ControllerBase
 {
-    [HttpGet("ActiveAppChain")]
+    [HttpGet("ActiveAppChain/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ActiveAppChain()
+    public async Task<IActionResult> ActiveAppChain(Guid id)
     {
-        var response = await med.Send(new ActiveLeaveAppChainQry());
+        var response = await med.Send(new ActiveLeaveAppChainQry { Id = id });
         return Ok(ApiResponse<object>.Ok(response));
     }
 

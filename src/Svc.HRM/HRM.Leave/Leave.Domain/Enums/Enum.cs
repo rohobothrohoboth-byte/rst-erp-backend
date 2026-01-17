@@ -52,8 +52,6 @@ public enum LeaveCategory
 
 public enum PolicyStatus
 {
-    [Display(Name = "Draft")]
-    Draft,
     [Display(Name = "Active")]
     Active,
     [Display(Name = "Inactive")]
