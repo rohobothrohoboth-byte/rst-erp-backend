@@ -70,19 +70,19 @@ public enum Priority
 
 public enum ConditionOperator
 {
-    [Display(Name = "=")]
-    Equals,
-    [Display(Name = "!=")]
+    [Display(Name = "Equals")]
+    Equal,
+    [Display(Name = "Not Equals")]
     NotEquals,
     [Display(Name = "In")]
     In,
-    [Display(Name = ">")]
+    [Display(Name = "Greater than")]
     GreaterThan,
-    [Display(Name = "<")]
+    [Display(Name = "Less than")]
     LessThan,
-    [Display(Name = ">=")]
+    [Display(Name = "Greater than or Equals")]
     GreaterOrEqual,
-    [Display(Name = "<=")]
+    [Display(Name = "Less than or Equals")]
     LessOrEqual
 }
 

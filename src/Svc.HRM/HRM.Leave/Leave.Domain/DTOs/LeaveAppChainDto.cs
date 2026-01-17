@@ -8,6 +8,7 @@ public class LeaveAppChainListDto : BaseDto
     public string EffectiveFromStr => $"{EffectiveFrom:MMMM dd, yyyy}";
     public string EffectiveToStr => EffectiveTo.HasValue ? $"{EffectiveTo:MMMM dd, yyyy}" : "";
     public string IsActiveStr { get; set; } = default!;
+    public int AddedSteps { get; set; } = default!;
     public string LeavePolicy { get; set; } = default!; // LeavePolicy
 }
 

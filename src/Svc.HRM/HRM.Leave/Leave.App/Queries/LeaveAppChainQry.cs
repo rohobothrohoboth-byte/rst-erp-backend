@@ -22,9 +22,11 @@ public class LeaveAppChainByPolicyIdHandler : IRequestHandler<LeaveAppChainByPol
         var dataL = new List<LeaveAppChainListDto>();
         if (dbData.Count <= 0) { return dataL; }
         var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(request.Id);
+        var stpL = await _unitOfWork.Repository<LeaveAppStep>().GetAll();
 
         foreach (var data in dbData)
         {
+            var stp = stpL.Where(s => s.LeaveAppChainId == data.Id).ToList();
             var c = new LeaveAppChainListDto
             {
                 Id = data.Id,
@@ -32,6 +34,7 @@ public class LeaveAppChainByPolicyIdHandler : IRequestHandler<LeaveAppChainByPol
                 EffectiveTo = data.EffectiveTo,
                 IsActive = data.IsActive,
                 IsActiveStr = BoolToStr.FormatBool(data.IsActive),
+                AddedSteps = stp.Count,
                 LeavePolicy = lvPo!.Name,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
@@ -61,6 +64,7 @@ public class LeaveAppChainByIdHandler : IRequestHandler<LeaveAppChainByIdQry, Le
         var data = await _unitOfWork.Repository<LeaveAppChain>().GetById(request.Id);
         if (data == null) { return null; }
         var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
+        var stp = (await _unitOfWork.Repository<LeaveAppStep>().Find(s => s.LeaveAppChainId == request.Id)).ToList();
 
         var c = new LeaveAppChainListDto
         {
@@ -69,6 +73,7 @@ public class LeaveAppChainByIdHandler : IRequestHandler<LeaveAppChainByIdQry, Le
             EffectiveTo = data.EffectiveTo,
             IsActive = data.IsActive,
             IsActiveStr = BoolToStr.FormatBool(data.IsActive),
+            AddedSteps = stp.Count,
             LeavePolicy = lvPo!.Name,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
@@ -95,6 +100,7 @@ public class ActiveLeaveAppChainHandler : IRequestHandler<ActiveLeaveAppChainQry
         var data = await _unitOfWork.Repository<LeaveAppChain>().GetFoD(c => c.IsActive == true && c.LeavePolicyId == request.Id);
         if (data == null) { return null; }
         var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
+        var stp = (await _unitOfWork.Repository<LeaveAppStep>().Find(s => s.LeaveAppChainId == data.Id)).ToList();
 
         var c = new LeaveAppChainListDto
         {
@@ -103,6 +109,7 @@ public class ActiveLeaveAppChainHandler : IRequestHandler<ActiveLeaveAppChainQry
             EffectiveTo = data.EffectiveTo,
             IsActive = data.IsActive,
             IsActiveStr = BoolToStr.FormatBool(data.IsActive),
+            AddedSteps = stp.Count,
             LeavePolicy = lvPo!.Name,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
