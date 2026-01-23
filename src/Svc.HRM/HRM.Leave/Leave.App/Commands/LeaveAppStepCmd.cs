@@ -23,6 +23,9 @@ public class LeaveAppStepAddCmdHandler : IRequestHandler<LeaveAppStepAddCmd, Lea
         await _unitOfWork.Begin();
         try
         {
+            var chain = await _unitOfWork.Repository<LeaveAppChain>().GetFoD(c => c.LeavePolicyId == request.AddDto.LeavePolicyId && c.IsActive == true);
+            if (chain == null) { throw new DomainException($"Leave Approval Step NOT CREATED, NO ACTIVE Approval chain was found."); }
+
             var data = new LeaveAppStep
             {
                 StepName = request.AddDto.StepName,
@@ -30,7 +33,7 @@ public class LeaveAppStepAddCmdHandler : IRequestHandler<LeaveAppStepAddCmd, Lea
                 Role = request.AddDto.Role,
                 EmployeeId = request.AddDto.EmployeeId,
                 IsFinal = request.AddDto.IsFinal,
-                LeaveAppChainId = request.AddDto.LeaveAppChainId
+                LeaveAppChainId = chain.Id
             };
             await _unitOfWork.Repository<LeaveAppStep>().Add(data);
             await _unitOfWork.Commit();
@@ -69,7 +72,6 @@ public class LeaveAppStepModCmdHandler : IRequestHandler<LeaveAppStepModCmd, Lea
             oldData.Role = request.ModDto.Role;
             oldData.EmployeeId = request.ModDto.EmployeeId;
             oldData.IsFinal = request.ModDto.IsFinal;
-            oldData.LeaveAppChainId = request.ModDto.LeaveAppChainId;
             var data = await _unitOfWork.Repository<LeaveAppStep>().Update(oldData);
             await _unitOfWork.Commit();
 

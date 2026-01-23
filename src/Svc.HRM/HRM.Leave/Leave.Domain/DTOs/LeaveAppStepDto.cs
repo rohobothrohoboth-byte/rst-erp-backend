@@ -20,7 +20,7 @@ public class LeaveAppStepAddDto
     public string Role { get; set; } = default!;  // enum.ApprovalRole
     public Guid? EmployeeId { get; set; }   // HRM.Profile.Employee
     public bool IsFinal { get; set; } = false;
-    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
+    public Guid LeavePolicyId { get; set; } // LeavePolicy
 }
 
 public class LeaveAppStepModDto
@@ -31,6 +31,5 @@ public class LeaveAppStepModDto
     public string Role { get; set; } = default!;  // enum.ApprovalRole
     public Guid? EmployeeId { get; set; }   // HRM.Profile.Employee
     public bool IsFinal { get; set; } = false;
-    public Guid LeaveAppChainId { get; set; } // LeaveAppChain
     public string RowVersion { get; set; } = default!;
 }

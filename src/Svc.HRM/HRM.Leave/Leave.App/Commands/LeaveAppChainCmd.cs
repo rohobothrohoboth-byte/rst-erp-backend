@@ -10,7 +10,7 @@ namespace Leave.App.Commands;
 public class LeaveAppChainAddCmd : IRequest<LeaveAppChainListDto> { public LeaveAppChainAddDto AddDto { get; set; } = default!; }
 public class LeaveAppChainModCmd : IRequest<LeaveAppChainListDto> { public LeaveAppChainModDto ModDto { get; set; } = default!; }
 public class LeaveAppChainDelCmd : IRequest { public Guid Id { get; set; } }
-public class AppChainStatCmd : IRequest { public Guid Id { get; set; } }
+public class AppChainStatCmd : IRequest { public Guid Id { get; set; } public Guid PolicyId { get; set; } }
 
 public class LeaveAppChainAddCmdHandler : IRequestHandler<LeaveAppChainAddCmd, LeaveAppChainListDto>
 {
@@ -34,7 +34,7 @@ public class LeaveAppChainAddCmdHandler : IRequestHandler<LeaveAppChainAddCmd, L
             await _unitOfWork.Repository<LeaveAppChain>().Add(data);
             await _unitOfWork.Commit();
 
-            await _med.Send(new AppChainStatCmd { Id = data.Id }, cancellationToken);
+            await _med.Send(new AppChainStatCmd { Id = data.Id, PolicyId = request.AddDto.LeavePolicyId }, cancellationToken);
             var res = new LeaveAppChainListDto();
             var response = await _med.Send(new LeaveAppChainByIdQry { Id = data.Id }, cancellationToken);
             if (response == null) { return res; }
@@ -71,6 +71,7 @@ public class LeaveAppChainModCmdHandler : IRequestHandler<LeaveAppChainModCmd, L
             var data = await _unitOfWork.Repository<LeaveAppChain>().Update(oldData);
             await _unitOfWork.Commit();
 
+            await _med.Send(new AppChainStatCmd { Id = oldData.Id, PolicyId = request.ModDto.LeavePolicyId }, cancellationToken);
             var res = new LeaveAppChainListDto();
             var response = await _med.Send(new LeaveAppChainByIdQry { Id = data.Id }, cancellationToken);
             if (response == null) { return res; }
@@ -118,7 +119,7 @@ public class AppChainStatHandler : IRequestHandler<AppChainStatCmd>
         await _unitOfWork.Begin();
         try
         {
-            var data = (await _unitOfWork.Repository<LeaveAppChain>().Find(c => c.Id != request.Id)).ToList();
+            var data = (await _unitOfWork.Repository<LeaveAppChain>().Find(c => c.Id != request.Id && c.LeavePolicyId == request.PolicyId)).ToList();
             if (data.Count > 0)
             {
                 foreach (var oldData in data)
