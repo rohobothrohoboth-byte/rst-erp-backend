@@ -46,6 +46,22 @@ public class LeavePolicyConfigController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpPost("StatPolicyConfig")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeStat([FromBody] StatChangeDto statDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var command = new LeavePolicyConfigStatCmd { StatDto = statDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "LEAVE POLICY CONFIGURATION status successfully changed."));
+    }
+
     [HttpPost("AddPolicyConfig")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,7 +70,7 @@ public class LeavePolicyConfigController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new LeavePolicyConfigAddCmd { AddDto = addDto };
@@ -72,7 +88,7 @@ public class LeavePolicyConfigController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new LeavePolicyConfigModCmd { ModDto = modDto };

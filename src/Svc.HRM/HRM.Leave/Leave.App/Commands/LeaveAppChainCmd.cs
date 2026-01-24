@@ -9,15 +9,16 @@ namespace Leave.App.Commands;
 
 public class LeaveAppChainAddCmd : IRequest<LeaveAppChainListDto> { public LeaveAppChainAddDto AddDto { get; set; } = default!; }
 public class LeaveAppChainModCmd : IRequest<LeaveAppChainListDto> { public LeaveAppChainModDto ModDto { get; set; } = default!; }
+public class LeaveAppChainStatCmd : IRequest<LeaveAppChainListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class LeaveAppChainDelCmd : IRequest { public Guid Id { get; set; } }
 public class AppChainStatCmd : IRequest { public Guid Id { get; set; } public Guid PolicyId { get; set; } }
 
-public class LeaveAppChainAddCmdHandler : IRequestHandler<LeaveAppChainAddCmd, LeaveAppChainListDto>
+public class LeaveAppChainAddHandler : IRequestHandler<LeaveAppChainAddCmd, LeaveAppChainListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeaveAppChainAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveAppChainAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeaveAppChainListDto> Handle(LeaveAppChainAddCmd request, CancellationToken cancellationToken)
     {
@@ -49,12 +50,12 @@ public class LeaveAppChainAddCmdHandler : IRequestHandler<LeaveAppChainAddCmd, L
     }
 }
 
-public class LeaveAppChainModCmdHandler : IRequestHandler<LeaveAppChainModCmd, LeaveAppChainListDto>
+public class LeaveAppChainModHandler : IRequestHandler<LeaveAppChainModCmd, LeaveAppChainListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeaveAppChainModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveAppChainModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeaveAppChainListDto> Handle(LeaveAppChainModCmd request, CancellationToken cancellationToken)
     {
@@ -86,10 +87,44 @@ public class LeaveAppChainModCmdHandler : IRequestHandler<LeaveAppChainModCmd, L
     }
 }
 
-public class LeaveAppChainDelCmdHandler : IRequestHandler<LeaveAppChainDelCmd>
+public class LeaveAppChainStatHandler : IRequestHandler<LeaveAppChainStatCmd, LeaveAppChainListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public LeaveAppChainDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public LeaveAppChainStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<LeaveAppChainListDto> Handle(LeaveAppChainStatCmd request, CancellationToken cancellationToken)
+    {
+        var oldData = await _unitOfWork.Repository<LeaveAppChain>().GetById(request.StatDto.Id);
+        if (oldData == null) { throw new DomainException($"LEAVE APPROVAL CHAIN with Id {request.StatDto.Id} NOT FOUND."); }
+
+        await _unitOfWork.Begin();
+        try
+        {
+            oldData.IsActive = request.StatDto.Stat;
+            var data = await _unitOfWork.Repository<LeaveAppChain>().Update(oldData);
+            await _unitOfWork.Commit();
+
+            await _med.Send(new AppChainStatCmd { Id = oldData.Id, PolicyId = oldData.LeavePolicyId }, cancellationToken);
+            var res = new LeaveAppChainListDto();
+            var response = await _med.Send(new LeaveAppChainByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class LeaveAppChainDelHandler : IRequestHandler<LeaveAppChainDelCmd>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public LeaveAppChainDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task Handle(LeaveAppChainDelCmd request, CancellationToken cancellationToken)
     {

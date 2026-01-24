@@ -94,7 +94,7 @@ public enum ConditionField
     EmpNat,
     [Display(Name = "Gender")]
     Gender,
-    [Display(Name = "Service Year")]
+    [Display(Name = "Service Months")]
     SerYear,
     [Display(Name = "Disablity Status")]
     Disable

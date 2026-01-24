@@ -46,6 +46,22 @@ public class PolicyAssRuleController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpPost("StatPolicyAssRule")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeStat([FromBody] StatChangeDto statDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var command = new PolicyAssignmentRuleStatCmd { StatDto = statDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "LEAVE POLICY ASSIGMENT RULE status successfully changed."));
+    }
+
     [HttpPost("AddPolicyAssRule")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,7 +70,7 @@ public class PolicyAssRuleController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new PolicyAssignmentRuleAddCmd { AddDto = addDto };
@@ -72,7 +88,7 @@ public class PolicyAssRuleController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new PolicyAssignmentRuleModCmd { ModDto = modDto };

@@ -9,14 +9,15 @@ namespace Leave.App.Commands;
 
 public class LeaveTypeAddCmd : IRequest<LeaveTypeListDto> { public LeaveTypeAddDto AddDto { get; set; } = default!; }
 public class LeaveTypeModCmd : IRequest<LeaveTypeListDto> { public LeaveTypeModDto ModDto { get; set; } = default!; }
+public class LeaveTypeStatCmd : IRequest<LeaveTypeListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class LeaveTypeDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class LeaveTypeAddCmdHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeListDto>
+public class LeaveTypeAddHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeaveTypeAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveTypeAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeaveTypeListDto> Handle(LeaveTypeAddCmd request, CancellationToken cancellationToken)
     {
@@ -49,12 +50,12 @@ public class LeaveTypeAddCmdHandler : IRequestHandler<LeaveTypeAddCmd, LeaveType
     }
 }
 
-public class LeaveTypeModCmdHandler : IRequestHandler<LeaveTypeModCmd, LeaveTypeListDto>
+public class LeaveTypeModHandler : IRequestHandler<LeaveTypeModCmd, LeaveTypeListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeaveTypeModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveTypeModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeaveTypeListDto> Handle(LeaveTypeModCmd request, CancellationToken cancellationToken)
     {
@@ -87,10 +88,43 @@ public class LeaveTypeModCmdHandler : IRequestHandler<LeaveTypeModCmd, LeaveType
     }
 }
 
-public class LeaveTypeDelCmdHandler : IRequestHandler<LeaveTypeDelCmd>
+public class LeaveTypeStatHandler : IRequestHandler<LeaveTypeStatCmd, LeaveTypeListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public LeaveTypeDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public LeaveTypeStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<LeaveTypeListDto> Handle(LeaveTypeStatCmd request, CancellationToken cancellationToken)
+    {
+        var oldData = await _unitOfWork.Repository<LeaveType>().GetById(request.StatDto.Id);
+        if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.StatDto.Id} NOT FOUND."); }
+
+        await _unitOfWork.Begin();
+        try
+        {
+            oldData.IsActive = request.StatDto.Stat;
+            var data = await _unitOfWork.Repository<LeaveType>().Update(oldData);
+            await _unitOfWork.Commit();
+
+            var res = new LeaveTypeListDto();
+            var response = await _med.Send(new LeaveTypeByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class LeaveTypeDelHandler : IRequestHandler<LeaveTypeDelCmd>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public LeaveTypeDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task Handle(LeaveTypeDelCmd request, CancellationToken cancellationToken)
     {

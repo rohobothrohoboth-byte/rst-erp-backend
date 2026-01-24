@@ -38,6 +38,22 @@ public class LeaveTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpPost("StatLeaveType")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeStat([FromBody] StatChangeDto statDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var command = new LeaveTypeStatCmd { StatDto = statDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "LEAVE TYPE status successfully changed."));
+    }
+
     [HttpPost("AddLeaveType")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -46,7 +62,7 @@ public class LeaveTypeController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new LeaveTypeAddCmd { AddDto = addDto };
@@ -64,7 +80,7 @@ public class LeaveTypeController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new LeaveTypeModCmd { ModDto = modDto };

@@ -9,14 +9,15 @@ namespace Leave.App.Commands;
 
 public class PolicyAssignmentRuleAddCmd : IRequest<PolicyAssignmentRuleListDto> { public PolicyAssignmentRuleAddDto AddDto { get; set; } = default!; }
 public class PolicyAssignmentRuleModCmd : IRequest<PolicyAssignmentRuleListDto> { public PolicyAssignmentRuleModDto ModDto { get; set; } = default!; }
+public class PolicyAssignmentRuleStatCmd : IRequest<PolicyAssignmentRuleListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class PolicyAssignmentRuleDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class PolicyAssignmentRuleAddCmdHandler : IRequestHandler<PolicyAssignmentRuleAddCmd, PolicyAssignmentRuleListDto>
+public class PolicyAssignmentRuleAddHandler : IRequestHandler<PolicyAssignmentRuleAddCmd, PolicyAssignmentRuleListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public PolicyAssignmentRuleAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public PolicyAssignmentRuleAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<PolicyAssignmentRuleListDto> Handle(PolicyAssignmentRuleAddCmd request, CancellationToken cancellationToken)
     {
@@ -54,12 +55,12 @@ public class PolicyAssignmentRuleAddCmdHandler : IRequestHandler<PolicyAssignmen
     }
 }
 
-public class PolicyAssignmentRuleModCmdHandler : IRequestHandler<PolicyAssignmentRuleModCmd, PolicyAssignmentRuleListDto>
+public class PolicyAssignmentRuleModHandler : IRequestHandler<PolicyAssignmentRuleModCmd, PolicyAssignmentRuleListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public PolicyAssignmentRuleModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public PolicyAssignmentRuleModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<PolicyAssignmentRuleListDto> Handle(PolicyAssignmentRuleModCmd request, CancellationToken cancellationToken)
     {
@@ -95,10 +96,43 @@ public class PolicyAssignmentRuleModCmdHandler : IRequestHandler<PolicyAssignmen
     }
 }
 
-public class PolicyAssignmentRuleDelCmdHandler : IRequestHandler<PolicyAssignmentRuleDelCmd>
+public class PolicyAssignmentRuleStatHandler : IRequestHandler<PolicyAssignmentRuleStatCmd, PolicyAssignmentRuleListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public PolicyAssignmentRuleDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public PolicyAssignmentRuleStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<PolicyAssignmentRuleListDto> Handle(PolicyAssignmentRuleStatCmd request, CancellationToken cancellationToken)
+    {
+        var oldData = await _unitOfWork.Repository<PolicyAssignmentRule>().GetById(request.StatDto.Id);
+        if (oldData == null) { throw new DomainException($"POLICY ASSIGNMENT RULE with Id {request.StatDto.Id} NOT FOUND."); }
+
+        await _unitOfWork.Begin();
+        try
+        {
+            oldData.IsActive = request.StatDto.Stat;
+            var data = await _unitOfWork.Repository<PolicyAssignmentRule>().Update(oldData);
+            await _unitOfWork.Commit();
+
+            var res = new PolicyAssignmentRuleListDto();
+            var response = await _med.Send(new PolicyAssignmentRuleByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class PolicyAssignmentRuleDelHandler : IRequestHandler<PolicyAssignmentRuleDelCmd>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public PolicyAssignmentRuleDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task Handle(PolicyAssignmentRuleDelCmd request, CancellationToken cancellationToken)
     {

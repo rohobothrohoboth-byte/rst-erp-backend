@@ -1,10 +1,14 @@
 ﻿using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Common;
+using FluentValidation;
+using Leave.App;
 using Leave.App.Interfaces;
+using Leave.App.Validators;
 using Leave.Utility.Extensions;
 using Leave.Utility.Persistence;
 using Leave.Utility.Repos;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +50,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
         builder.Services.AddScoped(typeof(IHrmLeaveRepo<>), typeof(HrmLeaveRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
-        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AppAssemblyMarker).Assembly));
         builder.Services.AddOpenApi();
         builder.Services.AddGrpc();
         return builder;
@@ -54,6 +58,9 @@ public static class DependencyInjection
 
     public static WebApplicationBuilder AddErrorHandling(this WebApplicationBuilder builder)
     {
+        builder.Services.AddValidatorsFromAssemblyContaining<AppAssemblyMarker>();
+        builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
         builder.Services.AddProblemDetails(options =>
         {
             options.CustomizeProblemDetails = context =>

@@ -9,15 +9,16 @@ namespace Leave.App.Commands;
 
 public class LeavePolicyConfigAddCmd : IRequest<LeavePolicyConfigListDto> { public LeavePolicyConfigAddDto AddDto { get; set; } = default!; }
 public class LeavePolicyConfigModCmd : IRequest<LeavePolicyConfigListDto> { public LeavePolicyConfigModDto ModDto { get; set; } = default!; }
+public class LeavePolicyConfigStatCmd : IRequest<LeavePolicyConfigListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class LeavePolicyConfigDelCmd : IRequest { public Guid Id { get; set; } }
 public class LeavePolicyStatCmd : IRequest { public Guid Id { get; set; } }
 
-public class LeavePolicyConfigAddCmdHandler : IRequestHandler<LeavePolicyConfigAddCmd, LeavePolicyConfigListDto>
+public class LeavePolicyConfigAddHandler : IRequestHandler<LeavePolicyConfigAddCmd, LeavePolicyConfigListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeavePolicyConfigAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeavePolicyConfigAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeavePolicyConfigListDto> Handle(LeavePolicyConfigAddCmd request, CancellationToken cancellationToken)
     {
@@ -55,12 +56,12 @@ public class LeavePolicyConfigAddCmdHandler : IRequestHandler<LeavePolicyConfigA
     }
 }
 
-public class LeavePolicyConfigModCmdHandler : IRequestHandler<LeavePolicyConfigModCmd, LeavePolicyConfigListDto>
+public class LeavePolicyConfigModHandler : IRequestHandler<LeavePolicyConfigModCmd, LeavePolicyConfigListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public LeavePolicyConfigModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeavePolicyConfigModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<LeavePolicyConfigListDto> Handle(LeavePolicyConfigModCmd request, CancellationToken cancellationToken)
     {
@@ -95,10 +96,43 @@ public class LeavePolicyConfigModCmdHandler : IRequestHandler<LeavePolicyConfigM
     }
 }
 
-public class LeavePolicyConfigDelCmdHandler : IRequestHandler<LeavePolicyConfigDelCmd>
+public class LeavePolicyConfigStatHandler : IRequestHandler<LeavePolicyConfigStatCmd, LeavePolicyConfigListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public LeavePolicyConfigDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IMediator _med;
+
+    public LeavePolicyConfigStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+
+    public async Task<LeavePolicyConfigListDto> Handle(LeavePolicyConfigStatCmd request, CancellationToken cancellationToken)
+    {
+        var oldData = await _unitOfWork.Repository<LeavePolicyConfig>().GetById(request.StatDto.Id);
+        if (oldData == null) { throw new DomainException($"LEAVE POLICY CONFIGURATION with Id {request.StatDto.Id} NOT FOUND."); }
+
+        await _unitOfWork.Begin();
+        try
+        {
+            oldData.IsActive = request.StatDto.Stat;
+            var data = await _unitOfWork.Repository<LeavePolicyConfig>().Update(oldData);
+            await _unitOfWork.Commit();
+
+            var res = new LeavePolicyConfigListDto();
+            var response = await _med.Send(new LeavePolicyConfigByIdQry { Id = data.Id }, cancellationToken);
+            if (response == null) { return res; }
+            res = response;
+            return res;
+        }
+        catch
+        {
+            await _unitOfWork.Rollback();
+            throw;
+        }
+    }
+}
+
+public class LeavePolicyConfigDelHandler : IRequestHandler<LeavePolicyConfigDelCmd>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public LeavePolicyConfigDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task Handle(LeavePolicyConfigDelCmd request, CancellationToken cancellationToken)
     {
