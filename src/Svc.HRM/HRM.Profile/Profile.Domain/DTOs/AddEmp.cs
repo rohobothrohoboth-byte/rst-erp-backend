@@ -24,6 +24,7 @@ public class Step1Dto
     public Guid BranchId { get; set; } = default!; //Dummy property for Branch
     public string EmploymentType { get; set; } = default!; //enum.EmpType (0/1)
     public string EmploymentNature { get; set; } = default!; //enum.EmpNature (0/1)
+    public string WorkArrangement { get; set; } = default!; //enum.WorkArrangement (0/1)
     public IFormFile? File { get; set; } = default!;
 }
 
@@ -127,6 +128,7 @@ public class Step5Dto
     public string Branch { get; set; } = default!;
     public string EmploymentType { get; set; } = default!;
     public string EmploymentNature { get; set; } = default!;
+    public string WorkArr { get; set; } = default!;
 
     // Biographical
     public string BirthDate { get; set; } = default!;
@@ -181,4 +183,5 @@ public class BasicInfoDto
     public string Branch { get; set; } = default!;
     public string EmploymentType { get; set; } = default!;
     public string EmploymentNature { get; set; } = default!;
+    public string WorkArrangement { get; set; } = default!;
 }

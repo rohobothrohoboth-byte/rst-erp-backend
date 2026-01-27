@@ -43,7 +43,8 @@ public class EmpLeavePolicyConf : IEntityTypeConfiguration<EmpLeavePolicy>
     {
         b.HasKey(x => x.Id);
         b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeavePolicyConfigId });
+        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeavePolicyConfigId });
+        b.HasIndex(x => new { x.EmployeeId, x.LeavePolicyId});
         b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
     }
 }

@@ -32,18 +32,36 @@ public enum EmpType
 
 public enum EmpNature
 {
-    [Display(Name = "Permanent")]
+    [Display(Name = "Permanent / Full-time")]
     Per,
-    [Display(Name = "Contract")]
-    Con
+    [Display(Name = "Contract / Fixed-term")]
+    Con,
+    [Display(Name = "Probation")]
+    Pro,
+    [Display(Name = "Intern / Trainee")]
+    Inte,
+    [Display(Name = "Part-time / Casual")]
+    Par
+}
+
+public enum WorkArrangement
+{
+    [Display(Name = "On-site")]
+    OnSite,
+    [Display(Name = "Remote")]
+    Remote,
+    [Display(Name = "Hybrid")]
+    Hybrid,
+    [Display(Name = "Shift-based")]
+    ShiftB,
+    [Display(Name = "Rotational / Roster-based")]
+    Rota
 }
 
 public enum MaritalStat
 {
-    [Display(Name = "Not Married")]
+    [Display(Name = "Single / Not Married")]
     NotMar,
-    [Display(Name = "Single")]
-    Sin,
     [Display(Name = "Married")]
     Mar,
     [Display(Name = "Widow/er")]

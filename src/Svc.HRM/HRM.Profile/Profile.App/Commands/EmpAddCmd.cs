@@ -44,6 +44,7 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                 DepartmentId = request.AddDto.DepartmentId,
                 EmploymentType = request.AddDto.EmploymentType,
                 EmploymentNature = request.AddDto.EmploymentNature,
+                WorkArrangement = request.AddDto.WorkArrangement,
                 PersonId = per.Id
             };
             await _unitOfWork.Repository<Employee>().Add(data);
@@ -166,6 +167,7 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
         }
     }
 }
+
 
 public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 {

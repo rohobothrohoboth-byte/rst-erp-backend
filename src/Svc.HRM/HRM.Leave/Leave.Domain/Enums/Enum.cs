@@ -74,8 +74,6 @@ public enum ConditionOperator
     Equal,
     [Display(Name = "Not Equals")]
     NotEquals,
-    [Display(Name = "In")]
-    In,
     [Display(Name = "Greater than")]
     GreaterThan,
     [Display(Name = "Less than")]
@@ -88,16 +86,16 @@ public enum ConditionOperator
 
 public enum ConditionField
 {
-    [Display(Name = "Employement Type")]
-    EmpType,
     [Display(Name = "Employement Nature")]
     EmpNat,
     [Display(Name = "Gender")]
     Gender,
     [Display(Name = "Service Months")]
     SerYear,
-    [Display(Name = "Disablity Status")]
-    Disable
+    [Display(Name = "Work Arrangement")]
+    WorkAr,
+    [Display(Name = "Job Grade")]
+    Jg,
 }
 
 public enum LedgerSource

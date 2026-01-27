@@ -68,6 +68,7 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 JobGrade = jg.Name != null ? jg.Name : "NOT AVAILABLE",
                 EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
                 EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+                WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
                 Photo = photo,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
@@ -118,6 +119,7 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             JobGrade = jg.Res.Name != null ? jg.Res.Name : "NOT AVAILABLE",
             EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
             EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+            WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
             Photo = Convert.ToBase64String(ePhotoB!.Data),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
@@ -182,7 +184,8 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
             Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
             EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-            EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
+            EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+            WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
         };
 
         if (eBio != null)
@@ -372,7 +375,8 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
             Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
             Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
             EmploymentType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-            EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName()
+            EmploymentNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
+            WorkArrangement = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName()
         };
 
         return c;

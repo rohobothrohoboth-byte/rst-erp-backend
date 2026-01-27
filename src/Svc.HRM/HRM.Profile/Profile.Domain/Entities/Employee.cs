@@ -5,6 +5,7 @@ public class Employee : BaseEntity
     public string Code { get; set; } = default!;
     public string EmploymentType { get; set; } = default!; //enum.EmpType
     public string EmploymentNature { get; set; } = default!; //enum.EmpNature
+    public string WorkArrangement { get; set; } = default!; //enum.WorkArrangement
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
     public Guid PersonId { get; set; } = default!; //Person
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade

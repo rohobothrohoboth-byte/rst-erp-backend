@@ -30,7 +30,7 @@ public class LeaveAppChainAddHandler : IRequestHandler<LeaveAppChainAddCmd, Leav
                 LeavePolicyId = request.AddDto.LeavePolicyId,
                 EffectiveFrom = request.AddDto.EffectiveFrom,
                 EffectiveTo = request.AddDto.EffectiveTo,
-                IsActive = request.AddDto.IsActive
+                IsActive = true
             };
             await _unitOfWork.Repository<LeaveAppChain>().Add(data);
             await _unitOfWork.Commit();
