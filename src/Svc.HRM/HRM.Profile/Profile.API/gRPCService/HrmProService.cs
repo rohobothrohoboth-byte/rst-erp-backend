@@ -18,6 +18,20 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
+    public override async Task<HrmProRes> GetEmp(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new HrmProRes();
+        var response = await _med.Send(new EmpNameByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            var nList = new HrmProList { Id = null, Name = null };
+            res.Res = nList;
+            return res;
+        }
+        var nList2 = new HrmProList { Id = response.Id.ToString(), Name = response.Name, };
+        res.Res = nList2;
+        return res;
+    }
 
     public override async Task<HrmProListRes> GetListEmp(HrmProListRqst request, ServerCallContext context)
     {
@@ -38,18 +52,31 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
-    public override async Task<HrmProRes> GetEmp(HrmProRqst request, ServerCallContext context)
+    public override async Task<HrmProListPlcy> GetListEmpPolicy(HrmProListRqst request, ServerCallContext context)
     {
-        var res = new HrmProRes();
-        var response = await _med.Send(new EmpNameByIdQry { Id = Guid.Parse(request.Id) });
-        if (response == null)
+        var res = new HrmProListPlcy();
+        var response = (await _med.Send(new EmpPolicyAllQry())).ToList();
+        if (response.Count <= 0)
         {
-            var nList = new HrmProList { Id = null, Name = null };
-            res.Res = nList;
+            var nList = new HrmEmpPlcy { Id = null, Name = null, SerYear = null, EmpType = null, WorkAr = null, Gender = null, Jg = null };
+            res.Res.Add(nList);
             return res;
         }
-        var nList2 = new HrmProList { Id = response.Id.ToString(), Name = response.Name, };
-        res.Res = nList2;
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new HrmEmpPlcy
+            {
+                Id = dbItem.EmployeeId.ToString(),
+                Name = dbItem.Name,
+                SerYear = dbItem.SerYear.ToString(),
+                EmpType = dbItem.EmpType,
+                WorkAr = dbItem.WorkAr,
+                Gender = dbItem.Gender,
+                Jg = dbItem.Jg
+            });
+        }
+
         return res;
     }
 

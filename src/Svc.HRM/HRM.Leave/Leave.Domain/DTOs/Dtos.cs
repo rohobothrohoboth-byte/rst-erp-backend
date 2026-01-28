@@ -23,12 +23,25 @@ public class LedgerEntryDto
     public Guid? ReferenceId { get; set; } // LeaveRequestId, AccrualBatchId, etc.
 }
 
-public class EmployeePolicyContext
+public class EmpPolicyCtx
 {
     public Guid EmployeeId { get; set; }
+    public string Name { get; set; } = default!;
     public double SerYear { get; set; } = default!;
     public string EmpType { get; set; } = default!;
-    public string EmpNat { get; set; } = default!;
+    public string WorkAr { get; set; } = default!;
     public string Gender { get; set; } = default!;
-    public string Disable { get; set; } = default!;
+    public string Jg { get; set; } = default!;
 }
+
+public class PolicyCondCtx
+{
+    public Guid PolicyAssId { get; set; }
+    public string Name { get; set; } = default!;
+    public double SerYear { get; set; } = default!;
+    public string EmpType { get; set; } = default!;
+    public string WorkAr { get; set; } = default!;
+    public string Gender { get; set; } = default!;
+    public string Jg { get; set; } = default!;
+}
+

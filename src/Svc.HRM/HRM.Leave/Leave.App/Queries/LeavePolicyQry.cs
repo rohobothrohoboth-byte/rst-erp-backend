@@ -90,7 +90,7 @@ public class ActiveLeavePolicyHandler : IRequestHandler<ActiveLeavePolicyQry, Li
     public async Task<List<LeavePolicyListDto>> Handle(ActiveLeavePolicyQry request, CancellationToken cancellationToken)
     {
         var stat = BoolToStr.EnumToString(PolicyStatus.Active);
-        IEnumerable<LeavePolicy> dbData = await _unitOfWork.Repository<LeavePolicy>().Find(p => p.Status == stat);
+        var dbData = await _unitOfWork.Repository<LeavePolicy>().Find(p => p.Status == stat);
         var dataL = new List<LeavePolicyListDto>();
         var lvtL = await _unitOfWork.Repository<LeaveType>().GetAll();
 

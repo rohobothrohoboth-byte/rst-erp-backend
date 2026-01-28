@@ -19,4 +19,12 @@ public class NumToWord
 
         return new string(chars);
     }
+
+    public int GetMonths(DateTime startDateUtc, DateTime asOfUtc)
+    {
+        if (asOfUtc < startDateUtc) { return 0; }
+        var months = (asOfUtc.Year - startDateUtc.Year) * 12 + (asOfUtc.Month - startDateUtc.Month);
+        if (asOfUtc.Day < startDateUtc.Day) { months--; }
+        return Math.Max(0, months);
+    }
 }

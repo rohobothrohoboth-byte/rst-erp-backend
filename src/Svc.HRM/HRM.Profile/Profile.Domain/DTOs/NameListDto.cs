@@ -25,3 +25,14 @@ public class EmpSearchRes
     public string Position { get; set; } = default!;
 }
 
+public class EmpPolicyCtx
+{
+    public Guid EmployeeId { get; set; }
+    public string Name { get; set; } = default!;
+    public double SerYear { get; set; } = default!;
+    public string EmpType { get; set; } = default!;
+    public string WorkAr { get; set; } = default!;
+    public string Gender { get; set; } = default!;
+    public string Jg { get; set; } = default!;
+}
+
