@@ -11,7 +11,7 @@ public class LeavePolicyConfigAddCmd : IRequest<LeavePolicyConfigListDto> { publ
 public class LeavePolicyConfigModCmd : IRequest<LeavePolicyConfigListDto> { public LeavePolicyConfigModDto ModDto { get; set; } = default!; }
 public class LeavePolicyConfigStatCmd : IRequest<LeavePolicyConfigListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class LeavePolicyConfigDelCmd : IRequest { public Guid Id { get; set; } }
-public class LeavePolicyStatCmd : IRequest { public Guid Id { get; set; } }
+public class LeavePolicyStatCmd : IRequest { public Guid Id { get; set; } public Guid PolicyId { get; set; } }
 
 public class LeavePolicyConfigAddHandler : IRequestHandler<LeavePolicyConfigAddCmd, LeavePolicyConfigListDto>
 {
@@ -40,7 +40,7 @@ public class LeavePolicyConfigAddHandler : IRequestHandler<LeavePolicyConfigAddC
             await _unitOfWork.Repository<LeavePolicyConfig>().Add(data);
             await _unitOfWork.Commit();
 
-            await _med.Send(new LeavePolicyStatCmd { Id = data.Id }, cancellationToken);
+            await _med.Send(new LeavePolicyStatCmd { Id = data.Id, PolicyId = request.AddDto.LeavePolicyId }, cancellationToken);
 
             var res = new LeavePolicyConfigListDto();
             var response = await _med.Send(new LeavePolicyConfigByIdQry { Id = data.Id }, cancellationToken);
@@ -162,7 +162,7 @@ public class LeavePolicyStatHandler : IRequestHandler<LeavePolicyStatCmd>
         await _unitOfWork.Begin();
         try
         {
-            var data = (await _unitOfWork.Repository<LeavePolicyConfig>().Find(c => c.Id != request.Id)).ToList();
+            var data = (await _unitOfWork.Repository<LeavePolicyConfig>().Find(c => c.Id != request.Id && c.LeavePolicyId == request.PolicyId)).ToList();
             if (data.Count > 0)
             {
                 foreach (var oldData in data)

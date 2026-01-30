@@ -18,6 +18,14 @@ namespace Leave.API.Controllers;
 [ApiVersion("1.0")]
 public class LeavePolicyController(IMediator med) : ControllerBase
 {
+    [HttpGet("AssignLeavePolicy")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AssignPolicy()
+    {
+        var response = await med.Send(new PolicyAssignCmd());
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     [HttpGet("ActiveLeavePolicy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ActiveLeavePolicy()

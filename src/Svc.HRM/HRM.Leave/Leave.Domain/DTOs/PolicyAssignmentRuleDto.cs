@@ -12,8 +12,6 @@ public class PolicyAssignmentRuleListDto : BaseDto
     public string EffectiveToStr => EffectiveTo.HasValue ? $"{EffectiveTo:MMMM dd, yyyy}" : "";
     public string PriorityStr { get; set; } = default!;
     public string IsActiveStr { get; set; } = default!;
-    public string LeavePolicy { get; set; } = default!; // LeavePolicy
-    public string LeaveType { get; set; } = default!; // LeaveType
 }
 
 public class PolicyAssignmentRuleAddDto

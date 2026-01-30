@@ -21,16 +21,6 @@ public class AssignmentRuleByPolicyIdHandler : IRequestHandler<AssignmentRuleByP
         var dbData = (await _unitOfWork.Repository<PolicyAssignmentRule>().Find(c => c.LeavePolicyId == request.Id)).ToList();
         var dataL = new List<PolicyAssignmentRuleListDto>();
         if (dbData.Count <= 0) { return dataL; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(request.Id);
-        var lvTyNm = "Unknown";
-        if (lvPo != null)
-        {
-            var lvTy = await _unitOfWork.Repository<LeaveType>().GetById(lvPo!.LeaveTypeId);
-            if (lvTy != null)
-            {
-                lvTyNm = lvTy.Name;
-            }
-        }
 
         foreach (var data in dbData)
         {
@@ -45,8 +35,6 @@ public class AssignmentRuleByPolicyIdHandler : IRequestHandler<AssignmentRuleByP
                 EffectiveTo = data.EffectiveTo,
                 PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
                 IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                LeavePolicy = lvPo!.Name,
-                LeaveType = lvTyNm,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
@@ -68,16 +56,6 @@ public class PolicyAssignmentRuleByIdHandler : IRequestHandler<PolicyAssignmentR
     {
         var data = await _unitOfWork.Repository<PolicyAssignmentRule>().GetById(request.Id);
         if (data == null) { return null; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
-        var lvTyNm = "Unknown";
-        if (lvPo != null)
-        {
-            var lvTy = await _unitOfWork.Repository<LeaveType>().GetById(lvPo!.LeaveTypeId);
-            if (lvTy != null)
-            {
-                lvTyNm = lvTy.Name;
-            }
-        }
 
         var c = new PolicyAssignmentRuleListDto
         {
@@ -90,8 +68,6 @@ public class PolicyAssignmentRuleByIdHandler : IRequestHandler<PolicyAssignmentR
             EffectiveTo = data.EffectiveTo,
             PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
             IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            LeavePolicy = lvPo!.Name,
-            LeaveType = lvTyNm,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
@@ -116,17 +92,6 @@ public class ActiveAssignmentRulesHandler : IRequestHandler<ActiveAssignmentRule
 
         foreach (var data in dbData)
         {
-            var lvPo = lvPoL.FirstOrDefault(p => p.Id == data.LeavePolicyId);
-            var lvTyNm = "Unknown";
-            if (lvPo != null)
-            {
-                var lvTy = lvTyL.FirstOrDefault(p => p.Id == lvPo.LeaveTypeId);
-                if (lvTy != null)
-                {
-                    lvTyNm = lvTy.Name;
-                }
-            }
-
             var c = new PolicyAssignmentRuleListDto
             {
                 Id = data.Id,
@@ -138,8 +103,6 @@ public class ActiveAssignmentRulesHandler : IRequestHandler<ActiveAssignmentRule
                 EffectiveTo = data.EffectiveTo,
                 PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
                 IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                LeavePolicy = lvPo!.Name,
-                LeaveType = lvTyNm,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,

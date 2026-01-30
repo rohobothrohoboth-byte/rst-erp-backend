@@ -36,12 +36,30 @@ public class EmpPolicyCtx
 
 public class PolicyCondCtx
 {
-    public Guid PolicyAssId { get; set; }
-    public string Name { get; set; } = default!;
-    public double SerYear { get; set; } = default!;
-    public string EmpType { get; set; } = default!;
-    public string WorkAr { get; set; } = default!;
-    public string Gender { get; set; } = default!;
-    public string Jg { get; set; } = default!;
+    public Guid PolicyId { get; set; }
+    public Guid PolAssignRuleId { get; set; }
+    public Guid PolRuleCondId { get; set; }
+    public DateTime EffectiveFrom { get; set; }
+    public string Priority { get; set; } = default!;
+    public string Field { get; set; } = default!; // enum.ConditionField
+    public string Operator { get; set; } = default!; // enum.ConditionOperator
+    public string Value { get; set; } = default!;
 }
+
+public class ResolvePolicy
+{
+    public DateTime EffectiveFrom { get; set; }
+    public double AssignedEntitlement { get; set; }
+    //public string Reason { get; set; } = default!; // enum.EmpLeavePolReason(0/1)
+    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
+    public Guid LeaveTypeId { get; set; } // LeaveType
+    public Guid LeavePolicyId { get; set; } // LeavePolicy
+}
+
+//public class TempCtx
+//{
+//    public List<ResolvePolicy> ResolvePolicy { get; set; } = default!;
+//    public List<EmpPolicyCtx> EmpPolicyCtx { get; set; } = default!;
+//    public List<PolicyCondCtx> PolicyCondCtx { get; set; } = default!;
+//}
 

@@ -3,6 +3,7 @@ using System;
 using Leave.Utility.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Leave.Utility.Migrations
 {
     [DbContext(typeof(HrmLeaveDbContext))]
-    partial class HrmLeaveDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260129093504_MigHrmLeave06")]
+    partial class MigHrmLeave06
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
