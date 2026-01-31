@@ -50,16 +50,9 @@ public class ResolvePolicy
 {
     public DateTime EffectiveFrom { get; set; }
     public double AssignedEntitlement { get; set; }
-    //public string Reason { get; set; } = default!; // enum.EmpLeavePolReason(0/1)
     public Guid EmployeeId { get; set; } // HRM.Profile.Employee
     public Guid LeaveTypeId { get; set; } // LeaveType
     public Guid LeavePolicyId { get; set; } // LeavePolicy
 }
 
-//public class TempCtx
-//{
-//    public List<ResolvePolicy> ResolvePolicy { get; set; } = default!;
-//    public List<EmpPolicyCtx> EmpPolicyCtx { get; set; } = default!;
-//    public List<PolicyCondCtx> PolicyCondCtx { get; set; } = default!;
-//}
 

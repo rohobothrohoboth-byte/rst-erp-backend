@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Svc.Auth.Commands;
 using Svc.Auth.Helpers;
 using Svc.Auth.Models.Dtos;
-using ValidationException = Svc.Auth.Helpers.ValidationException;
 
 namespace Svc.Auth.Controllers;
 
@@ -28,7 +27,7 @@ public class RegistrationController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new RegStep1Cmd { Reg = dto };
@@ -45,7 +44,7 @@ public class RegistrationController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new RegStep2Cmd { Reg = dto };
@@ -62,7 +61,7 @@ public class RegistrationController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new RegStep3Cmd { Reg = dto };

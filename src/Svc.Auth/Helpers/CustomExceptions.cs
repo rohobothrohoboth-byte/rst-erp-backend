@@ -55,7 +55,7 @@ public class DomainExceptionHandler : IExceptionHandler
     public Task<ApiResponse<string>> HandleAsync(Exception ex, HttpContext context)
     {
         var domainEx = (DomainException)ex;
-        var errors = domainEx is ValidationException valEx ? valEx.Errors.ToList() : new List<string> { domainEx.Message };
+        var errors = domainEx is ValException valEx ? valEx.Errors.ToList() : new List<string> { domainEx.Message };
         var response = new ApiResponse<string>(domainEx.Message, errors, domainEx.StatusCode)
         {
             TraceId = context.TraceIdentifier

@@ -14,6 +14,17 @@ public class HolidayListDto : BaseDTO
     public string DateStrAm => Date.ToEthiopianDateString("MMMM dd, yyyy");
 }
 
+public class HolidaySerListDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public DateTime Date { get; set; } = default!;
+    public bool IsPublic { get; set; } = true;
+    public Guid FiscalYearId { get; set; }
+    public DateTime DateAdd { get; set; }
+    public DateTime? DateMod { get; set; }
+}
+
 public class AddHolidayDto
 {
     public string Name { get; set; } = default!;

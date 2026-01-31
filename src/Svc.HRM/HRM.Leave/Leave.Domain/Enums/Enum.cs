@@ -98,6 +98,46 @@ public enum ConditionField
     Jg,
 }
 
+public enum PolicyGender
+{
+    [Display(Name = "Male")]
+    Male,
+    [Display(Name = "Female")]
+    Female,
+    [Display(Name = "Male & Female")]
+    Both
+}
+
+public enum EmpLeavePolReason
+{
+    [Display(Name = "Employee Onboarding")]
+    OnBoard,
+    [Display(Name = "Promotion")]
+    Porm,
+    [Display(Name = "Transfer")]
+    Tra,
+    [Display(Name = "Policy Migration")]
+    PolChange
+}
+
+public enum AccuralSource
+{
+    [Display(Name = "SYSTEM")]
+    Sys,
+    [Display(Name = "MANUAL")]
+    Manual
+}
+
+public enum LeaveCondition
+{
+    [Display(Name = "With Half Salary")]
+    HalfSalary,
+    [Display(Name = "With Full Salary")]
+    FullSlary,
+    [Display(Name = "With No Salary")]
+    NoSalary
+}
+
 public enum LedgerSource
 {
     [Display(Name = "Accrual")]
@@ -124,72 +164,4 @@ public enum LedgerEntryType
     Approval,
     [Display(Name = "Deduction")]
     Deduction
-}
-
-public enum PolicyGender
-{
-    [Display(Name = "Male")]
-    Male,
-    [Display(Name = "Female")]
-    Female,
-    [Display(Name = "Male & Female")]
-    Both
-}
-
-public enum AccuralSource
-{
-    [Display(Name = "SYSTEM")]
-    Sys,
-    [Display(Name = "MANUAL")]
-    Manual
-}
-
-public enum EmpLeavePolReason
-{
-    [Display(Name = "Employee Onboarding")]
-    OnBoard,
-    [Display(Name = "Promotion")]
-    Porm,
-    [Display(Name = "Transfer")]
-    Tra,
-    [Display(Name = "Policy Migration")]
-    PolChange
-}
-
-public enum LeaveCondition
-{
-    [Display(Name = "With Half Salary")]
-    HalfSalary,
-    [Display(Name = "With Full Salary")]
-    FullSlary,
-    [Display(Name = "With No Salary")]
-    NoSalary
-}
-
-public enum EmpNature
-{
-    [Display(Name = "Permanent / Full-time")]
-    Per,
-    [Display(Name = "Contract / Fixed-term")]
-    Con,
-    [Display(Name = "Probation")]
-    Pro,
-    [Display(Name = "Intern / Trainee")]
-    Inte,
-    [Display(Name = "Part-time / Casual")]
-    Par
-}
-
-public enum WorkArrangement
-{
-    [Display(Name = "On-site")]
-    OnSite,
-    [Display(Name = "Remote")]
-    Remote,
-    [Display(Name = "Hybrid")]
-    Hybrid,
-    [Display(Name = "Shift-based")]
-    ShiftB,
-    [Display(Name = "Rotational / Roster-based")]
-    Rota
 }

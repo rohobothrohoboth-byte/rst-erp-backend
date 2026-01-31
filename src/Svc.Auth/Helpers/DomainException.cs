@@ -6,11 +6,11 @@ public class DomainException : Exception
     public DomainException(string message, int statusCode = 400) : base(message) { StatusCode = statusCode; }
 }
 
-public class ValidationException : DomainException
+public class ValException : DomainException
 {
     public List<string> Errors { get; }
-    public ValidationException(IEnumerable<string> errors) : base("Validation failed.") { Errors = errors.ToList(); }
-    public ValidationException(string error) : this(new List<string> { error }) { }
+    public ValException(IEnumerable<string> errors) : base("Validation failed.") { Errors = errors.ToList(); }
+    public ValException(string error) : this(new List<string> { error }) { }
 }
 
 public class ConflictException : DomainException

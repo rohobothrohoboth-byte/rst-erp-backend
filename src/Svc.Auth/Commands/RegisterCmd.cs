@@ -40,36 +40,48 @@ public class RegStep1CmdHandler : IRequestHandler<RegStep1Cmd, RegRes?>
             var code = (await _gRPC_HrmPro.GetEmpCode(empId.ToString())).Code;
             if (code == null) { throw new DomainException($"UNABLE to FIND employee with Id {request.Reg.EmployeeId}!!"); }
 
-            var usr = await _uManager.FindByNameAsync(code);
-            if (usr != null) { throw new DomainException($"USER ACCOUNT ALREADY CREATED for selected employee!!"); }
+            //var usr = await _uManager.FindByNameAsync(code);
+            //if (usr != null) { throw new DomainException($"USER ACCOUNT ALREADY CREATED for selected employee!!"); }
 
             var role = await _rManager.FindByIdAsync(request.Reg.RoleId);
             if (role == null) { throw new DomainException($"UNABLE to FIND Description for selected role!!"); }
 
-            var usrPw = request.Reg.Password;
-            var user = new AppUser
+            var userid = "";
+            var usr = await _uManager.FindByNameAsync(code);
+            if (usr == null)
             {
-                EmployeeId = empId,
-                IsActive = true,
-                UserName = code,
-                Email = code,
-                EmailConfirmed = true,
-            };
+                var usrPw = request.Reg.Password;
+                var user = new AppUser
+                {
+                    EmployeeId = empId,
+                    IsActive = true,
+                    UserName = code,
+                    Email = code,
+                    EmailConfirmed = true,
+                };
 
-            var createResult = await _uManager.CreateAsync(user, usrPw);
-            if (!createResult.Succeeded) { throw new DomainException($"UNABLE to Create USER ACCOUNT!!"); }
+                var createResult = await _uManager.CreateAsync(user, usrPw);
+                if (!createResult.Succeeded) { throw new DomainException($"UNABLE to Create USER ACCOUNT!!"); }
 
-            await _uManager.AddToRoleAsync(user, role.Name!);
-            var userid = user.Id;
+                await _uManager.AddToRoleAsync(user, role.Name!);
+                userid = user.Id;
+                //var userid = user.Id;
+            }
+
+            userid = usr!.Id;
 
             foreach (var per in selPer)
             {
-                var userMod = new UserPerModule
+                var added = await _unitOfWork.Repository<UserPerModule>().GetFoD(p => p.UserId == userid && p.PerModuleId == per);
+                if (added == null)
                 {
-                    UserId = userid,
-                    PerModuleId = per
-                };
-                await _unitOfWork.Repository<UserPerModule>().Add(userMod);
+                    var userMod = new UserPerModule
+                    {
+                        UserId = userid,
+                        PerModuleId = per
+                    };
+                    await _unitOfWork.Repository<UserPerModule>().Add(userMod);
+                }
             }
             await _unitOfWork.Commit();
 
@@ -100,12 +112,16 @@ public class RegStep2CmdHandler : IRequestHandler<RegStep2Cmd, RegRes?>
             var userId = request.Reg.UserId;
             foreach (var per in selPer)
             {
-                var userMod = new UserPerMenu
+                var added = await _unitOfWork.Repository<UserPerMenu>().GetFoD(p => p.UserId == userId && p.PerMenuId == per);
+                if (added == null)
                 {
-                    UserId = userId,
-                    PerMenuId = per
-                };
-                await _unitOfWork.Repository<UserPerMenu>().Add(userMod);
+                    var userMod = new UserPerMenu
+                    {
+                        UserId = userId,
+                        PerMenuId = per
+                    };
+                    await _unitOfWork.Repository<UserPerMenu>().Add(userMod);
+                }
             }
             await _unitOfWork.Commit();
 
@@ -136,12 +152,16 @@ public class RegStep3CmdHandler : IRequestHandler<RegStep3Cmd, RegRes?>
             var userId = request.Reg.UserId;
             foreach (var per in selPer)
             {
-                var userMod = new UserPerApi
+                var added = await _unitOfWork.Repository<UserPerApi>().GetFoD(p => p.UserId == userId && p.PerApiId == per);
+                if (added == null)
                 {
-                    UserId = userId,
-                    PerApiId = per
-                };
-                await _unitOfWork.Repository<UserPerApi>().Add(userMod);
+                    var userMod = new UserPerApi
+                    {
+                        UserId = userId,
+                        PerApiId = per
+                    };
+                    await _unitOfWork.Repository<UserPerApi>().Add(userMod);
+                }                
             }
             await _unitOfWork.Commit();
 

@@ -74,7 +74,7 @@ public class PerApiByMenuIdQryHandler : IRequestHandler<PerApiByMenuIdQry, MenuP
         if (allMenu.Count <= 0) { return null; }
         var perL = allMenu.Select(data => new NameList { Id = data.Id, Name = data.Desc, }).ToList();
 
-        var dataL = new MenuPerApiListDto { PerModuleId = menu.Id, PerMenu = menu.Label, PerApiList = perL };
+        var dataL = new MenuPerApiListDto { PerMenuId = menu.Id, PerMenu = menu.Label, PerApiList = perL };
         return dataL;
     }
 }
