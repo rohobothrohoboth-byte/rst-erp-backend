@@ -12,6 +12,7 @@ public class AddressNameByIdQry : IRequest<NameList?> { public Guid Id { get; se
 public class EmpNameAllQry : IRequest<List<NameList>> { }
 public class EmpNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 public class EmpPolicyAllQry : IRequest<List<EmpPolicyCtx>> { }
+public class EmpPolicyByIdQry : IRequest<EmpPolicyCtx?> { public Guid Id { get; set; } }
 
 
 public class AddressNameAllHandler : IRequestHandler<AddressNameAllQry, List<NameList>>
@@ -137,5 +138,33 @@ public class EmpPolicyAllHandler : IRequestHandler<EmpPolicyAllQry, List<EmpPoli
         }
 
         return dataL;
+    }
+}
+
+public class EmpPolicyByIdHandler : IRequestHandler<EmpPolicyByIdQry, EmpPolicyCtx?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public EmpPolicyByIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<EmpPolicyCtx?> Handle(EmpPolicyByIdQry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
+        if (data == null) { return null; }
+
+        var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
+        if (per == null) { return null; }
+        var ser = new NumToWord().GetMonths(data.EmploymentDate, DateTime.UtcNow);
+
+        var c = new EmpPolicyCtx
+        {
+            EmployeeId = data.Id,
+            Name = $"{per.FirstName} {per.MiddleName} {per.LastName}",
+            Gender = per.Gender,
+            EmpType = data.EmploymentType,
+            Jg = data.JobGradeId.ToString(),
+            WorkAr = data.WorkArrangement,
+            SerYear = ser
+        };
+        return c;
     }
 }

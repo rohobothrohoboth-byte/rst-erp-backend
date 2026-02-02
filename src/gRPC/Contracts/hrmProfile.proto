@@ -9,6 +9,7 @@ service HrmProfileService {
   rpc GetEmp (HrmProRqst) returns (HrmProRes);
   rpc GetListEmp (HrmProListRqst) returns (HrmProListRes);
   rpc GetListEmpPolicy (HrmProListRqst) returns (HrmProListPlcy);
+  rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
 }
 
 message HrmEmpPlcy {

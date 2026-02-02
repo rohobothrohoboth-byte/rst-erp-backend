@@ -8,7 +8,30 @@ service CorModuleService {
   rpc GetDept (CorModuleRqst) returns (CorModuleResAm);
   rpc GetListDept (CorModuleListRqst) returns (CorModuleListResAm);
   rpc GetFiscalYear (CorModuleRqst) returns (CorModuleRes);
+  rpc GetFiscYearDesc (CorModuleRqst) returns (ActFiscalYear);
   rpc GetListFiscalYear (CorModuleListRqst) returns (CorModuleListRes);
+  rpc GetActiveFiscal (CorModuleListRqst) returns (ActFiscalYear);
+  rpc GetHoDay (CorModuleRqst) returns (HoDayRes);
+  rpc GetListHoDay (CorModuleListRqst) returns (HoDayListRes);
+}
+
+message HoDayRes {
+  string Id = 1;
+  string Name = 2;  
+  string Date = 3;  
+  bool IsPublic = 4;
+  string FiscalYearId = 5;
+}
+
+message HoDayListRes { 
+  repeated HoDayRes Res = 1; 
+}
+
+message ActFiscalYear {
+  string Id = 1;
+  string Name = 2;  
+  string StartDate = 3;  
+  string EndDate = 4;  
 }
 
 message CorModList {

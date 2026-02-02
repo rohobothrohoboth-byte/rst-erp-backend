@@ -80,5 +80,18 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
+    public override async Task<HrmEmpPlcy> GetEmpPolicy(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new HrmEmpPlcy();
+        var response = await _med.Send(new EmpPolicyByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new HrmEmpPlcy { Id = null, Name = null, SerYear = null, EmpType = null, WorkAr = null, Gender = null, Jg = null };
+        }
+        
+
+        return res;
+    }
+
 
 }

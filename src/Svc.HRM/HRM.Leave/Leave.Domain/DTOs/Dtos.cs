@@ -55,4 +55,82 @@ public class ResolvePolicy
     public Guid LeavePolicyId { get; set; } // LeavePolicy
 }
 
+public class LeaveReqValResult
+{
+    public List<string> Errors { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+    public bool IsValid => !Errors.Any();
+    public LeaveBalanceInfo? LeaveBalance { get; set; }
+    public EligibilityInfo? EligibilityInfo { get; set; }
+    public PolicyConstraintsInfo? PolicyConstraints { get; set; }
+    public HolidayInfo? HolidayInfo { get; set; }
+    public double CalculatedWorkingDays { get; set; }
 
+    public void AddError(string error) => Errors.Add(error);
+    public void AddWarning(string warning) => Warnings.Add(warning);
+}
+
+public class LeaveBalanceInfo
+{
+    public double AssignedEntitlement { get; set; }
+    public double UsedDays { get; set; }
+    public double RemainingBalance { get; set; }
+    public double RequestedDays { get; set; }
+}
+
+public class EligibilityInfo
+{
+    public DateTime JoiningDate { get; set; }
+    public int ServiceMonths { get; set; }
+    public int MinRequiredMonths { get; set; }
+    public bool IsEligible { get; set; }
+}
+
+public class PolicyConstraintsInfo
+{
+    public double MaxDaysPerRequest { get; set; }
+    public bool RequiresAttachment { get; set; }
+    public bool AllowEncashment { get; set; }
+    public double MaxCarryOverDays { get; set; }
+}
+
+public class HolidayInfo
+{
+    public int TotalNonWorkingDays { get; set; }
+    public int HolidaysCount { get; set; }
+    public int WeekendsCount { get; set; }
+    public List<HolidayDate> HolidayDates { get; set; } = new();
+}
+
+public class HolidayDate
+{
+    public DateTime Date { get; set; }
+    public string Name { get; set; } = default!;
+}
+
+public class HolidaySerListDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public DateTime Date { get; set; } = default!;
+    public bool IsPublic { get; set; } = true;
+    public Guid FiscalYearId { get; set; }
+}
+
+public class NonWorkingDay
+{
+    public DateTime Date { get; set; }
+    public string Type { get; set; } = default!; // "Weekend" or "Holiday"
+    public string Description { get; set; } = default!;
+}
+
+public class HolidayStatistics
+{
+    public Guid FiscalYearId { get; set; }
+    public string FiscalYearName { get; set; } = default!;
+    public int TotalHolidays { get; set; }
+    public int PublicHolidays { get; set; }
+    public double TotalWorkingDays { get; set; }
+    public Dictionary<int, int> HolidaysByMonth { get; set; } = new();
+    public Dictionary<string, int> HolidaysByDayOfWeek { get; set; } = new();
+}

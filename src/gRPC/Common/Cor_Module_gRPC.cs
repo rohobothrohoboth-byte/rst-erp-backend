@@ -10,6 +10,10 @@ public interface ICorModClient
     Task<CorModuleResAm> GetDept(string id, CancellationToken ct = default);
     Task<CorModuleListRes> GetListFiscalYear(CancellationToken ct = default);
     Task<CorModuleRes> GetFiscalYear(string id, CancellationToken ct = default);
+    Task<ActFiscalYear> GetFiscYearDesc(string id, CancellationToken ct = default);
+    Task<ActFiscalYear> GetActiveFiscal(CancellationToken ct = default);
+    Task<HoDayListRes> GetListHoDay(CancellationToken ct = default);
+    Task<HoDayRes> GetHoDay(string id, CancellationToken ct = default);
 
 }
 
@@ -53,6 +57,38 @@ public class CorModClient : ICorModClient
         var client = new CorModuleService.CorModuleServiceClient(channel);
         var req = new CorModuleRqst { Id = id };
         return await client.GetFiscalYearAsync(req);
+    }
+
+    public async Task<ActFiscalYear> GetFiscYearDesc(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleRqst { Id = id };
+        return await client.GetFiscYearDescAsync(req);
+    }
+
+    public async Task<ActFiscalYear> GetActiveFiscal(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleListRqst();
+        return await client.GetActiveFiscalAsync(req);
+    }
+
+    public async Task<HoDayListRes> GetListHoDay(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleListRqst();
+        return await client.GetListHoDayAsync(req);
+    }
+
+    public async Task<HoDayRes> GetHoDay(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleRqst { Id = id };
+        return await client.GetHoDayAsync(req);
     }
 
 

@@ -1,4 +1,5 @@
-﻿using Cor.Module.Interfaces;
+﻿using Cor.Module.Helpers;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Models.Enums;
@@ -8,6 +9,7 @@ namespace Cor.Module.Queries;
 
 public class AllFiscalYearsQry : IRequest<List<FiscYearListDto>> { }
 public class FiscalYearByIdQry : IRequest<FiscYearListDto?> { public Guid Id { get; set; } }
+public class ActiveFiscalYearQry : IRequest<FiscYearListDto> { }
 
 public class AllFiscalYearsQryHandler : IRequestHandler<AllFiscalYearsQry, List<FiscYearListDto>>
 {
@@ -50,6 +52,35 @@ public class FiscalYearByIdQryHandler : IRequestHandler<FiscalYearByIdQry, FiscY
     public async Task<FiscYearListDto?> Handle(FiscalYearByIdQry request, CancellationToken cancellationToken)
     {
         var yearFisc = await _unitOfWork.Repository<FiscalYear>().GetById(request.Id);
+        if (yearFisc == null) { return null; }
+
+        var c = new FiscYearListDto
+        {
+            Id = yearFisc.Id,
+            Name = yearFisc.Name,
+            DateStart = yearFisc.DateStart,
+            DateEnd = yearFisc.DateEnd,
+            IsActive = yearFisc.IsActive,
+            IsActiveStr = ((YesNo)Enum.Parse(typeof(YesNo), yearFisc.IsActive)).ToDisplayName(),
+            IsDeleted = yearFisc.IsDeleted,
+            DateAdd = yearFisc.DateAdd,
+            DateMod = yearFisc.DateMod,
+            RowVersion = Convert.ToBase64String(yearFisc.RowVersion)
+        };
+        return c;
+    }
+}
+
+public class ActiveFiscalYearHandler : IRequestHandler<ActiveFiscalYearQry, FiscYearListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public ActiveFiscalYearHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<FiscYearListDto?> Handle(ActiveFiscalYearQry request, CancellationToken cancellationToken)
+    {
+        var stat = BoolToStr.EnumToString(YesNo.Yes);
+        var yearFisc = await _unitOfWork.Repository<FiscalYear>().GetFoD(f => f.IsActive == stat);
         if (yearFisc == null) { return null; }
 
         var c = new FiscYearListDto
