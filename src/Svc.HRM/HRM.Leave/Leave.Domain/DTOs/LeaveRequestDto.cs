@@ -26,7 +26,7 @@ public class LeaveRequestAddDto
     public Guid LeaveTypeId { get; set; } // LeaveType
     public DateTime StartDate { get; set; } = default!;
     public DateTime EndDate { get; set; } = default!;
-    public bool IsHalfDay { get; set; } = default!;
+    public bool IsHalfDay { get; set; } = false;
     public string Comments { get; set; } = default!;
 }
 
@@ -63,4 +63,16 @@ public class LeaveRequestDetailDto : BaseDto
     public string ApprovedBy { get; set; } = default!;
     public string Employee { get; set; } = default!;
     public string LeaveType { get; set; } = default!;
+}
+
+public class LeaveReqTestDto
+{
+    public Guid EmpId { get; set; } // LeaveType
+    public Guid LeaveTypeId { get; set; } // LeaveType
+    public DateTime StartDate { get; set; } = default!;
+    public DateTime EndDate { get; set; } = default!;
+    public bool IsHalfDay { get; set; } = false;
+    public bool IsValid { get; set; } = false;
+    public double Days { get; set; } = default!;
+    public string Comments { get; set; } = default!;
 }

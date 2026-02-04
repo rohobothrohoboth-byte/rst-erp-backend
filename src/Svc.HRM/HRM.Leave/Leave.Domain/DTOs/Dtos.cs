@@ -90,8 +90,6 @@ public class PolicyConstraintsInfo
 {
     public double MaxDaysPerRequest { get; set; }
     public bool RequiresAttachment { get; set; }
-    public bool AllowEncashment { get; set; }
-    public double MaxCarryOverDays { get; set; }
 }
 
 public class HolidayInfo
@@ -115,6 +113,46 @@ public class HolidaySerListDto
     public DateTime Date { get; set; } = default!;
     public bool IsPublic { get; set; } = true;
     public Guid FiscalYearId { get; set; }
+}
+
+public class LeaveAppRes
+{
+    public Guid LeaveRequestId { get; set; }
+    public string Status { get; set; } = default!;
+    public string Message { get; set; } = default!;
+    public int CurrentStep { get; set; }
+    public int TotalSteps { get; set; }
+    public bool RequiresApproval { get; set; }
+    public bool IsFinalApproval { get; set; }
+    public ApproverInfo? NextApprover { get; set; }
+    public List<string> Errors { get; set; } = new();
+
+    public bool IsSuccessful => !Errors.Any();
+    public void AddError(string error) => Errors.Add(error);
+}
+
+public class ApproverInfo
+{
+    public int StepOrder { get; set; }
+    public string StepName { get; set; } = default!;
+    public string Role { get; set; } = default!;
+    public Guid? SpecificEmployeeId { get; set; }
+    public bool IsFinalStep { get; set; }
+}
+
+public class PendingApprovalInfo
+{
+    public Guid LeaveRequestId { get; set; }
+    public Guid EmployeeId { get; set; }
+    public string EmployeeName { get; set; } = default!;
+    public string LeaveType { get; set; } = default!;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public double DaysRequested { get; set; }
+    public int CurrentStep { get; set; }
+    public int TotalSteps { get; set; }
+    public string StepName { get; set; } = default!;
+    public DateTime SubmittedDate { get; set; }
 }
 
 public class NonWorkingDay

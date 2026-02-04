@@ -7,8 +7,10 @@ using MediatR;
 namespace Cor.HRMM.Queries;
 
 public class PositionReqAllQry : IRequest<List<PositionReqListDto>> { public Guid Id { get; set; } }
-
 public class PositionReqByIdQry : IRequest<PositionReqListDto?> { public Guid Id { get; set; } }
+public class PosReqByPosIdQry : IRequest<PositionReqListDto?> { public Guid Id { get; set; } }
+
+
 
 public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<PositionReqListDto>>
 {
@@ -77,6 +79,31 @@ public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, Pos
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
             RowVersion = Convert.ToBase64String(data.RowVersion)
+        };
+        return c;
+    }
+}
+
+public class PosReqByPosIdHandler : IRequestHandler<PosReqByPosIdQry, PositionReqListDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public PosReqByPosIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<PositionReqListDto?> Handle(PosReqByPosIdQry request, CancellationToken cancellationToken)
+    {
+        var data = await _unitOfWork.Repository<PositionReq>().GetFoD(r => r.PositionId == request.Id);
+        if (data == null) { return null; }
+
+        var c = new PositionReqListDto
+        {
+            Id = data.Id,
+            PositionId = data.PositionId,
+            Gender = data.Gender,
+            ProfessionType = data.ProfessionType,
+            SaturdayWorkOption = data.SaturdayWorkOption,
+            SundayWorkOption = data.SundayWorkOption,            
+            WorkingHours = data.WorkingHours
         };
         return c;
     }

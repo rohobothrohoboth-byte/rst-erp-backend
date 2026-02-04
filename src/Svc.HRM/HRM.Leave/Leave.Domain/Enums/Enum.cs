@@ -120,6 +120,42 @@ public enum EmpLeavePolReason
     PolChange
 }
 
+public enum WorkOption
+{
+    [Display(Name = "Morning")]
+    Morning,
+    [Display(Name = "Afternoon")]
+    Afternoon,
+    [Display(Name = "Both")]
+    Both,
+    [Display(Name = "None")]
+    None
+}
+
+public enum LedgerSource
+{
+    [Display(Name = "Accrual")]
+    Accrual,
+    [Display(Name = "Leave Request")]
+    LeaveReq,
+    [Display(Name = "Adjustment")]
+    Adjustment,
+    [Display(Name = "Encashment")]
+    Encashment,
+    [Display(Name = "Carry Over")]
+    CarryOver,
+    [Display(Name = "Expiry")]
+    Expiry,
+}
+
+public enum LedgerEntryType
+{
+    [Display(Name = "Credit")]
+    Credit,
+    [Display(Name = "Debit")]
+    Debit
+}
+
 public enum AccuralSource
 {
     [Display(Name = "SYSTEM")]
@@ -136,32 +172,4 @@ public enum LeaveCondition
     FullSlary,
     [Display(Name = "With No Salary")]
     NoSalary
-}
-
-public enum LedgerSource
-{
-    [Display(Name = "Accrual")]
-    Accrual,
-    [Display(Name = "Leave Approved")]
-    LeaveApproved,
-    [Display(Name = "Adjustment")]
-    Adjustment,
-    [Display(Name = "Encashment")]
-    Encashment,
-    [Display(Name = "Carry Over")]
-    CarryOver,
-    [Display(Name = "Expiry")]
-    Expiry,
-}
-
-public enum LedgerEntryType
-{
-    [Display(Name = "Accrual")]
-    Accrual,
-    [Display(Name = "Request")]
-    Request,
-    [Display(Name = "Approval")]
-    Approval,
-    [Display(Name = "Deduction")]
-    Deduction
 }

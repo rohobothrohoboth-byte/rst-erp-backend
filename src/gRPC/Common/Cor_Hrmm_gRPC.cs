@@ -10,6 +10,7 @@ public interface ICorHrmmClient
     Task<CorHrmmRes> GetJobGrade(string id, CancellationToken ct = default);
     Task<CorHrmmListRes> GetListPosition(CancellationToken ct = default);
     Task<CorHrmmRes> GetPosition(string id, CancellationToken ct = default);
+    Task<PosReqRes> GetPosReq(string id, CancellationToken ct = default);
 
 }
 
@@ -53,6 +54,14 @@ public class CorHrmmClient : ICorHrmmClient
         var client = new CorHrmmService.CorHrmmServiceClient(channel);
         var req = new CorHrmmRqst { Id = id };
         return await client.GetPositionAsync(req);
+    }
+
+    public async Task<PosReqRes> GetPosReq(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorHrmmService.CorHrmmServiceClient(channel);
+        var req = new CorHrmmRqst { Id = id };
+        return await client.GetPosReqAsync(req);
     }
 
 

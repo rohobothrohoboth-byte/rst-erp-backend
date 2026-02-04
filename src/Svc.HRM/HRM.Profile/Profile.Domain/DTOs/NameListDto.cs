@@ -36,3 +36,10 @@ public class EmpPolicyCtx
     public string Jg { get; set; } = default!;
 }
 
+public class EmpPosResDto
+{
+    public Guid Id { get; set; }
+    public Guid PositionId { get; set; }
+    public string SaturdayWorkOption { get; set; } = default!;
+    public string SundayWorkOption { get; set; } = default!;
+}

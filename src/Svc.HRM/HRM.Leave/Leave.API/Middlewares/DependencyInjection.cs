@@ -4,6 +4,7 @@ using Common;
 using FluentValidation;
 using Leave.App;
 using Leave.App.Interfaces;
+using Leave.App.Services;
 using Leave.App.Validators;
 using Leave.Utility.Extensions;
 using Leave.Utility.Persistence;
@@ -44,6 +45,12 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
+
+        builder.Services.AddScoped<ILeaveValService, LeaveValService>();
+        builder.Services.AddScoped<IHolidayService, HolidayService>();
+        builder.Services.AddScoped<IApprovalEngine, ApprovalEngine>();
+        builder.Services.AddScoped<ILeaveLedgerService, LeaveLedgerService>();
+
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();

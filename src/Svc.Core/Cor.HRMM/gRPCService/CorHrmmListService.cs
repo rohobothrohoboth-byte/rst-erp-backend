@@ -78,6 +78,24 @@ public class CorHrmmListService : CorHrmmService.CorHrmmServiceBase
         return res;
     }
 
+    public override async Task<PosReqRes> GetPosReq(CorHrmmRqst request, ServerCallContext context)
+    {
+        var res = new PosReqRes();
+        var response = await _med.Send(new PosReqByPosIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new PosReqRes { Id = null, PositionId = null, Gender = null, ProfessionType = null, SaturdayWorkOption = null, SundayWorkOption = null, WorkingHours = null };
+        };
+        res.Id = response!.Id.ToString();
+        res.PositionId = response.PositionId.ToString();
+        res.Gender = response.Gender;
+        res.ProfessionType = response.ProfessionType;
+        res.SaturdayWorkOption = response.SaturdayWorkOption;
+        res.SundayWorkOption = response.SaturdayWorkOption;
+        res.WorkingHours = response.WorkingHours.ToString();
+        return res;
+    }
+
 
 
 

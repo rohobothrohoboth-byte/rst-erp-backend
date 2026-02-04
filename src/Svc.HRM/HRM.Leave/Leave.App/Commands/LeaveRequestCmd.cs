@@ -19,15 +19,17 @@ public class LeaveRequestAddCmdHandler : IRequestHandler<LeaveRequestAddCmd, Lea
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
-    private readonly HolidayService _hdService;
-    private readonly LeaveValService _lvService;
+    private readonly IHolidayService _hdService;
+    private readonly ILeaveValService _lvService;
+    private readonly IApprovalEngine _approvalEngine;
 
-    public LeaveRequestAddCmdHandler(IUnitOfWork unitOfWork, IMediator med, HolidayService hdService, LeaveValService lvService)
+    public LeaveRequestAddCmdHandler(IUnitOfWork unitOfWork, IMediator med, IHolidayService hdService, ILeaveValService lvService, IApprovalEngine approvalEngine)
     {
         _unitOfWork = unitOfWork;
         _med = med;
         _hdService = hdService;
         _lvService = lvService;
+        _approvalEngine = approvalEngine;
     }
 
     public async Task<LeaveRequestListDto> Handle(LeaveRequestAddCmd request, CancellationToken cancellationToken)
@@ -35,28 +37,31 @@ public class LeaveRequestAddCmdHandler : IRequestHandler<LeaveRequestAddCmd, Lea
         await _unitOfWork.Begin();
         try
         {
-            var workingDays = await _hdService.CalculateLeaveWorkingDays(request.AddDto.StartDate, request.AddDto.EndDate, request.AddDto.IsHalfDay);
-            var valReq = await _lvService.ValLeaveRequest(request.EmpId, request.AddDto.LeaveTypeId, request.AddDto.StartDate, request.AddDto.EndDate, request.AddDto.IsHalfDay);
-            if (!valReq.IsValid)
-            {
-                throw new DomainException($"Leave request VALIDATION FAILED: {string.Join(", ", valReq.Errors)}");
-            }
+            var empId = request.EmpId;
+            var sDate = request.AddDto.StartDate;
+            var eDate = request.AddDto.EndDate;
+            var iHalf = request.AddDto.IsHalfDay;
 
-            var dRequested = request.AddDto.EndDate.Subtract(request.AddDto.StartDate);
+            var workingDays = await _hdService.CalEmpLeaveWorkingDays(empId, sDate, eDate, iHalf);
+            var valReq = await _lvService.ValLeaveRequest(empId, request.AddDto.LeaveTypeId, sDate, eDate, iHalf);
 
-            var stat = BoolToStr.EnumToString(Status.Pending);
+            if (!valReq.IsValid) { throw new DomainException($"Leave request VALIDATION FAILED: {string.Join(", ", valReq.Errors)}"); }
+
             var data = new LeaveRequest
             {
-                EmployeeId = request.EmpId,
+                EmployeeId = empId,
                 LeaveTypeId = request.AddDto.LeaveTypeId,
-                StartDate = request.AddDto.StartDate,
-                EndDate = request.AddDto.EndDate,
-                DaysRequested = dRequested.TotalDays,
-                IsHalfDay = request.AddDto.IsHalfDay,
-                Status = stat,
+                StartDate = sDate,
+                EndDate = eDate,
+                DaysRequested = workingDays,
+                IsHalfDay = iHalf,
+                Status = BoolToStr.EnumToString(Status.Pending),
                 Comments = request.AddDto.Comments
             };
             await _unitOfWork.Repository<LeaveRequest>().Add(data);
+
+            await _approvalEngine.InitApproval(data.Id);
+
             await _unitOfWork.Commit();
 
             var res = new LeaveRequestListDto();

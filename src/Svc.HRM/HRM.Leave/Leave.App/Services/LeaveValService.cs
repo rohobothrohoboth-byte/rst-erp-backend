@@ -7,13 +7,19 @@ using Leave.Domain.Enums;
 
 namespace Leave.App.Services;
 
-public class LeaveValService
+public interface ILeaveValService
+{
+    Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay);
+}
+
+public class LeaveValService : ILeaveValService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICorModClient _corModClient;
     private readonly IHrmProfileClient _hrmProfileClient;
-    private readonly HolidayService _hdService;
-    public LeaveValService(IUnitOfWork unitOfWork, ICorModClient corModClient, IHrmProfileClient hrmProfileClient, HolidayService hdService)
+    private readonly IHolidayService _hdService;
+
+    public LeaveValService(IUnitOfWork unitOfWork, ICorModClient corModClient, IHrmProfileClient hrmProfileClient, IHolidayService hdService)
     {
         _unitOfWork = unitOfWork;
         _corModClient = corModClient;
@@ -24,12 +30,12 @@ public class LeaveValService
     public async Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay)
     {
         var result = new LeaveReqValResult();
-        var workingDays = await _hdService.CalculateLeaveWorkingDays(startDate, endDate, isHalfDay);
+        var workingDays = await _hdService.CalEmpLeaveWorkingDays(empId, startDate, endDate, isHalfDay);
         var empLeavePolicy = await GetActiveEmpLeavePolicy(empId, leaveTypeId, startDate);
 
         if (empLeavePolicy == null)
         {
-            result.AddError("No active leave policy found for this employee and leave type.");
+            result.AddError("NO ACTIVE LEAVE POLICY FOUND for this employee and leave type.");
             return result;
         }
 
@@ -37,7 +43,7 @@ public class LeaveValService
         await ValidateOverlap(empId, startDate, endDate, result);
         await ValProbationEligibility(empId, empLeavePolicy, result);
         await ValPolicyConstraints(empLeavePolicy, workingDays, startDate, endDate, isHalfDay, result);
-        await ProvideHolidayInfo(startDate, endDate, result);
+        //await ProvideHolidayInfo(startDate, endDate, result);
         result.CalculatedWorkingDays = workingDays;
 
         return result;
@@ -45,14 +51,11 @@ public class LeaveValService
 
     private async Task<EmpLeavePolicy?> GetActiveEmpLeavePolicy(Guid empId, Guid leaveTypeId, DateTime requestDate)
     {
-        var ePolicy = await _unitOfWork.Repository<EmpLeavePolicy>().GetFoD(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.IsActive(requestDate));
+        //var ePolicy = await _unitOfWork.Repository<EmpLeavePolicy>().GetFoD(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.IsActive(requestDate));
+        var ePolicyL = (await _unitOfWork.Repository<EmpLeavePolicy>().Find(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.EffectiveFrom <= requestDate)).ToList();
+        if (ePolicyL.Count <= 0) { return null; }
+        var ePolicy = ePolicyL.FirstOrDefault(e => e.IsActive(requestDate));
         return ePolicy;
-        //return await _unitOfWork.EmpLeavePolicies
-        //    .Include(elp => elp.LeavePolicy)
-        //    .Include(elp => elp.LeaveType)
-        //    .Where(elp => elp.EmployeeId == employeeId && elp.LeaveTypeId == leaveTypeId && elp.IsActive(requestDate))
-        //    .OrderByDescending(elp => elp.EffectiveFrom)
-        //    .FirstOrDefaultAsync();
     }
 
     private async Task ValEntitlementBalance(Guid empId, Guid leaveTypeId, double daysRequested, EmpLeavePolicy empLeavePolicy, LeaveReqValResult result)
@@ -147,8 +150,22 @@ public class LeaveValService
 
     private async Task ValPolicyConstraints(EmpLeavePolicy empLvPolicy, double daysReq, DateTime startDate, DateTime endDate, bool isHalfDay, LeaveReqValResult result)
     {
-        var lPolicy = empLvPolicy.LeavePolicy;
-        var pConfig = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(lpc => lpc.LeavePolicyId == empLvPolicy.LeavePolicyId && lpc.IsActive);
+        var lPolicyId = empLvPolicy.LeavePolicyId;
+        var lPolicy = await _unitOfWork.Repository<LeavePolicy>().GetById(lPolicyId);
+        var pConfig = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(lpc => lpc.LeavePolicyId == lPolicyId && lpc.IsActive);
+
+        if (lPolicy == null)
+        {
+            result.AddWarning("No active Leave Policy found.");
+            return;
+        }
+
+        var stat = BoolToStr.EnumToString(PolicyStatus.Active);
+        if (lPolicy.Status != stat)
+        {
+            result.AddError($"Leave policy is not active. Current status: {lPolicy.Status}");
+            return;
+        }
 
         if (pConfig == null)
         {
@@ -164,11 +181,6 @@ public class LeaveValService
         if (lPolicy.RequiresAttachment)
         {
             result.AddWarning("This leave type requires supporting documentation/attachment.");
-        }
-
-        if (lPolicy.Status != "Active" && lPolicy.Status != "1")
-        {
-            result.AddError($"Leave policy is not active. Current status: {lPolicy.Status}");
         }
 
         if (startDate > endDate)
@@ -189,40 +201,36 @@ public class LeaveValService
         result.PolicyConstraints = new PolicyConstraintsInfo
         {
             MaxDaysPerRequest = pConfig.MaxDaysPerReq,
-            RequiresAttachment = lPolicy.RequiresAttachment,
-            AllowEncashment = lPolicy.AllowEncashment,
-            MaxCarryOverDays = pConfig.MaxCarryOverDays
+            RequiresAttachment = lPolicy.RequiresAttachment
         };
     }
 
-    private async Task ProvideHolidayInfo(DateTime startDate, DateTime endDate, LeaveReqValResult result)
-    {
-        var nonWorkingDays = await _hdService.GetNonWorkingDays(startDate, endDate);
+    //private async Task ProvideHolidayInfo(DateTime startDate, DateTime endDate, LeaveReqValResult result)
+    //{
+    //    var nonWorkingDays = await _hdService.GetNonWorkingDays(startDate, endDate);
 
-        if (nonWorkingDays.Any())
-        {
-            var holidays = nonWorkingDays.Where(nwd => nwd.Type == "Holiday").ToList();
-            var weekends = nonWorkingDays.Where(nwd => nwd.Type == "Weekend").ToList();
+    //    if (nonWorkingDays.Any())
+    //    {
+    //        var holidays = nonWorkingDays.Where(nwd => nwd.Type == "Holiday").ToList();
+    //        var weekends = nonWorkingDays.Where(nwd => nwd.Type == "Weekend").ToList();
 
-            result.HolidayInfo = new HolidayInfo
-            {
-                TotalNonWorkingDays = nonWorkingDays.Count,
-                HolidaysCount = holidays.Count,
-                WeekendsCount = weekends.Count,
-                HolidayDates = holidays.Select(h => new HolidayDate
-                {
-                    Date = h.Date,
-                    Name = h.Description
-                }).ToList()
-            };
+    //        result.HolidayInfo = new HolidayInfo
+    //        {
+    //            TotalNonWorkingDays = nonWorkingDays.Count,
+    //            HolidaysCount = holidays.Count,
+    //            WeekendsCount = weekends.Count,
+    //            HolidayDates = holidays.Select(h => new HolidayDate
+    //            {
+    //                Date = h.Date,
+    //                Name = h.Description
+    //            }).ToList()
+    //        };
 
-            if (holidays.Any())
-            {
-                var holidayNames = string.Join(", ", holidays.Select(h => $"{h.Description} ({h.Date:MMM dd})"));
-                result.AddWarning($"Note: Your leave period includes {holidays.Count} holiday(s): {holidayNames}. " + $"These are not counted against your leave balance.");
-            }
-        }
-    }
-
-
+    //        if (holidays.Any())
+    //        {
+    //            var holidayNames = string.Join(", ", holidays.Select(h => $"{h.Description} ({h.Date:MMM dd})"));
+    //            result.AddWarning($"Note: Your leave period includes {holidays.Count} holiday(s): {holidayNames}. " + $"These are not counted against your leave balance.");
+    //        }
+    //    }
+    //}
 }

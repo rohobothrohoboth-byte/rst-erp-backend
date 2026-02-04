@@ -33,6 +33,21 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
+    public override async Task<EmpPosRes> GetPosEmp(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new EmpPosRes();
+        var response = await _med.Send(new GetPosEmpQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new EmpPosRes { Id = null, PositionId = null, SaturdayWorkOption = null, SundayWorkOption = null };
+        }
+        res.Id = response!.Id.ToString();
+        res.PositionId = response.PositionId.ToString();
+        res.SaturdayWorkOption = response.SaturdayWorkOption;
+        res.SundayWorkOption = response.SundayWorkOption;
+        return res;
+    }
+
     public override async Task<HrmProListRes> GetListEmp(HrmProListRqst request, ServerCallContext context)
     {
         var res = new HrmProListRes();
@@ -88,8 +103,13 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         {
             res = new HrmEmpPlcy { Id = null, Name = null, SerYear = null, EmpType = null, WorkAr = null, Gender = null, Jg = null };
         }
-        
-
+        res.Id = response!.EmployeeId.ToString();
+        res.Name = response.Name;
+        res.SerYear = response.SerYear.ToString();
+        res.EmpType = response.EmpType;
+        res.WorkAr = response.WorkAr;
+        res.Gender = response.Gender;
+        res.Jg = response.Jg.ToString();
         return res;
     }
 

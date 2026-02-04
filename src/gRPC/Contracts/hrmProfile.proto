@@ -7,6 +7,7 @@ package hrmProfile;
 service HrmProfileService {
   rpc GetEmpCode (HrmProRqst) returns (HrmProResCode);
   rpc GetEmp (HrmProRqst) returns (HrmProRes);
+  rpc GetPosEmp (HrmProRqst) returns (EmpPosRes);
   rpc GetListEmp (HrmProListRqst) returns (HrmProListRes);
   rpc GetListEmpPolicy (HrmProListRqst) returns (HrmProListPlcy);
   rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
@@ -20,6 +21,13 @@ message HrmEmpPlcy {
   string WorkAr = 5;
   string Gender = 6;
   string Jg = 7;
+}
+
+message EmpPosRes {
+  string Id = 1;
+  string SaturdayWorkOption = 2;
+  string SundayWorkOption = 3;
+  string PositionId = 4;
 }
 
 message HrmProList {

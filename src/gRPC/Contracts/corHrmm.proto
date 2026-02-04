@@ -9,6 +9,17 @@ service CorHrmmService {
   rpc GetListJobGrade (CorHrmmListRqst) returns (CorHrmmListRes);
   rpc GetPosition (CorHrmmRqst) returns (CorHrmmRes);
   rpc GetListPosition (CorHrmmListRqst) returns (CorHrmmListRes);
+  rpc GetPosReq (CorHrmmRqst) returns (PosReqRes);
+}
+
+message PosReqRes {
+  string Id = 1;
+  string PositionId = 2;
+  string Gender = 3;
+  string ProfessionType = 4;
+  string SaturdayWorkOption = 5;
+  string SundayWorkOption = 6;
+  string WorkingHours = 7;
 }
 
 message CorHrmmList {
