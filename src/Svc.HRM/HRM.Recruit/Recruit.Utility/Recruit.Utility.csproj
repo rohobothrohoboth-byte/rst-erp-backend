@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="Serilog" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Recruit.App\Recruit.App.csproj" />
+	</ItemGroup>
+
+</Project>

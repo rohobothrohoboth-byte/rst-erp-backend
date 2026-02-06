@@ -1,8 +1,8 @@
 ﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
-using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,7 +48,7 @@ public class PositionExpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new PositionExpAddCmd { AddDto = addDto };
@@ -66,7 +66,7 @@ public class PositionExpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new PositionExpModCmd { ModDto = modDto };

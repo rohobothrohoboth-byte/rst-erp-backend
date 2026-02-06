@@ -1,9 +1,8 @@
 ﻿using Asp.Versioning;
+using Helpers;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
-using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -28,7 +27,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpAddStep1Cmd { AddDto = addDto };
@@ -44,7 +43,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpAddStep2Cmd { AddDto = addDto };
@@ -60,7 +59,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpAddStep3Cmd { AddDto = addDto };
@@ -76,7 +75,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpAddStep4Cmd { AddDto = addDto };

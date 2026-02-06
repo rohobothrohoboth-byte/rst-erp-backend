@@ -2,6 +2,7 @@
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Models.Enums;
+using Helpers;
 using MediatR;
 
 namespace Cor.Module.Queries;

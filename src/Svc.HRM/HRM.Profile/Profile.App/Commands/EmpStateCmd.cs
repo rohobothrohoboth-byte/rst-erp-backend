@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Helpers;
+using MediatR;
 using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.App.Queries;

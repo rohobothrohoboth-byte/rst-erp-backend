@@ -1,5 +1,5 @@
-﻿using System.Text.Json;
-using Svc.Auth.Helpers;
+﻿using Helpers;
+using System.Text.Json;
 
 namespace Svc.Auth.Middlewares;
 

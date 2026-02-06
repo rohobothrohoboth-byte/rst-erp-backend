@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
-using Common;
-using Cor.HRMM.Helpers;
 using Cor.HRMM.Queries;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

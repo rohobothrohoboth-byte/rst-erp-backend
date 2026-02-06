@@ -1,8 +1,8 @@
 ﻿using Asp.Versioning;
 using Cor.Module.Commands;
-using Cor.Module.Helpers;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,7 +44,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new AddDeptCmd { AddDto = addDto };
@@ -62,7 +62,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new ModDeptCmd { ModDto = modDto };

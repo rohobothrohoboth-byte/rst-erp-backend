@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,7 +48,7 @@ public class EmployeeController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmployeeModCmd { ModDto = modDto };

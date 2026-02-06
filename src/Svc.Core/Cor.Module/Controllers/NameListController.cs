@@ -1,6 +1,6 @@
 ﻿using Asp.Versioning;
-using Cor.Module.Helpers;
 using Cor.Module.Queries;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

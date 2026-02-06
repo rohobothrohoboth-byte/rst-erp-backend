@@ -1,8 +1,8 @@
 ﻿using Asp.Versioning;
 using Cor.HRMM.Commands;
-using Cor.HRMM.Helpers;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,7 +49,7 @@ public class JgStepController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new JgStepAddCmd { AddDto = addDto };
@@ -67,7 +67,7 @@ public class JgStepController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new JgStepModCmd { ModDto = modDto };

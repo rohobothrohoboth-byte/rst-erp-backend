@@ -1,6 +1,6 @@
 ﻿using Common;
+using Helpers;
 using MediatR;
-using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;

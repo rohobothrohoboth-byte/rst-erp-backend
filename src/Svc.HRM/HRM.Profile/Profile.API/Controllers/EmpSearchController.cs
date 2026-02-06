@@ -1,7 +1,7 @@
 ﻿using Asp.Versioning;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Profile.App.Helpers;
 using Profile.App.Queries;
 
 namespace Profile.API.Controllers;

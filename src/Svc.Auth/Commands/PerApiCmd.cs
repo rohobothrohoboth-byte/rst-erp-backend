@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Svc.Auth.Helpers;
+﻿using Helpers;
+using MediatR;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;

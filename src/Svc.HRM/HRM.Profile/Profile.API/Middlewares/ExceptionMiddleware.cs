@@ -1,4 +1,4 @@
-﻿using Profile.App.Helpers;
+﻿using Helpers;
 using System.Text.Json;
 
 namespace Profile.API.Middlewares;

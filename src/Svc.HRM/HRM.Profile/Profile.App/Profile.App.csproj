@@ -4,11 +4,11 @@
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Npgsql" />
-		<PackageReference Include="SixLabors.ImageSharp" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\gRPC\Common\Common.csproj" />
+		<ProjectReference Include="..\..\..\Shared\Helpers\Helpers.csproj" />
 		<ProjectReference Include="..\Profile.Domain\Profile.Domain.csproj" />
 	</ItemGroup>
 

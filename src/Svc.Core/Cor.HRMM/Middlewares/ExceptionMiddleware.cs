@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Helpers;
+﻿using Helpers;
 using System.Text.Json;
 
 namespace Cor.HRMM.Middlewares;

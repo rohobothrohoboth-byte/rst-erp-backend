@@ -21,7 +21,6 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Http.Polly" />
 		<PackageReference Include="Npgsql" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Scalar.AspNetCore" />
@@ -35,6 +34,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\gRPC\Common\Common.csproj" />
 		<ProjectReference Include="..\RST_ERP.ServiceDefaults\RST_ERP.ServiceDefaults.csproj" />
+		<ProjectReference Include="..\Shared\Helpers\Helpers.csproj" />
 	</ItemGroup>
 	
 	<ItemGroup>

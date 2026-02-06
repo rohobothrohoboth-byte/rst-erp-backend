@@ -3,6 +3,7 @@ using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
+using Helpers;
 using MediatR;
 
 namespace Cor.Module.Commands;

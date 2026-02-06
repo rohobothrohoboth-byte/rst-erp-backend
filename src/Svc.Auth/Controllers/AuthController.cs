@@ -1,11 +1,11 @@
-﻿using System.Security.Claims;
-using Asp.Versioning;
+﻿using Asp.Versioning;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Svc.Auth.Commands;
-using Svc.Auth.Helpers;
 using Svc.Auth.Models.Dtos;
+using System.Security.Claims;
 
 namespace Svc.Auth.Controllers;
 

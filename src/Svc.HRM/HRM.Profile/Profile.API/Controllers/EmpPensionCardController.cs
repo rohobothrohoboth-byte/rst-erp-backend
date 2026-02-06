@@ -1,8 +1,8 @@
 ﻿using Asp.Versioning;
+using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
-using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 
@@ -36,7 +36,7 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpPensionCardAddCmd { AddDto = addDto };
@@ -54,7 +54,7 @@ public class EmpPensionCardController(IMediator med) : ControllerBase
         if (!ModelState.IsValid || modDto.Id != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            throw new ValidationException(errors);
+            throw new ValException(errors);
         }
 
         var command = new EmpPensionCardModCmd { ModDto = modDto };
