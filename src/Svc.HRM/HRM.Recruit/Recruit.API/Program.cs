@@ -1,27 +1,37 @@
+using Recruit.API.Middlewares;
+using Scalar.AspNetCore;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .Enrich.FromLogContext()
+    .MinimumLevel.Information()
+    .CreateLogger();
+builder.Host.UseSerilog();
 
-builder.AddServiceDefaults();
-
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.AddApiServices()
+    .AddErrorHandling()
+    .AddSwaggerService()
+    .AddAuthService();
 
 var app = builder.Build();
-
 app.MapDefaultEndpoints();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+if (app.Environment.IsDevelopment())
+{
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference(options => { options.WithTitle("HRM Recruit API"); });
+    app.ApplyMigration();
+}
 
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
