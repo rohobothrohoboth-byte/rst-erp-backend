@@ -6,6 +6,8 @@ namespace Common;
 
 public interface ICorHrmmClient
 {
+    Task<CorHrmmListRes> GetListJgStep(CancellationToken ct = default);
+    Task<CorHrmmRes> GetJgStep(string id, CancellationToken ct = default);
     Task<CorHrmmListRes> GetListJobGrade(CancellationToken ct = default);
     Task<CorHrmmRes> GetJobGrade(string id, CancellationToken ct = default);
     Task<CorHrmmListRes> GetListPosition(CancellationToken ct = default);
@@ -22,6 +24,22 @@ public class CorHrmmClient : ICorHrmmClient
     public CorHrmmClient(IConfiguration config)
     {
         _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core Module Service Address not configured");
+    }
+
+    public async Task<CorHrmmListRes> GetListJgStep(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorHrmmService.CorHrmmServiceClient(channel);
+        var req = new CorHrmmListRqst();
+        return await client.GetListJgStepAsync(req);
+    }
+
+    public async Task<CorHrmmRes> GetJgStep(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorHrmmService.CorHrmmServiceClient(channel);
+        var req = new CorHrmmRqst { Id = id };
+        return await client.GetJgStepAsync(req);
     }
 
     public async Task<CorHrmmListRes> GetListJobGrade(CancellationToken ct = default)

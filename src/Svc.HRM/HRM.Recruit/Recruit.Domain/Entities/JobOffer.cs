@@ -16,5 +16,5 @@ public class JobOffer : BaseEntity
     //******************************************//
 
     public JobRequisition JobRequisition { get; set; } = null!;
-    public CandidateApplication CanApplication { get; set; } = null!;
+    public JobApplication CanApplication { get; set; } = null!;
 }

@@ -5,6 +5,8 @@ option csharp_namespace = "Contracts";
 package corHrmm;
 
 service CorHrmmService {
+  rpc GetJgStep (CorHrmmRqst) returns (CorHrmmRes);
+  rpc GetListJgStep (CorHrmmListRqst) returns (CorHrmmListRes);
   rpc GetJobGrade (CorHrmmRqst) returns (CorHrmmRes);
   rpc GetListJobGrade (CorHrmmListRqst) returns (CorHrmmListRes);
   rpc GetPosition (CorHrmmRqst) returns (CorHrmmRes);

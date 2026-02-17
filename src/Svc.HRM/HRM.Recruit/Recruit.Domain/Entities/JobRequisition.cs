@@ -2,19 +2,20 @@
 
 public class JobRequisition : BaseEntity
 {
-    public string RequisitionNumber { get; set; } = default!;
-    public string JobTitle { get; set; } = default!;
-    public string JobDescription { get; set; } = default!;
-    public int NumberOfPositions { get; set; }
-    public int? BudgetCode { get; set; }
-    public string Status { get; set; } = default!; // enum.RequisitionStatus(0/1)
-    public DateTime TargetStartDate { get; set; }
-    public string? ApprovalComments { get; set; }
-    public Guid PositionId { get; set; } // Cor.HRMM.Employee
-    public Guid JgStepId { get; set; } // Cor.HRMM.Employee
+    public string ReqNumber { get; set; } = default!;
+    public string ReqReason { get; set; } = default!;
+    public int ReqQuantity { get; set; }
+    public string BudgetCode { get; set; } = default!;
+    public string Status { get; set; } = default!; // enum.ReqStatus(0/1)
+    public DateTime StartDate { get; set; }
+    public Guid PositionId { get; set; } // Cor.HRMM.Position
+    public Guid JgStepId { get; set; } // Cor.HRMM.JgStep
     public Guid WorkforcePlanId { get; set; } // WorkforcePlan
+    public Guid JobDecId { get; set; } // JobDec
 
     //******************************************//
 
     public WorkforcePlan WorkforcePlan { get; set; } = null!;
+    public JobDec JobDec { get; set; } = null!;
+    public List<JobReqReview> Reviews { get; set; } = [];
 }

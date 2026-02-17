@@ -8,8 +8,8 @@ public class LoginDto
 
 public class LoginResDto
 {
-    public string AccessToken { get; set; } = default;
-    public string RefreshToken { get; set; } = default;
+    public string AccessToken { get; set; } = default!;
+    public string RefreshToken { get; set; } = default!;
     public DateTime ExpiresDate { get; set; }
 }
 
@@ -19,9 +19,9 @@ public class UserDto
     public string UserId { get; set; } = default!;
     public string Username { get; set; } = default!;
     public string Role { get; set; } = default!;
-    public List<string> PerModule { get; set; } = null;
-    public List<string> PerMenu { get; set; } = null;
-    public List<string> PerApi { get; set; } = null;
+    public List<string> PerModule { get; set; } = null!;
+    public List<string> PerMenu { get; set; } = null!;
+    public List<string> PerApi { get; set; } = null!;
 }
 
 public class TokenDto
@@ -38,18 +38,18 @@ public class RefreshTokenDto
 public class NameList
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = default;
+    public string Name { get; set; } = default!;
 }
 
 public class RoleListDto
 {
-    public string Id { get; set; } = default;
-    public string Role { get; set; } = default;
+    public string Id { get; set; } = default!;
+    public string Role { get; set; } = default!;
 }
 
 public class ModuleListDto
 {
     public Guid Id { get; set; }
-    public string Key { get; set; } = default;
-    public string Name { get; set; } = default;
+    public string Key { get; set; } = default!;
+    public string Name { get; set; } = default!;
 }

@@ -3,7 +3,6 @@ using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-using Profile.Domain.Enums;
 
 namespace Profile.App.Queries;
 

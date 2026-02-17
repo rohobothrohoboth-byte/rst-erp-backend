@@ -3,8 +3,8 @@
 public class ModPerMenuListDto
 {
     public Guid PerModuleId { get; set; }
-    public string PerModule { get; set; } = default; // PerModule
-    public List<NameList> PerMenuList { get; set; } = default;
+    public string PerModule { get; set; } = default!; // PerModule
+    public List<NameList> PerMenuList { get; set; } = default!;
 }
 
 public class PerMenuListDto : BaseDto

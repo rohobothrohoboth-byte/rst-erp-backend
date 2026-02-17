@@ -4,23 +4,21 @@ using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-using Profile.Domain.Enums;
 
 namespace Profile.App.Queries;
 
 public class EmpFamilyAllQry : IRequest<List<EmpFamilyListDto>> { public Guid Id { get; set; } }
-
 public class EmpFamilyByIdQry : IRequest<EmpFamilyListDto?> { public Guid Id { get; set; } }
 
-public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpFamilyListDto>>
+public class EmpFamilyAllHandler : IRequestHandler<EmpFamilyAllQry, List<EmpFamilyListDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _gRPC;
+    private readonly ILupClient _lupClient;
 
-    public EmpFamilyAllQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
+    public EmpFamilyAllHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
+        _lupClient = lupClient;
     }
 
     public async Task<List<EmpFamilyListDto>> Handle(EmpFamilyAllQry request, CancellationToken cancellationToken)
@@ -28,14 +26,14 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
         var dbData = await _unitOfWork.Repository<EmpFamily>().Find(e => e.EmployeeId == request.Id);
         var dataL = new List<EmpFamilyListDto>();
         var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var rel = await _gRPC.GetRelList(cancellationToken);
+        var rel = await _lupClient.GetRelList(cancellationToken);
 
         foreach (var data in dbData)
         {
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
             var reV = rel.Res.FirstOrDefault(r => r.Id == data.RelationId.ToString());
             var re = "NOT AVAILABLE";
-            if (reV.Id != null) { re = reV.Name; }
+            if (reV != null) { re = reV.Name; }
             var c = new EmpFamilyListDto
             {
                 Id = data.Id,
@@ -60,15 +58,15 @@ public class EmpFamilyAllQryHandler : IRequestHandler<EmpFamilyAllQry, List<EmpF
     }
 }
 
-public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFamilyListDto?>
+public class EmpFamilyByIdHandler : IRequestHandler<EmpFamilyByIdQry, EmpFamilyListDto?>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _gRPC;
+    private readonly ILupClient _lupClient;
 
-    public EmpFamilyByIdQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
+    public EmpFamilyByIdHandler(IUnitOfWork unitOfWork, ILupClient lupClient)
     {
         _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
+        _lupClient = lupClient;
     }
 
     public async Task<EmpFamilyListDto?> Handle(EmpFamilyByIdQry request, CancellationToken cancellationToken)
@@ -77,7 +75,7 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
         if (data == null) { return null; }
         var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
         var emp = await _unitOfWork.Repository<Employee>().GetById(data.EmployeeId);
-        var re = await _gRPC.GetRel(data.RelationId.ToString(), cancellationToken);
+        var re = await _lupClient.GetRel(data.RelationId.ToString(), cancellationToken);
 
         var c = new EmpFamilyListDto
         {
@@ -90,7 +88,7 @@ public class EmpFamilyByIdQryHandler : IRequestHandler<EmpFamilyByIdQry, EmpFami
             FamilyName = $"{per.FirstName} {per.MiddleName} {per.LastName}",
             FamilyNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
             GenderStr = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            Relation = re.Res.Name != null ? re.Res.Name : "NOT AVAILABLE",
+            Relation = re.Res.Name ?? "NOT AVAILABLE",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

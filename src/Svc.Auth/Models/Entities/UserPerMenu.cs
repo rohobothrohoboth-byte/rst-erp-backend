@@ -7,6 +7,6 @@ public class UserPerMenu : BaseEntity
 
     //******************************************//
 
-    public AppUser User { get; set; } = null;
-    public PerMenu PerMenu { get; set; } = null;
+    public AppUser User { get; set; } = null!;
+    public PerMenu PerMenu { get; set; } = null!;
 }

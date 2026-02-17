@@ -7,6 +7,6 @@ public class UserPerModule : BaseEntity
 
     //******************************************//
 
-    public AppUser User { get; set; } = null;
-    public PerModule PerModule { get; set; } = null;
+    public AppUser User { get; set; } = null!;
+    public PerModule PerModule { get; set; } = null!;
 }

@@ -2,7 +2,7 @@
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
-using Cor.HRMM.Models.Enums;
+using Helpers;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -39,7 +39,7 @@ public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<Positi
                 NameAm = data.NameAm,
                 NoOfPosition = data.NoOfPosition,
                 IsVacantStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
-                Department = dept.Name != null ? dept.Name : "NOT AVAILABLE",
+                Department = dept!.Name != null ? dept.Name : "NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,

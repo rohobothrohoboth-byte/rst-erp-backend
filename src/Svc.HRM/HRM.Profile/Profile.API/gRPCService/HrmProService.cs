@@ -33,21 +33,6 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
-    public override async Task<EmpPosRes> GetPosEmp(HrmProRqst request, ServerCallContext context)
-    {
-        var res = new EmpPosRes();
-        var response = await _med.Send(new GetPosEmpQry { Id = Guid.Parse(request.Id) });
-        if (response == null)
-        {
-            res = new EmpPosRes { Id = null, PositionId = null, SaturdayWorkOption = null, SundayWorkOption = null };
-        }
-        res.Id = response!.Id.ToString();
-        res.PositionId = response.PositionId.ToString();
-        res.SaturdayWorkOption = response.SaturdayWorkOption;
-        res.SundayWorkOption = response.SundayWorkOption;
-        return res;
-    }
-
     public override async Task<HrmProListRes> GetListEmp(HrmProListRqst request, ServerCallContext context)
     {
         var res = new HrmProListRes();
@@ -64,6 +49,21 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
             res.Res.Add(new HrmProList { Id = dbItem.Id.ToString(), Name = dbItem.Name });
         }
 
+        return res;
+    }
+
+    public override async Task<EmpPosRes> GetPosEmp(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new EmpPosRes();
+        var response = await _med.Send(new GetPosEmpQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new EmpPosRes { Id = null, PositionId = null, SaturdayWorkOption = null, SundayWorkOption = null };
+        }
+        res.Id = response!.Id.ToString();
+        res.PositionId = response.PositionId.ToString();
+        res.SaturdayWorkOption = response.SaturdayWorkOption;
+        res.SundayWorkOption = response.SundayWorkOption;
         return res;
     }
 
@@ -110,6 +110,44 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         res.WorkAr = response.WorkAr;
         res.Gender = response.Gender;
         res.Jg = response.Jg.ToString();
+        return res;
+    }
+
+    public override async Task<HrmEmpId> GetEmpId(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new HrmEmpId();
+        var response = await _med.Send(new GetEmpIdByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new HrmEmpId { Id = null, PositionId = null, DeptId = null, BranchId = null, CompanyId = null, JgStepId = null, JgId = null };
+        }
+
+        res.Id = response!.Id.ToString();
+        res.PositionId = response.PositionId.ToString();
+        res.DeptId = response.DeptId.ToString();
+        res.BranchId = response.BranchId.ToString();
+        res.CompanyId = response.CompanyId.ToString();
+        res.JgStepId = response.JgStepId.ToString();
+        res.JgId = response.JgId.ToString();
+        return res;
+    }
+
+    public override async Task<HrmListEmpId> GetListEmpId(HrmProListRqst request, ServerCallContext context)
+    {
+        var res = new HrmListEmpId();
+        var response = (await _med.Send(new GetEmpIdAllQry())).ToList();
+        if (response.Count <= 0)
+        {
+            var nList = new HrmEmpId { Id = null, PositionId = null, DeptId = null, BranchId = null, CompanyId = null, JgStepId = null, JgId = null };
+            res.Res.Add(nList);
+            return res;
+        }
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new HrmEmpId { Id = dbItem.Id.ToString(), PositionId = dbItem.PositionId.ToString(), DeptId = dbItem.DeptId.ToString(), BranchId = dbItem.BranchId.ToString(), CompanyId = dbItem.CompanyId.ToString(), JgStepId = dbItem.JgStepId.ToString(), JgId = dbItem.JgId.ToString() });
+        }
+
         return res;
     }
 

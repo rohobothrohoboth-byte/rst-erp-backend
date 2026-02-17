@@ -1,6 +1,6 @@
 ﻿namespace Recruit.Domain.Entities;
 
-public class CandidateContact : BaseEntity
+public class ApplicantContact : BaseEntity
 {
     public string Phone { get; set; } = default!;
     public string PoBox { get; set; } = default!;

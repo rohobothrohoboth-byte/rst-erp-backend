@@ -151,6 +151,84 @@ public class CorModListService : CorModuleService.CorModuleServiceBase
         return res;
     }
 
+    public override async Task<PeriodListRes> GetListPeriod(CorModuleListRqst request, ServerCallContext context)
+    {
+        var res = new PeriodListRes();
+        var response = (await _med.Send(new AllPeriodQry())).ToList();
+        if (response.Count <= 0)
+        {
+            var nList = new PeriodRes { Id = null, Name = null, Quarter = null, FiscalYearId = null };
+            res.Res.Add(nList);
+            return res;
+        }
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new PeriodRes
+            {
+                Id = dbItem!.Id.ToString(),
+                Name = dbItem.Name,
+                Quarter = dbItem.QuarterStr,
+                FiscalYearId = dbItem.FiscalYearId.ToString()
+            });
+        }
+
+        return res;
+    }
+
+    public override async Task<PeriodRes> GetPeriod(CorModuleRqst request, ServerCallContext context)
+    {
+        var res = new PeriodRes();
+        var response = await _med.Send(new PeriodByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new PeriodRes { Id = null, Name = null, Quarter = null, FiscalYearId = null };
+        }
+        res.Id = response!.Id.ToString();
+        res.Name = response.Name;
+        res.Quarter = response.QuarterStr;
+        res.FiscalYearId = response.FiscalYearId.ToString();
+        return res;
+    }
+
+    public override async Task<DbcListRes> GetListDbc(CorModuleListRqst request, ServerCallContext context)
+    {
+        var res = new DbcListRes();
+        var response = (await _med.Send(new DbcAllQry())).ToList();
+        if (response.Count <= 0)
+        {
+            var nList = new DbcRes { DeptId = null, BranchId = null, CompId = null };
+            res.Res.Add(nList);
+            return res;
+        }
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new DbcRes
+            {
+                DeptId = dbItem!.DeptId.ToString(),
+                BranchId = dbItem.BranchId.ToString(),
+                CompId = dbItem.CompId.ToString()
+            });
+        }
+
+        return res;
+    }
+
+    public override async Task<DbcRes> GetDbc(CorModuleRqst request, ServerCallContext context)
+    {
+        var res = new DbcRes();
+        var response = await _med.Send(new DbcByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new DbcRes { DeptId = null, BranchId = null, CompId = null };
+        }
+        res.DeptId = response!.DeptId.ToString();
+        res.BranchId = response.BranchId.ToString();
+        res.CompId = response.CompId.ToString();
+        return res;
+    }
+
 
 
 

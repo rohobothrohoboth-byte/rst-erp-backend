@@ -9,7 +9,7 @@ public class LeaveAppStepListDto : BaseDto
 
     public string RoleStr { get; set; } = default!;
     public string IsFinalStr { get; set; } = default!;
-    public string Employee { get; set; } = default; // HRM.Profile.Employee
+    public string Employee { get; set; } = default!; // HRM.Profile.Employee
     public string LeaveAppChain { get; set; } = default!; // LeaveAppChain
 }
 

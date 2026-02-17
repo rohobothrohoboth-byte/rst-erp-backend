@@ -10,5 +10,5 @@ public class RefreshToken : BaseEntity
 
     //******************************************//
 
-    public AppUser User { get; set; } = null;
+    public AppUser User { get; set; } = null!;
 }

@@ -24,6 +24,10 @@ public static class MigrationExt
         var roles = RoleSeeder.GetRoles().ToList();
         foreach (var role in roles)
         {
+            if (string.IsNullOrEmpty(role.Name))
+            {
+                continue;
+            }
             if (!await rMgr.RoleExistsAsync(role.Name))
             {
                 await rMgr.CreateAsync(role);
@@ -31,9 +35,16 @@ public static class MigrationExt
             else
             {
                 var existing = await rMgr.FindByNameAsync(role.Name);
-                if (existing.Desc == role.Desc) continue;
-                existing.Desc = role.Desc;
-                await rMgr.UpdateAsync(existing);
+                if (existing != null && existing.Desc == role.Desc)
+                {
+                    continue;
+                }
+
+                if (existing != null)
+                {
+                    existing.Desc = role.Desc;
+                    await rMgr.UpdateAsync(existing);
+                }
             }
         }
         await RoleSeeder.SeedAdmin(uMgr, rMgr);

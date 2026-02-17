@@ -4,7 +4,6 @@ using Leave.App.Queries;
 using Leave.App.Services;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
-using Leave.Domain.Enums;
 using MediatR;
 
 namespace Leave.App.Commands;

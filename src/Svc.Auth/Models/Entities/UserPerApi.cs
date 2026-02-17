@@ -7,6 +7,6 @@ public class UserPerApi : BaseEntity
 
     //******************************************//
 
-    public AppUser User { get; set; } = null;
-    public PerApi PerApi { get; set; } = null;
+    public AppUser User { get; set; } = null!;
+    public PerApi PerApi { get; set; } = null!;
 }

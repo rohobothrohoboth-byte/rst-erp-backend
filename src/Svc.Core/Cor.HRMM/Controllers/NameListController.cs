@@ -122,9 +122,7 @@ public class NameListController(IMediator med) : ControllerBase
         if (res == null) { throw new DomainException($"POSITION with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
-
-
-    
+        
     [HttpGet("GetUser/{token}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

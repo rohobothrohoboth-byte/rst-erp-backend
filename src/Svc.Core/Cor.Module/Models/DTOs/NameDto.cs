@@ -20,3 +20,10 @@ public class BranchDeptList
     public string Dept { get; set; } = default!;
     public string Branch { get; set; } = default!;
 }
+
+public class DbcResDto
+{
+    public Guid DeptId { get; set; }
+    public Guid BranchId { get; set; }
+    public Guid CompId { get; set; }
+}

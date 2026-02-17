@@ -35,7 +35,7 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             };
             await _unitOfWork.Repository<Person>().Add(per);
 
-            var code = await new EmpCode(_unitOfWork).GetEmpCode();
+            var code = await new CodeGen(_unitOfWork).GetEmpCode();
             var data = new Employee
             {
                 Code = code,

@@ -1,6 +1,6 @@
 ﻿namespace Recruit.Domain.Entities;
 
-public class CandidatePerson : BaseEntity
+public class ApplicantPerson : BaseEntity
 {
     public string FirstName { get; set; } = default!;
     public string FirstNameAm { get; set; } = default!;

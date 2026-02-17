@@ -43,3 +43,14 @@ public class EmpPosResDto
     public string SaturdayWorkOption { get; set; } = default!;
     public string SundayWorkOption { get; set; } = default!;
 }
+
+public class HrmEmpId
+{
+    public Guid Id { get; set; }
+    public Guid PositionId { get; set; }
+    public Guid DeptId { get; set; }
+    public Guid BranchId { get; set; }
+    public Guid CompanyId { get; set; }
+    public Guid JgStepId { get; set; }
+    public Guid JgId { get; set; }
+}

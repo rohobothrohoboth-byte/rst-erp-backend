@@ -8,5 +8,5 @@ public class PerApi : BaseEntity
 
     //******************************************//
 
-    public PerMenu PerMenu { get; set; } = null;
+    public PerMenu PerMenu { get; set; } = null!;
 }

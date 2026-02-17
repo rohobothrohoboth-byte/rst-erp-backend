@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
+using Recruit.App.Services;
 
 namespace Recruit.API.Middlewares;
 
@@ -45,7 +46,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
 
-        //builder.Services.AddScoped<IRecruitValService, RecruitValService>();
+        builder.Services.AddScoped<IJobAppService, JobAppService>();
         //builder.Services.AddScoped<IHolidayService, HolidayService>();
         //builder.Services.AddScoped<IApprovalEngine, ApprovalEngine>();
         //builder.Services.AddScoped<IRecruitLedgerService, RecruitLedgerService>();

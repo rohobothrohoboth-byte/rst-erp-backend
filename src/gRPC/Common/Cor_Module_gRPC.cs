@@ -14,6 +14,10 @@ public interface ICorModClient
     Task<ActFiscalYear> GetActiveFiscal(CancellationToken ct = default);
     Task<HoDayListRes> GetListHoDay(CancellationToken ct = default);
     Task<HoDayRes> GetHoDay(string id, CancellationToken ct = default);
+    Task<PeriodListRes> GetListPeriod(CancellationToken ct = default);
+    Task<PeriodRes> GetPeriod(string id, CancellationToken ct = default);
+    Task<DbcListRes> GetListDbc(CancellationToken ct = default);
+    Task<DbcRes> GetDbc(string id, CancellationToken ct = default);
 
 }
 
@@ -89,6 +93,38 @@ public class CorModClient : ICorModClient
         var client = new CorModuleService.CorModuleServiceClient(channel);
         var req = new CorModuleRqst { Id = id };
         return await client.GetHoDayAsync(req);
+    }
+
+    public async Task<PeriodListRes> GetListPeriod(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleListRqst();
+        return await client.GetListPeriodAsync(req);
+    }
+
+    public async Task<PeriodRes> GetPeriod(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleRqst { Id = id };
+        return await client.GetPeriodAsync(req);
+    }
+
+    public async Task<DbcListRes> GetListDbc(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleListRqst();
+        return await client.GetListDbcAsync(req);
+    }
+
+    public async Task<DbcRes> GetDbc(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorModuleService.CorModuleServiceClient(channel);
+        var req = new CorModuleRqst { Id = id };
+        return await client.GetDbcAsync(req);
     }
 
 

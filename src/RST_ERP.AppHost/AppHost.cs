@@ -12,7 +12,7 @@ builder.AddProject<Projects.Leave_API>("API-hrm-leave");
 
 builder.AddProject<Projects.Profile_API>("API-hrm-profile");
 
-builder.AddProject<Projects.Recruit_API>("API-hrm-recruit");
+//builder.AddProject<Projects.Recruit_API>("API-hrm-recruit");
 
 builder.AddProject<Projects.Svc_Auth>("svc-auth");
 

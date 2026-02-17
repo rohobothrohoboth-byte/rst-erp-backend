@@ -18,6 +18,9 @@ public class PositionByDeptQry : IRequest<List<NameList>> { public Guid Id { get
 public class PositionNameAllQry : IRequest<List<NameList>> { }
 public class PositionNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
+
+
+
 public class BenefitSetNameAllQryHandler : IRequestHandler<BenefitSetNameAllQry, List<NameList>>
 {
     private readonly IUnitOfWork _unitOfWork;

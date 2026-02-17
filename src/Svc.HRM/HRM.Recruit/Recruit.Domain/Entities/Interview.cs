@@ -11,12 +11,12 @@ public class Interview : BaseEntity
     public Guid CreatedById { get; set; } // HRM.Profile.Employee
     public Guid? UpdatedById { get; set; } // HRM.Profile.Employee
     public Guid InterviewerId { get; set; } // HRM.Profile.Employee
-    public Guid CanApplicationId { get; set; } // CandidateApplication
+    public Guid JobApplicationId { get; set; } // JobApplication
     public Guid FeedbackId { get; set; } // InterviewFeedback
 
     //******************************************//
 
     public InterviewFeedback Feedback { get; set; } = null!;
-    public CandidateApplication CanApplication { get; set; } = null!;
+    public JobApplication JobApplication { get; set; } = null!;
     public List<InterviewRound> Rounds { get; set; } = new();
 }

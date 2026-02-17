@@ -10,6 +10,40 @@ public class CorHrmmListService : CorHrmmService.CorHrmmServiceBase
     private readonly IMediator _med;
     public CorHrmmListService(IMediator med) => _med = med;
 
+    public override async Task<CorHrmmListRes> GetListJgStep(CorHrmmListRqst request, ServerCallContext context)
+    {
+        var res = new CorHrmmListRes();
+        var response = (await _med.Send(new JgStepNameAllQry())).ToList();
+        if (response.Count <= 0)
+        {
+            var nList = new CorHrmmList { Id = null, Name = null };
+            res.Res.Add(nList);
+            return res;
+        }
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });
+        }
+
+        return res;
+    }
+
+    public override async Task<CorHrmmRes> GetJgStep(CorHrmmRqst request, ServerCallContext context)
+    {
+        var res = new CorHrmmRes();
+        var response = await _med.Send(new JgStepNameByIdQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            var nList = new CorHrmmList { Id = null, Name = null };
+            res.Res = nList;
+            return res;
+        }
+        var nList2 = new CorHrmmList { Id = response.Id.ToString(), Name = response.Name, };
+        res.Res = nList2;
+        return res;
+    }
+
     public override async Task<CorHrmmListRes> GetListJobGrade(CorHrmmListRqst request, ServerCallContext context)
     {
         var res = new CorHrmmListRes();

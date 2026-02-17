@@ -42,7 +42,7 @@ public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<
                 EducationQualId = data.EducationQualId,
                 EducationLevelId = data.EducationLevelId,
                 EducationQual = eduQual != null ? eduQual.Name : "NOT AVAILABLE",
-                EducationLevel = eduLevel.Name != null ? eduLevel.Name : "NOT AVAILABLE",
+                EducationLevel = eduLevel!.Name ?? "NOT AVAILABLE",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,

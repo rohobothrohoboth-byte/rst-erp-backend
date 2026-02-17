@@ -4,16 +4,13 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Helpers;
 
-public class EmpCode
+public class CodeGen
 {
     private readonly IUnitOfWork _unitOfWork;
-
-    public EmpCode(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
+    public CodeGen(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
     public async Task<string> GetEmpCode()
     {
         var validBraId = string.Empty;
-        //var gen = new NumToWord();
         var cGen = new NumToWord().IdGenerator(10);
         var allEmp = await _unitOfWork.Repository<Employee>().GetAll();
         if (allEmp.Any())

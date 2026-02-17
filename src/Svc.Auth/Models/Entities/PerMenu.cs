@@ -13,6 +13,6 @@ public class PerMenu : BaseEntity
 
     //******************************************//
 
-    public PerModule PerModule { get; set; } = null;
-    public PerMenu Parent { get; set; } = null;
+    public PerModule PerModule { get; set; } = null!;
+    public PerMenu Parent { get; set; } = null!;
 }

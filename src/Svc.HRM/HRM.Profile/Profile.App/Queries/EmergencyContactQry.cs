@@ -4,7 +4,6 @@ using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-using Profile.Domain.Enums;
 
 namespace Profile.App.Queries;
 
@@ -36,7 +35,7 @@ public class EmContactAllQryHandler : IRequestHandler<EmContactAllQry, List<EmCo
             var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
             var reV = rel.Res.FirstOrDefault(r => r.Id == data.RelationId.ToString());
             var re = "NOT AVAILABLE";
-            if (reV.Id != null)
+            if (reV != null)
             {
                 re = reV.Name;
             }

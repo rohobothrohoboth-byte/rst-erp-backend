@@ -7,7 +7,6 @@ public class ApprovalWorkflow : BaseEntity
     public string Description { get; set; } = default!;
     public string EntityType { get; set; } = default!;
     public bool IsActive { get; private set; }
-    public DateTime CreatedAt { get; set; }
 
     //******************************************//
 

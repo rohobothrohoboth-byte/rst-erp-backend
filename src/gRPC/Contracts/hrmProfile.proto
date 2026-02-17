@@ -7,10 +7,22 @@ package hrmProfile;
 service HrmProfileService {
   rpc GetEmpCode (HrmProRqst) returns (HrmProResCode);
   rpc GetEmp (HrmProRqst) returns (HrmProRes);
-  rpc GetPosEmp (HrmProRqst) returns (EmpPosRes);
   rpc GetListEmp (HrmProListRqst) returns (HrmProListRes);
+  rpc GetPosEmp (HrmProRqst) returns (EmpPosRes);
   rpc GetListEmpPolicy (HrmProListRqst) returns (HrmProListPlcy);
   rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
+  rpc GetEmpId (HrmProRqst) returns (HrmEmpId);
+  rpc GetListEmpId (HrmProListRqst) returns (HrmListEmpId);
+}
+
+message HrmEmpId {
+  string Id = 1;
+  string PositionId = 2;
+  string DeptId = 3;
+  string BranchId = 4;
+  string CompanyId = 5;
+  string JgStepId = 6;
+  string JgId = 7;
 }
 
 message HrmEmpPlcy {
@@ -45,6 +57,10 @@ message HrmProListRqst {}
 
 message HrmProRqst {
   string Id = 1;
+}
+
+message HrmListEmpId { 
+  repeated HrmEmpId Res = 1; 
 }
 
 message HrmProListPlcy { 

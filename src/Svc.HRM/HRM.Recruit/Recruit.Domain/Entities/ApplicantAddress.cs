@@ -1,6 +1,6 @@
 ﻿namespace Recruit.Domain.Entities;
 
-public class CandidateAddress : BaseEntity
+public class ApplicantAddress : BaseEntity
 {
     public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;

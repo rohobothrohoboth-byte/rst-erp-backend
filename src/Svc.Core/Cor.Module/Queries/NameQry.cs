@@ -19,6 +19,8 @@ public class FiscalYearNameByIdQry : IRequest<NameListDto?> { public Guid Id { g
 public class FiscalYearActiveQry : IRequest<List<NameListDto>> { }
 public class PeriodAllNameQry : IRequest<List<NameListDto>> { }
 public class PeriodNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class DbcAllQry : IRequest<List<DbcResDto>> { }
+public class DbcByIdQry : IRequest<DbcResDto?> { public Guid Id { get; set; } }
 
 public class BranchCompListQryHandler : IRequestHandler<BranchCompListQry, List<NameListDto>>
 {
@@ -321,6 +323,56 @@ public class PeriodNameByIdQryHandler : IRequestHandler<PeriodNameByIdQry, NameL
         {
             Id = res.Id,
             Name = res.Name
+        };
+        return c;
+    }
+}
+
+public class DbcAllHandler : IRequestHandler<DbcAllQry, List<DbcResDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public DbcAllHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<List<DbcResDto>> Handle(DbcAllQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Department>().GetAll();
+        var nameL = new List<DbcResDto>();
+        var braL = await _unitOfWork.Repository<Branch>().GetAll();
+
+        foreach (var data in res)
+        {
+            var bra = braL.FirstOrDefault(b => b.Id == data.BranchId);
+            var c = new DbcResDto
+            {
+                DeptId = data.Id,
+                BranchId = data.BranchId,
+                CompId = bra != null ? bra.CompId : Guid.Empty
+            };
+            nameL.Add(c);
+        }
+
+        return nameL;
+    }
+}
+
+public class DbcByIdHandler : IRequestHandler<DbcByIdQry, DbcResDto?>
+{
+    private readonly IUnitOfWork _unitOfWork;
+    public DbcByIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+
+    public async Task<DbcResDto?> Handle(DbcByIdQry request, CancellationToken cancellationToken)
+    {
+        var res = await _unitOfWork.Repository<Department>().GetById(request.Id);
+        if (res == null) { return null; }
+
+        var bra = await _unitOfWork.Repository<Branch>().GetById(res.BranchId);
+        if (bra == null) { return null; }
+
+        var c = new DbcResDto
+        {
+            DeptId = res.Id,
+            BranchId = res.BranchId,
+            CompId = bra.CompId
         };
         return c;
     }

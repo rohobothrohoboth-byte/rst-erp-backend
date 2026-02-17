@@ -5,7 +5,6 @@ using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-using Profile.Domain.Enums;
 
 namespace Profile.App.Queries;
 
@@ -62,10 +61,10 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 EmpFullNameAm = per != null ? $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}" : "NOT AVAILABLE",
                 Code = data.Code,
                 Gender = ((Gender)Enum.Parse(typeof(Gender), per!.Gender)).ToDisplayName(),
-                Branch = dept.NameAm != null ? dept.NameAm : "NOT AVAILABLE",
-                Department = dept.Name != null ? dept.Name : "NOT AVAILABLE",
-                Position = pos.Name != null ? pos.Name : "NOT AVAILABLE",
-                JobGrade = jg.Name != null ? jg.Name : "NOT AVAILABLE",
+                Branch = dept != null && dept.NameAm != null ? dept.NameAm : "NOT AVAILABLE",
+                Department = dept != null && dept.Name != null ? dept.Name : "NOT AVAILABLE",
+                Position = pos != null && pos.Name != null ? pos.Name : "NOT AVAILABLE",
+                JobGrade = jg != null && jg.Name != null ? jg.Name : "NOT AVAILABLE",
                 EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
                 EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
                 WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
@@ -236,7 +235,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             var con = await _unitOfWork.Repository<Person>().GetById(eCon.PersonId);
             var reV = rel.Res.FirstOrDefault(r => r.Id == eCon.RelationId.ToString());
             var re = "NOT AVAILABLE";
-            if (reV.Id != null)
+            if (reV != null)
             {
                 re = reV.Name;
             }
@@ -274,7 +273,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             var gua = await _unitOfWork.Repository<Person>().GetById(eGua.PersonId);
             var reV = rel.Res.FirstOrDefault(r => r.Id == eGua.RelationId.ToString());
             var re = "NOT AVAILABLE";
-            if (reV.Id != null)
+            if (reV != null)
             {
                 re = reV.Name;
             }

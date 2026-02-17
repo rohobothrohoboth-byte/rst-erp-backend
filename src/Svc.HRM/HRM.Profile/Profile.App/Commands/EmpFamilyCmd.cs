@@ -12,12 +12,12 @@ public class EmpFamilyAddCmd : IRequest<EmpFamilyListDto> { public EmpFamilyAddD
 public class EmpFamilyModCmd : IRequest<EmpFamilyListDto> { public EmpFamilyModDto ModDto { get; set; } = default!; }
 public class EmpFamilyDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class EmpFamilyAddCmdHandler : IRequestHandler<EmpFamilyAddCmd, EmpFamilyListDto>
+public class EmpFamilyAddHandler : IRequestHandler<EmpFamilyAddCmd, EmpFamilyListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public EmpFamilyAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EmpFamilyAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<EmpFamilyListDto> Handle(EmpFamilyAddCmd request, CancellationToken cancellationToken)
     {
@@ -60,12 +60,12 @@ public class EmpFamilyAddCmdHandler : IRequestHandler<EmpFamilyAddCmd, EmpFamily
     }
 }
 
-public class EmpFamilyModCmdHandler : IRequestHandler<EmpFamilyModCmd, EmpFamilyListDto>
+public class EmpFamilyModHandler : IRequestHandler<EmpFamilyModCmd, EmpFamilyListDto>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _med;
 
-    public EmpFamilyModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EmpFamilyModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
 
     public async Task<EmpFamilyListDto> Handle(EmpFamilyModCmd request, CancellationToken cancellationToken)
     {
@@ -73,7 +73,6 @@ public class EmpFamilyModCmdHandler : IRequestHandler<EmpFamilyModCmd, EmpFamily
         if (oldData == null) { throw new DomainException($"EMPLOYEE FAMILY with Id {request.ModDto.Id} NOT FOUND."); }
 
         await _unitOfWork.Begin();
-
         try
         {
             var oldPer = await _unitOfWork.Repository<Person>().GetById(oldData.PersonId);
@@ -107,10 +106,10 @@ public class EmpFamilyModCmdHandler : IRequestHandler<EmpFamilyModCmd, EmpFamily
     }
 }
 
-public class EmpFamilyDelCmdHandler : IRequestHandler<EmpFamilyDelCmd>
+public class EmpFamilyDelHandler : IRequestHandler<EmpFamilyDelCmd>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public EmpFamilyDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    public EmpFamilyDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
 
     public async Task Handle(EmpFamilyDelCmd request, CancellationToken cancellationToken)
     {
