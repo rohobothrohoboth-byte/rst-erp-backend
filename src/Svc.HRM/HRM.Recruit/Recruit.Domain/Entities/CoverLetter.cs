@@ -7,5 +7,5 @@ public class CoverLetter : BaseEntity
 
     //******************************************//
 
-    public JobApplication JobApp { get; set; } = null!;
+    public virtual JobApplication JobApp { get; set; } = null!;
 }

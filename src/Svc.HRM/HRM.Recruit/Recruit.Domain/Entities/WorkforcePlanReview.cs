@@ -11,5 +11,5 @@ public class WorkforcePlanReview : BaseEntity
 
     //******************************************//
 
-    public WorkforcePlan WorkforcePlan { get; set; } = null!;
+    public virtual WorkforcePlan WorkforcePlan { get; set; } = null!;
 }

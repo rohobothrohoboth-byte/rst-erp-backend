@@ -9,5 +9,5 @@ public class JobPostReview : BaseEntity
 
     //******************************************//
 
-    public JobPosting JobPosting { get; set; } = null!;
+    public virtual JobPosting JobPosting { get; set; } = null!;
 }

@@ -11,6 +11,5 @@ public class JobApplication : BaseEntity
 
     //******************************************//
 
-    public JobPosting JobPosting { get; set; } = null!;
-    public List<Interview> Interviews { get; set; } = new();
+    public virtual JobPosting JobPosting { get; set; } = null!;
 }

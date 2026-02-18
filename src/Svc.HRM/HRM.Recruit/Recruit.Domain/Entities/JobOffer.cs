@@ -7,14 +7,13 @@ public class JobOffer : BaseEntity
     public DateTime OfferDate { get; set; }
     public DateTime ExpirationDate { get; set; }
     public string OfferDocument { get; set; } = default!;
-    public Guid? UpdatedById { get; set; } // ApprovalStep
-    public Guid CanApplicationId { get; set; } // CandidateApplication
-    public Guid JobRequisitionId { get; set; } // JobRequisition
+    public Guid JobApplicationId { get; set; } // JobApplication
+    public Guid JobPostingId { get; set; } // JobPosting
 
-    public bool IsExpired => DateTime.UtcNow > ExpirationDate;
+    //public bool IsExpired => DateTime.UtcNow > ExpirationDate;
 
     //******************************************//
 
-    public JobRequisition JobRequisition { get; set; } = null!;
-    public JobApplication CanApplication { get; set; } = null!;
+    public virtual JobPosting JobPosting { get; set; } = null!;
+    public virtual JobApplication JobApplication { get; set; } = null!;
 }

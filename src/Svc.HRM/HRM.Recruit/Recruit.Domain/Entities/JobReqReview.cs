@@ -11,5 +11,5 @@ public class JobReqReview : BaseEntity
 
     //******************************************//
 
-    public JobRequisition JobReq { get; set; } = null!;
+    public virtual JobRequisition JobReq { get; set; } = null!;
 }

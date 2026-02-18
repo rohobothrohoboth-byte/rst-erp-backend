@@ -10,5 +10,5 @@ public class JobOfferReview : BaseEntity
 
     //******************************************//
 
-    public JobOffer JobOffer { get; set; } = null!;
+    public virtual JobOffer JobOffer { get; set; } = null!;
 }

@@ -7,5 +7,5 @@ public class ResumeBlob : BaseEntity
 
     //******************************************//
 
-    public Resume Resume { get; set; } = null!;
+    public virtual Resume Resume { get; set; } = null!;
 }

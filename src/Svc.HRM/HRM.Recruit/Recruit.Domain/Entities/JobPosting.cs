@@ -12,6 +12,6 @@ public class JobPosting : BaseEntity
 
     //******************************************//
 
-    public JobRequisition JobReq { get; set; } = null!;
+    public virtual JobRequisition JobReq { get; set; } = null!;
     public List<JobApplication> Applications { get; set; } = new();
 }

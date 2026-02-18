@@ -1,10 +1,9 @@
 ﻿namespace Recruit.Domain.Entities;
 
-public class JobAppScreening : BaseEntity
+public class ApplicationRanking : BaseEntity
 {
-    public double Score { get; set; }
-    public string Comments { get; set; } = default!;
-    public Guid ScreeningById { get; set; } // HRM.Profile.Employee
+    public double TotalScore { get; set; }
+    public int Rank { get; set; }
     public Guid JobAppId { get; set; } // JobApplication
 
     //******************************************//

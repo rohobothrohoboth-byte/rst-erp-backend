@@ -15,7 +15,7 @@ public class JobRequisition : BaseEntity
 
     //******************************************//
 
-    public WorkforcePlan WorkforcePlan { get; set; } = null!;
-    public JobDec JobDec { get; set; } = null!;
+    public virtual WorkforcePlan WorkforcePlan { get; set; } = null!;
+    public virtual JobDec JobDec { get; set; } = null!;
     public List<JobReqReview> Reviews { get; set; } = [];
 }
