@@ -1,5 +1,32 @@
 ﻿namespace Profile.Domain.DTOs;
 
+public sealed class EmployeeJoinRow
+{
+    public Guid Id { get; init; }
+    public string Code { get; init; } = default!;
+    public string EmploymentType { get; init; } = default!;
+    public string EmploymentNature { get; init; } = default!;
+    public string WorkArrangement { get; init; } = default!;
+    public Guid DepartmentId { get; init; }
+    public Guid JobGradeId { get; init; }
+    public Guid PositionId { get; init; }
+
+    public bool IsDeleted { get; init; }
+    public DateTime DateAdd { get; init; }
+    public DateTime? DateMod { get; init; }
+    public byte[] RowVersion { get; init; } = default!;
+
+    public string FirstName { get; init; } = default!;
+    public string MiddleName { get; init; } = default!;
+    public string LastName { get; init; } = default!;
+    public string FirstNameAm { get; init; } = default!;
+    public string MiddleNameAm { get; init; } = default!;
+    public string LastNameAm { get; init; } = default!;
+    public string Gender { get; init; } = default!;
+    public byte[]? PhotoThumbnail { get; init; }
+}
+
+
 public class EmployeeListDto : BaseDto
 {
     public string EmpFullName { get; set; } = default!;

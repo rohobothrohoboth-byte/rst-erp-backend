@@ -10,8 +10,6 @@ namespace Recruit.App.Commands;
 public class WoFoPlReviewCmd : IRequest<WorkforcePlanListDto> { public ReviewDto Rvw { get; set; } = default!; }
 public class JobReqReviewCmd : IRequest<JobReqListDto> { public ReviewDto Rvw { get; set; } = default!; }
 public class JobReqReviewAllCmd : IRequest<List<JobReqListDto>> { public ReviewAllDto Rvw { get; set; } = default!; }
-public class JobPostPublishCmd : IRequest<JobPostingListDto> { public PostPublish Rvw { get; set; } = default!; }
-public class JobPostPublishAllCmd : IRequest<List<JobPostingListDto>> { public PostPublish Rvw { get; set; } = default!; }
 
 
 
@@ -171,110 +169,6 @@ public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<J
 
             var res = new List<JobReqListDto>();
             var response = await _med.Send(new JobReqAllQry { Id = request.Rvw.Id }, cancellationToken);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-    }
-}
-
-public class JobPostPublishHandler : IRequestHandler<JobPostPublishCmd, JobPostingListDto>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMediator _med;
-
-    public JobPostPublishHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<JobPostingListDto> Handle(JobPostPublishCmd request, CancellationToken cancellationToken)
-    {
-        var jPost = await _unitOfWork.Repository<JobPosting>().GetById(request.Rvw.Id);
-        if (jPost == null) { throw new DomainException($"JOB POSTING with Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
-        try
-        {
-            jPost.Status = BoolToStr.EnumToString(PostingStatus.Published);
-            jPost.PublishedDate = DateTime.UtcNow;
-            await _unitOfWork.Repository<JobPosting>().Update(jPost);
-
-            var data = new JobPostReview
-            {
-                JobPostingId = request.Rvw.Id,
-                Comment = request.Rvw.Comment,
-                ReviewById = request.Rvw.ReviewById,
-                Status = BoolToStr.EnumToString(PostingStatus.Published)
-            };
-            await _unitOfWork.Repository<JobPostReview>().Add(data);
-            await _unitOfWork.Commit();
-
-            var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = request.Rvw.Id }, cancellationToken);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _unitOfWork.Rollback();
-            throw;
-        }
-    }
-}
-
-public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, List<JobPostingListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMediator _med;
-
-    public JobPostPublishAllHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    private async Task UpdatePosting(Guid id, PostPublish request)
-    {
-        var dataL = new List<JobPosting>();
-        var dbData = (await _unitOfWork.Repository<JobPosting>().Find(p => p.JobReqId == id)).ToList();
-        if (dbData.Count > 0)
-        {
-            var stat = BoolToStr.EnumToString(PostingStatus.Published);
-            foreach (var data in dbData)
-            {
-                data.Status = stat;
-                data.PublishedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<JobPosting>().Update(data);
-
-                var dataR = new JobPostReview
-                {
-                    Comment = request.Comment,
-                    ReviewById = request.ReviewById,
-                    JobPostingId = data.Id,
-                    Status = stat
-                };
-                await _unitOfWork.Repository<JobPostReview>().Add(dataR);
-            }
-        }
-    }
-
-    public async Task<List<JobPostingListDto>> Handle(JobPostPublishAllCmd request, CancellationToken cancellationToken)
-    {
-        var stat = BoolToStr.EnumToString(ReqStatus.Approved);
-        var jReqL = (await _unitOfWork.Repository<JobRequisition>().Find(r => r.WorkforcePlanId == request.Rvw.Id && r.Status == stat)).ToList();
-        if (jReqL.Count <= 0) { throw new DomainException($"JOB POST for Workforce Plan with Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
-        try
-        {
-            foreach (var jReq in jReqL)
-            {
-                await UpdatePosting(jReq.Id, request.Rvw);
-            }
-
-            await _unitOfWork.Commit();
-            var res = new List<JobPostingListDto>();
-            var response = await _med.Send(new JobPostingByWfpIdQry { Id = request.Rvw.Id }, cancellationToken);
             if (response == null) { return res; }
             res = response;
             return res;

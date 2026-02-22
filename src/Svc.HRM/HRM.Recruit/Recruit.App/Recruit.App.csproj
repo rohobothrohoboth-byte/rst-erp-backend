@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Recruit.Domain\Recruit.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Validators\" />
+  </ItemGroup>
+
 </Project>

@@ -2,8 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Profile.App.Interfaces;
 using Profile.Domain.Entities;
-using Profile.Utility.Extensions;
 using System.Data;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -11,134 +11,119 @@ namespace Profile.Utility.Repos;
 
 public class HrmProfileRepo<T> : IHrmProfileRepo<T> where T : BaseEntity
 {
-    private readonly IDbConnection _dbConnection;
-    private readonly ILogger<HrmProfileRepo<T>> _logger;
+    private readonly IDbConnection _connection;
+    private readonly IDbTransaction? _transaction;
     private readonly string _tableName;
+    private readonly ILogger<HrmProfileRepo<T>> _logger;
 
-    public HrmProfileRepo(DapperContext context, ILogger<HrmProfileRepo<T>> logger)
+    public HrmProfileRepo(IDbConnection connection, IDbTransaction? transaction, ILogger<HrmProfileRepo<T>> logger)
     {
-        _dbConnection = context.CreateConnection();
+        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _transaction = transaction;
         _logger = logger;
         _tableName = typeof(T).Name;
     }
-    
-    public async Task<IEnumerable<T>> GetAll()
+
+    private async Task<TResult> ExecuteWithTimer<TResult>(string method, Func<Task<TResult>> action)
     {
-        _logger.LogInformation("Fetching all entities from {TableName} where IsDeleted = false", _tableName);
-        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE ""IsDeleted"" = false ORDER BY ""DateAdd"" DESC";
-        return await _dbConnection.QueryAsync<T>(sql);
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            _logger.LogInformation("{Method} START Entity = {Entity}", method, _tableName);
+            var result = await action();
+            sw.Stop();
+            _logger.LogInformation("{Method} SUCCESS Entity={Entity} Duration={Duration}ms", method, _tableName, sw.ElapsedMilliseconds);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex, "{Method} FAILED Entity={Entity} Duration={Duration}ms", method, _tableName, sw.ElapsedMilliseconds);
+            throw;
+        }
     }
 
     public async Task<T?> GetById(Guid id)
     {
-        _logger.LogInformation("Fetching {Entity} by Id: {Id} from {TableName}", typeof(T).Name, id, _tableName);
-        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE ""Id"" = @Id AND ""IsDeleted"" = false";
-        return await _dbConnection.QueryFirstOrDefaultAsync<T>(sql, new { Id = id });
+        var sql = $""" SELECT * FROM "{_tableName}" WHERE "Id"=@Id AND "IsDeleted"=false """;
+        return await ExecuteWithTimer(nameof(GetById), () => _connection.QueryFirstOrDefaultAsync<T>(sql, new { Id = id }, _transaction));
+    }
+
+    public async Task<IEnumerable<T>> GetAll()
+    {
+        var sql = $""" SELECT * FROM "{_tableName}" WHERE "IsDeleted"=false ORDER BY "DateAdd" DESC """;
+        return await ExecuteWithTimer(nameof(GetAll), () => _connection.QueryAsync<T>(sql, transaction: _transaction));
     }
 
     public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
     {
-        _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-
-        var (sqlWhere, parameters) = ExpressionToSql.Parse(predicate);
-        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE {sqlWhere} AND ""IsDeleted"" = false LIMIT 1";
-        _logger.LogDebug("Executing SQL: {Sql} with parameters: {@Params}", sql, parameters);
-
-        return await _dbConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+        var (where, parameters) = ExpressionToSql.Parse(predicate);
+        var sql = $""" SELECT * FROM "{_tableName}" WHERE {where} AND "IsDeleted"=false LIMIT 1 """;
+        return await ExecuteWithTimer(nameof(GetFoD), () => _connection.QueryFirstOrDefaultAsync<T>(sql, parameters, _transaction));
     }
-
-    //public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
-    //{
-    //    _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-    //    var query = BuildDynamicQuery(predicate);
-    //    _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
-    //    return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
-    //}
 
     public async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> predicate)
     {
-        _logger.LogInformation("Fetching {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-        var (sqlWhere, parameters) = ExpressionToSql.Parse(predicate);
-        var sql = $@"SELECT * FROM ""{_tableName}"" WHERE {sqlWhere} AND ""IsDeleted"" = false";
-        _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", sql, parameters);
-        return await _dbConnection.QueryAsync<T>(sql, parameters);
+        var (where, parameters) = ExpressionToSql.Parse(predicate);
+        var sql = $""" SELECT * FROM "{_tableName}" WHERE {where} AND "IsDeleted"=false """;
+        return await ExecuteWithTimer(nameof(Find), () => _connection.QueryAsync<T>(sql, parameters, _transaction));
     }
 
     public async Task Add(T entity)
     {
-        if (entity.Id == Guid.Empty) { entity.Id = Guid.NewGuid(); }
+        entity.Id = Guid.NewGuid();
         entity.DateAdd = DateTime.UtcNow;
-
-        var properties = typeof(T).GetProperties().Where(p => IsSupportedDapperType(p.PropertyType) && !IsIgnoredProperty(p)).ToList();
-
-        var columns = string.Join(", ", properties.Select(p => $@"""{p.Name}"""));
-        var paramList = string.Join(", ", properties.Select(p => "@" + p.Name));
-
-        var sql = $@"INSERT INTO ""{_tableName}"" ({columns}, ""RowVersion"") VALUES ({paramList}, gen_random_bytes(8));";
-
-        var paramObj = new DynamicParameters();
-        foreach (var prop in properties) { paramObj.Add("@" + prop.Name, prop.GetValue(entity)); }
-
-        _logger.LogDebug("Inserting entity into {TableName} with Id {Id}", _tableName, entity.Id);
-        await _dbConnection.ExecuteAsync(sql, paramObj);
+        var props = GetProps();
+        var columns = string.Join(",", props.Select(p => $"\"{p.Name}\""));
+        var values = string.Join(",", props.Select(p => $"@{p.Name}"));
+        var sql = $""" INSERT INTO "{_tableName}" ({columns}, "RowVersion") VALUES ({values}, gen_random_bytes(8)) """;
+        await ExecuteWithTimer(nameof(Add), () => _connection.ExecuteAsync(sql, entity, _transaction));
+        _logger.LogInformation("Entity added successfully: {EntityId}", entity.Id);
     }
-    
+
     public async Task<T> Update(T entity)
     {
-        var newRowVersion = await _dbConnection.ExecuteScalarAsync<byte[]>("SELECT gen_random_bytes(8);") ?? throw new InvalidOperationException("Failed to generate RowVersion.");
-        var originalRowVersion = entity.RowVersion;
-        entity.RowVersion = newRowVersion;
         entity.DateMod = DateTime.UtcNow;
+        var newVersion = await _connection.ExecuteScalarAsync<byte[]>("SELECT gen_random_bytes(8)", transaction: _transaction);
+        var originalVersion = entity.RowVersion;
+        entity.RowVersion = newVersion;
+        var props = GetProps();
+        var set = string.Join(",", props.Select(p => $"\"{p.Name}\"=@{p.Name}"));
 
-        var props = typeof(T).GetProperties().Where(p => p.CanRead && p.CanWrite && !IsIgnoredProperty(p) && IsSupportedDapperType(p.PropertyType)).ToList();
-        props.Add(typeof(T).GetProperty(nameof(BaseEntity.RowVersion))!);
-
-        var setClause = string.Join(", ", props.Select(p => $@"""{p.Name}"" = @{p.Name}"));
-        var sql = $@"UPDATE ""{_tableName}"" SET {setClause} WHERE ""Id"" = @Id AND ""RowVersion"" = @RowVersionOriginal AND ""IsDeleted"" = false RETURNING *;";
-
-        var parameters = new DynamicParameters();
-        foreach (var prop in props)
+        var sql = $""" UPDATE "{_tableName}" SET {set}, "RowVersion"=@RowVersion WHERE "Id"=@Id AND "RowVersion"=@OriginalVersion RETURNING * """;
+        var param = new DynamicParameters(entity);
+        param.Add("@OriginalVersion", originalVersion);
+        var result = await ExecuteWithTimer(nameof(Update), () => _connection.QuerySingleOrDefaultAsync<T>(sql, param, _transaction));
+        if (result == null)
         {
-            parameters.Add("@" + prop.Name, prop.GetValue(entity));
+            _logger.LogWarning("Concurrency conflict while updating entity {EntityId}", entity.Id);
+            throw new DBConcurrencyException("The record was modified by another user.");
         }
 
-        parameters.Add("@Id", entity.Id);
-        parameters.Add("@RowVersionOriginal", originalRowVersion, DbType.Binary);
-        _logger.LogDebug("Updating entity in {TableName} with Id {Id}", _tableName, entity.Id);
-
-        var updated = await _dbConnection.QuerySingleOrDefaultAsync<T>(sql, parameters);
-        if (updated == null)
-        {
-            _logger.LogWarning("Concurrency conflict or entity not found for update in {TableName} with Id {Id}", _tableName, entity.Id);
-            throw new DBConcurrencyException("The record was modified by another user or deleted.");
-        }
-
-        return updated;
+        _logger.LogInformation("Entity updated successfully: {EntityId}", entity.Id);
+        return result;
     }
 
     public async Task Delete(Guid id)
     {
-        var sql = $@"UPDATE ""{_tableName}"" SET ""IsDeleted"" = true, ""DateMod"" = CURRENT_TIMESTAMP WHERE ""Id"" = @Id AND ""IsDeleted"" = false";
-        var rowsAffected = await _dbConnection.ExecuteAsync(sql, new { Id = id });
-
+        var sql = $""" UPDATE "{_tableName}" SET "IsDeleted"=true, "DateMod"=CURRENT_TIMESTAMP WHERE "Id"=@Id """;
+        var rowsAffected = await ExecuteWithTimer(nameof(Delete), () => _connection.ExecuteAsync(sql, new { Id = id }, _transaction));
         if (rowsAffected == 0)
         {
-            _logger.LogWarning("Entity not found for soft delete in {TableName} with Id {Id}", _tableName, id);
+            _logger.LogWarning("Entity not found or already deleted in {TableName} with Id {Id}", _tableName, id);
             throw new KeyNotFoundException("Entity not found for delete");
         }
-
-        _logger.LogInformation("Entity soft-deleted from {TableName} with Id {Id}", _tableName, id);
+        _logger.LogInformation("Entity soft-deleted successfully: {EntityId}", id);
     }
 
-    private bool IsSupportedDapperType(Type type)
+    private static IEnumerable<PropertyInfo> GetProps()
     {
-        var t = Nullable.GetUnderlyingType(type) ?? type;
-        //return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(Enum) || t == typeof(int) || t == typeof(DateTime) || t == typeof(byte[]);
-        return t.IsPrimitive || t == typeof(string) || t == typeof(Guid) || t == typeof(byte[]) || t == typeof(DateTime) || t.IsEnum || t == typeof(uint) || t == typeof(sbyte) || t == typeof(long);
+        return typeof(T).GetProperties().Where(p => p.Name != nameof(BaseEntity.RowVersion) && IsSimpleType(p.PropertyType));
     }
 
-    private bool IsIgnoredProperty(PropertyInfo p)
+    private static bool IsSimpleType(Type type)
     {
-        return p.Name is nameof(BaseEntity.RowVersion) || !IsSupportedDapperType(p.PropertyType);
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(decimal) || type == typeof(byte[]);
     }
 }

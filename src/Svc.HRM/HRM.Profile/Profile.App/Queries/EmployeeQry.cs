@@ -1,10 +1,16 @@
 ﻿using Common;
+using Dapper;
 using EthiopianCalendar;
 using Helpers;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Npgsql;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
+using System.Data;
+using System.Data.Common;
 
 namespace Profile.App.Queries;
 
@@ -14,118 +20,166 @@ public class Step5Qry : IRequest<Step5Dto?> { public Guid Id { get; set; } }
 public class Step2Qry : IRequest<BasicInfoDto?> { public Guid Id { get; set; } }
 public class EmpCodeByIdQry : IRequest<string?> { public Guid Id { get; set; } }
 
+
+
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly DapperCxtHelper _db;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeAllQryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeAllQryHandler(DapperCxtHelper db, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
+        _db = db;
         _corHRMM = corHRMM;
         _corMod = corMod;
     }
 
-    public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken cancellationToken)
+    public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<Employee>().GetAll();
-        var dataL = new List<EmployeeListDto>();
-        var perL = await _unitOfWork.Repository<Person>().GetAll();
-        var deL = await _corMod.GetListDept(cancellationToken);
-        var jgL = await _corHRMM.GetListJobGrade(cancellationToken);
-        var poL = await _corHRMM.GetListPosition(cancellationToken);
-        var ePhotoL = await _unitOfWork.Repository<EmpPhoto>().GetAll();
+        var conn = await _db.GetOpenConnectionAsync(ct: ct);
+        var deptTask = _corMod.GetListDept(ct);
+        var jgTask = _corHRMM.GetListJobGrade(ct);
+        var posTask = _corHRMM.GetListPosition(ct);
+        await Task.WhenAll(deptTask, jgTask, posTask);
 
-        foreach (var data in dbData)
+        var deptDict = deptTask.Result.Res.ToDictionary(d => Guid.Parse(d.Id));
+        var jobGradeDict = jgTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+
+        const string e = "e";
+        const string p = "p";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.RowVersion)
+            .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
+            .From<Employee>(e)
+            .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id);
+
+        //// Dynamic search
+        //if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        //{
+        //    qb.SearchILike<Person>(p, request.SearchTerm,
+        //        x => x.FirstName, x => x.LastName,
+        //        x => x.FirstNameAm, x => x.LastNameAm);
+        //}
+
+        //// Keyset pagination
+        //if (request.LastDate.HasValue && request.LastId.HasValue)
+        //{
+        //    qb.KeysetAfter<Employee>(e, new[]
+        //    {
+        //        (x => x.DateAdd, request.LastDate.Value),
+        //        (x => x.Id, request.LastId.Value)
+        //    }, desc: true);
+        //}
+
+        //// Order & limit
+        //qb.OrderBy<Employee>(e, x => x.DateAdd, desc: true)
+        //  .OrderBy<Employee>(e, x => x.Id, desc: true)
+        //  .Limit(request.PageSize);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<EmployeeListDto>(10000);
+        using var reader = (DbDataReader)await conn.ExecuteReaderAsync(new CommandDefinition(sql, parameters, cancellationToken: ct), CommandBehavior.SequentialAccess);
+        var parser = reader.GetRowParser<EmployeeJoinRow>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var per = perL.FirstOrDefault(t => t.Id == data.PersonId);
-            var dept = deL.Res.FirstOrDefault(t => t.Id == data.DepartmentId.ToString());
-            var jg = jgL.Res.FirstOrDefault(t => t.Id == data.JobGradeId.ToString());
-            var pos = poL.Res.FirstOrDefault(t => t.Id == data.PositionId.ToString());
-            var photo = "";
-            if (ePhotoL.Any())
-            {
-                var ePhoto = ePhotoL.FirstOrDefault(t => t.EmployeeId == data.Id);
-                if (ePhoto != null)
-                {
-                    var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto.ThumbnailId);
-                    photo = Convert.ToBase64String(ePhotoB!.Data);
-                }
-            }
+            var row = parser(reader);
+            deptDict.TryGetValue(row.DepartmentId, out var dept);
+            jobGradeDict.TryGetValue(row.JobGradeId, out var jg);
+            posDict.TryGetValue(row.PositionId, out var pos);
 
-            var c = new EmployeeListDto
+            result.Add(new EmployeeListDto
             {
-                Id = data.Id,
-                EmpFullName = per != null ? $"{per.FirstName} {per.MiddleName} {per.LastName}" : "NOT AVAILABLE",
-                EmpFullNameAm = per != null ? $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}" : "NOT AVAILABLE",
-                Code = data.Code,
-                Gender = ((Gender)Enum.Parse(typeof(Gender), per!.Gender)).ToDisplayName(),
-                Branch = dept != null && dept.NameAm != null ? dept.NameAm : "NOT AVAILABLE",
-                Department = dept != null && dept.Name != null ? dept.Name : "NOT AVAILABLE",
-                Position = pos != null && pos.Name != null ? pos.Name : "NOT AVAILABLE",
-                JobGrade = jg != null && jg.Name != null ? jg.Name : "NOT AVAILABLE",
-                EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-                EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
-                WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
-                Photo = photo,
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                Id = row.Id,
+                Code = row.Code,
+                EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
+                EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+                Gender = MyEnumHelper.TryParseEnum<Gender>(row.Gender)?.ToDisplayName() ?? "",
+                Branch = dept?.NameAm ?? "",
+                Department = dept?.Name ?? "",
+                Position = pos?.Name ?? "",
+                JobGrade = jg?.Name ?? "",
+                EmpType = MyEnumHelper.TryParseEnum<EmpType>(row.EmploymentType)?.ToDisplayName() ?? "",
+                EmpNature = MyEnumHelper.TryParseEnum<EmpNature>(row.EmploymentNature)?.ToDisplayName() ?? "",
+                WorkArr = MyEnumHelper.TryParseEnum<WorkArrangement>(row.WorkArrangement)?.ToDisplayName() ?? "",
+                IsDeleted = false,  // handled by QueryBuilder soft-delete
+                DateAdd = row.DateAdd,
+                DateMod = row.DateMod,
+                RowVersion = Convert.ToBase64String(row.RowVersion)
+            });
         }
 
-        return dataL;
+        return result;
     }
 }
 
 public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly DapperCxtHelper _db;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeByIdQryHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeByIdQryHandler(DapperCxtHelper db, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
+        _db = db;
         _corHRMM = corHRMM;
         _corMod = corMod;
     }
 
-    public async Task<EmployeeListDto?> Handle(EmployeeByIdQry request, CancellationToken cancellationToken)
+    public async Task<EmployeeListDto?> Handle(EmployeeByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
-        if (data == null) { return null; }
-        var per = await _unitOfWork.Repository<Person>().GetById(data.PersonId);
-        var dept = await _corMod.GetDept(data.DepartmentId.ToString(), cancellationToken);
-        var jg = await _corHRMM.GetJobGrade(data.JobGradeId.ToString(), cancellationToken);
-        var pos = await _corHRMM.GetPosition(data.PositionId.ToString(), cancellationToken);
-        var ePhoto = await _unitOfWork.Repository<EmpPhoto>().GetFoD(t => t.EmployeeId == request.Id);
-        var ePhotoB = await _unitOfWork.Repository<EmpPhotoThumbnail>().GetFoD(t => t.FileMetaDataId == ePhoto!.FileMetaDataId);
+        var conn = await _db.GetOpenConnectionAsync(ct: ct);
+        const string e = "e";
+        const string p = "p";
+        const string ph = "ph";
+        const string th = "th";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.RowVersion)
+            .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
+            .SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
+            .From<Employee>(e)
+            .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
+            .Join<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId, "LEFT JOIN")
+            .Join<EmpPhoto, EmpPhotoThumbnail>(ph, th, x => x.ThumbnailId, x => x.FileMetaDataId, "LEFT JOIN")
+            .And<Employee>(e, x => x.Id, "=", request.Id)
+            .Limit(1);
+        var (sql, parameters) = qb.Build();
+        EmployeeJoinRow? row = null;
 
-        var c = new EmployeeListDto
+        using var reader = (DbDataReader)await conn.ExecuteReaderAsync(new CommandDefinition(sql, parameters, cancellationToken: ct), CommandBehavior.SequentialAccess);
+        var parser = reader.GetRowParser<EmployeeJoinRow>();
+        if (await reader.ReadAsync(ct)) { row = parser(reader); }
+        if (row == null) return null;
+
+        var deptTask = _corMod.GetDept(row.DepartmentId.ToString(), ct);
+        var jobGradeTask = _corHRMM.GetJobGrade(row.JobGradeId.ToString(), ct);
+        var positionTask = _corHRMM.GetPosition(row.PositionId.ToString(), ct);
+        await Task.WhenAll(deptTask, jobGradeTask, positionTask);
+
+        var dto = new EmployeeListDto
         {
-            Id = data.Id,
-            EmpFullName = $"{per!.FirstName} {per.MiddleName} {per.LastName}",
-            EmpFullNameAm = $"{per.FirstNameAm} {per.MiddleNameAm} {per.LastNameAm}",
-            Code = data.Code,
-            Gender = ((Gender)Enum.Parse(typeof(Gender), per.Gender)).ToDisplayName(),
-            Branch = dept.Res.NameAm != null ? dept.Res.NameAm : "NOT AVAILABLE",
-            Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
-            Position = pos.Res.Name != null ? pos.Res.Name : "NOT AVAILABLE",
-            JobGrade = jg.Res.Name != null ? jg.Res.Name : "NOT AVAILABLE",
-            EmpType = ((EmpType)Enum.Parse(typeof(EmpType), data.EmploymentType)).ToDisplayName(),
-            EmpNature = ((EmpNature)Enum.Parse(typeof(EmpNature), data.EmploymentNature)).ToDisplayName(),
-            WorkArr = ((WorkArrangement)Enum.Parse(typeof(WorkArrangement), data.WorkArrangement)).ToDisplayName(),
-            Photo = Convert.ToBase64String(ePhotoB!.Data),
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
+            Id = row.Id,
+            EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
+            EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+            Code = row.Code,
+            Gender = MyEnumHelper.TryParseEnum<Gender>(row.Gender)?.ToDisplayName() ?? "",
+            Branch = deptTask.Result?.Res?.NameAm ?? "",
+            Department = deptTask.Result?.Res?.Name ?? "",
+            Position = positionTask.Result?.Res?.Name ?? "",
+            JobGrade = jobGradeTask.Result?.Res?.Name ?? "",
+            EmpType = MyEnumHelper.TryParseEnum<EmpType>(row.EmploymentType)?.ToDisplayName() ?? "",
+            EmpNature = MyEnumHelper.TryParseEnum<EmpNature>(row.EmploymentNature)?.ToDisplayName() ?? "",
+            WorkArr = MyEnumHelper.TryParseEnum<WorkArrangement>(row.WorkArrangement)?.ToDisplayName() ?? "",
+            Photo = row.PhotoThumbnail != null ? Convert.ToBase64String(row.PhotoThumbnail) : "",
+            IsDeleted = false,
+            DateAdd = row.DateAdd,
+            DateMod = row.DateMod,
+            RowVersion = Convert.ToBase64String(row.RowVersion)
         };
-        return c;
+
+        return dto;
     }
 }
 

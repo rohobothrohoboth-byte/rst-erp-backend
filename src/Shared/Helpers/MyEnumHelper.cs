@@ -17,4 +17,10 @@ public static class MyEnumHelper
         var attribute = value.GetAttribute<DisplayAttribute>();
         return attribute.Name ?? value.ToString();
     }
+
+    public static TEnum? TryParseEnum<TEnum>(string? value) where TEnum : struct, Enum
+    {
+        if (string.IsNullOrWhiteSpace(value)) { return null; }
+        return Enum.TryParse<TEnum>(value, out var parsed) ? parsed : null;
+    }
 }

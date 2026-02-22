@@ -12,6 +12,8 @@ public class LeaveTypeModCmd : IRequest<LeaveTypeListDto> { public LeaveTypeModD
 public class LeaveTypeStatCmd : IRequest<LeaveTypeListDto> { public StatChangeDto StatDto { get; set; } = default!; }
 public class LeaveTypeDelCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class LeaveTypeAddHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeListDto>
 {
     private readonly IUnitOfWork _unitOfWork;

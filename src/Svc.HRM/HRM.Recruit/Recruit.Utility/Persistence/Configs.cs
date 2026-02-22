@@ -15,6 +15,7 @@ public class ApplicantConfig : IEntityTypeConfiguration<Applicant>
         b.HasOne(x => x.Contact).WithMany().HasForeignKey(x => x.ContactId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => x.PersonId); b.HasIndex(x => x.ContactId); b.HasIndex(x => x.AddressId);
+        b.HasIndex(x => x.IsDeleted); b.HasIndex(x => x.DateAdd);
         b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
         b.HasQueryFilter(x => !x.IsDeleted);
     }
@@ -155,6 +156,7 @@ public class EvaluationTypeConfig : IEntityTypeConfiguration<EvaluationType>
         b.Property(x => x.Name).HasMaxLength(150).IsRequired();
         b.Property(x => x.MaxScore).HasPrecision(5, 2).IsRequired();
         b.HasIndex(x => x.Name).IsUnique();
+        b.HasIndex(x => x.IsActive);
         b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
         b.HasQueryFilter(x => !x.IsDeleted);
     }

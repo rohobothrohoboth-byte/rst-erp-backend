@@ -47,14 +47,6 @@ public class HrmLeaveRepo<T> : IHrmLeaveRepo<T> where T : BaseEntity
         return await _dbConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
     }
 
-    //public async Task<T?> GetFoD(Expression<Func<T, bool>> predicate)
-    //{
-    //    _logger.LogInformation("Fetching first {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);
-    //    var query = BuildDynamicQuery(predicate);
-    //    _logger.LogDebug("Executing SQL: {Sql} with parameters: {Params}", query.Sql, query.Parameters);
-    //    return await _dbConnection.QueryFirstOrDefaultAsync<T>(query.Sql, query.Parameters);
-    //}
-
     public async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> predicate)
     {
         _logger.LogInformation("Fetching {Entity} matching predicate from {TableName}", typeof(T).Name, _tableName);

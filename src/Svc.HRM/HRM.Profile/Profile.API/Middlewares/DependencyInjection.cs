@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.Utility.Extensions;
 using Profile.Utility.Persistence;
@@ -37,6 +38,7 @@ public static class DependencyInjection
 
         builder.Services.AddDbContext<HrmProfileDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("HRMProDbCon")));
         builder.Services.AddScoped<DapperContext>();
+        builder.Services.AddScoped<DapperCxtHelper>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ILupClient, LupClient>();
