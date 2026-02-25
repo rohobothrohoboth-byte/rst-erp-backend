@@ -1,12 +1,13 @@
 ﻿namespace Profile.Domain.DTOs;
 
-public sealed class EmployeeJoinRow
+public sealed class EmpJoinRow
 {
     public Guid Id { get; init; }
     public string Code { get; init; } = default!;
     public string EmploymentType { get; init; } = default!;
     public string EmploymentNature { get; init; } = default!;
     public string WorkArrangement { get; init; } = default!;
+    public DateTime EmploymentDate { get; set; }
     public Guid DepartmentId { get; init; }
     public Guid JobGradeId { get; init; }
     public Guid PositionId { get; init; }
@@ -23,9 +24,70 @@ public sealed class EmployeeJoinRow
     public string MiddleNameAm { get; init; } = default!;
     public string LastNameAm { get; init; } = default!;
     public string Gender { get; init; } = default!;
+    public string Nationality { get; set; } = default!;
     public byte[]? PhotoThumbnail { get; init; }
 }
 
+public class EmpBioJoin
+{
+    public DateTime? BirthDate { get; set; }
+    public string? BirthLocation { get; set; }
+    public string? MotherFullName { get; set; }
+    public string? HasBirthCert { get; set; }
+    public string? HasMarriageCert { get; set; }
+    public string? MaritalStatus { get; set; }
+    public string? AddressType { get; set; }
+    public string? Region { get; set; }
+    public string? Subcity { get; set; }
+    public string? Zone { get; set; }
+    public string? Woreda { get; set; }
+    public string? Kebele { get; set; }
+    public string? Telephone { get; set; }
+    public string? Tin { get; set; }
+    public string? BankAccountNo { get; set; }
+    public string? PensionNumber { get; set; }
+}
+
+public class EmpContJoin
+{
+    public string FirstName { get; init; } = default!;
+    public string MiddleName { get; init; } = default!;
+    public string LastName { get; init; } = default!;
+    public string FirstNameAm { get; init; } = default!;
+    public string MiddleNameAm { get; init; } = default!;
+    public string LastNameAm { get; init; } = default!;
+    public string Gender { get; init; } = default!;
+    public string Nationality { get; set; } = default!;
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
+    public string Region { get; set; } = default!;
+    public string Subcity { get; set; } = default!;
+    public string Zone { get; set; } = default!;
+    public string Woreda { get; set; } = default!;
+    public string Kebele { get; set; } = default!;
+    public string Telephone { get; set; } = default!;
+}
+
+public class EmpGuaJoin
+{
+    public string FirstName { get; init; } = default!;
+    public string MiddleName { get; init; } = default!;
+    public string LastName { get; init; } = default!;
+    public string FirstNameAm { get; init; } = default!;
+    public string MiddleNameAm { get; init; } = default!;
+    public string LastNameAm { get; init; } = default!;
+    public string Gender { get; init; } = default!;
+    public string Nationality { get; set; } = default!;
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
+    public string Region { get; set; } = default!;
+    public string Subcity { get; set; } = default!;
+    public string Zone { get; set; } = default!;
+    public string Woreda { get; set; } = default!;
+    public string Kebele { get; set; } = default!;
+    public string Telephone { get; set; } = default!;
+    public string FileName { get; set; } = default!;
+    public long FileSize { get; set; } = default!;
+    public string ContentType { get; set; } = default!;
+}
 
 public class EmployeeListDto : BaseDto
 {

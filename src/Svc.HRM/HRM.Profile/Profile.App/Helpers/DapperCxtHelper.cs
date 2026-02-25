@@ -35,6 +35,7 @@ public class DapperCxtHelper : IAsyncDisposable, IDisposable
     }
 
     public IDbTransaction? Transaction => _transaction;
+    public string ConnectionString => _connectionString;
 
     public async Task CommitAsync()
     {

@@ -23,4 +23,6 @@ public static class MyEnumHelper
         if (string.IsNullOrWhiteSpace(value)) { return null; }
         return Enum.TryParse<TEnum>(value, out var parsed) ? parsed : null;
     }
+
+    public static string FormatEnum<TEnum>(string? value) where TEnum : struct, Enum => TryParseEnum<TEnum>(value)?.ToDisplayName() ?? "";
 }
