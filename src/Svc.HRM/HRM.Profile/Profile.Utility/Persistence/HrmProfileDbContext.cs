@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Profile.Domain.Entities;
+using System.Data.Common;
 
 namespace Profile.Utility.Persistence;
 
@@ -15,6 +17,41 @@ public class HrmProfileDbContext : DbContext
 
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrmProfileDbContext).Assembly);
+    }
+
+    public DbConnection GetConnection() => Database.GetDbConnection();
+    public DbTransaction? GetTransaction() => Database.CurrentTransaction?.GetDbTransaction();
+
+    public async Task BeginTransactionAsync(CancellationToken ct = default)
+    {
+        if (Database.CurrentTransaction == null)
+            await Database.BeginTransactionAsync(ct);
+    }
+
+    public async Task CommitAsync(CancellationToken ct = default)
+    {
+        if (Database.CurrentTransaction != null)
+            await Database.CurrentTransaction.CommitAsync(ct);
+    }
+
+    public async Task RollbackAsync(CancellationToken ct = default)
+    {
+        if (Database.CurrentTransaction != null)
+            await Database.CurrentTransaction.RollbackAsync(ct);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.DateAdd = DateTime.UtcNow;
+
+            if (entry.State == EntityState.Modified)
+                entry.Entity.DateMod = DateTime.UtcNow;
+        }
+
+        return base.SaveChangesAsync(cancellationToken);
     }
 
     public DbSet<Address> Address { get; set; }

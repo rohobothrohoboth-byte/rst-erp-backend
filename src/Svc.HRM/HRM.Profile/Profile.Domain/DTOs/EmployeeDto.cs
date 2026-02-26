@@ -28,7 +28,7 @@ public sealed class EmpJoinRow
     public byte[]? PhotoThumbnail { get; init; }
 }
 
-public class EmpBioJoin
+public sealed class EmpBioJoin
 {
     public DateTime? BirthDate { get; set; }
     public string? BirthLocation { get; set; }
@@ -48,7 +48,7 @@ public class EmpBioJoin
     public string? PensionNumber { get; set; }
 }
 
-public class EmpContJoin
+public sealed class EmpContJoin
 {
     public string FirstName { get; init; } = default!;
     public string MiddleName { get; init; } = default!;
@@ -67,7 +67,7 @@ public class EmpContJoin
     public string Telephone { get; set; } = default!;
 }
 
-public class EmpGuaJoin
+public sealed class EmpGuaJoin
 {
     public string FirstName { get; init; } = default!;
     public string MiddleName { get; init; } = default!;
@@ -124,4 +124,9 @@ public class EmployeeModDto
     public string EmploymentType { get; set; } = default!; //enum.EmpType (0/1)
     public string EmploymentNature { get; set; } = default!; //enum.EmpNature (0/1)
     public string RowVersion { get; set; } = default!;
+}
+
+public sealed class EmpCodeJoin
+{
+    public string? Code { get; set; }
 }
