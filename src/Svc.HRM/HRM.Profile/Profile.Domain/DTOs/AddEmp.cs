@@ -19,6 +19,7 @@ public class Step1Dto
     public string Nationality { get; set; } = default!;
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade
+    public Guid JgStepId { get; set; } = default!; //Cor.HRMM.JgStep
     public Guid PositionId { get; set; } = default!; //Cor.HRMM.Position
     public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department
     public Guid BranchId { get; set; } = default!; //Dummy property for Branch
@@ -65,7 +66,7 @@ public class Step3Dto
     public string LastNameAm { get; set; } = default!;
     public string Nationality { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender
-    public Guid RelationId { get; set; } = default!; //lup.Relation
+    public string Relation { get; set; } = default!; //enum.Relation
     public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
     public string Region { get; set; } = default!;
@@ -92,7 +93,7 @@ public class Step4Dto
     public string LastNameAm { get; set; } = default!;
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
-    public Guid RelationId { get; set; } = default!; //lup.Relation
+    public string Relation { get; set; } = default!; //enum.Relation
     public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
     public string Region { get; set; } = default!;

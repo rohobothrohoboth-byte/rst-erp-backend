@@ -5,24 +5,23 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-public static class SqlMetadataCache
+public static class SqlMetadata
 {
-    private static readonly ConcurrentDictionary<Type, string> TableNames = new();
-    private static readonly ConcurrentDictionary<MemberInfo, string> ColumnNames = new();
-    private static readonly ConcurrentDictionary<Type, bool> SoftDeleteTypes = new();
+    private static readonly ConcurrentDictionary<Type, string> TableCache = new();
+    private static readonly ConcurrentDictionary<MemberInfo, string> ColumnCache = new();
 
-    public static string GetTableName(Type type)
+    public static string Table(Type type)
     {
-        return TableNames.GetOrAdd(type, t =>
+        return TableCache.GetOrAdd(type, t =>
         {
             var attr = t.GetCustomAttribute<TableAttribute>();
             return attr?.Name ?? t.Name;
         });
     }
 
-    public static string GetColumnName(MemberInfo member)
+    public static string Column(MemberInfo member)
     {
-        return ColumnNames.GetOrAdd(member, m =>
+        return ColumnCache.GetOrAdd(member, m =>
         {
             var attr = m.GetCustomAttribute<ColumnAttribute>();
             return attr?.Name ?? m.Name;
@@ -31,22 +30,21 @@ public static class SqlMetadataCache
 
     public static bool HasSoftDelete(Type type)
     {
-        return SoftDeleteTypes.GetOrAdd(type, t => t.GetProperty("IsDeleted")?.PropertyType == typeof(bool));
+        return type.GetProperty("IsDeleted")?.PropertyType == typeof(bool);
     }
 }
 
 public static class SqlGen
 {
-    public static string Table<T>(string alias) => $"\"{SqlMetadataCache.GetTableName(typeof(T))}\" {alias}";
-
-    public static string Column<T>(Expression<Func<T, object>> expr, string alias)
+    public static string Col<T>(string alias, Expression<Func<T, object>> expr)
     {
         var member = GetMember(expr);
-        var name = SqlMetadataCache.GetColumnName(member);
+        var name = SqlMetadata.Column(member);
+
         return $"{alias}.\"{name}\"";
     }
 
-    private static MemberInfo GetMember<T>(Expression<Func<T, object>> expr)
+    public static MemberInfo GetMember<T>(Expression<Func<T, object>> expr)
     {
         return expr.Body switch
         {
@@ -59,81 +57,125 @@ public static class SqlGen
 
 public sealed class QueryBuilder
 {
-    private readonly List<string> _select = new(16);
-    private readonly List<string> _joins = new(8);
-    private readonly List<string> _where = new(8);
-    private readonly List<string> _order = new(4);
+    private readonly List<string> _select = new();
+    private readonly List<string> _joins = new();
+    private readonly List<string> _where = new();
+    private readonly List<string> _group = new();
+    private readonly List<string> _order = new();
+
     private readonly DynamicParameters _params = new();
+
     private string? _from;
-    private int? _limit;
+
     private int _paramIndex;
-    private readonly HashSet<string> _softDeleteWhereAliases = new();
+    private int? _limit;
+    private int? _offset;
 
     public QueryBuilder Select<T>(string alias, params Expression<Func<T, object>>[] cols)
     {
         foreach (var c in cols)
-            _select.Add(SqlGen.Column(c, alias));
+            _select.Add(SqlGen.Col(alias, c));
+
+        return this;
+    }
+
+    public QueryBuilder SelectRaw(string sql)
+    {
+        _select.Add(sql);
         return this;
     }
 
     public QueryBuilder SelectAs<T>(string alias, string asName, Expression<Func<T, object>> col)
     {
-        _select.Add($"{SqlGen.Column(col, alias)} AS \"{asName}\"");
+        _select.Add($"{SqlGen.Col(alias, col)} AS \"{asName}\"");
+        return this;
+    }
+
+    public QueryBuilder SelectAs<TSource, TDest>(string alias, Expression<Func<TSource, object>> source, Expression<Func<TDest, object>> dest)
+    {
+        var sourceCol = SqlGen.Col(alias, source);
+        var destName = SqlMetadata.Column(SqlGen.GetMember(dest));
+        _select.Add($"{sourceCol} AS \"{destName}\"");
+        return this;
+    }
+
+    public QueryBuilder SelectDto<TEntity, TDto>(string alias)
+    {
+        var entityProps = typeof(TEntity).GetProperties();
+        var dtoProps = typeof(TDto).GetProperties().Select(p => p.Name).ToHashSet();
+
+        foreach (var prop in entityProps)
+        {
+            if (!dtoProps.Contains(prop.Name))
+                continue;
+
+            var col = SqlMetadata.Column(prop);
+            _select.Add($"{alias}.\"{col}\"");
+        }
+
         return this;
     }
 
     public QueryBuilder From<T>(string alias)
     {
-        _from = SqlGen.Table<T>(alias);
-        if (SqlMetadataCache.HasSoftDelete(typeof(T)))
-            InjectSoftDeleteWhere(alias);
+        _from = $"\"{SqlMetadata.Table(typeof(T))}\" {alias}";
+
+        if (SqlMetadata.HasSoftDelete(typeof(T)))
+            _where.Add($"{alias}.\"IsDeleted\" = false");
 
         return this;
     }
+
 
     public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
     {
-        var joinType = leftJoin ? "LEFT JOIN" : "JOIN";
-        var sb = new StringBuilder(128);
-        sb.Append(joinType).Append(' ').Append(SqlGen.Table<TRight>(rightAlias)).AppendLine().Append("    ON ").Append(SqlGen.Column(rightKey, rightAlias)).Append(" = ").Append(SqlGen.Column(leftKey, leftAlias));
+        var type = leftJoin ? "LEFT JOIN" : "JOIN";
+        var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(rightAlias, rightKey)} = {SqlGen.Col(leftAlias, leftKey)}";
 
-        if (SqlMetadataCache.HasSoftDelete(typeof(TRight)))
-        {
-            sb.AppendLine().Append("    AND ").Append(rightAlias).Append(".\"IsDeleted\" = false");
-        }
+        if (SqlMetadata.HasSoftDelete(typeof(TRight)))
+            sql += $" AND {rightAlias}.\"IsDeleted\" = false";
+        _joins.Add(sql);
 
-        _joins.Add(sb.ToString());
         return this;
     }
 
-    public QueryBuilder LeftJoin<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey) => Join<TLeft, TRight>(leftAlias, rightAlias, leftKey, rightKey, true);
-
-    public QueryBuilder Where<T>(string alias, Expression<Func<T, object>> col, string op, object value)
+    public QueryBuilder LeftJoin<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> left, Expression<Func<TRight, object>> right)
     {
-        var param = AddParam(value);
-        AppendWhere($"{SqlGen.Column(col, alias)} {op} {param}");
-        return this;
+        return Join(leftAlias, rightAlias, left, right, true);
     }
 
-    public QueryBuilder WhereRaw(string sql)
+
+    public QueryBuilder Where<T>(string alias, Expression<Func<T, bool>> predicate)
     {
+        var sql = ParseExpression(alias, predicate.Body);
         AppendWhere(sql);
         return this;
     }
 
-    private void InjectSoftDeleteWhere(string alias)
+    public QueryBuilder WhereRaw<T>(string alias, Expression<Func<T, object>> column, string sqlOperator, object? value = null)
     {
-        if (_softDeleteWhereAliases.Contains(alias))
-            return;
+        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
+        string condition;
 
-        AppendWhere($"{alias}.\"IsDeleted\" = false");
-        _softDeleteWhereAliases.Add(alias);
+        if (value == null)
+        {
+            condition = $"{alias}.\"{columnName}\" {sqlOperator}";
+        }
+        else
+        {
+            var paramName = AddParam(value);
+            condition = $"{alias}.\"{columnName}\" {sqlOperator} {paramName}";
+        }
+
+        AppendWhere(condition);
+        return this;
     }
 
     public QueryBuilder OrderBy<T>(string alias, Expression<Func<T, object>> col, bool desc = false)
     {
-        _order.Add($"{SqlGen.Column(col, alias)} {(desc ? "DESC" : "ASC")}");
+        _order.Add($"{SqlGen.Col(alias, col)} {(desc ? "DESC" : "ASC")}");
         return this;
+
     }
 
     public QueryBuilder Limit(int limit)
@@ -142,49 +184,164 @@ public sealed class QueryBuilder
         return this;
     }
 
+    public QueryBuilder GroupBy(params string[] cols)
+    {
+        _group.AddRange(cols);
+        return this;
+    }
+
+    public QueryBuilder Page(int page, int pageSize)
+    {
+        _limit = pageSize;
+        _offset = (page - 1) * pageSize;
+        return this;
+    }
+
     public (string Sql, DynamicParameters Params) Build()
     {
-        var sb = new StringBuilder(512);
-        sb.Append("SELECT ");
-        if (_select.Count == 0)
-            sb.Append('*');
-        else
-            sb.AppendJoin(", ", _select);
+        var sb = new StringBuilder();
 
-        sb.AppendLine().Append("FROM ").AppendLine(_from);
+        sb.Append("SELECT ");
+        sb.Append(_select.Count == 0 ? "*" : string.Join(", ", _select));
+
+        sb.AppendLine();
+        sb.AppendLine($"FROM {_from}");
+
         foreach (var j in _joins)
             sb.AppendLine(j);
 
         if (_where.Count > 0)
-        {
-            sb.Append("WHERE ");
-            sb.AppendJoin(" AND ", _where);
-            sb.AppendLine();
-        }
+            sb.AppendLine("WHERE " + string.Join(" AND ", _where));
+
+        if (_group.Count > 0)
+            sb.AppendLine("GROUP BY " + string.Join(", ", _group));
 
         if (_order.Count > 0)
-        {
-            sb.Append("ORDER BY ");
-            sb.AppendJoin(", ", _order);
-            sb.AppendLine();
-        }
+            sb.AppendLine("ORDER BY " + string.Join(", ", _order));
 
         if (_limit.HasValue)
-        {
-            sb.Append("LIMIT ");
-            sb.Append(_limit.Value);
-            sb.AppendLine();
-        }
+            sb.AppendLine($"LIMIT {_limit}");
+
+        if (_offset.HasValue)
+            sb.AppendLine($"OFFSET {_offset}");
 
         return (sb.ToString(), _params);
     }
 
-    private void AppendWhere(string condition) => _where.Add(condition);
+    public (string Sql, DynamicParameters Params) BuildCount()
+    {
+        var sb = new StringBuilder();
 
-    private string AddParam(object value)
+        sb.AppendLine("SELECT COUNT(1)");
+        sb.AppendLine($"FROM {_from}");
+
+        foreach (var j in _joins)
+            sb.AppendLine(j);
+
+        if (_where.Count > 0)
+            sb.AppendLine("WHERE " + string.Join(" AND ", _where));
+
+        return (sb.ToString(), _params);
+    }
+
+    private void AppendWhere(string condition)
+    {
+        if (!string.IsNullOrWhiteSpace(condition))
+            _where.Add(condition);
+    }
+
+    private string AddParam(object? value)
     {
         var name = $"@p{_paramIndex++}";
         _params.Add(name, value);
         return name;
+    }
+
+    private string ParseExpression(string alias, Expression expr)
+    {
+        return expr switch
+        {
+            BinaryExpression b => ParseBinary(alias, b),
+            MemberExpression m => ParseMember(alias, m),
+            ConstantExpression c => AddParam(c.Value),
+            MethodCallExpression mc => ParseMethod(alias, mc),
+            _ => throw new NotSupportedException($"Expression {expr.NodeType} not supported")
+        };
+    }
+
+    private string ParseBinary(string alias, BinaryExpression expr)
+    {
+        var left = ParseExpression(alias, expr.Left);
+
+        if (expr.Right is ConstantExpression c && c.Value == null)
+        {
+            return expr.NodeType switch
+            {
+                ExpressionType.Equal => $"{left} IS NULL",
+                ExpressionType.NotEqual => $"{left} IS NOT NULL",
+                _ => throw new NotSupportedException("Invalid NULL comparison")
+            };
+        }
+
+        var right = ParseExpression(alias, expr.Right);
+
+        var op = expr.NodeType switch
+        {
+            ExpressionType.Equal => "=",
+            ExpressionType.NotEqual => "!=",
+            ExpressionType.GreaterThan => ">",
+            ExpressionType.GreaterThanOrEqual => ">=",
+            ExpressionType.LessThan => "<",
+            ExpressionType.LessThanOrEqual => "<=",
+            ExpressionType.AndAlso => "AND",
+            ExpressionType.OrElse => "OR",
+            _ => throw new NotSupportedException($"Operator {expr.NodeType} not supported")
+        };
+
+        return expr.NodeType switch
+        {
+            ExpressionType.AndAlso or ExpressionType.OrElse
+                => $"({left} {op} {right})",
+            _ => $"{left} {op} {right}"
+        };
+    }
+
+    private string ParseMember(string alias, MemberExpression expr)
+    {
+        if (expr.Expression is ParameterExpression)
+        {
+            var column = SqlMetadata.Column(expr.Member);
+            return $"{alias}.\"{column}\"";
+        }
+
+        var value = Expression.Lambda(expr).Compile().DynamicInvoke();
+        return AddParam(value);
+    }
+
+    private string ParseMethod(string alias, MethodCallExpression expr)
+    {
+        if (expr.Method.Name == "Contains")
+        {
+            if (expr.Object != null)
+            {
+                var column = ParseExpression(alias, expr.Object);
+                var value = Expression.Lambda(expr.Arguments[0]).Compile().DynamicInvoke();
+                var param = AddParam($"%{value}%");
+
+                return $"{column} LIKE {param}";
+            }
+
+            var values = Expression.Lambda(expr.Arguments[0]).Compile().DynamicInvoke();
+            var columnExpr = expr.Arguments[1] as MemberExpression;
+
+            if (columnExpr != null)
+            {
+                var column = $"{alias}.\"{SqlMetadata.Column(columnExpr.Member)}\"";
+                var param = AddParam(values);
+                return $"{column} IN {param}";
+            }
+        }
+
+        throw new NotSupportedException($"Method {expr.Method.Name} not supported");
     }
 }

@@ -8,6 +8,7 @@ public class PolicyAssignmentRuleListDto : BaseDto
     public bool IsActive { get; set; }
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
+
     public string EffectiveFromStr => $"{EffectiveFrom:MMMM dd, yyyy}";
     public string EffectiveToStr => EffectiveTo.HasValue ? $"{EffectiveTo:MMMM dd, yyyy}" : "";
     public string PriorityStr { get; set; } = default!;

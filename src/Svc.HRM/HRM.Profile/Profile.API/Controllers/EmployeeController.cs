@@ -1,10 +1,8 @@
 ﻿using Asp.Versioning;
 using Helpers;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
-using Profile.App.Helpers;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
 

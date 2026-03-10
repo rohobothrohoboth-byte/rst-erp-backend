@@ -1,7 +1,13 @@
-﻿namespace Leave.Domain.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Leave.Domain.DTOs;
 
 public class LeaveAppStepListDto : BaseDto
 {
+    [JsonIgnore]
+    public DateTime EffectiveFrom { get; set; }
+    [JsonIgnore]
+    public Guid? EmployeeId { get; set; }   // HRM.Profile.Employee
     public string StepName { get; set; } = default!;
     public int StepOrder { get; set; }    // 1, 2, 3 ...
     public string Role { get; set; } = default!;  // enum.ApprovalRole

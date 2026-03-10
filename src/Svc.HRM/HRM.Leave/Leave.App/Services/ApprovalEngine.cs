@@ -2,30 +2,32 @@
 using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Leave.App.Services;
 
 public interface IApprovalEngine
 {
-    Task<LeaveAppRes> InitApproval(Guid id);
+    Task<LeaveAppRes> InitApproval(Guid id, CancellationToken ct);
 }
+
+
 
 public class ApprovalEngine : IApprovalEngine
 {
-
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly ILeaveLedgerService _leaveLedgerService;
 
-    public ApprovalEngine(IUnitOfWork unitOfWork, ILeaveLedgerService leaveLedgerService)
+    public ApprovalEngine(IUnitOfWork uow, ILeaveLedgerService leaveLedgerService)
     {
-        _unitOfWork = unitOfWork;
+        _uow = uow;
         _leaveLedgerService = leaveLedgerService;
     }
 
-    public async Task<LeaveAppRes> InitApproval(Guid id)
+    public async Task<LeaveAppRes> InitApproval(Guid id, CancellationToken ct)
     {
         var result = new LeaveAppRes();
-        var req = await _unitOfWork.Repository<LeaveRequest>().GetById(id);
+        var req = await _uow.Set<LeaveRequest>().FirstOrDefaultAsync(x => x.Id == id, ct);
         if (req == null)
         {
             result.AddError("Leave request NOT FOUND.");
@@ -35,19 +37,19 @@ public class ApprovalEngine : IApprovalEngine
         var empId = req.EmployeeId;
         var leaveTypeId = req.LeaveTypeId;
         var requestDate = req.StartDate;
-        var empLeavePolicy = await GetActiveEmpLeavePolicy(empId, leaveTypeId, requestDate);
+        var empLeavePolicy = GetActiveEmpLeavePolicy(empId, leaveTypeId, requestDate);
         if (empLeavePolicy == null)
         {
             result.AddError("NO ACTIVE LEAVE POLICY FOUND for this employee and leave type.");
             return result;
         }
 
-        var approvalSteps = await GetApprovalSteps(id);
+        var approvalSteps = await GetApprovalSteps(id, ct);
 
         if (!approvalSteps.Any())
         {
             // No approval required - auto-approve
-            await AutoAppLeaveReq(req);
+            await AutoAppLeaveReq(req, ct);
             result.Status = "Approved";
             result.Message = "Leave request auto-approved (no approval chain configured)";
             result.RequiresApproval = false;
@@ -57,12 +59,12 @@ public class ApprovalEngine : IApprovalEngine
         // Set to pending and start at first step
         req.Status = BoolToStr.EnumToString(Status.Pending);
         req.CurrentAppStep = 1;
-        await _unitOfWork.Repository<LeaveRequest>().Update(req);
+        await _uow.Update(req);
 
         result.Status = "Pending";
         result.CurrentStep = 1;
         result.TotalSteps = approvalSteps.Count;
-        result.NextApprover = await GetNextAppInfo(req.Id, 1);
+        result.NextApprover = await GetNextAppInfo(req.Id, 1, ct);
         result.RequiresApproval = true;
         result.Message = $"Leave request submitted for approval (Step 1 of {approvalSteps.Count})";
 
@@ -70,37 +72,34 @@ public class ApprovalEngine : IApprovalEngine
     }
 
 
-
-
-
-    private async Task<EmpLeavePolicy?> GetActiveEmpLeavePolicy(Guid empId, Guid leaveTypeId, DateTime requestDate)
+    private EmpLeavePolicy? GetActiveEmpLeavePolicy(Guid empId, Guid leaveTypeId, DateTime requestDate)
     {
-        var ePolicyL = (await _unitOfWork.Repository<EmpLeavePolicy>().Find(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.EffectiveFrom <= requestDate)).ToList();
+        var ePolicyL = _uow.Set<EmpLeavePolicy>().Where(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.EffectiveFrom <= requestDate).ToList();
         if (ePolicyL.Count <= 0) { return null; }
         var ePolicy = ePolicyL.FirstOrDefault(e => e.IsActive(requestDate));
         return ePolicy;
     }
 
-    public async Task<LeaveAppChain?> GetActiveApprovalChain(Guid leavePolicyId, DateTime effectiveDate)
+    public LeaveAppChain? GetActiveApprovalChain(Guid leavePolicyId, DateTime effectiveDate)
     {
-        var aChainL = (await _unitOfWork.Repository<LeaveAppChain>().Find(lac => lac.LeavePolicyId == leavePolicyId && lac.IsActive && lac.EffectiveFrom <= effectiveDate)).ToList();
+        var aChainL = _uow.Set<LeaveAppChain>().Where(lac => lac.LeavePolicyId == leavePolicyId && lac.IsActive && lac.EffectiveFrom <= effectiveDate).ToList();
         var aChain = aChainL.FirstOrDefault(lac => lac.EffectiveTo == null || lac.EffectiveTo >= effectiveDate);
         return aChain;
     }
 
-    public async Task<List<LeaveAppStep>> GetApprovalSteps(Guid id)
+    public async Task<List<LeaveAppStep>> GetApprovalSteps(Guid id, CancellationToken ct)
     {
-        var req = await _unitOfWork.Repository<LeaveRequest>().GetById(id) ?? throw new DomainException("Leave request NOT FOUND.");
-        var eLp = await GetActiveEmpLeavePolicy(req.EmployeeId, req.LeaveTypeId, req.StartDate) ?? throw new DomainException("NO ACTIVE leave policy found.");
-        var aChain = await GetActiveApprovalChain(eLp.LeavePolicyId, req.StartDate);
+        var req = await _uow.Set<LeaveRequest>().FirstOrDefaultAsync(x => x.Id == id, ct) ?? throw new DomainException("Leave request NOT FOUND.");
+        var eLp = GetActiveEmpLeavePolicy(req.EmployeeId, req.LeaveTypeId, req.StartDate) ?? throw new DomainException("NO ACTIVE leave policy found.");
+        var aChain = GetActiveApprovalChain(eLp.LeavePolicyId, req.StartDate);
         return aChain?.Steps.OrderBy(s => s.StepOrder).ToList() ?? [];
     }
 
-    private async Task AutoAppLeaveReq(LeaveRequest leaveRequest)
+    private async Task AutoAppLeaveReq(LeaveRequest leaveRequest, CancellationToken ct)
     {
         leaveRequest.Status = BoolToStr.EnumToString(Status.Approved);
         leaveRequest.DateApproved = DateTime.UtcNow;
-        await _unitOfWork.Repository<LeaveRequest>().Update(leaveRequest);
+        await _uow.Update(leaveRequest);
 
         var dto = new LedgerEntryDto
         {
@@ -113,12 +112,12 @@ public class ApprovalEngine : IApprovalEngine
             ReferenceId = leaveRequest.Id
         };
 
-        await _leaveLedgerService.Credit(dto);
+        await _leaveLedgerService.Credit(dto, ct);
     }
 
-    private async Task<ApproverInfo?> GetNextAppInfo(Guid leaveRequestId, int stepOrder)
+    private async Task<ApproverInfo?> GetNextAppInfo(Guid leaveRequestId, int stepOrder, CancellationToken ct)
     {
-        var approvalSteps = await GetApprovalSteps(leaveRequestId);
+        var approvalSteps = await GetApprovalSteps(leaveRequestId, ct);
         var nextStep = approvalSteps.FirstOrDefault(s => s.StepOrder == stepOrder);
 
         if (nextStep == null) { return null; }
@@ -133,7 +132,7 @@ public class ApprovalEngine : IApprovalEngine
         };
     }
 
-    public async Task<LeaveAppRes> ProcessApproval(Guid id, Guid approvedById, string action, string? comment = null)
+    public async Task<LeaveAppRes> ProcessApproval(Guid id, Guid approvedById, string action, CancellationToken ct, string? comment = null)
     {
         var result = new LeaveAppRes { LeaveRequestId = id };
         var actRej = BoolToStr.EnumToString(Status.Rejected);
@@ -146,7 +145,7 @@ public class ApprovalEngine : IApprovalEngine
             return result;
         }
 
-        var lReq = await _unitOfWork.Repository<LeaveRequest>().GetById(id);
+        var lReq = await _uow.Set<LeaveRequest>().FirstOrDefaultAsync(x => x.Id == id, ct);
         if (lReq == null)
         {
             result.AddError("Leave request not found");
@@ -159,7 +158,7 @@ public class ApprovalEngine : IApprovalEngine
             return result;
         }
 
-        var approvalSteps = await GetApprovalSteps(id);
+        var approvalSteps = await GetApprovalSteps(id, ct);
         var currentStep = approvalSteps.FirstOrDefault(s => s.StepOrder == lReq.CurrentAppStep);
 
         if (currentStep == null)
@@ -185,13 +184,13 @@ public class ApprovalEngine : IApprovalEngine
             LeaveRequestId = id,
             ApprovedById = approvedById,
         };
-        await _unitOfWork.Repository<LeaveAppAction>().Add(appAction);
+        await _uow.Add(appAction, ct);
 
         // Process based on action
         if (action == actRej)
         {
             lReq.Status = actRej;
-            await _unitOfWork.Repository<LeaveRequest>().Update(lReq);
+            await _uow.Update(lReq);
 
             result.Status = "Rejected";
             result.Message = "Leave request has been rejected";
@@ -202,7 +201,7 @@ public class ApprovalEngine : IApprovalEngine
         {
             if (currentStep.IsFinal || currentStep.StepOrder == approvalSteps.Count)
             {
-                await ApproveLeaveRequest(lReq, appAction);
+                await ApproveLeaveRequest(lReq, appAction, ct);
                 result.Status = "Approved";
                 result.Message = "Leave request has been fully approved";
                 result.CurrentStep = currentStep.StepOrder;
@@ -212,12 +211,12 @@ public class ApprovalEngine : IApprovalEngine
             else
             {
                 lReq.CurrentAppStep++;
-                await _unitOfWork.Repository<LeaveRequest>().Update(lReq);
+                await _uow.Update(lReq);
 
                 result.Status = "Pending";
                 result.CurrentStep = lReq.CurrentAppStep;
                 result.TotalSteps = approvalSteps.Count;
-                result.NextApprover = await GetNextAppInfo(id, lReq.CurrentAppStep);
+                result.NextApprover = await GetNextAppInfo(id, lReq.CurrentAppStep, ct);
                 result.Message = $"Approved at step {currentStep.StepOrder}. Moved to step {lReq.CurrentAppStep}";
             }
         }
@@ -225,13 +224,13 @@ public class ApprovalEngine : IApprovalEngine
         return result;
     }
 
-    private async Task ApproveLeaveRequest(LeaveRequest lReq, LeaveAppAction finalAppAction)
+    private async Task ApproveLeaveRequest(LeaveRequest lReq, LeaveAppAction finalAppAction, CancellationToken ct)
     {
         var actApp = BoolToStr.EnumToString(Status.Approved);
         lReq.Status = actApp;
         lReq.DateApproved = DateTime.UtcNow;
         lReq.ApprovedById = finalAppAction.ApprovedById;
-        await _unitOfWork.Repository<LeaveRequest>().Update(lReq);
+        await _uow.Update(lReq);
 
         var dto = new LedgerEntryDto
         {
@@ -244,7 +243,7 @@ public class ApprovalEngine : IApprovalEngine
             ReferenceId = lReq.Id
         };
 
-        await _leaveLedgerService.Credit(dto);
+        await _leaveLedgerService.Credit(dto, ct);
     }
 
     private async Task<bool> VerifyAppPer(Guid approvedById, LeaveAppStep step)

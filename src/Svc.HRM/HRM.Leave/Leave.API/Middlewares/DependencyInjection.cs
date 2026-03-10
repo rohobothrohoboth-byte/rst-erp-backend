@@ -6,7 +6,6 @@ using Helpers;
 using Leave.App;
 using Leave.App.Interfaces;
 using Leave.App.Services;
-using Leave.App.Validators;
 using Leave.Utility.Extensions;
 using Leave.Utility.Persistence;
 using Leave.Utility.Repos;
@@ -41,22 +40,36 @@ public static class DependencyInjection
                 option.SubstituteApiVersionInUrl = true;
             });
 
-        builder.Services.AddDbContext<HrmLeaveDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("HRMLeaveDbCon")));
-        builder.Services.AddScoped<DapperContext>();
+        builder.Services.AddDbContextPool<HrmLeaveDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("HRMLeaveDbCon"), npgsql =>
+                    {
+                        npgsql.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsql.CommandTimeout(30);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.EnableSensitiveDataLogging(false);
+            });
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-        builder.Services.AddScoped<IAuthClient, AuthClient>();
-        builder.Services.AddScoped<PerValService, PerValService>();
+        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
 
         builder.Services.AddScoped<ILeaveValService, LeaveValService>();
         builder.Services.AddScoped<IHolidayService, HolidayService>();
         builder.Services.AddScoped<IApprovalEngine, ApprovalEngine>();
         builder.Services.AddScoped<ILeaveLedgerService, LeaveLedgerService>();
 
+        builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
-        builder.Services.AddScoped(typeof(IHrmLeaveRepo<>), typeof(HrmLeaveRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AppAssemblyMarker).Assembly));
         builder.Services.AddOpenApi();

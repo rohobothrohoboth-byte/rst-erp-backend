@@ -1,95 +1,89 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using Helpers;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class PositionBenefitAllQry : IRequest<List<PositionBenefitListDto>> { public Guid Id { get; set; } }
+public class PosBenefitAllQry : IRequest<List<PosBenefitListDto>> { public Guid Id { get; set; } }
+public class PosBenefitByIdQry : IRequest<PosBenefitListDto?> { public Guid Id { get; set; } }
 
-public class PositionBenefitByIdQry : IRequest<PositionBenefitListDto?> { public Guid Id { get; set; } }
 
-public class PositionBenefitAllQryHandler : IRequestHandler<PositionBenefitAllQry, List<PositionBenefitListDto>>
+public class PosBenefitAllHandler : IRequestHandler<PosBenefitAllQry, List<PosBenefitListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionBenefitAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PosBenefitAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PositionBenefitListDto>> Handle(PositionBenefitAllQry request, CancellationToken cancellationToken)
+    public async Task<List<PosBenefitListDto>> Handle(PosBenefitAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<PositionBenefit>().Find(c => c.PositionId == request.Id);
-        var dataL = new List<PositionBenefitListDto>();
-        var nData = dbData.ToList();
-        if (nData.Count <= 0) return dataL;
-        var benL = await _unitOfWork.Repository<BenefitSetting>().GetAll();
+        const string v = "v";
+        const string bs = "bs";
+        var qb = new QueryBuilder()
+            .Select<PositionBenefit>(v, x => x.Id, x => x.BenefitSettingId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<BenefitSetting>(bs, x => x.BenefitValue, x => x.Per)
+            .From<BenefitSetting>(v)
+            .Join<PositionBenefit, BenefitSetting>(v, bs, x => x.BenefitSettingId, x => x.Id)
+            .OrderBy<BenefitSetting>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PosBenefitListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PosBenefitListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var ben = benL.FirstOrDefault(t => t.Id == data.BenefitSettingId);
-            var c = new PositionBenefitListDto
+            var data = parser(reader);
+            dataL.Add(new PosBenefitListDto
             {
                 Id = data.Id,
                 BenefitSettingId = data.BenefitSettingId,
                 PositionId = data.PositionId,
+                Benefit = $"{data.BenefitValue:#,##0.##}",
+                PerStr = MyEnumHelper.FormatEnum<EmpType>(data.Per),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-
-            if (ben != null)
-            {
-                c.BenefitName = ben.Name;
-                c.Benefit = $"{ben.BenefitValue:#,##0.##}";
-                c.PerStr = ((Per)Enum.Parse(typeof(Per), ben.Per)).ToDisplayName();
-            }
-            else
-            {
-                c.BenefitName = "BENEFIT NOT AVAILABLE";
-                c.Benefit = "";
-                c.PerStr = "";
-            }
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class PositionBenefitByIdQryHandler : IRequestHandler<PositionBenefitByIdQry, PositionBenefitListDto?>
+public class PosBenefitByIdHandler : IRequestHandler<PosBenefitByIdQry, PosBenefitListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionBenefitByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PosBenefitByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<PositionBenefitListDto?> Handle(PositionBenefitByIdQry request, CancellationToken cancellationToken)
+    public async Task<PosBenefitListDto?> Handle(PosBenefitByIdQry request, CancellationToken ct)
     {
-        var nData = await _unitOfWork.Repository<PositionBenefit>().GetById(request.Id);
-        if (nData == null) { return null; }
-        var ben = await _unitOfWork.Repository<BenefitSetting>().GetById(nData.BenefitSettingId);
+        const string v = "v";
+        const string bs = "bs";
+        var qb = new QueryBuilder()
+            .Select<PositionBenefit>(v, x => x.Id, x => x.BenefitSettingId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<BenefitSetting>(bs, x => x.BenefitValue, x => x.Per)
+            .From<BenefitSetting>(v)
+            .Join<PositionBenefit, BenefitSetting>(v, bs, x => x.BenefitSettingId, x => x.Id)
+            .Where<BenefitSetting>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PositionBenefitListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PosBenefitListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new PosBenefitListDto
         {
-            Id = nData.Id,
-            BenefitSettingId = nData.BenefitSettingId,
-            PositionId = nData.PositionId,
-            IsDeleted = nData.IsDeleted,
-            DateAdd = nData.DateAdd,
-            DateMod = nData.DateMod,
-            RowVersion = Convert.ToBase64String(nData.RowVersion)
+            Id = data.Id,
+            BenefitSettingId = data.BenefitSettingId,
+            PositionId = data.PositionId,
+            Benefit = $"{data.BenefitValue:#,##0.##}",
+            PerStr = MyEnumHelper.FormatEnum<EmpType>(data.Per),
+            IsDeleted = data.IsDeleted,
+            DateAdd = data.DateAdd,
+            DateMod = data.DateMod,
+            RowVersion = data.xmin.ToString()
         };
-
-        if (ben != null)
-        {
-            c.BenefitName = ben.Name;
-            c.Benefit = $"{ben.BenefitValue:#,##0.##}";
-            c.PerStr = ((Per)Enum.Parse(typeof(Per), ben.Per)).ToDisplayName();
-        }
-        else
-        {
-            c.BenefitName = "BENEFIT NOT AVAILABLE";
-            c.Benefit = "";
-            c.PerStr = "";
-        }
-        return c;
     }
 }

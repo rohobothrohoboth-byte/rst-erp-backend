@@ -6,8 +6,7 @@ namespace Recruit.Domain.Entities;
 
 public abstract class BaseEntity
 {
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     [JsonIgnore]
     public DateTime DateAdd { get; set; } = DateTime.UtcNow;
     [JsonIgnore]

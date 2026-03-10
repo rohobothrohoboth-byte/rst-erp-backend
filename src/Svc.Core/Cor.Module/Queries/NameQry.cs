@@ -1,379 +1,308 @@
 ﻿using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
+using Dapper;
+using Helpers;
 using MediatR;
 
 namespace Cor.Module.Queries;
 
-public class BranchCompListQry : IRequest<List<NameListDto>> { }
-public class BranchCompByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
-public class BranchAllNameQry : IRequest<List<NameListDto>> { }
-public class BranchNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
+public class BraCompListQry : IRequest<List<NameList>> { }
+public class BraCompByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class BraAllNameQry : IRequest<List<NameList>> { }
+public class BraNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 public class DeptByBraQry : IRequest<List<BranchDeptList>> { public Guid Id { get; set; } }
-public class DeptAllNameQry : IRequest<List<NameAmListDto>> { }
-public class DeptNameByIdQry : IRequest<NameAmListDto?> { public Guid Id { get; set; } }
-public class CompAllNameQry : IRequest<List<NameListDto>> { }
-public class CompNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
-public class FiscalYearAllNameQry : IRequest<List<NameListDto>> { }
-public class FiscalYearNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
-public class FiscalYearActiveQry : IRequest<List<NameListDto>> { }
-public class PeriodAllNameQry : IRequest<List<NameListDto>> { }
-public class PeriodNameByIdQry : IRequest<NameListDto?> { public Guid Id { get; set; } }
-public class DbcAllQry : IRequest<List<DbcResDto>> { }
-public class DbcByIdQry : IRequest<DbcResDto?> { public Guid Id { get; set; } }
+public class DeptAllNameQry : IRequest<List<NameAmList>> { }
+public class DeptNameByIdQry : IRequest<NameAmList?> { public Guid Id { get; set; } }
+public class CompAllNameQry : IRequest<List<NameList>> { }
+public class CompNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class FiscYearAllNameQry : IRequest<List<NameList>> { }
+public class FiscYearNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class FiscYearActiveQry : IRequest<List<NameList>> { }
+public class PeriodAllNameQry : IRequest<List<NameList>> { }
+public class PeriodNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
-public class BranchCompListQryHandler : IRequestHandler<BranchCompListQry, List<NameListDto>>
+
+
+public class BraCompListHandler : IRequestHandler<BraCompListQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public BranchCompListQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public BraCompListHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(BranchCompListQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(BraCompListQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Branch>().GetAll();
-        var nameL = new List<NameListDto>();
-        foreach (var data in res)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Branch>(v, x => x.Id, x => x.Name)
+            .SelectAs<Company, NameAmList>(c, x => x.Name, d => d.NameAm)
+            .From<Branch>(v)
+            .Join<Branch, Company>(v, c, x => x.CompId, x => x.Id);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameAmList>();
+        while (await reader.ReadAsync(ct))
         {
-            var comp = await _unitOfWork.Repository<Company>().GetById(data.CompId);
-            if (comp == null) continue;
-            var c = new NameListDto
+            var data = parser(reader);
+            dataL.Add(new NameList
             {
                 Id = data.Id,
-                Name = $"{data.Name} => {comp.Name}"
-            };
-            nameL.Add(c);
+                Name = $"{data.Name} => {data.NameAm}"
+            });
         }
-
-        return nameL;
+        return dataL;
     }
 }
 
-public class BranchCompByIdQryHandler : IRequestHandler<BranchCompByIdQry, NameListDto?>
+public class BraCompByIdHandler : IRequestHandler<BraCompByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public BranchCompByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public BraCompByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameListDto?> Handle(BranchCompByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(BraCompByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Branch>().GetById(request.Id);
-        if (res == null) { return null; }
-        var comp = await _unitOfWork.Repository<Company>().GetById(res.CompId);
-        if (comp == null) { return null; }
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Branch>(v, x => x.Id, x => x.Name)
+            .SelectAs<Company, NameAmList>(c, x => x.Name, d => d.NameAm)
+            .From<Branch>(v)
+            .Join<Branch, Company>(v, c, x => x.CompId, x => x.Id)
+            .Where<Branch>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new NameListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameAmList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new NameList
         {
-            Id = res.Id,
-            Name = $"{res.Name} => {comp.Name}"
+            Id = data.Id,
+            Name = $"{data.Name} => {data.NameAm}"
         };
-        return c;
     }
 }
 
-public class BranchAllNameQryHandler : IRequestHandler<BranchAllNameQry, List<NameListDto>>
+public class BraAllNameHandler : IRequestHandler<BraAllNameQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public BranchAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public BraAllNameHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(BranchAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(BraAllNameQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Branch>().GetAll();
-
-        return res.Select(data => new NameListDto { Id = data.Id, Name = data.Name }).ToList();
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Branch, NameList>(v).From<Branch>(v);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class BranchNameByIdQryHandler : IRequestHandler<BranchNameByIdQry, NameListDto?>
+public class BraNameByIdHandler : IRequestHandler<BraNameByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public BranchNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public BraNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameListDto?> Handle(BranchNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(BraNameByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Branch>().GetById(request.Id);
-        if (res == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Branch, NameList>(v).From<Branch>(v).Where<Branch>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
 
-        var c = new NameListDto
-        {
-            Id = res.Id,
-            Name = res.Name
-        };
-        return c;
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var dto = await reader.FirstOrDefaultAsync<NameList>(ct);
+
+        if (dto == null) { return null; }
+        return dto;
     }
 }
 
-public class DeptByBraQryHandler : IRequestHandler<DeptByBraQry, List<BranchDeptList>>
+public class DeptByBraHandler : IRequestHandler<DeptByBraQry, List<BranchDeptList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public DeptByBraHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public DeptByBraQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<BranchDeptList>> Handle(DeptByBraQry request, CancellationToken cancellationToken)
+    public async Task<List<BranchDeptList>> Handle(DeptByBraQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Department>().Find(c => c.BranchId == request.Id);
-        var resL = new List<BranchDeptList>();
-        var nData = res.ToList();
-        if (nData.Count <= 0) return resL;
-        foreach (var data in nData)
-        {
-            var bra = await _unitOfWork.Repository<Branch>().GetById(data.BranchId);
-            if (bra == null) continue;
-            var c = new BranchDeptList
-            {
-                Id = data.Id,
-                BranchId = data.BranchId,
-                Dept = data.Name,
-                Branch = bra.Name
-            };
-            resL.Add(c);
-        }
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<Department>(v, x => x.Id, x => x.BranchId)
+            .SelectAs<Department, BranchDeptList>(v, x => x.Name, d => d.Dept)
+            .SelectAs<Branch, BranchDeptList>(v, x => x.Name, d => d.Branch)
+            .From<Department>(v)
+            .Join<Department, Branch>(v, jg, x => x.BranchId, x => x.Id)
+            .Where<Department>(v, x => x.BranchId == request.Id);
 
-        return resL;
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<BranchDeptList>(ct);
+        return list;
     }
 }
 
-public class DeptAllNameQryHandler : IRequestHandler<DeptAllNameQry, List<NameAmListDto>>
+public class DeptAllNameHandler : IRequestHandler<DeptAllNameQry, List<NameAmList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public DeptAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public DeptAllNameHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameAmListDto>> Handle(DeptAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameAmList>> Handle(DeptAllNameQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Department>().GetAll();
-        var nameL = new List<NameAmListDto>();
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<Department>(v, x => x.Id, x => x.Name)
+            .SelectAs<Branch, NameAmList>(v, x => x.Name, d => d.NameAm)
+            .From<Department>(v)
+            .Join<Department, Branch>(v, jg, x => x.BranchId, x => x.Id);
 
-        foreach (var data in res)
-        {
-            var bra = await _unitOfWork.Repository<Branch>().GetById(data.BranchId);
-            if (bra == null) continue;
-            var c = new NameAmListDto
-            {
-                Id = data.Id,
-                Name = data.Name,
-                NameAm = bra.Name
-            };
-            nameL.Add(c);
-        }
-
-        return nameL;
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameAmList>(ct);
+        return list;
     }
 }
 
-public class DeptNameByIdQryHandler : IRequestHandler<DeptNameByIdQry, NameAmListDto?>
+public class DeptNameByIdHandler : IRequestHandler<DeptNameByIdQry, NameAmList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public DeptNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public DeptNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameAmListDto?> Handle(DeptNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameAmList?> Handle(DeptNameByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Department>().GetById(request.Id);
-        if (res == null) { return null; }
-        var bra = await _unitOfWork.Repository<Branch>().GetById(res.BranchId);
-        if (bra == null) { return null; }
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<Department>(v, x => x.Id, x => x.Name)
+            .SelectAs<Branch, NameAmList>(v, x => x.Name, d => d.NameAm)
+            .From<Department>(v)
+            .Join<Department, Branch>(v, jg, x => x.BranchId, x => x.Id)
+            .Where<Department>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new NameAmListDto
-        {
-            Id = res.Id,
-            Name = res.Name,
-            NameAm = bra.Name
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.FirstOrDefaultAsync<NameAmList>(ct);
+        return list;
     }
 }
 
-public class CompAllNameQryHandler : IRequestHandler<CompAllNameQry, List<NameListDto>>
+public class CompAllNameHandler : IRequestHandler<CompAllNameQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public CompAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public CompAllNameHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(CompAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(CompAllNameQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Company>().GetAll();
-        var nameL = new List<NameListDto>();
-        foreach (var data in res)
-        {
-            var c = new NameListDto
-            {
-                Id = data.Id,
-                Name = data.Name
-            };
-            nameL.Add(c);
-        }
-
-        return nameL;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Company, NameList>(v).From<Company>(v);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class CompNameByIdQryHandler : IRequestHandler<CompNameByIdQry, NameListDto?>
+public class CompNameByIdHandler : IRequestHandler<CompNameByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public CompNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public CompNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameListDto?> Handle(CompNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(CompNameByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Company>().GetById(request.Id);
-        if (res == null) { return null; }
-
-        var c = new NameListDto
-        {
-            Id = res.Id,
-            Name = res.Name
-        };
-        return c;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Company, NameList>(v).From<Company>(v).Where<Company>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.FirstOrDefaultAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class FiscalYearAllNameQryHandler : IRequestHandler<FiscalYearAllNameQry, List<NameListDto>>
+public class FiscYearAllNameHandler : IRequestHandler<FiscYearAllNameQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public FiscalYearAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public FiscYearAllNameHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(FiscalYearAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(FiscYearAllNameQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<FiscalYear>().GetAll();
-        var nameL = new List<NameListDto>();
-        foreach (var data in res)
-        {
-            var c = new NameListDto
-            {
-                Id = data.Id,
-                Name = data.Name
-            };
-            nameL.Add(c);
-        }
-
-        return nameL;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<FiscalYear, NameList>(v).From<FiscalYear>(v);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class FiscalYearNameByIdQryHandler : IRequestHandler<FiscalYearNameByIdQry, NameListDto?>
+public class FiscYearNameByIdHandler : IRequestHandler<FiscYearNameByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public FiscalYearNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public FiscYearNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameListDto?> Handle(FiscalYearNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(FiscYearNameByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<FiscalYear>().GetById(request.Id);
-        if (res == null) { return null; }
-
-        var c = new NameListDto
-        {
-            Id = res.Id,
-            Name = res.Name
-        };
-        return c;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<FiscalYear, NameList>(v).From<FiscalYear>(v).Where<FiscalYear>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.FirstOrDefaultAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class FiscalYearActiveQryHandler : IRequestHandler<FiscalYearActiveQry, List<NameListDto>>
+public class FiscYearActiveHandler : IRequestHandler<FiscYearActiveQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public FiscalYearActiveQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public FiscYearActiveHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(FiscalYearActiveQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(FiscYearActiveQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<FiscalYear>().Find(f => f.IsActive == "0" && f.DateEnd >= DateTime.UtcNow);
-        var nameL = new List<NameListDto>();
-        foreach (var data in res)
-        {
-            var c = new NameListDto
-            {
-                Id = data.Id,
-                Name = data.Name
-            };
-            nameL.Add(c);
-        }
+        var stat = BoolToStr.EnumToString(YesNo.Yes);
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .SelectDto<FiscalYear, NameList>(v)
+            .From<FiscalYear>(v)
+            .Where<FiscalYear>(v, f => f.IsActive == stat && f.DateEnd >= DateTime.UtcNow);
 
-        return nameL;
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class PeriodAllNameQryHandler : IRequestHandler<PeriodAllNameQry, List<NameListDto>>
+public class PeriodAllNameHandler : IRequestHandler<PeriodAllNameQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PeriodAllNameQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PeriodAllNameHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameListDto>> Handle(PeriodAllNameQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(PeriodAllNameQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Period>().GetAll();
-        var nameL = new List<NameListDto>();
-        foreach (var data in res)
-        {
-            var c = new NameListDto
-            {
-                Id = data.Id,
-                Name = data.Name
-            };
-            nameL.Add(c);
-        }
-
-        return nameL;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Period, NameList>(v).From<Period>(v);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<NameList>(ct);
+        return list;
     }
 }
 
-public class PeriodNameByIdQryHandler : IRequestHandler<PeriodNameByIdQry, NameListDto?>
+public class PeriodNameByIdHandler : IRequestHandler<PeriodNameByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PeriodNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PeriodNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameListDto?> Handle(PeriodNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(PeriodNameByIdQry request, CancellationToken ct)
     {
-        var res = await _unitOfWork.Repository<Period>().GetById(request.Id);
-        if (res == null) { return null; }
-
-        var c = new NameListDto
-        {
-            Id = res.Id,
-            Name = res.Name
-        };
-        return c;
-    }
-}
-
-public class DbcAllHandler : IRequestHandler<DbcAllQry, List<DbcResDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public DbcAllHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<DbcResDto>> Handle(DbcAllQry request, CancellationToken cancellationToken)
-    {
-        var res = await _unitOfWork.Repository<Department>().GetAll();
-        var nameL = new List<DbcResDto>();
-        var braL = await _unitOfWork.Repository<Branch>().GetAll();
-
-        foreach (var data in res)
-        {
-            var bra = braL.FirstOrDefault(b => b.Id == data.BranchId);
-            var c = new DbcResDto
-            {
-                DeptId = data.Id,
-                BranchId = data.BranchId,
-                CompId = bra != null ? bra.CompId : Guid.Empty
-            };
-            nameL.Add(c);
-        }
-
-        return nameL;
-    }
-}
-
-public class DbcByIdHandler : IRequestHandler<DbcByIdQry, DbcResDto?>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public DbcByIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<DbcResDto?> Handle(DbcByIdQry request, CancellationToken cancellationToken)
-    {
-        var res = await _unitOfWork.Repository<Department>().GetById(request.Id);
-        if (res == null) { return null; }
-
-        var bra = await _unitOfWork.Repository<Branch>().GetById(res.BranchId);
-        if (bra == null) { return null; }
-
-        var c = new DbcResDto
-        {
-            DeptId = res.Id,
-            BranchId = res.BranchId,
-            CompId = bra.CompId
-        };
-        return c;
+        const string v = "v";
+        var qb = new QueryBuilder().SelectDto<Period, NameList>(v).From<Period>(v).Where<Period>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.FirstOrDefaultAsync<NameList>(ct);
+        return list;
     }
 }

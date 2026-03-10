@@ -1,91 +1,92 @@
-﻿using Common;
-using Cor.HRMM.Interfaces;
+﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
+using Helpers;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
 public class PositionEduAllQry : IRequest<List<PositionEduListDto>> { public Guid Id { get; set; } }
-
 public class PositionEduByIdQry : IRequest<PositionEduListDto?> { public Guid Id { get; set; } }
 
-public class PositionEduAllQryHandler : IRequestHandler<PositionEduAllQry, List<PositionEduListDto>>
+
+
+public class PositionEduAllHandler : IRequestHandler<PositionEduAllQry, List<PositionEduListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _gRPC;
+    private readonly IDapperHelper _dapper;
+    public PositionEduAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public PositionEduAllQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
+    public async Task<List<PositionEduListDto>> Handle(PositionEduAllQry request, CancellationToken ct)
     {
-        _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
-    }
+        const string v = "v";
+        const string q = "q";
+        var qb = new QueryBuilder()
+            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<EducationQual>(q, asName: "EducationQual", x => x.Name)
+            .From<PositionEducation>(v)
+            .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
+            .OrderBy<PositionEducation>(v, x => x.DateAdd, desc: true);
 
-    public async Task<List<PositionEduListDto>> Handle(PositionEduAllQry request, CancellationToken cancellationToken)
-    {
-        var dbData = await _unitOfWork.Repository<PositionEducation>().Find(c => c.PositionId == request.Id);
+        var (sql, parameters) = qb.Build();
         var dataL = new List<PositionEduListDto>();
-        var nData = dbData.ToList();
-        if (nData.Count <= 0) return dataL;
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PositionEduListDto>();
 
-        var eduLevelL = await _gRPC.GetListEduLevel(cancellationToken);
-        var eduQualL = await _unitOfWork.Repository<EducationQual>().GetAll();
-
-        foreach (var data in dbData)
+        while (await reader.ReadAsync(ct))
         {
-            var eduLevel = eduLevelL.Res.FirstOrDefault(t => t.Id == data.EducationLevelId.ToString());
-            var eduQual = eduQualL.FirstOrDefault(t => t.Id == data.EducationQualId);
-            var c = new PositionEduListDto
+            var data = parser(reader);
+            dataL.Add(new PositionEduListDto
             {
                 Id = data.Id,
                 PositionId = data.PositionId,
                 EducationQualId = data.EducationQualId,
-                EducationLevelId = data.EducationLevelId,
-                EducationQual = eduQual != null ? eduQual.Name : "NOT AVAILABLE",
-                EducationLevel = eduLevel!.Name ?? "NOT AVAILABLE",
+                EducationLevel = data.EducationLevel,
+                EducationQual = data.EducationQual,
+                EducationLevelStr = MyEnumHelper.FormatEnum<EducationLevel>(data.EducationLevel),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class PositionEduByIdQryHandler : IRequestHandler<PositionEduByIdQry, PositionEduListDto?>
+public class PositionEduByIdHandler : IRequestHandler<PositionEduByIdQry, PositionEduListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILupClient _gRPC;
+    private readonly IDapperHelper _dapper;
+    public PositionEduByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public PositionEduByIdQryHandler(IUnitOfWork unitOfWork, ILupClient gRPC)
+    public async Task<PositionEduListDto?> Handle(PositionEduByIdQry request, CancellationToken ct)
     {
-        _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
-    }
+        const string v = "v";
+        const string q = "q";
+        var qb = new QueryBuilder()
+            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<EducationQual>(q, asName: "EducationQual", x => x.Name)
+            .From<PositionEducation>(v)
+            .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
+            .Where<PositionEducation>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-    public async Task<PositionEduListDto?> Handle(PositionEduByIdQry request, CancellationToken cancellationToken)
-    {
-        var data = await _unitOfWork.Repository<PositionEducation>().GetById(request.Id);
-        if (data == null) { return null; }
-        var eduLevel = await _gRPC.GetEduLevel(data.EducationLevelId.ToString(), cancellationToken);
-        var eduQual = await _unitOfWork.Repository<EducationQual>().GetById(data.EducationQualId);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PositionEduListDto>(sql, parameters, ct);
+        if (data == null) return null;
 
-        var c = new PositionEduListDto
+        return new PositionEduListDto
         {
             Id = data.Id,
             PositionId = data.PositionId,
             EducationQualId = data.EducationQualId,
-            EducationLevelId = data.EducationLevelId,
-            EducationQual = eduQual != null ? eduQual.Name : "NOT AVAILABLE",
-            EducationLevel = eduLevel.Res.Name != null ? eduLevel.Res.Name : "NOT AVAILABLE",
+            EducationLevel = data.EducationLevel,
+            EducationQual = data.EducationQual,
+            EducationLevelStr = MyEnumHelper.FormatEnum<EducationLevel>(data.EducationLevel),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion),
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

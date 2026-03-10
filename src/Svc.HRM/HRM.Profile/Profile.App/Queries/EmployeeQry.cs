@@ -3,13 +3,9 @@ using Dapper;
 using EthiopianCalendar;
 using Helpers;
 using MediatR;
-using Npgsql;
-using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-using System.Data;
-using System.Data.Common;
 
 namespace Profile.App.Queries;
 
@@ -23,14 +19,12 @@ public class EmpCodeByIdQry : IRequest<string?> { public Guid Id { get; set; } }
 
 public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
-    private readonly IUnitOfWorkNew _uow;
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeAllQryHandler(IUnitOfWorkNew uow, IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeAllQryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _uow = uow;
         _dapper = dapper;
         _corHRMM = corHRMM;
         _corMod = corMod;
@@ -38,7 +32,6 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
 
     public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken ct)
     {
-        await _uow.BeginAsync(ct);
         var deptTask = _corMod.GetListDept(ct);
         var jgTask = _corHRMM.GetListJobGrade(ct);
         var posTask = _corHRMM.GetListPosition(ct);
@@ -51,12 +44,11 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.RowVersion)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
-            .OrderBy<Employee>(e, x => x.DateAdd, desc: true)
-            .OrderBy<Employee>(e, x => x.Id, desc: true);
+            .OrderBy<Employee>(e, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
         var result = new List<EmployeeListDto>();
@@ -76,6 +68,7 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 Code = row.Code,
                 EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
                 EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+                EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
                 Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
                 Branch = dept?.NameAm ?? "",
                 Department = dept?.Name ?? "",
@@ -87,7 +80,7 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
                 IsDeleted = false,
                 DateAdd = row.DateAdd,
                 DateMod = row.DateMod,
-                RowVersion = Convert.ToBase64String(row.RowVersion)
+                RowVersion = row.xmin.ToString()
             });
         }
 
@@ -97,14 +90,12 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
 
 public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
 {
-    private readonly IUnitOfWorkNew _uow;
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeByIdQryHandler(IUnitOfWorkNew uow, IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeByIdQryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _uow = uow;
         _dapper = dapper;
         _corHRMM = corHRMM;
         _corMod = corMod;
@@ -112,20 +103,19 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
 
     public async Task<EmployeeListDto?> Handle(EmployeeByIdQry request, CancellationToken ct)
     {
-        await _uow.BeginAsync(ct);
         const string e = "e";
         const string p = "p";
         const string ph = "ph";
         const string th = "th";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.RowVersion)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
             .SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpPhoto, EmpPhotoThumbnail>(ph, th, x => x.ThumbnailId, x => x.FileMetaDataId)
-            .Where<Employee>(e, x => x.Id, "=", request.Id)
+            .Where<Employee>(e, x => x.Id == request.Id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
@@ -143,6 +133,7 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
             EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
             Code = row.Code,
+            EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
             Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
             Branch = deptTask.Result?.Res?.NameAm ?? "",
             Department = deptTask.Result?.Res?.Name ?? "",
@@ -155,7 +146,7 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
             IsDeleted = false,
             DateAdd = row.DateAdd,
             DateMod = row.DateMod,
-            RowVersion = Convert.ToBase64String(row.RowVersion)
+            RowVersion = row.xmin.ToString()
         };
 
         return dto;
@@ -164,17 +155,21 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
 
 public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
 {
-    private readonly IUnitOfWorkNew _uow;
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public Step5QryHandler(IUnitOfWorkNew uow, IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public Step5QryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _uow = uow;
         _dapper = dapper;
         _corHRMM = corHRMM;
         _corMod = corMod;
+    }
+
+    private static string BuildAddress(string type, string? region, string? zone, string? subcity, string? woreda, string? kebele)
+    {
+        if (string.IsNullOrWhiteSpace(region)) return "";
+        return $"{MyEnumHelper.FormatEnum<AddressType>(type)}: {region} | {zone}({subcity}) | {woreda} | {kebele}";
     }
 
     private async Task<EmpBioJoin?> GetBio(Guid id, CancellationToken ct)
@@ -192,7 +187,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             .LeftJoin<Employee, EmpBio>(e, eb, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpBio, Address>(eb, ad, x => x.AddressId, x => x.Id)
             .LeftJoin<Employee, EmpFinance>(e, ef, x => x.Id, x => x.EmployeeId)
-            .Where<Employee>(e, x => x.Id, "=", id)
+            .Where<Employee>(e, x => x.Id == id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
@@ -208,14 +203,14 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         const string ad = "ad";
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
-            .Select<EmergencyContact>(ec, x => x.RelationId)
+            .Select<EmergencyContact>(ec, x => x.Relation)
             .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
             .From<Employee>(e)
             .Join<Employee, EmergencyContact>(e, ec, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmergencyContact, Address>(ec, ad, x => x.AddressId, x => x.Id)
             .Join<EmergencyContact, Person>(ec, p, x => x.PersonId, x => x.Id)
-            .Where<Employee>(e, x => x.Id, "=", id)
+            .Where<Employee>(e, x => x.Id == id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
@@ -233,7 +228,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         const string fm = "fm";
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
-            .Select<EmpGuarantor>(eg, x => x.RelationId)
+            .Select<EmpGuarantor>(eg, x => x.Relation)
             .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
             .Select<FileMetaData>(fm, x => x.FileName, x => x.ContentType, x => x.FileSize)
@@ -243,7 +238,7 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
             .LeftJoin<EmpGuarantor, Address>(eg, ad, x => x.AddressId, x => x.Id)
             .LeftJoin<EmpGuarantor, EmpGuarantorFile>(eg, egf, x => x.Id, x => x.EmpGuarantorId)
             .LeftJoin<EmpGuarantorFile, FileMetaData>(egf, fm, x => x.FileMetaDataId, x => x.Id)
-            .Where<Employee>(e, x => x.Id, "=", id)
+            .Where<Employee>(e, x => x.Id == id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
@@ -251,105 +246,105 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
         return row;
     }
 
-
     public async Task<Step5Dto?> Handle(Step5Qry request, CancellationToken ct)
     {
-        await _uow.BeginAsync(ct);
         const string e = "e";
         const string p = "p";
         const string ph = "ph";
         const string th = "th";
+
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-            .SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
+            .SelectAs<EmpPhotoThumbnail>(th, "PhotoThumbnail", x => x.Data)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpPhoto, EmpPhotoThumbnail>(ph, th, x => x.ThumbnailId, x => x.FileMetaDataId)
-            .Where<Employee>(e, x => x.Id, "=", request.Id)
+            .Where<Employee>(e, x => x.Id == request.Id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
         var row = await _dapper.QueryFirstOrDefaultAsync<EmpJoinRow>(sql, parameters, ct);
-        if (row == null) return null;
 
-        var eBio = await GetBio(request.Id, ct);
-        var eCon = await GetCon(request.Id, ct);
-        var eGar = await GetGra(request.Id, ct);
+        if (row is null) { return null; }
 
+        var bioTask = await GetBio(request.Id, ct);
+        var conTask = await GetCon(request.Id, ct);
+        var garTask = await GetGra(request.Id, ct);
         var deptTask = _corMod.GetDept(row.DepartmentId.ToString(), ct);
         var jobGradeTask = _corHRMM.GetJobGrade(row.JobGradeId.ToString(), ct);
         var positionTask = _corHRMM.GetPosition(row.PositionId.ToString(), ct);
-
         await Task.WhenAll(deptTask, jobGradeTask, positionTask);
+        var eBio = bioTask ?? new EmpBioJoin();
+        var eCon = conTask ?? new EmpContJoin();
+        var eGar = garTask ?? new EmpGuaJoin();
+        var dept = deptTask.Result?.Res;
+        var jobGrade = jobGradeTask.Result?.Res;
+        var position = positionTask.Result?.Res;
 
-        var dto = new Step5Dto
+        return new Step5Dto
         {
             EmployeeId = row.Id,
             Code = row.Code,
-            FullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
-            FullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+            FullName = $"{row.FirstName} {row.MiddleName} {row.LastName}".Trim(),
+            FullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}".Trim(),
             Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
             Nationality = row.Nationality,
-            EmploymentDate = $"{row.EmploymentDate:MMMM dd, yyyy}",
+            EmploymentDate = row.EmploymentDate.ToString("MMMM dd, yyyy"),
             EmploymentDateAm = row.EmploymentDate.ToEthiopianDateString("MMMM dd, yyyy"),
-            Branch = deptTask.Result?.Res?.NameAm ?? "",
-            Department = deptTask.Result?.Res?.Name ?? "",
-            Position = positionTask.Result?.Res?.Name ?? "",
-            JobGrade = jobGradeTask.Result?.Res?.Name ?? "",
+            Branch = dept?.NameAm ?? "",
+            Department = dept?.Name ?? "",
+            Position = position?.Name ?? "",
+            JobGrade = jobGrade?.Name ?? "",
             EmploymentType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
             EmploymentNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
             WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
-            Photo = row.PhotoThumbnail != null ? Convert.ToBase64String(row.PhotoThumbnail) : "",
-
-            BirthDate = eBio != null ? $"{eBio.BirthDate:MMMM dd, yyyy}" : "",
-            BirthDateAm = eBio?.BirthDate.HasValue == true ? eBio.BirthDate.Value.ToEthiopianDateString("MMMM dd, yyyy") : "",
-            BirthLocation = eBio?.BirthLocation ?? "",
-            MotherFullName = eBio?.MotherFullName ?? "",
-            HasBirthCert = eBio != null ? MyEnumHelper.FormatEnum<YesNo>(eBio.HasBirthCert) : "",
-            HasMarriageCert = eBio != null ? MyEnumHelper.FormatEnum<YesNo>(eBio.HasMarriageCert) : "",
-            MaritalStatus = eBio != null ? MyEnumHelper.FormatEnum<MaritalStat>(eBio.MaritalStatus) : "",
-            Address = eBio != null ? $"{MyEnumHelper.FormatEnum<AddressType>(eBio.AddressType)}: {eBio.Region} | {eBio.Zone}({eBio.Subcity}) | {eBio.Woreda} | {eBio.Kebele}" : "",
-            Telephone = eBio?.Telephone ?? "",
-            Tin = eBio?.Tin ?? "",
-            BankAccountNo = eBio?.BankAccountNo ?? "",
-            PensionNumber = eBio?.PensionNumber ?? "",
-
-            ConFullName = eCon != null ? $"{eCon.FirstName} {eCon.MiddleName} {eCon.LastName}" : "",
-            ConFullNameAm = eCon != null ? $"{eCon.FirstNameAm} {eCon.MiddleNameAm} {eCon.LastNameAm}" : "",
-            ConNationality = eCon?.Nationality ?? "",
-            ConGender = eCon != null ? MyEnumHelper.FormatEnum<Gender>(eCon.Gender) : "",
-            ConRelation = "Convert to enum",
-            ConAddress = eCon != null ? $"{MyEnumHelper.FormatEnum<AddressType>(eCon.AddressType)}: {eCon.Region} | {eCon.Zone}({eCon.Subcity}) | {eCon.Woreda} | {eCon.Kebele}" : "",
-            ConTelephone = eCon?.Telephone ?? "",
-
-            GuaFullName = eGar != null ? $"{eGar.FirstName} {eGar.MiddleName} {eGar.LastName}" : "",
-            GuaFullNameAm = eGar != null ? $"{eGar.FirstNameAm} {eGar.MiddleNameAm} {eGar.LastNameAm}" : "",
-            GuaNationality = eGar?.Nationality ?? "",
-            GuaGender = eGar != null ? MyEnumHelper.FormatEnum<Gender>(eGar.Gender) : "",
-            GuaRelation = "Convert to enum",
-            GuaAddress = eGar != null ? $"{MyEnumHelper.FormatEnum<AddressType>(eGar.AddressType)}: {eGar.Region} | {eGar.Zone}({eGar.Subcity}) | {eGar.Woreda} | {eGar.Kebele}" : "",
-            GuaTelephone = eGar?.Telephone ?? "",
-            GuaFileName = eGar?.FileName ?? "",
-            GuaFileType = eGar?.ContentType ?? "",
-            GuaFileSize = eGar != null ? SizeFormatter.FormatBytes(eGar.FileSize) : ""
+            Photo = row.PhotoThumbnail is not null ? Convert.ToBase64String(row.PhotoThumbnail) : "",
+            // BIO
+            BirthDate = eBio.BirthDate?.ToString("MMMM dd, yyyy") ?? "",
+            BirthDateAm = eBio.BirthDate?.ToEthiopianDateString("MMMM dd, yyyy") ?? "",
+            BirthLocation = eBio.BirthLocation ?? "",
+            MotherFullName = eBio.MotherFullName ?? "",
+            HasBirthCert = MyEnumHelper.FormatEnum<YesNo>(eBio.HasBirthCert),
+            HasMarriageCert = MyEnumHelper.FormatEnum<YesNo>(eBio.HasMarriageCert),
+            MaritalStatus = MyEnumHelper.FormatEnum<MaritalStat>(eBio.MaritalStatus),
+            Address = BuildAddress(eBio.AddressType, eBio.Region, eBio.Zone, eBio.Subcity, eBio.Woreda, eBio.Kebele),
+            Telephone = eBio.Telephone ?? "",
+            Tin = eBio.Tin ?? "",
+            BankAccountNo = eBio.BankAccountNo ?? "",
+            PensionNumber = eBio.PensionNumber ?? "",
+            // CONTACT
+            ConFullName = $"{eCon.FirstName} {eCon.MiddleName} {eCon.LastName}".Trim(),
+            ConFullNameAm = $"{eCon.FirstNameAm} {eCon.MiddleNameAm} {eCon.LastNameAm}".Trim(),
+            ConNationality = eCon.Nationality ?? "",
+            ConGender = MyEnumHelper.FormatEnum<Gender>(eCon.Gender),
+            ConRelation = MyEnumHelper.FormatEnum<Relation>(eCon.Relation),
+            ConAddress = BuildAddress(eCon.AddressType, eCon.Region, eCon.Zone, eCon.Subcity, eCon.Woreda, eCon.Kebele),
+            ConTelephone = eCon.Telephone ?? "",
+            // GUARANTOR
+            GuaFullName = $"{eGar.FirstName} {eGar.MiddleName} {eGar.LastName}".Trim(),
+            GuaFullNameAm = $"{eGar.FirstNameAm} {eGar.MiddleNameAm} {eGar.LastNameAm}".Trim(),
+            GuaNationality = eGar.Nationality ?? "",
+            GuaGender = MyEnumHelper.FormatEnum<Gender>(eGar.Gender),
+            GuaRelation = MyEnumHelper.FormatEnum<Relation>(eGar.Relation),
+            GuaAddress = BuildAddress(eGar.AddressType, eGar.Region, eGar.Zone, eGar.Subcity, eGar.Woreda, eGar.Kebele),
+            GuaTelephone = eGar.Telephone ?? "",
+            GuaFileName = eGar.FileName ?? "",
+            GuaFileType = eGar.ContentType ?? "",
+            GuaFileSize = eGar.FileSize > 0 ? SizeFormatter.FormatBytes(eGar.FileSize) : ""
         };
-
-        return dto;
     }
 }
 
 public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
 {
-    private readonly IUnitOfWorkNew _uow;
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public Step2QryHandler(IUnitOfWorkNew uow, IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public Step2QryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
-        _uow = uow;
         _dapper = dapper;
         _corHRMM = corHRMM;
         _corMod = corMod;
@@ -357,20 +352,19 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
 
     public async Task<BasicInfoDto?> Handle(Step2Qry request, CancellationToken ct)
     {
-        await _uow.BeginAsync(ct);
         const string e = "e";
         const string p = "p";
         const string ph = "ph";
         const string th = "th";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.RowVersion)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
             .SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpPhoto, EmpPhotoThumbnail>(ph, th, x => x.ThumbnailId, x => x.FileMetaDataId)
-            .Where<Employee>(e, x => x.Id, "=", request.Id)
+            .Where<Employee>(e, x => x.Id == request.Id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
@@ -408,22 +402,16 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
 
 public class EmpCodeByIdQryHandler : IRequestHandler<EmpCodeByIdQry, string?>
 {
-    private readonly IUnitOfWorkNew _uow;
     private readonly IDapperHelper _dapper;
-    public EmpCodeByIdQryHandler(IUnitOfWorkNew uow, IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
-    {
-        _uow = uow;
-        _dapper = dapper;
-    }
+    public EmpCodeByIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
 
     public async Task<string?> Handle(EmpCodeByIdQry request, CancellationToken ct)
     {
-        await _uow.BeginAsync(ct);
         const string e = "e";
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Code)
             .From<Employee>(e)
-            .Where<Employee>(e, x => x.Id, "=", request.Id)
+            .Where<Employee>(e, x => x.Id == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
         var row = await _dapper.QueryFirstOrDefaultAsync<EmpCodeJoin>(sql, parameters, ct);

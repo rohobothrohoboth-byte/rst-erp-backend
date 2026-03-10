@@ -10,105 +10,85 @@ public class AssignmentRuleByPolicyIdQry : IRequest<List<PolicyAssignmentRuleLis
 public class PolicyAssignmentRuleByIdQry : IRequest<PolicyAssignmentRuleListDto?> { public Guid Id { get; set; } }
 public class ActiveAssignmentRulesQry : IRequest<List<PolicyAssignmentRuleListDto>> { public Guid Id { get; set; } }
 
+
+
 public class AssignmentRuleByPolicyIdHandler : IRequestHandler<AssignmentRuleByPolicyIdQry, List<PolicyAssignmentRuleListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public AssignmentRuleByPolicyIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public AssignmentRuleByPolicyIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PolicyAssignmentRuleListDto>> Handle(AssignmentRuleByPolicyIdQry request, CancellationToken cancellationToken)
+    public async Task<List<PolicyAssignmentRuleListDto>> Handle(AssignmentRuleByPolicyIdQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<PolicyAssignmentRule>().Find(c => c.LeavePolicyId == request.Id)).ToList();
-        var dataL = new List<PolicyAssignmentRuleListDto>();
-        if (dbData.Count <= 0) { return dataL; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PolicyAssignmentRule>(v, x => x.Id, x => x.Name, x => x.Code, x => x.Code, x => x.Priority, x => x.IsActive, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PolicyAssignmentRule>(v)
+            .OrderBy<PolicyAssignmentRule>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<PolicyAssignmentRuleListDto>(ct);
+
+        foreach (var data in list)
         {
-            var c = new PolicyAssignmentRuleListDto
-            {
-                Id = data.Id,
-                Code = data.Code,
-                Name = data.Name,
-                Priority = data.Priority,
-                IsActive = data.IsActive,
-                EffectiveFrom = data.EffectiveFrom,
-                EffectiveTo = data.EffectiveTo,
-                PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
-                IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            data.PriorityStr = MyEnumHelper.FormatEnum<Priority>(data.Priority);
+            data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+            data.RowVersion = data.xmin.ToString();
         }
 
-        return dataL;
+        return list;
     }
 }
 
 public class PolicyAssignmentRuleByIdHandler : IRequestHandler<PolicyAssignmentRuleByIdQry, PolicyAssignmentRuleListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PolicyAssignmentRuleByIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PolicyAssignmentRuleByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<PolicyAssignmentRuleListDto?> Handle(PolicyAssignmentRuleByIdQry request, CancellationToken cancellationToken)
+    public async Task<PolicyAssignmentRuleListDto?> Handle(PolicyAssignmentRuleByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<PolicyAssignmentRule>().GetById(request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PolicyAssignmentRule>(v, x => x.Id, x => x.Name, x => x.Code, x => x.Code, x => x.Priority, x => x.IsActive, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PolicyAssignmentRule>(v)
+            .Where<PolicyAssignmentRule>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PolicyAssignmentRuleListDto
-        {
-            Id = data.Id,
-            Code = data.Code,
-            Name = data.Name,
-            Priority = data.Priority,
-            IsActive = data.IsActive,
-            EffectiveFrom = data.EffectiveFrom,
-            EffectiveTo = data.EffectiveTo,
-            PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PolicyAssignmentRuleListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        data.PriorityStr = MyEnumHelper.FormatEnum<Priority>(data.Priority);
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }
 
 public class ActiveAssignmentRulesHandler : IRequestHandler<ActiveAssignmentRulesQry, List<PolicyAssignmentRuleListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public ActiveAssignmentRulesHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public ActiveAssignmentRulesHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PolicyAssignmentRuleListDto>> Handle(ActiveAssignmentRulesQry request, CancellationToken cancellationToken)
+    public async Task<List<PolicyAssignmentRuleListDto>> Handle(ActiveAssignmentRulesQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<PolicyAssignmentRule>().Find(c => c.IsActive == true && c.LeavePolicyId == request.Id)).ToList();
-        var dataL = new List<PolicyAssignmentRuleListDto>();
-        if (dbData.Count <= 0) { return dataL; }
-        var lvPoL = await _unitOfWork.Repository<LeavePolicy>().GetAll();
-        var lvTyL = await _unitOfWork.Repository<LeaveType>().GetAll();
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PolicyAssignmentRule>(v, x => x.Id, x => x.Name, x => x.Code, x => x.Code, x => x.Priority, x => x.IsActive, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PolicyAssignmentRule>(v)
+            .Where<PolicyAssignmentRule>(v, x => x.LeavePolicyId == request.Id && x.IsActive == true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<PolicyAssignmentRuleListDto>(ct);
+
+        foreach (var data in list)
         {
-            var c = new PolicyAssignmentRuleListDto
-            {
-                Id = data.Id,
-                Code = data.Code,
-                Name = data.Name,
-                Priority = data.Priority,
-                IsActive = data.IsActive,
-                EffectiveFrom = data.EffectiveFrom,
-                EffectiveTo = data.EffectiveTo,
-                PriorityStr = ((Priority)Enum.Parse(typeof(Priority), data.Priority)).ToDisplayName(),
-                IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            data.PriorityStr = MyEnumHelper.FormatEnum<Priority>(data.Priority);
+            data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+            data.RowVersion = data.xmin.ToString();
         }
-        return dataL;
+
+        return list;
     }
 }

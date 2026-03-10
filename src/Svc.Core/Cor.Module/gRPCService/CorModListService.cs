@@ -47,7 +47,7 @@ public class CorModListService : CorModuleService.CorModuleServiceBase
     public override async Task<CorModuleListRes> GetListFiscalYear(CorModuleListRqst request, ServerCallContext context)
     {
         var res = new CorModuleListRes();
-        var response = (await _med.Send(new FiscalYearAllNameQry())).ToList();
+        var response = (await _med.Send(new FiscYearAllNameQry())).ToList();
         if (response.Count <= 0)
         {
             var nList = new CorModList { Id = null, Name = null };
@@ -66,7 +66,7 @@ public class CorModListService : CorModuleService.CorModuleServiceBase
     public override async Task<CorModuleRes> GetFiscalYear(CorModuleRqst request, ServerCallContext context)
     {
         var res = new CorModuleRes();
-        var response = await _med.Send(new FiscalYearNameByIdQry { Id = Guid.Parse(request.Id) });
+        var response = await _med.Send(new FiscYearNameByIdQry { Id = Guid.Parse(request.Id) });
         if (response == null)
         {
             var nList = new CorModList { Id = null, Name = null };

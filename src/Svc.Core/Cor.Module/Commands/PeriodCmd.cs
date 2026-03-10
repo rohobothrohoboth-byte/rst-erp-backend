@@ -4,6 +4,7 @@ using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Module.Commands;
 
@@ -11,16 +12,18 @@ public class AddPeriodCmd : IRequest<PeriodListDto> { public AddPeriodDto AddDto
 public class ModPeriodCmd : IRequest<PeriodListDto> { public EditPeriodDto ModDto { get; set; } = default!; }
 public class DelPeriodCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public AddPeriodCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public AddPeriodCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<PeriodListDto> Handle(AddPeriodCmd request, CancellationToken cancellationToken)
+    public async Task<PeriodListDto> Handle(AddPeriodCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var period = new Period
@@ -28,22 +31,22 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
                 Name = request.AddDto.Name,
                 DateStart = request.AddDto.DateStart,
                 DateEnd = request.AddDto.DateEnd,
-                IsActive = "0",
+                IsActive = BoolToStr.EnumToString(YesNo.Yes),
                 Quarter = request.AddDto.Quarter,
                 FiscalYearId = request.AddDto.FiscalYearId
             };
-            await _unitOfWork.Repository<Period>().Add(period);
-            await _unitOfWork.Commit();
+            await _uow.Add(period, ct);
+            await _uow.Commit(ct);
 
             var res = new PeriodListDto();
-            var response = await _med.Send(new PeriodByIdQry { Id = period.Id }, cancellationToken);
+            var response = await _med.Send(new PeriodByIdQry { Id = period.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -51,37 +54,38 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
 
 public class ModPeriodCmdHandler : IRequestHandler<ModPeriodCmd, PeriodListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public ModPeriodCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public ModPeriodCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<PeriodListDto> Handle(ModPeriodCmd request, CancellationToken cancellationToken)
+    public async Task<PeriodListDto> Handle(ModPeriodCmd request, CancellationToken ct)
     {
-        var oldPeriod = await _unitOfWork.Repository<Period>().GetById(request.ModDto.Id);
-        if (oldPeriod == null) { throw new DomainException($"PERIOD with id [{request.ModDto.Id}] NOT FOUND."); }
-        
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            oldPeriod.Name = request.ModDto.Name;
-            oldPeriod.DateStart = request.ModDto.DateStart;
-            oldPeriod.DateEnd = request.ModDto.DateEnd;
-            oldPeriod.IsActive = request.ModDto.IsActive;
-            oldPeriod.Quarter = request.ModDto.Quarter;
-            oldPeriod.FiscalYearId = request.ModDto.FiscalYearId;
-            var nPeriod = await _unitOfWork.Repository<Period>().Update(oldPeriod);
-            await _unitOfWork.Commit();
+            var oldData = await _uow.Set<Period>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"PERIOD with id [{request.ModDto.Id}] NOT FOUND."); }
+
+            oldData.Name = request.ModDto.Name;
+            oldData.DateStart = request.ModDto.DateStart;
+            oldData.DateEnd = request.ModDto.DateEnd;
+            oldData.IsActive = request.ModDto.IsActive;
+            oldData.Quarter = request.ModDto.Quarter;
+            oldData.FiscalYearId = request.ModDto.FiscalYearId;
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new PeriodListDto();
-            var response = await _med.Send(new PeriodByIdQry { Id = nPeriod.Id }, cancellationToken);
+            var response = await _med.Send(new PeriodByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -89,22 +93,22 @@ public class ModPeriodCmdHandler : IRequestHandler<ModPeriodCmd, PeriodListDto>
 
 public class DelPeriodCmdHandler : IRequestHandler<DelPeriodCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public DelPeriodCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public DelPeriodCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(DelPeriodCmd request, CancellationToken cancellationToken)
+    public async Task Handle(DelPeriodCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<Period>().GetById(request.Id);
+            var data = await _uow.Set<Period>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"PERIOD with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<Period>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

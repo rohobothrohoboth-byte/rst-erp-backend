@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
@@ -14,26 +15,34 @@ public class GetEmpIdAllQry : IRequest<List<HrmEmpId>> { }
 
 public class GetPosEmpHandler : IRequestHandler<GetPosEmpQry, EmpPosResDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
 
-    public GetPosEmpHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHRMM)
+    public GetPosEmpHandler(IDapperHelper dapper, ICorHrmmClient corHRMM)
     {
-        _unitOfWork = unitOfWork;
+        _dapper = dapper;
         _corHRMM = corHRMM;
     }
 
-    public async Task<EmpPosResDto?> Handle(GetPosEmpQry request, CancellationToken cancellationToken)
+    public async Task<EmpPosResDto?> Handle(GetPosEmpQry request, CancellationToken ct)
     {
-        var emp = await _unitOfWork.Repository<Employee>().GetById(request.Id);
-        if (emp == null) { return null; }
+        const string e = "e";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.PositionId)
+            .From<Employee>(e)
+            .Where<Employee>(e, x => x.Id == request.Id)
+            .Limit(1);
 
-        var posReq = await _corHRMM.GetPosReq(emp.PositionId.ToString(), cancellationToken);
+        var (sql, parameters) = qb.Build();
+        var row = await _dapper.QueryFirstOrDefaultAsync<Employee>(sql, parameters, ct);
+        if (row == null) return null;
+
+        var posReq = await _corHRMM.GetPosReq(row.PositionId.ToString(), ct);
         if (posReq.Id == null) { return null; }
         var res = new EmpPosResDto
         {
             Id = Guid.Parse(posReq.Id),
-            PositionId = emp.PositionId,
+            PositionId = row.PositionId,
             SaturdayWorkOption = posReq.SaturdayWorkOption,
             SundayWorkOption = posReq.SundayWorkOption
         };
@@ -44,20 +53,29 @@ public class GetPosEmpHandler : IRequestHandler<GetPosEmpQry, EmpPosResDto?>
 
 public class GetEmpIdByIdHandler : IRequestHandler<GetEmpIdByIdQry, HrmEmpId?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
     private readonly ICorModClient _corMod;
 
-    public GetEmpIdByIdHandler(IUnitOfWork unitOfWork, ICorModClient corMod)
+    public GetEmpIdByIdHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
+        _dapper = dapper;
         _corMod = corMod;
     }
 
-    public async Task<HrmEmpId?> Handle(GetEmpIdByIdQry request, CancellationToken cancellationToken)
+    public async Task<HrmEmpId?> Handle(GetEmpIdByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
-        if (data == null) { return null; }
-        var dept = await _corMod.GetDbc(data.DepartmentId.ToString(), cancellationToken);
+        const string e = "e";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.DepartmentId)
+            .From<Employee>(e)
+            .Where<Employee>(e, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<Employee>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var dept = await _corMod.GetDbc(data.DepartmentId.ToString(), ct);
 
         var c = new HrmEmpId
         {
@@ -75,26 +93,37 @@ public class GetEmpIdByIdHandler : IRequestHandler<GetEmpIdByIdQry, HrmEmpId?>
 
 public class GetEmpIdAllHandler : IRequestHandler<GetEmpIdAllQry, List<HrmEmpId>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
     private readonly ICorModClient _corMod;
 
-    public GetEmpIdAllHandler(IUnitOfWork unitOfWork, ICorModClient corMod)
+    public GetEmpIdAllHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
+        _dapper = dapper;
         _corMod = corMod;
     }
 
-    public async Task<List<HrmEmpId>> Handle(GetEmpIdAllQry request, CancellationToken cancellationToken)
+    public async Task<List<HrmEmpId>> Handle(GetEmpIdAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<Employee>().GetAll();
+        var deptTask = await _corMod.GetListDbc(ct);
+        var deptDict = deptTask.Res.ToDictionary(d => Guid.Parse(d.DeptId));
+
+        const string e = "e";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId)
+            .From<Employee>(e)
+            .OrderBy<Employee>(e, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<EmpJoinRow>();
         var dataL = new List<HrmEmpId>();
-        var deL = await _corMod.GetListDbc(cancellationToken);
 
-        foreach (var data in dbData)
+        while (await reader.ReadAsync(ct))
         {
+            var data = parser(reader);
+            deptDict.TryGetValue(data.DepartmentId, out var dept);
 
-            var dept = deL.Res.FirstOrDefault(t => t.DeptId == data.DepartmentId.ToString());
-            var c = new HrmEmpId
+            dataL.Add(new HrmEmpId
             {
                 Id = data.Id,
                 PositionId = data.PositionId,
@@ -103,11 +132,9 @@ public class GetEmpIdAllHandler : IRequestHandler<GetEmpIdAllQry, List<HrmEmpId>
                 CompanyId = dept != null ? Guid.Parse(dept!.CompId) : Guid.Empty,
                 JgStepId = data.JobGradeId,
                 JgId = data.JobGradeId
-            };
-            dataL.Add(c);
+            });
         }
 
         return dataL;
     }
 }
-

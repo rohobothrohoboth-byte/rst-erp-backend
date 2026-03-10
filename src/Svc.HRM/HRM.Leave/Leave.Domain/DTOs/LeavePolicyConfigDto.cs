@@ -1,7 +1,11 @@
-﻿namespace Leave.Domain.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Leave.Domain.DTOs;
 
 public class LeavePolicyConfigListDto : BaseDto
 {
+    [JsonIgnore]
+    public Guid FiscalYearId { get; set; } // Cor.Module.FiscalYear
     public double AnnualEntitlement { get; set; }
     public string AccrualFrequency { get; set; } = default!; // enum.AccrualFrequency (0/1)
     public double AccrualRate { get; set; }

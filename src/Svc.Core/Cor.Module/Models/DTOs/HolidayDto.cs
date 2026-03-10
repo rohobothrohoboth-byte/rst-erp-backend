@@ -4,10 +4,10 @@ namespace Cor.Module.Models.DTOs;
 
 public class HolidayListDto : BaseDTO
 {
-    public bool IsPublic { get; set; }  // bool (true/false)
     public Guid FiscalYearId { get; set; }  // FiscalYear
     public string Name { get; set; } = default!;
     public DateTime Date { get; set; }
+    public bool IsPublic { get; set; }  // bool (true/false)
     public string IsPublicStr { get; set; } = default!;
     public string FiscYear { get; set; } = default!;
     public string DateStr => $"{Date:MMMM dd, yyyy}";

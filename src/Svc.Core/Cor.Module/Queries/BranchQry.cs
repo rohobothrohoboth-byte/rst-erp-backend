@@ -10,123 +10,97 @@ public class AllBranchesQry : IRequest<List<BranchListDto>> { }
 public class BranchByIdQry : IRequest<BranchListDto?> { public Guid Id { get; set; } }
 public class BranchByCompQry : IRequest<List<BranchListDto>> { public Guid Id { get; set; } }
 
-public class AllBranchesQryHandler : IRequestHandler<AllBranchesQry, List<BranchListDto>>
+
+
+public class AllBranchesHandler : IRequestHandler<AllBranchesQry, List<BranchListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public AllBranchesHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public AllBranchesQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<BranchListDto>> Handle(AllBranchesQry request, CancellationToken cancellationToken)
+    public async Task<List<BranchListDto>> Handle(AllBranchesQry request, CancellationToken ct)
     {
-        var bras = await _unitOfWork.Repository<Branch>().GetAll();
-        var braL = new List<BranchListDto>();
-        foreach (var nBra in bras)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
+            .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
+            .From<Branch>(v)
+            .Join<Branch, Company>(v, c, x => x.CompId, x => x.Id)
+            .OrderBy<Branch>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<BranchListDto>(ct);
+
+        foreach (var data in list)
         {
-            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
-            if (comp == null) continue;
-            var c = new BranchListDto
-            {
-                Id = nBra.Id,
-                CompId = nBra.CompId,
-                Name = nBra.Name,
-                NameAm = nBra.NameAm,
-                Code = nBra.Code,
-                Location = nBra.Location,
-                BranchStat = nBra.BranchStat,
-                BranchType = nBra.BranchType,
-                BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-                BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
-                Comp = comp.Name,
-                CompAm = comp.NameAm,
-                OpenDate = nBra.OpenDate,
-                IsDeleted = nBra.IsDeleted,
-                DateAdd = nBra.DateAdd,
-                DateMod = nBra.DateMod,
-                RowVersion = Convert.ToBase64String(nBra.RowVersion)
-            };
-            braL.Add(c);
+            data.BranchTypeStr = MyEnumHelper.FormatEnum<BranchType>(data.BranchType);
+            data.BranchStatStr = MyEnumHelper.FormatEnum<BranchStat>(data.BranchStat);
+            data.RowVersion = data.xmin.ToString();
         }
 
-        return braL;
+        return list;
     }
 }
 
-public class BranchByIdQryHandler : IRequestHandler<BranchByIdQry, BranchListDto?>
+public class BranchByIdHandler : IRequestHandler<BranchByIdQry, BranchListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public BranchByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public BranchByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<BranchListDto?> Handle(BranchByIdQry request, CancellationToken cancellationToken)
+    public async Task<BranchListDto?> Handle(BranchByIdQry request, CancellationToken ct)
     {
-        var nBra = await _unitOfWork.Repository<Branch>().GetById(request.Id);
-        if (nBra == null) { return null; }
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
+            .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
+            .From<Branch>(v)
+            .Join<Branch, Company>(v, c, x => x.CompId, x => x.Id)
+            .Where<Branch>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
-        if (comp == null) return null;
-        var c = new BranchListDto
-        {
-            Id = nBra.Id,
-            CompId = nBra.CompId,
-            Name = nBra.Name,
-            NameAm = nBra.NameAm,
-            Code = nBra.Code,
-            Location = nBra.Location,
-            BranchStat = nBra.BranchStat,
-            BranchType = nBra.BranchType,
-            BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-            BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
-            Comp = nBra.Name,
-            CompAm = nBra.Name,
-            OpenDate = nBra.OpenDate,
-            IsDeleted = nBra.IsDeleted,
-            DateAdd = nBra.DateAdd,
-            DateMod = nBra.DateMod,
-            RowVersion = Convert.ToBase64String(nBra.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<BranchListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        data.BranchTypeStr = MyEnumHelper.FormatEnum<BranchType>(data.BranchType);
+        data.BranchStatStr = MyEnumHelper.FormatEnum<BranchStat>(data.BranchStat);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }
 
-public class BranchByCompQryHandler : IRequestHandler<BranchByCompQry, List<BranchListDto>>
+public class BranchByCompHandler : IRequestHandler<BranchByCompQry, List<BranchListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public BranchByCompHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public BranchByCompQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<BranchListDto>> Handle(BranchByCompQry request, CancellationToken cancellationToken)
+    public async Task<List<BranchListDto>> Handle(BranchByCompQry request, CancellationToken ct)
     {
-        var bras = await _unitOfWork.Repository<Branch>().Find(c => c.CompId == request.Id);
-        var braL = new List<BranchListDto>();
-        var nBras = bras.ToList();
-        if (nBras.Count <= 0) return braL;
-        foreach (var nBra in nBras)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
+            .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
+            .From<Branch>(v)
+            .Join<Branch, Company>(v, c, x => x.CompId, x => x.Id)
+            .Where<Branch>(v, x => x.CompId == request.Id);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<BranchListDto>(ct);
+
+        foreach (var item in list)
         {
-            var comp = await _unitOfWork.Repository<Company>().GetById(nBra.CompId);
-            if (comp == null) continue;
-            var c = new BranchListDto
-            {
-                Id = nBra.Id,
-                CompId = nBra.CompId,
-                Name = nBra.Name,
-                NameAm = nBra.NameAm,
-                Code = nBra.Code,
-                Location = nBra.Location,
-                BranchStat = nBra.BranchStat,
-                BranchType = nBra.BranchType,
-                BranchTypeStr = ((BranchType)Enum.Parse(typeof(BranchType), nBra.BranchType)).ToDisplayName(),
-                BranchStatStr = ((BranchStat)Enum.Parse(typeof(BranchStat), nBra.BranchStat)).ToDisplayName(),
-                Comp = comp.Name,
-                CompAm = comp.NameAm,
-                OpenDate = nBra.OpenDate,
-                IsDeleted = nBra.IsDeleted,
-                DateAdd = nBra.DateAdd,
-                DateMod = nBra.DateMod,
-                RowVersion = Convert.ToBase64String(nBra.RowVersion)
-            };
-            braL.Add(c);
+            item.BranchTypeStr = MyEnumHelper.FormatEnum<BranchType>(item.BranchType);
+            item.BranchStatStr = MyEnumHelper.FormatEnum<BranchStat>(item.BranchStat);
+            item.RowVersion = item.xmin.ToString();
         }
 
-        return braL;
+        return list;
     }
 }

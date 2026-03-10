@@ -4,6 +4,7 @@ using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cor.HRMM.Commands;
 
@@ -11,16 +12,18 @@ public class JobGradeAddCmd : IRequest<JobGradeListDto> { public JobGradeAddDto 
 public class JobGradeModCmd : IRequest<JobGradeListDto> { public JobGradeModDto ModDto { get; set; } = default!; }
 public class JobGradeDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class JobGradeAddCmdHandler : IRequestHandler<JobGradeAddCmd, JobGradeListDto>
+
+
+public class JobGradeAddHandler : IRequestHandler<JobGradeAddCmd, JobGradeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobGradeAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobGradeAddHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<JobGradeListDto> Handle(JobGradeAddCmd request, CancellationToken cancellationToken)
+    public async Task<JobGradeListDto> Handle(JobGradeAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new JobGrade
@@ -29,76 +32,76 @@ public class JobGradeAddCmdHandler : IRequestHandler<JobGradeAddCmd, JobGradeLis
                 StartSalary = request.AddDto.StartSalary,
                 MaxSalary = request.AddDto.MaxSalary
             };
-            await _unitOfWork.Repository<JobGrade>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new JobGradeListDto();
-            var response = await _med.Send(new JobGradeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JobGradeByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class JobGradeModCmdHandler : IRequestHandler<JobGradeModCmd, JobGradeListDto>
+public class JobGradeModHandler : IRequestHandler<JobGradeModCmd, JobGradeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
+    public JobGradeModHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public JobGradeModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<JobGradeListDto> Handle(JobGradeModCmd request, CancellationToken cancellationToken)
+    public async Task<JobGradeListDto> Handle(JobGradeModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<JobGrade>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"JOB GRADE with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<JobGrade>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, cancellationToken: ct);
+            if (oldData == null) { throw new DomainException($"JOB GRADE with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.Name = request.ModDto.Name;
             oldData.StartSalary = request.ModDto.StartSalary;
             oldData.MaxSalary = request.ModDto.MaxSalary;
-            var data = await _unitOfWork.Repository<JobGrade>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new JobGradeListDto();
-            var response = await _med.Send(new JobGradeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JobGradeByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class JobGradeDelCmdHandler : IRequestHandler<JobGradeDelCmd>
+public class JobGradeDelHandler : IRequestHandler<JobGradeDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JobGradeDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public JobGradeDelHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(JobGradeDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(JobGradeDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<JobGrade>().GetById(request.Id);
+            var data = await _uow.Set<JobGrade>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"JOB GRADE with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<JobGrade>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

@@ -275,6 +275,26 @@ public enum LeaveCondition
 
 #region HRM.Profile Enums
 
+public enum EmpState
+{
+    [Display(Name = "Pending")]
+    Pen,
+    [Display(Name = "Approved")]
+    App,
+    [Display(Name = "Active")]
+    Active,
+    [Display(Name = "Under Probation")]
+    Prob,
+    [Display(Name = "Terminated")]
+    Term,
+    [Display(Name = "StandBy")]
+    StandBy,
+    [Display(Name = "Retired")]
+    Retired,
+    [Display(Name = "On Leave")]
+    Leave
+}
+
 public enum EmpType
 {
     [Display(Name = "Replacement")]
@@ -335,6 +355,34 @@ public enum AddressType
     Res,
     [Display(Name = "Work Place")]
     Work
+}
+
+public enum Relation
+{
+    [Display(Name = "Daughter")]
+    Daughter,
+    [Display(Name = "Father")]
+    Father,
+    [Display(Name = "Brother")]
+    Bro,
+    [Display(Name = "Son")]
+    Son,
+    [Display(Name = "Aunt")]
+    Aunt,
+    [Display(Name = "Sister")]
+    Sister,
+    [Display(Name = "Wife")]
+    Wife,
+    [Display(Name = "Uncle")]
+    Uncle,
+    [Display(Name = "Husband")]
+    Husband,
+    [Display(Name = "Mother")]
+    Mother,
+    [Display(Name = "Child")]
+    Child,
+    [Display(Name = "UNKNOWN")]
+    Unknknown
 }
 
 #endregion

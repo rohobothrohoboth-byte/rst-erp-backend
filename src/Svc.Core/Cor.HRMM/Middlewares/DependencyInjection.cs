@@ -35,16 +35,31 @@ public static class DependencyInjection
                 option.SubstituteApiVersionInUrl = true;
             });
 
-        builder.Services.AddDbContext<coreHRMMDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("coreHRMMDbCon")));
-        builder.Services.AddScoped<DapperContext>();
+        builder.Services.AddDbContextPool<coreHRMMDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("coreHRMMDbCon"), npgsql =>
+                    {
+                        npgsql.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsql.CommandTimeout(30);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.EnableSensitiveDataLogging(false);
+            });
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
+
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ILupClient, LupClient>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
-        builder.Services.AddScoped(typeof(ICorHRMMRepo<>), typeof(CorHRMMRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();

@@ -1,0 +1,14 @@
+﻿namespace Profile.Domain.Entities;
+
+public class EmpSalary : BaseEntity
+{
+    public double BaseSalary { get; set; } = default!;
+    public DateTime EffectiveFrom { get; set; } = DateTime.UtcNow;
+    public DateTime? EffectiveTo { get; set; }
+    public Guid EmployeeId { get; set; } = default!;
+    public Guid JgStepId { get; set; } = default!; //Cor.HRMM.JgStep
+
+    //******************************************//
+
+    public Employee Employee { get; set; } = null!;
+}

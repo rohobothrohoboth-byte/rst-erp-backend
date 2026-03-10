@@ -20,7 +20,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBenefitSetName()
     {
-        var res = await med.Send(new BenefitSetNameAllQry());
+        var res = await med.Send(new BenSetNameAllQry());
         return Ok(res);
     }
 
@@ -29,7 +29,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBenefitSetName(Guid id)
     {
-        var res = await med.Send(new BenefitSetNameByIdQry { Id = id });
+        var res = await med.Send(new BenSetNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BENEFIT SETTING with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
@@ -38,7 +38,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEducationQualName()
     {
-        var res = await med.Send(new EducationQualNameAllQry());
+        var res = await med.Send(new EduQualNameAllQry());
         return Ok(res);
     }
 
@@ -47,7 +47,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEducationQualName(Guid id)
     {
-        var res = await med.Send(new EducationQualNameByIdQry { Id = id });
+        var res = await med.Send(new EduQualNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"EDUCATION QUALIFICATION with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
@@ -101,7 +101,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DeptPosition(Guid id)
     {
-        var res = await med.Send(new PositionByDeptQry { Id = id });
+        var res = await med.Send(new PosByDeptQry { Id = id });
         return Ok(res);
     }
 
@@ -109,7 +109,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionName()
     {
-        var res = await med.Send(new PositionNameAllQry());
+        var res = await med.Send(new PosNameAllQry());
         return Ok(res);
     }
 
@@ -118,7 +118,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPositionName(Guid id)
     {
-        var res = await med.Send(new PositionNameByIdQry { Id = id });
+        var res = await med.Send(new PosNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"POSITION with id [{id}] NOT FOUND."); }
         return Ok(res);
     }

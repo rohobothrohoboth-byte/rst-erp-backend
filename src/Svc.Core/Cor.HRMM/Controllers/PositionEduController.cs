@@ -51,7 +51,7 @@ public class PositionEduController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionEduAddCmd { AddDto = addDto };
+        var command = new PosEduAddCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New POSITION EDUCATION successfully created."));
     }
@@ -69,7 +69,7 @@ public class PositionEduController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionEduModCmd { ModDto = modDto };
+        var command = new PosEduModCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected POSITION EDUCATION successfully updated."));
     }
@@ -79,7 +79,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new PositionEduDelCmd { Id = id };
+        var command = new PosEduDelCmd { Id = id };
         await med.Send(command);
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION EDUCATION with Id {id} successfully deleted."));
     }

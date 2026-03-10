@@ -1,29 +1,38 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
 public class PositionExpAllQry : IRequest<List<PositionExpListDto>> { public Guid Id { get; set; } }
-
 public class PositionExpByIdQry : IRequest<PositionExpListDto?> { public Guid Id { get; set; } }
 
-public class PositionExpAllQryHandler : IRequestHandler<PositionExpAllQry, List<PositionExpListDto>>
+
+
+public class PositionExpAllHandler : IRequestHandler<PositionExpAllQry, List<PositionExpListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionExpAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PositionExpAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PositionExpListDto>> Handle(PositionExpAllQry request, CancellationToken cancellationToken)
+    public async Task<List<PositionExpListDto>> Handle(PositionExpAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<PositionExp>().Find(c => c.PositionId == request.Id);
-        var dataL = new List<PositionExpListDto>();
-        var nData = dbData.ToList();
-        if (nData.Count <= 0) return dataL;
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionExp>(v, x => x.Id, x => x.SamePosExp, x => x.OtherPosExp, x => x.MinAge, x => x.MaxAge, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PositionExp>(v)
+            .OrderBy<PositionExp>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PositionExpListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PositionExpListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var c = new PositionExpListDto
+            var data = parser(reader);
+            dataL.Add(new PositionExpListDto
             {
                 Id = data.Id,
                 PositionId = data.PositionId,
@@ -34,26 +43,33 @@ public class PositionExpAllQryHandler : IRequestHandler<PositionExpAllQry, List<
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class PositionExpByIdQryHandler : IRequestHandler<PositionExpByIdQry, PositionExpListDto?>
+public class PositionExpByIdHandler : IRequestHandler<PositionExpByIdQry, PositionExpListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionExpByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PositionExpByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<PositionExpListDto?> Handle(PositionExpByIdQry request, CancellationToken cancellationToken)
+    public async Task<PositionExpListDto?> Handle(PositionExpByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<PositionExp>().GetById(request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionExp>(v, x => x.Id, x => x.SamePosExp, x => x.OtherPosExp, x => x.MinAge, x => x.MaxAge, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PositionExp>(v)
+            .OrderBy<PositionExp>(v, x => x.DateAdd, desc: true)
+            .Where<PositionExp>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PositionExpListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PositionExpListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new PositionExpListDto
         {
             Id = data.Id,
             PositionId = data.PositionId,
@@ -64,8 +80,7 @@ public class PositionExpByIdQryHandler : IRequestHandler<PositionExpByIdQry, Pos
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion),
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

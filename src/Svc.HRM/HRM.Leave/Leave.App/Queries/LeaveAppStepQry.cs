@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using Helpers;
 using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
@@ -10,97 +11,110 @@ namespace Leave.App.Queries;
 public class AppStepByChainIdQry : IRequest<List<LeaveAppStepListDto>> { public Guid Id { get; set; } }
 public class LeaveAppStepByIdQry : IRequest<LeaveAppStepListDto?> { public Guid Id { get; set; } }
 
+
+
 public class AppStepByChainIdHandler : IRequestHandler<AppStepByChainIdQry, List<LeaveAppStepListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfileClient _hrmProfileClient;
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
 
-    public AppStepByChainIdHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmProfileClient)
+    public AppStepByChainIdHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
-        _hrmProfileClient = hrmProfileClient;
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<List<LeaveAppStepListDto>> Handle(AppStepByChainIdQry request, CancellationToken cancellationToken)
+    public async Task<List<LeaveAppStepListDto>> Handle(AppStepByChainIdQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<LeaveAppStep>().Find(c => c.LeaveAppChainId == request.Id)).ToList();
-        var dataL = new List<LeaveAppStepListDto>();
-        if (dbData.Count <= 0) { return dataL; }
-        var appC = await _unitOfWork.Repository<LeaveAppChain>().GetById(request.Id);
-        var empL = await _hrmProfileClient.GetListEmp(cancellationToken);
+        var empTask = await _hrmProfile.GetListEmp(ct);
+        var empDict = empTask.Res.ToDictionary(d => Guid.Parse(d.Id));
 
-        foreach (var data in dbData)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeaveAppStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.Role, x => x.IsFinal, x => x.EmployeeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<LeaveAppChain>(c, x => x.EffectiveFrom)
+            .From<LeaveAppStep>(v)
+            .Join<LeaveAppStep, LeaveAppChain>(v, c, x => x.LeaveAppChainId, x => x.Id)
+            .Where<LeaveAppStep>(v, x => x.LeaveAppChainId == request.Id);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<LeaveAppStepListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<LeaveAppStepListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var empN = "NOT ASSIGNED";
+            var data = parser(reader);
+            var emp = "Not Assigned";
             if (data.EmployeeId != null)
             {
-                var emp = empL.Res.FirstOrDefault(f => f.Id == data.EmployeeId.ToString());
-                empN = emp!.Name;
+                empDict.TryGetValue((Guid)data.EmployeeId, out var empN);
+                emp = empN?.Name ?? "";
             }
 
-            var c = new LeaveAppStepListDto
+            result.Add(new LeaveAppStepListDto
             {
                 Id = data.Id,
                 StepName = data.StepName,
                 StepOrder = data.StepOrder,
                 Role = data.Role,
                 IsFinal = data.IsFinal,
-                RoleStr = ((ApprovalRole)Enum.Parse(typeof(ApprovalRole), data.Role)).ToDisplayName(),
+                RoleStr = MyEnumHelper.FormatEnum<ApprovalRole>(data.Role),
                 IsFinalStr = BoolToStr.FormatBool(data.IsFinal),
-                Employee = empN,
-                LeaveAppChain = $"From : {appC!.EffectiveFrom:MMMM dd, yyyy}",
+                Employee = emp,
+                LeaveAppChain = $"From : {data.EffectiveFrom:MMMM dd, yyyy}",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
 
-        return dataL;
+        return result;
     }
 }
 
 public class LeaveAppStepByIdHandler : IRequestHandler<LeaveAppStepByIdQry, LeaveAppStepListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfileClient _hrmProfileClient;
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
 
-    public LeaveAppStepByIdHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmProfileClient)
+    public LeaveAppStepByIdHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
-        _hrmProfileClient = hrmProfileClient;
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<LeaveAppStepListDto?> Handle(LeaveAppStepByIdQry request, CancellationToken cancellationToken)
+    public async Task<LeaveAppStepListDto?> Handle(LeaveAppStepByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<LeaveAppStep>().GetById(request.Id);
-        if (data == null) { return null; }
-        var appC = await _unitOfWork.Repository<LeaveAppChain>().GetById(data.LeaveAppChainId);
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeaveAppStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.Role, x => x.IsFinal, x => x.EmployeeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<LeaveAppChain>(c, x => x.EffectiveFrom)
+            .From<LeaveAppStep>(v)
+            .Join<LeaveAppStep, LeaveAppChain>(v, c, x => x.LeaveAppChainId, x => x.Id)
+            .Where<LeaveAppStep>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var empN = "NOT ASSIGNED";
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeaveAppStepListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var emp = "NOT ASSIGNED";
         if (data.EmployeeId != null)
         {
-            var emp = await _hrmProfileClient.GetEmp(((Guid)data.EmployeeId).ToString(), cancellationToken);
-            empN = emp.Res.Name;
+            var empR = await _hrmProfile.GetEmp(((Guid)data.EmployeeId).ToString(), ct);
+            emp = empR.Res.Name;
         }
 
-        var c = new LeaveAppStepListDto
-        {
-            Id = data.Id,
-            StepName = data.StepName,
-            StepOrder = data.StepOrder,
-            Role = data.Role,
-            IsFinal = data.IsFinal,
-            RoleStr = ((ApprovalRole)Enum.Parse(typeof(ApprovalRole), data.Role)).ToDisplayName(),
-            IsFinalStr = BoolToStr.FormatBool(data.IsFinal),
-            Employee = empN,
-            LeaveAppChain = $"From : {appC!.EffectiveFrom:MMMM dd, yyyy}",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+
+        data.RoleStr = MyEnumHelper.FormatEnum<ApprovalRole>(data.Role);
+        data.IsFinalStr = BoolToStr.FormatBool(data.IsFinal);
+        data.Employee = emp;
+        data.LeaveAppChain = $"From : {data.EffectiveFrom:MMMM dd, yyyy}";
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

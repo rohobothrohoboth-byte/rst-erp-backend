@@ -51,7 +51,7 @@ public class PositionReqController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionReqAddCmd { AddDto = addDto };
+        var command = new PosReqAddCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New POSITION REQUIREMENT successfully created."));
     }
@@ -69,7 +69,7 @@ public class PositionReqController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionReqModCmd { ModDto = modDto };
+        var command = new PosReqModCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected POSITION REQUIREMENT successfully updated."));
     }
@@ -79,7 +79,7 @@ public class PositionReqController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new PositionReqDelCmd { Id = id };
+        var command = new PosReqDelCmd { Id = id };
         await med.Send(command);
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION REQUIREMENT with Id {id} successfully deleted."));
     }

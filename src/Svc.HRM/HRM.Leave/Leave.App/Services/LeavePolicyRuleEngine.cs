@@ -6,16 +6,17 @@ namespace Leave.App.Services;
 
 public static class LeavePolicyRuleEngine
 {
-    public static async Task<List<ResolvePolicy>> Resolve(EmpPolicyCtx emp, List<PolicyCondCtx> conditions, Func<Guid, Task<List<LeavePolicyConfig>>> getConfigs)
+    public static Task<List<ResolvePolicy>> Resolve(EmpPolicyCtx emp, List<PolicyCondCtx> conditions, Func<Guid, List<LeavePolicyConfig>> getConfigs)
     {
         var resolvedPolicies = new List<ResolvePolicy>();
-        if (conditions == null || !conditions.Any()) { return resolvedPolicies; }
+        if (conditions == null || conditions.Count == 0) { return Task.FromResult(resolvedPolicies); }
 
         var grouped = conditions.GroupBy(c => c.PolAssignRuleId);
         var priorityOrder = new List<string> { "High", "Medium", "Low" };
         var sortedGroups = grouped.OrderBy(g => priorityOrder.IndexOf(g.First().Priority)).ToList();
+        int serviceMonths = (int)emp.SerYear;
 
-        foreach (var group in sortedGroups)
+        foreach (var group in grouped)
         {
             bool allMatch = true;
             foreach (var cond in group)
@@ -28,23 +29,31 @@ public static class LeavePolicyRuleEngine
             }
 
             if (!allMatch) { continue; }
+
             var policyId = group.First().PolicyId;
             var effectiveFrom = group.First().EffectiveFrom;
-            var configs = await getConfigs(policyId);
-            if (configs == null || !configs.Any()) { continue; }
-            int serviceMonths = (int)(emp.SerYear);
-            var config = configs.Where(c => c.MinServiceMonths <= serviceMonths && c.IsActive).OrderByDescending(c => c.MinServiceMonths).FirstOrDefault();
+            var configs = getConfigs(policyId);
+            if (configs == null || configs.Count == 0) { continue; }
 
-            if (config == null) { continue; }
+            LeavePolicyConfig? best = null;
+            foreach (var c in configs)
+            {
+                if (!c.IsActive) continue;
+                if (c.MinServiceMonths > serviceMonths) continue;
+                if (best == null || c.MinServiceMonths > best.MinServiceMonths) { best = c; }
+            }
+
+            if (best == null) { continue; }
             resolvedPolicies.Add(new ResolvePolicy
             {
-                EffectiveFrom = effectiveFrom,
-                AssignedEntitlement = config.AnnualEntitlement,
-                LeavePolicyId = policyId
+                LeavePolicyId = policyId,
+                LeaveTypeId = best.LeavePolicy.LeaveTypeId,
+                AssignedEntitlement = best.AnnualEntitlement,
+                EffectiveFrom = effectiveFrom
             });
         }
 
-        return resolvedPolicies;
+        return Task.FromResult(resolvedPolicies);
     }
 
     private static bool EvaluateCondition(EmpPolicyCtx emp, PolicyCondCtx cond)

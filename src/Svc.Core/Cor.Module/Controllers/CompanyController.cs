@@ -13,7 +13,7 @@ namespace Cor.Module.Controllers;
 /// Company management end points
 /// </summary>
 
-[Authorize(Roles = "admin")]
+//[Authorize(Roles = "admin")]
 [ApiController]
 [Route("api/core/module/v{version:apiVersion}/Company")]
 [ApiVersion("1.0")]

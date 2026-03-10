@@ -2,7 +2,7 @@
 
 public class EmpFamily : BaseEntity
 {
-    public Guid RelationId { get; set; } = default!; //lup.Relation
+    public string Relation { get; set; } = default!; //enum.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
     public Guid PersonId { get; set; } = default!; //Person
 

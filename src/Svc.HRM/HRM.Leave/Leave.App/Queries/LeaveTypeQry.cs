@@ -9,73 +9,64 @@ namespace Leave.App.Queries;
 public class LeaveTypeAllQry : IRequest<List<LeaveTypeListDto>> { }
 public class LeaveTypeByIdQry : IRequest<LeaveTypeListDto?> { public Guid Id { get; set; } }
 
-public class LeaveTypeAllQryHandler : IRequestHandler<LeaveTypeAllQry, List<LeaveTypeListDto>>
+
+
+public class LeaveTypeAllHandler : IRequestHandler<LeaveTypeAllQry, List<LeaveTypeListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public LeaveTypeAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork;}
+    private readonly IDapperHelper _dapper;
+    public LeaveTypeAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<LeaveTypeListDto>> Handle(LeaveTypeAllQry request, CancellationToken cancellationToken)
+    public async Task<List<LeaveTypeListDto>> Handle(LeaveTypeAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<LeaveType>().GetAll();
-        var dataL = new List<LeaveTypeListDto>();
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<LeaveType>(v, x => x.Id, x => x.Name, x => x.LeaveCategory, x => x.RequiresApproval, x => x.AllowHalfDay, x => x.HolidaysAsLeave, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<LeaveType>(v)
+            .OrderBy<LeaveType>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<LeaveTypeListDto>(ct);
+
+        foreach (var data in list)
         {
-            var c = new LeaveTypeListDto
-            {
-                Id = data.Id,
-                Name = data.Name,
-                LeaveCategory = data.LeaveCategory,
-                RequiresApproval = data.RequiresApproval,
-                AllowHalfDay = data.AllowHalfDay,
-                HolidaysAsLeave = data.HolidaysAsLeave,
-                IsActive = data.IsActive,
-                LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
-                RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval),
-                AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay),
-                HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave),
-                IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            data.LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName();
+            data.RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval);
+            data.AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay);
+            data.HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave);
+            data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+            data.RowVersion = data.xmin.ToString();
         }
 
-        return dataL;
+        return list;
     }
 }
 
-public class LeaveTypeByIdQryHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTypeListDto?>
+public class LeaveTypeByIdHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTypeListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public LeaveTypeByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public LeaveTypeByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<LeaveTypeListDto?> Handle(LeaveTypeByIdQry request, CancellationToken cancellationToken)
+    public async Task<LeaveTypeListDto?> Handle(LeaveTypeByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<LeaveType>().GetById(request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<LeaveType>(v, x => x.Id, x => x.Name, x => x.LeaveCategory, x => x.RequiresApproval, x => x.AllowHalfDay, x => x.HolidaysAsLeave, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<LeaveType>(v)
+            .OrderBy<LeaveType>(v, x => x.DateAdd, desc: true)
+            .Where<LeaveType>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new LeaveTypeListDto
-        {
-            Id = data.Id,
-            Name = data.Name,
-            LeaveCategory = data.LeaveCategory,
-            RequiresApproval = data.RequiresApproval,
-            AllowHalfDay = data.AllowHalfDay,
-            HolidaysAsLeave = data.HolidaysAsLeave,
-            IsActive = data.IsActive,
-            LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName(),
-            RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval),
-            AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay),
-            HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave),
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeaveTypeListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        data.LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName();
+        data.RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval);
+        data.AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay);
+        data.HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave);
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

@@ -3,7 +3,7 @@
 public class EmpGuarantor : BaseEntity
 {
     public Guid AddressId { get; set; } = default!; //Address
-    public Guid RelationId { get; set; } = default!; //lup.Relation
+    public string Relation { get; set; } = default!; //enum.Relation
     public Guid EmployeeId { get; set; } = default!; //Employee
     public Guid PersonId { get; set; } = default!; //Person
 

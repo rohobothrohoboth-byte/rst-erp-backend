@@ -1,6 +1,7 @@
 ﻿using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
+using Dapper;
 using Helpers;
 using MediatR;
 
@@ -9,71 +10,85 @@ namespace Cor.Module.Queries;
 public class AllDeptsQry : IRequest<List<DeptListDto>> { }
 public class DeptByIdQry : IRequest<DeptListDto?> { public Guid Id { get; set; } }
 
-public class AllDeptsQryHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
+
+
+public class AllDeptsHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public AllDeptsHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public AllDeptsQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<DeptListDto>> Handle(AllDeptsQry request, CancellationToken cancellationToken)
+    public async Task<List<DeptListDto>> Handle(AllDeptsQry request, CancellationToken ct)
     {
-        var depts = await _unitOfWork.Repository<Department>().GetAll();
-        var deptL = new List<DeptListDto>();
-        foreach (var dept in depts)
-        {
-            var branch = await _unitOfWork.Repository<Branch>().GetById(dept.BranchId);
-            if (branch == null) continue;
-            var c = new DeptListDto
-            {
-                Id = dept.Id,
-                Name = dept.Name,
-                NameAm = dept.NameAm,
-                DeptStat = dept.DeptStat,
-                DeptStatStr = ((DeptStat)Enum.Parse(typeof(DeptStat), dept.DeptStat)).ToDisplayName(),
-                Branch = branch.Name,
-                BranchAm = branch.NameAm,
-                IsDeleted = dept.IsDeleted,
-                DateAdd = dept.DateAdd,
-                DateMod = dept.DateMod,
-                RowVersion = Convert.ToBase64String(dept.RowVersion)
-            };
-            deptL.Add(c);
-        }
+        const string v = "v";
+        const string b = "b";
+        var qb = new QueryBuilder()
+            .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
+            .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
+            .From<Department>(v)
+            .OrderBy<Department>(v, x => x.DateAdd, desc: true);
 
-        return deptL;
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<DeptListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<DeptListDto>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new DeptListDto
+            {
+                Id = data.Id,
+                Name = data.Name,
+                NameAm = data.NameAm,
+                DeptStat = data.DeptStat,
+                DeptStatStr = MyEnumHelper.FormatEnum<DeptStat>(data.DeptStat),
+                Branch = data.Branch,
+                BranchAm = data.BranchAm,
+                IsDeleted = data.IsDeleted,
+                DateAdd = data.DateAdd,
+                DateMod = data.DateMod,
+                RowVersion = data.xmin.ToString()
+            });
+        }
+        return dataL;
     }
 }
 
-public class DeptByIdQryHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
+public class DeptByIdHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public DeptByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public DeptByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<DeptListDto?> Handle(DeptByIdQry request, CancellationToken cancellationToken)
+    public async Task<DeptListDto?> Handle(DeptByIdQry request, CancellationToken ct)
     {
-        var dept = await _unitOfWork.Repository<Department>().GetById(request.Id);
-        if (dept == null)
-        {
-            return null;
-        }
+        const string v = "v";
+        const string b = "b";
+        var qb = new QueryBuilder()
+            .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
+            .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
+            .From<Department>(v)
+            .Where<Department>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var branch = await _unitOfWork.Repository<Branch>().GetById(dept.BranchId);
-        if (branch == null) return null;
-        var c = new DeptListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<DeptListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new DeptListDto
         {
-            Id = dept.Id,
-            Name = dept.Name,
-            NameAm = dept.NameAm,
-            DeptStat = dept.DeptStat,
-            DeptStatStr = ((DeptStat)Enum.Parse(typeof(DeptStat), dept.DeptStat)).ToDisplayName(),
-            Branch = branch.Name,
-            BranchAm = branch.NameAm,
-            IsDeleted = dept.IsDeleted,
-            DateAdd = dept.DateAdd,
-            DateMod = dept.DateMod,
-            RowVersion = Convert.ToBase64String(dept.RowVersion)
+            Id = data.Id,
+            Name = data.Name,
+            NameAm = data.NameAm,
+            DeptStat = data.DeptStat,
+            DeptStatStr = MyEnumHelper.FormatEnum<DeptStat>(data.DeptStat),
+            Branch = data.Branch,
+            BranchAm = data.BranchAm,
+            IsDeleted = data.IsDeleted,
+            DateAdd = data.DateAdd,
+            DateMod = data.DateMod,
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

@@ -4,6 +4,7 @@ using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Module.Commands;
 
@@ -11,16 +12,18 @@ public class AddFiscalYearCmd : IRequest<FiscYearListDto> { public AddFiscYearDt
 public class ModFiscalYearCmd : IRequest<FiscYearListDto> { public EditFiscYearDto ModDto { get; set; } = default!; }
 public class DelFiscalYearCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYearListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public AddFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public AddFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<FiscYearListDto> Handle(AddFiscalYearCmd request, CancellationToken cancellationToken)
+    public async Task<FiscYearListDto> Handle(AddFiscalYearCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var fYear = new FiscalYear
@@ -28,20 +31,20 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
                 Name = request.AddDto.Name,
                 DateStart = request.AddDto.DateStart,
                 DateEnd = request.AddDto.DateEnd,
-                IsActive = "0",
+                IsActive = BoolToStr.EnumToString(YesNo.Yes),
             };
-            await _unitOfWork.Repository<FiscalYear>().Add(fYear);
-            await _unitOfWork.Commit();
+            await _uow.Add(fYear, ct);
+            await _uow.Commit(ct);
 
             var res = new FiscYearListDto();
-            var response = await _med.Send(new FiscalYearByIdQry { Id = fYear.Id }, cancellationToken);
+            var response = await _med.Send(new FiscalYearByIdQry { Id = fYear.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -49,35 +52,36 @@ public class AddFiscalYearCmdHandler : IRequestHandler<AddFiscalYearCmd, FiscYea
 
 public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYearListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public ModFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public ModFiscalYearCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<FiscYearListDto> Handle(ModFiscalYearCmd request, CancellationToken cancellationToken)
+    public async Task<FiscYearListDto> Handle(ModFiscalYearCmd request, CancellationToken ct)
     {
-        var oldYear = await _unitOfWork.Repository<FiscalYear>().GetById(request.ModDto.Id);
-        if (oldYear == null) { throw new DomainException($"FISCAL YEAR with id [{request.ModDto.Id}] NOT FOUND."); }
-        
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            oldYear.Name = request.ModDto.Name;
-            oldYear.DateStart = request.ModDto.DateStart;
-            oldYear.DateEnd = request.ModDto.DateEnd;
-            oldYear.IsActive = request.ModDto.IsActive;
-            var fYear = await _unitOfWork.Repository<FiscalYear>().Update(oldYear);
-            await _unitOfWork.Commit();
+            var oldData = await _uow.Set<FiscalYear>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"FISCAL YEAR with id [{request.ModDto.Id}] NOT FOUND."); }
+
+            oldData.Name = request.ModDto.Name;
+            oldData.DateStart = request.ModDto.DateStart;
+            oldData.DateEnd = request.ModDto.DateEnd;
+            oldData.IsActive = request.ModDto.IsActive;
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new FiscYearListDto();
-            var response = await _med.Send(new FiscalYearByIdQry { Id = fYear.Id }, cancellationToken);
+            var response = await _med.Send(new FiscalYearByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -85,22 +89,22 @@ public class ModFiscalYearCmdHandler : IRequestHandler<ModFiscalYearCmd, FiscYea
 
 public class DelFiscalYearCmdHandler : IRequestHandler<DelFiscalYearCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public DelFiscalYearCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public DelFiscalYearCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(DelFiscalYearCmd request, CancellationToken cancellationToken)
+    public async Task Handle(DelFiscalYearCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<FiscalYear>().GetById(request.Id);
+            var data = await _uow.Set<FiscalYear>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"FISCAL YEAR with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<FiscalYear>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

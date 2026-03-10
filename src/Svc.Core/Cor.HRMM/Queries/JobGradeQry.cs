@@ -1,6 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -8,19 +9,30 @@ namespace Cor.HRMM.Queries;
 public class JobGradeAllQry : IRequest<List<JobGradeListDto>> { }
 public class JobGradeByIdQry : IRequest<JobGradeListDto?> { public Guid Id { get; set; } }
 
-public class JobGradeAllQryHandler : IRequestHandler<JobGradeAllQry, List<JobGradeListDto>>
+
+
+public class JobGradeAllHandler : IRequestHandler<JobGradeAllQry, List<JobGradeListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JobGradeAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public JobGradeAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<JobGradeListDto>> Handle(JobGradeAllQry request, CancellationToken cancellationToken)
+    public async Task<List<JobGradeListDto>> Handle(JobGradeAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<JobGrade>().GetAll();
-        var dataL = new List<JobGradeListDto>();
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<JobGrade>(v)
+            .OrderBy<JobGrade>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<JobGradeListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<JobGradeListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var c = new JobGradeListDto
+            var data = parser(reader);
+            dataL.Add(new JobGradeListDto
             {
                 Id = data.Id,
                 Name = data.Name,
@@ -29,36 +41,41 @@ public class JobGradeAllQryHandler : IRequestHandler<JobGradeAllQry, List<JobGra
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class JobGradeByIdQryHandler : IRequestHandler<JobGradeByIdQry, JobGradeListDto?>
+public class JobGradeByIdHandler : IRequestHandler<JobGradeByIdQry, JobGradeListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JobGradeByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public JobGradeByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<JobGradeListDto?> Handle(JobGradeByIdQry request, CancellationToken cancellationToken)
+    public async Task<JobGradeListDto?> Handle(JobGradeByIdQry request, CancellationToken ct)
     {
-        var nData = await _unitOfWork.Repository<JobGrade>().GetById(request.Id);
-        if (nData == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<JobGrade>(v)
+            .Where<JobGrade>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new JobGradeListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<JobGradeListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new JobGradeListDto
         {
-            Id = nData.Id,
-            Name = nData.Name,
-            StartSalary = nData.StartSalary,
-            MaxSalary = nData.MaxSalary,
-            IsDeleted = nData.IsDeleted,
-            DateAdd = nData.DateAdd,
-            DateMod = nData.DateMod,
-            RowVersion = Convert.ToBase64String(nData.RowVersion)
+            Id = data.Id,
+            Name = data.Name,
+            StartSalary = data.StartSalary,
+            MaxSalary = data.MaxSalary,
+            IsDeleted = data.IsDeleted,
+            DateAdd = data.DateAdd,
+            DateMod = data.DateMod,
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

@@ -11,111 +11,95 @@ public class LeaveAppChainByPolicyIdQry : IRequest<List<LeaveAppChainListDto>> {
 public class LeaveAppChainByIdQry : IRequest<LeaveAppChainListDto?> { public Guid Id { get; set; } }
 public class ActiveLeaveAppChainQry : IRequest<LeaveAppChainListDto?> { public Guid Id { get; set; } }
 
+
+
 public class LeaveAppChainByPolicyIdHandler : IRequestHandler<LeaveAppChainByPolicyIdQry, List<LeaveAppChainListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public LeaveAppChainByPolicyIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public LeaveAppChainByPolicyIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<LeaveAppChainListDto>> Handle(LeaveAppChainByPolicyIdQry request, CancellationToken cancellationToken)
+    public async Task<List<LeaveAppChainListDto>> Handle(LeaveAppChainByPolicyIdQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<LeaveAppChain>().Find(c => c.LeavePolicyId == request.Id)).ToList();
-        var dataL = new List<LeaveAppChainListDto>();
-        if (dbData.Count <= 0) { return dataL; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(request.Id);
-        var stpL = await _unitOfWork.Repository<LeaveAppStep>().GetAll();
+        const string v = "v";
+        const string p = "p";
+        const string s = "s";
+        var qb = new QueryBuilder()
+            .Select<LeaveAppChain>(v, x => x.Id, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeaveAppChainListDto>(p, x => x.Name, d => d.LeavePolicy)
+            .From<LeaveAppChain>(v)
+            .Join<LeaveAppChain, LeavePolicy>(v, p, x => x.LeavePolicyId, x => x.Id)
+            .LeftJoin<LeaveAppChain, LeaveAppStep>(v, s, x => x.Id, x => x.LeaveAppChainId)
+            .OrderBy<LeaveAppChain>(v, x => x.DateAdd, desc: true)
+            .Where<LeaveAppChain>(v, x => x.LeavePolicyId == request.Id);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<LeaveAppChainListDto>(ct);
+
+        foreach (var item in list)
         {
-            var stp = stpL.Where(s => s.LeaveAppChainId == data.Id).ToList();
-            var c = new LeaveAppChainListDto
-            {
-                Id = data.Id,
-                EffectiveFrom = data.EffectiveFrom,
-                EffectiveTo = data.EffectiveTo,
-                IsActive = data.IsActive,
-                IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                AddedSteps = stp.Count,
-                LeavePolicy = lvPo!.Name,
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            item.IsActiveStr = BoolToStr.FormatStat(item.IsActive);
+            item.RowVersion = item.xmin.ToString();
         }
-
-        return dataL;
+        return list;
     }
 }
 
 public class LeaveAppChainByIdHandler : IRequestHandler<LeaveAppChainByIdQry, LeaveAppChainListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _corModClient;
+    private readonly IDapperHelper _dapper;
+    public LeaveAppChainByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public LeaveAppChainByIdHandler(IUnitOfWork unitOfWork, ICorModClient corModClient)
+    public async Task<LeaveAppChainListDto?> Handle(LeaveAppChainByIdQry request, CancellationToken ct)
     {
-        _unitOfWork = unitOfWork;
-        _corModClient = corModClient;
-    }
+        const string v = "v";
+        const string p = "p";
+        const string s = "s";
+        var qb = new QueryBuilder()
+            .Select<LeaveAppChain>(v, x => x.Id, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeaveAppChainListDto>(p, x => x.Name, d => d.LeavePolicy)
+            .From<LeaveAppChain>(v)
+            .Join<LeaveAppChain, LeavePolicy>(v, p, x => x.LeavePolicyId, x => x.Id)
+            .LeftJoin<LeaveAppChain, LeaveAppStep>(v, s, x => x.Id, x => x.LeaveAppChainId)
+            .Where<LeaveAppChain>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-    public async Task<LeaveAppChainListDto?> Handle(LeaveAppChainByIdQry request, CancellationToken cancellationToken)
-    {
-        var data = await _unitOfWork.Repository<LeaveAppChain>().GetById(request.Id);
-        if (data == null) { return null; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
-        var stp = (await _unitOfWork.Repository<LeaveAppStep>().Find(s => s.LeaveAppChainId == request.Id)).ToList();
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeaveAppChainListDto>(sql, parameters, ct);
+        if (data == null) return null;
 
-        var c = new LeaveAppChainListDto
-        {
-            Id = data.Id,
-            EffectiveFrom = data.EffectiveFrom,
-            EffectiveTo = data.EffectiveTo,
-            IsActive = data.IsActive,
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            AddedSteps = stp.Count,
-            LeavePolicy = lvPo!.Name,
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }
 
 public class ActiveLeaveAppChainHandler : IRequestHandler<ActiveLeaveAppChainQry, LeaveAppChainListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _corModClient;
+    private readonly IDapperHelper _dapper;
+    public ActiveLeaveAppChainHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public ActiveLeaveAppChainHandler(IUnitOfWork unitOfWork, ICorModClient corModClient)
+    public async Task<LeaveAppChainListDto?> Handle(ActiveLeaveAppChainQry request, CancellationToken ct)
     {
-        _unitOfWork = unitOfWork;
-        _corModClient = corModClient;
-    }
+        const string v = "v";
+        const string p = "p";
+        const string s = "s";
+        var qb = new QueryBuilder()
+            .Select<LeaveAppChain>(v, x => x.Id, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeaveAppChainListDto>(p, x => x.Name, d => d.LeavePolicy)
+            .From<LeaveAppChain>(v)
+            .Join<LeaveAppChain, LeavePolicy>(v, p, x => x.LeavePolicyId, x => x.Id)
+            .LeftJoin<LeaveAppChain, LeaveAppStep>(v, s, x => x.Id, x => x.LeaveAppChainId)
+            .OrderBy<LeaveAppChain>(v, x => x.DateAdd, desc: true)
+            .Where<LeaveAppChain>(v, x => x.LeavePolicyId == request.Id && x.IsActive == true)
+            .Limit(1);
 
-    public async Task<LeaveAppChainListDto?> Handle(ActiveLeaveAppChainQry request, CancellationToken cancellationToken)
-    {
-        var data = await _unitOfWork.Repository<LeaveAppChain>().GetFoD(c => c.IsActive == true && c.LeavePolicyId == request.Id);
-        if (data == null) { return null; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
-        var stp = (await _unitOfWork.Repository<LeaveAppStep>().Find(s => s.LeaveAppChainId == data.Id)).ToList();
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeaveAppChainListDto>(sql, parameters, ct);
+        if (data == null) return null;
 
-        var c = new LeaveAppChainListDto
-        {
-            Id = data.Id,
-            EffectiveFrom = data.EffectiveFrom,
-            EffectiveTo = data.EffectiveTo,
-            IsActive = data.IsActive,
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            AddedSteps = stp.Count,
-            LeavePolicy = lvPo!.Name,
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

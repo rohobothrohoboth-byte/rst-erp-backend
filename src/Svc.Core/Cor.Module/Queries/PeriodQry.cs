@@ -1,6 +1,7 @@
 ﻿using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
+using Dapper;
 using Helpers;
 using MediatR;
 
@@ -9,76 +10,89 @@ namespace Cor.Module.Queries;
 public class AllPeriodQry : IRequest<List<PeriodListDto>> { }
 public class PeriodByIdQry : IRequest<PeriodListDto?> { public Guid Id { get; set; } }
 
-public class AllPeriodQryHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto>>
+
+
+public class AllPeriodHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public AllPeriodHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public AllPeriodQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork;}
-
-    public async Task<List<PeriodListDto>> Handle(AllPeriodQry request, CancellationToken cancellationToken)
+    public async Task<List<PeriodListDto>> Handle(AllPeriodQry request, CancellationToken ct)
     {
-        var dataList = await _unitOfWork.Repository<Period>().GetAll();
-        var dataL = new List<PeriodListDto>();
+        const string v = "v";
+        const string b = "b";
+        var qb = new QueryBuilder()
+            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
+            .From<Period>(v)
+            .OrderBy<Period>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dataList)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PeriodListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PeriodListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
-            if (fYear == null) continue;
-            var c = new PeriodListDto
+            var data = parser(reader);
+            dataL.Add(new PeriodListDto
             {
                 Id = data.Id,
                 FiscalYearId = data.FiscalYearId,
                 Quarter = data.Quarter,
                 Name = data.Name,
-                FiscYear = fYear.Name,
-                QuarterStr = ((Quarter)Enum.Parse(typeof(Quarter), data.Quarter)).ToDisplayName(),
+                FiscYear = data.FiscYear,
+                QuarterStr = MyEnumHelper.FormatEnum<Quarter>(data.Quarter),
                 DateStart = data.DateStart,
                 DateEnd = data.DateEnd,
                 IsActive = data.IsActive,
-                IsActiveStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
+                IsActiveStr = MyEnumHelper.FormatEnum<YesNo>(data.IsActive),
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class PeriodByIdQryHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
+public class PeriodByIdHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public PeriodByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public PeriodByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork;}
-
-    public async Task<PeriodListDto?> Handle(PeriodByIdQry request, CancellationToken cancellationToken)
+    public async Task<PeriodListDto?> Handle(PeriodByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<Period>().GetById(request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        const string b = "b";
+        var qb = new QueryBuilder()
+            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
+            .From<Period>(v)
+            .Where<Period>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var fYear = await _unitOfWork.Repository<FiscalYear>().GetById(data.FiscalYearId);
-        if (fYear == null) { return null; }
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PeriodListDto>(sql, parameters, ct);
+        if (data == null) return null;
 
-        var c = new PeriodListDto
+        return new PeriodListDto
         {
             Id = data.Id,
             FiscalYearId = data.FiscalYearId,
             Quarter = data.Quarter,
             Name = data.Name,
-            FiscYear = fYear.Name,
-            QuarterStr = ((Quarter)Enum.Parse(typeof(Quarter), data.Quarter)).ToDisplayName(),
+            FiscYear = data.FiscYear,
+            QuarterStr = MyEnumHelper.FormatEnum<Quarter>(data.Quarter),
             DateStart = data.DateStart,
             DateEnd = data.DateEnd,
             IsActive = data.IsActive,
-            IsActiveStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsActive)).ToDisplayName(),
+            IsActiveStr = MyEnumHelper.FormatEnum<YesNo>(data.IsActive),
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

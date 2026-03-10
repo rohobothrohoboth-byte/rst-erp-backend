@@ -4,6 +4,7 @@ using Leave.App.Queries;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Leave.App.Commands;
 
@@ -11,16 +12,18 @@ public class LeavePolicyAddCmd : IRequest<LeavePolicyListDto> { public LeavePoli
 public class LeavePolicyModCmd : IRequest<LeavePolicyListDto> { public LeavePolicyModDto ModDto { get; set; } = default!; }
 public class LeavePolicyDelCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class LeavePolicyAddCmdHandler : IRequestHandler<LeavePolicyAddCmd, LeavePolicyListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public LeavePolicyAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeavePolicyAddCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<LeavePolicyListDto> Handle(LeavePolicyAddCmd request, CancellationToken cancellationToken)
+    public async Task<LeavePolicyListDto> Handle(LeavePolicyAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new LeavePolicy
@@ -29,21 +32,21 @@ public class LeavePolicyAddCmdHandler : IRequestHandler<LeavePolicyAddCmd, Leave
                 Name = request.AddDto.Name,
                 AllowEncashment = request.AddDto.AllowEncashment,
                 RequiresAttachment = request.AddDto.RequiresAttachment,
-                Status = "0",
+                Status = BoolToStr.EnumToString(PolicyStatus.Active),
                 LeaveTypeId = request.AddDto.LeaveTypeId
             };
-            await _unitOfWork.Repository<LeavePolicy>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new LeavePolicyListDto();
-            var response = await _med.Send(new LeavePolicyByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new LeavePolicyByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -51,37 +54,38 @@ public class LeavePolicyAddCmdHandler : IRequestHandler<LeavePolicyAddCmd, Leave
 
 public class LeavePolicyModCmdHandler : IRequestHandler<LeavePolicyModCmd, LeavePolicyListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public LeavePolicyModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeavePolicyModCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<LeavePolicyListDto> Handle(LeavePolicyModCmd request, CancellationToken cancellationToken)
+    public async Task<LeavePolicyListDto> Handle(LeavePolicyModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<LeavePolicy>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"LEAVE POLICY with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<LeavePolicy>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id);
+            if (oldData == null) { throw new DomainException($"LEAVE POLICY with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.Code = request.ModDto.Code;
             oldData.Name = request.ModDto.Name;
             oldData.AllowEncashment = request.ModDto.AllowEncashment;
             oldData.RequiresAttachment = request.ModDto.RequiresAttachment;
             oldData.Status = request.ModDto.Status;
             oldData.LeaveTypeId = request.ModDto.LeaveTypeId;
-            var data = await _unitOfWork.Repository<LeavePolicy>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new LeavePolicyListDto();
-            var response = await _med.Send(new LeavePolicyByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new LeavePolicyByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -89,22 +93,22 @@ public class LeavePolicyModCmdHandler : IRequestHandler<LeavePolicyModCmd, Leave
 
 public class LeavePolicyDelCmdHandler : IRequestHandler<LeavePolicyDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public LeavePolicyDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public LeavePolicyDelCmdHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(LeavePolicyDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(LeavePolicyDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<LeavePolicy>().GetById(request.Id);
+            var data = await _uow.Set<LeavePolicy>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"LEAVE POLICY with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<LeavePolicy>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

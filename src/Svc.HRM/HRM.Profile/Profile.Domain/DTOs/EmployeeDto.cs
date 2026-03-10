@@ -4,10 +4,11 @@ public sealed class EmpJoinRow
 {
     public Guid Id { get; init; }
     public string Code { get; init; } = default!;
+    public string EmpState { get; init; } = default!;
     public string EmploymentType { get; init; } = default!;
     public string EmploymentNature { get; init; } = default!;
     public string WorkArrangement { get; init; } = default!;
-    public DateTime EmploymentDate { get; set; }
+    public DateTime EmploymentDate { get; init; }
     public Guid DepartmentId { get; init; }
     public Guid JobGradeId { get; init; }
     public Guid PositionId { get; init; }
@@ -15,7 +16,7 @@ public sealed class EmpJoinRow
     public bool IsDeleted { get; init; }
     public DateTime DateAdd { get; init; }
     public DateTime? DateMod { get; init; }
-    public byte[] RowVersion { get; init; } = default!;
+    public string xmin { get; init; } = default!;
 
     public string FirstName { get; init; } = default!;
     public string MiddleName { get; init; } = default!;
@@ -24,28 +25,28 @@ public sealed class EmpJoinRow
     public string MiddleNameAm { get; init; } = default!;
     public string LastNameAm { get; init; } = default!;
     public string Gender { get; init; } = default!;
-    public string Nationality { get; set; } = default!;
+    public string Nationality { get; init; } = default!;
     public byte[]? PhotoThumbnail { get; init; }
 }
 
 public sealed class EmpBioJoin
 {
-    public DateTime? BirthDate { get; set; }
-    public string? BirthLocation { get; set; }
-    public string? MotherFullName { get; set; }
-    public string? HasBirthCert { get; set; }
-    public string? HasMarriageCert { get; set; }
-    public string? MaritalStatus { get; set; }
-    public string? AddressType { get; set; }
-    public string? Region { get; set; }
-    public string? Subcity { get; set; }
-    public string? Zone { get; set; }
-    public string? Woreda { get; set; }
-    public string? Kebele { get; set; }
-    public string? Telephone { get; set; }
-    public string? Tin { get; set; }
-    public string? BankAccountNo { get; set; }
-    public string? PensionNumber { get; set; }
+    public DateTime? BirthDate { get; init; }
+    public string? BirthLocation { get; init; }
+    public string? MotherFullName { get; init; }
+    public string?    HasBirthCert { get; init; }
+    public string? HasMarriageCert { get; init; }
+    public string? MaritalStatus { get; init; }
+    public string? AddressType { get; init; }
+    public string? Region { get; init; }
+    public string? Subcity { get; init; }
+    public string? Zone { get; init; }
+    public string? Woreda { get; init; }
+    public string? Kebele { get; init; }
+    public string? Telephone { get; init; }
+    public string? Tin { get; init; }
+    public string? BankAccountNo { get; init; }
+    public string? PensionNumber { get; init; }
 }
 
 public sealed class EmpContJoin
@@ -57,14 +58,15 @@ public sealed class EmpContJoin
     public string MiddleNameAm { get; init; } = default!;
     public string LastNameAm { get; init; } = default!;
     public string Gender { get; init; } = default!;
-    public string Nationality { get; set; } = default!;
-    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
-    public string Region { get; set; } = default!;
-    public string Subcity { get; set; } = default!;
-    public string Zone { get; set; } = default!;
-    public string Woreda { get; set; } = default!;
-    public string Kebele { get; set; } = default!;
-    public string Telephone { get; set; } = default!;
+    public string Nationality { get; init; } = default!;
+    public string Relation { get; init; } = default!;
+    public string AddressType { get; init; } = default!; // enum.AddressType (0/1)
+    public string Region { get; init; } = default!;
+    public string Subcity { get; init; } = default!;
+    public string Zone { get; init; } = default!;
+    public string Woreda { get; init; } = default!;
+    public string Kebele { get; init; } = default!;
+    public string Telephone { get; init; } = default!;
 }
 
 public sealed class EmpGuaJoin
@@ -76,17 +78,18 @@ public sealed class EmpGuaJoin
     public string MiddleNameAm { get; init; } = default!;
     public string LastNameAm { get; init; } = default!;
     public string Gender { get; init; } = default!;
-    public string Nationality { get; set; } = default!;
-    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
-    public string Region { get; set; } = default!;
-    public string Subcity { get; set; } = default!;
-    public string Zone { get; set; } = default!;
-    public string Woreda { get; set; } = default!;
-    public string Kebele { get; set; } = default!;
-    public string Telephone { get; set; } = default!;
-    public string FileName { get; set; } = default!;
-    public long FileSize { get; set; } = default!;
-    public string ContentType { get; set; } = default!;
+    public string Nationality { get; init; } = default!;
+    public string Relation { get; init; } = default!;
+    public string AddressType { get; init; } = default!; // enum.AddressType (0/1)
+    public string Region { get; init; } = default!;
+    public string Subcity { get; init; } = default!;
+    public string Zone { get; init; } = default!;
+    public string Woreda { get; init; } = default!;
+    public string Kebele { get; init; } = default!;
+    public string Telephone { get; init; } = default!;
+    public string FileName { get; init; } = default!;
+    public long FileSize { get; init; } = default!;
+    public string ContentType { get; init; } = default!;
 }
 
 public class EmployeeListDto : BaseDto
@@ -95,6 +98,7 @@ public class EmployeeListDto : BaseDto
     public string EmpFullNameAm { get; set; } = default!;
     public string Code { get; set; } = default!;
     public string Gender { get; set; } = default!;
+    public string EmpState { get; set; } = default!;
     public string Branch { get; set; } = default!;
     public string Department { get; set; } = default!;
     public string Position { get; set; } = default!;
@@ -117,7 +121,6 @@ public class EmployeeModDto
     public string Gender { get; set; } = default!; // enum.Gender (0/1)
     public string Nationality { get; set; } = default!;
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
-    public Guid PersonId { get; set; } = default!; //Person
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade
     public Guid PositionId { get; set; } = default!; //Cor.HRMM.Position
     public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department

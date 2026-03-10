@@ -2,6 +2,7 @@
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using Helpers;
 using MediatR;
 
@@ -10,27 +11,41 @@ namespace Cor.HRMM.Queries;
 public class PositionAllQry : IRequest<List<PositionListDto>> { }
 public class PositionByIdQry : IRequest<PositionListDto?> { public Guid Id { get; set; } }
 
-public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<PositionListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _gRPC;
 
-    public PositionAllQryHandler(IUnitOfWork unitOfWork, ICorModClient gRPC)
+
+public class PositionAllHandler : IRequestHandler<PositionAllQry, List<PositionListDto>>
+{
+    private readonly IDapperHelper _dapper;
+    private readonly ICorModClient _corMod;
+
+    public PositionAllHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
+        _dapper = dapper;
+        _corMod = corMod;
     }
 
-    public async Task<List<PositionListDto>> Handle(PositionAllQry request, CancellationToken cancellationToken)
+    public async Task<List<PositionListDto>> Handle(PositionAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<Position>().GetAll();
-        var dataL = new List<PositionListDto>();
-        var deptL = await _gRPC.GetListDept(cancellationToken);
+        var deptTask = await _corMod.GetListDept(ct);
+        var deptDict = deptTask.Res.ToDictionary(d => Guid.Parse(d.Id));
 
-        foreach (var data in dbData)
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<Position>(v)
+            .OrderBy<Position>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PositionListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PositionListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var dept = deptL.Res.FirstOrDefault(t => t.Id == data.DepartmentId.ToString());
-            var c = new PositionListDto
+            var data = parser(reader);
+            deptDict.TryGetValue(data.DepartmentId, out var dept);
+
+            dataL.Add(new PositionListDto
             {
                 Id = data.Id,
                 DepartmentId = data.DepartmentId,
@@ -38,38 +53,46 @@ public class PositionAllQryHandler : IRequestHandler<PositionAllQry, List<Positi
                 Name = data.Name,
                 NameAm = data.NameAm,
                 NoOfPosition = data.NoOfPosition,
-                IsVacantStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
-                Department = dept!.Name != null ? dept.Name : "NOT AVAILABLE",
+                IsVacantStr = MyEnumHelper.FormatEnum<YesNo>(data.IsVacant),
+                Department = dept?.Name ?? "",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
 
         return dataL;
     }
 }
 
-public class PositionByIdQryHandler : IRequestHandler<PositionByIdQry, PositionListDto?>
+public class PositionByIdHandler : IRequestHandler<PositionByIdQry, PositionListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _gRPC;
+    private readonly IDapperHelper _dapper;
+    private readonly ICorModClient _corMod;
 
-    public PositionByIdQryHandler(IUnitOfWork unitOfWork, ICorModClient gRPC)
+    public PositionByIdHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
-        _gRPC = gRPC;
+        _dapper = dapper;
+        _corMod = corMod;
     }
 
-    public async Task<PositionListDto?> Handle(PositionByIdQry request, CancellationToken cancellationToken)
+    public async Task<PositionListDto?> Handle(PositionByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<Position>().GetById(request.Id);
-        if (data == null) { return null; }
-        var dept = await _gRPC.GetDept(data.DepartmentId.ToString(), cancellationToken);
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<Position>(v)
+            .Where<Position>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PositionListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PositionListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var dept = await _corMod.GetDept(data.DepartmentId.ToString(), ct);
+
+        return new PositionListDto
         {
             Id = data.Id,
             DepartmentId = data.DepartmentId,
@@ -77,13 +100,12 @@ public class PositionByIdQryHandler : IRequestHandler<PositionByIdQry, PositionL
             Name = data.Name,
             NameAm = data.NameAm,
             NoOfPosition = data.NoOfPosition,
-            IsVacantStr = ((YesNo)Enum.Parse(typeof(YesNo), data.IsVacant)).ToDisplayName(),
-            Department = dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
+            IsVacantStr = MyEnumHelper.FormatEnum<YesNo>(data.IsVacant),
+            Department = dept.Res?.Name ?? "",
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

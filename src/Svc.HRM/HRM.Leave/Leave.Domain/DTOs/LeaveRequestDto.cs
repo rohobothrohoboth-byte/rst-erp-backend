@@ -1,10 +1,20 @@
 ﻿using EthiopianCalendar;
+using System.Text.Json.Serialization;
 
 namespace Leave.Domain.DTOs;
 
 public class LeaveRequestListDto : BaseDto
 {
-    public Guid LeaveTypeId { get; set; } // LeaveType
+    [JsonIgnore]
+    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
+    [JsonIgnore]
+    public Guid? ApprovedById { get; set; } // HRM.Profile.Employee
+    [JsonIgnore]
+    public double DaysRequested { get; set; } = default!;
+    [JsonIgnore]
+    public bool IsHalfDay { get; set; } = false;
+    [JsonIgnore]
+    public string Status { get; set; } = default!; // enum.Status (0/1)
     public DateTime StartDate { get; set; } = default!;
     public DateTime EndDate { get; set; } = default!;
     public DateTime DateRequested { get; set; } = default!;

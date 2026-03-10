@@ -81,7 +81,7 @@ public class CorHrmmListService : CorHrmmService.CorHrmmServiceBase
     public override async Task<CorHrmmListRes> GetListPosition(CorHrmmListRqst request, ServerCallContext context)
     {
         var res = new CorHrmmListRes();
-        var response = (await _med.Send(new PositionNameAllQry())).ToList();
+        var response = (await _med.Send(new PosNameAllQry())).ToList();
         if (response.Count <= 0)
         {
             var nList = new CorHrmmList { Id = null, Name = null };
@@ -100,7 +100,7 @@ public class CorHrmmListService : CorHrmmService.CorHrmmServiceBase
     public override async Task<CorHrmmRes> GetPosition(CorHrmmRqst request, ServerCallContext context)
     {
         var res = new CorHrmmRes();
-        var response = await _med.Send(new PositionNameByIdQry { Id = Guid.Parse(request.Id) });
+        var response = await _med.Send(new PosNameByIdQry { Id = Guid.Parse(request.Id) });
         if (response == null)
         {
             var nList = new CorHrmmList { Id = null, Name = null };

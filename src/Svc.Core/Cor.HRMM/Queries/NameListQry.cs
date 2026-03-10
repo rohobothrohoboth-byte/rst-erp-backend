@@ -2,214 +2,312 @@
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
-public class BenefitSetNameAllQry : IRequest<List<NameList>> { }
-public class BenefitSetNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
-public class EducationQualNameAllQry : IRequest<List<NameList>> { }
-public class EducationQualNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class BenSetNameAllQry : IRequest<List<NameList>> { }
+public class BenSetNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class EduQualNameAllQry : IRequest<List<NameList>> { }
+public class EduQualNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 public class JgStepNameAllQry : IRequest<List<NameList>> { }
 public class JgStepNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 public class JobGradeNameAllQry : IRequest<List<NameList>> { }
 public class JobGradeNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
-public class PositionByDeptQry : IRequest<List<NameList>> { public Guid Id { get; set; } }
-public class PositionNameAllQry : IRequest<List<NameList>> { }
-public class PositionNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class PosByDeptQry : IRequest<List<NameList>> { public Guid Id { get; set; } }
+public class PosNameAllQry : IRequest<List<NameList>> { }
+public class PosNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
 
 
 
-public class BenefitSetNameAllQryHandler : IRequestHandler<BenefitSetNameAllQry, List<NameList>>
+public class BenSetNameAllHandler : IRequestHandler<BenSetNameAllQry, List<NameList>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public BenSetNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public BenefitSetNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(BenefitSetNameAllQry request, CancellationToken cancellationToken)
+    public async Task<List<NameList>> Handle(BenSetNameAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<BenefitSetting>().GetAll();
-        return dbData.Select(data => new NameList { Id = data.Id, Name = data.Name }).ToList();
-    }
-}
-
-public class BenefitSetNameByIdQryHandler : IRequestHandler<BenefitSetNameByIdQry, NameList?>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public BenefitSetNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<NameList?> Handle(BenefitSetNameByIdQry request, CancellationToken cancellationToken)
-    {
-        var nData = await _unitOfWork.Repository<BenefitSetting>().GetById(request.Id);
-        if (nData == null) { return null; }
-
-        var c = new NameList
-        {
-            Id = nData.Id,
-            Name = nData.Name
-        };
-        return c;
-    }
-}
-
-public class EducationQualNameAllQryHandler : IRequestHandler<EducationQualNameAllQry, List<NameList>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public EducationQualNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(EducationQualNameAllQry request, CancellationToken cancellationToken)
-    {
-        var dbData = await _unitOfWork.Repository<EducationQual>().GetAll();
-        return dbData.Select(data => new NameList { Id = data.Id, Name = data.Name }).ToList();
-    }
-}
-
-public class EducationQualNameByIdQryHandler : IRequestHandler<EducationQualNameByIdQry, NameList?>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public EducationQualNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<NameList?> Handle(EducationQualNameByIdQry request, CancellationToken cancellationToken)
-    {
-        var nData = await _unitOfWork.Repository<EducationQual>().GetById(request.Id);
-        if (nData == null) { return null; }
-
-        var c = new NameList
-        {
-            Id = nData.Id,
-            Name = nData.Name
-        };
-        return c;
-    }
-}
-
-public class JgStepNameAllQryHandler : IRequestHandler<JgStepNameAllQry, List<NameList>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-
-    public JgStepNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(JgStepNameAllQry request, CancellationToken cancellationToken)
-    {
-        var dbData = await _unitOfWork.Repository<JgStep>().GetAll();
-        var jobGradeL = await _unitOfWork.Repository<JobGrade>().GetAll();
-
-        return (from data in dbData let jobGrade = jobGradeL.FirstOrDefault(t => t.Id == data.JobGradeId) select new NameList { Id = data.Id, Name = jobGrade != null ? $"{data.Name} => {jobGrade.Name}" : $"{data.Name} => JOB GRADE NOT AVAILABLE" }).ToList();
-    }
-}
-
-public class JgStepNameByIdQryHandler : IRequestHandler<JgStepNameByIdQry, NameList?>
-{
-    private readonly IUnitOfWork _unitOfWork;
-
-    public JgStepNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<NameList?> Handle(JgStepNameByIdQry request, CancellationToken cancellationToken)
-    {
-        var data = await _unitOfWork.Repository<JgStep>().GetById(request.Id);
-        if (data == null) { return null; }
-        var jobGrade = await _unitOfWork.Repository<JobGrade>().GetById(data.JobGradeId);
-
-        var c = new NameList
-        {
-            Id = data.Id,
-            Name = jobGrade != null ? $"{data.Name} => {jobGrade.Name}" : $"{data.Name} => JOB GRADE NOT AVAILABLE"
-        };
-        return c;
-    }
-}
-
-public class JobGradeNameAllQryHandler : IRequestHandler<JobGradeNameAllQry, List<NameList>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public JobGradeNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(JobGradeNameAllQry request, CancellationToken cancellationToken)
-    {
-        var dbData = await _unitOfWork.Repository<JobGrade>().GetAll();
+        const string v = "v";
+        var qb = new QueryBuilder().Select<BenefitSetting>(v, x => x.Id, x => x.Name).From<BenefitSetting>(v);
+        var (sql, parameters) = qb.Build();
         var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameList>();
 
-        foreach (var data in dbData)
+        while (await reader.ReadAsync(ct))
         {
-            var c = new NameList
+            var data = parser(reader);
+            dataL.Add(new NameList
             {
                 Id = data.Id,
                 Name = data.Name
-            };
-            dataL.Add(c);
+            });
         }
-
         return dataL;
     }
 }
 
-public class JobGradeNameByIdQryHandler : IRequestHandler<JobGradeNameByIdQry, NameList?>
+public class BenSetNameByIdHandler : IRequestHandler<BenSetNameByIdQry, NameList?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JobGradeNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public BenSetNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameList?> Handle(JobGradeNameByIdQry request, CancellationToken cancellationToken)
+    public async Task<NameList?> Handle(BenSetNameByIdQry request, CancellationToken ct)
     {
-        var nData = await _unitOfWork.Repository<JobGrade>().GetById(request.Id);
-        if (nData == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder().Select<BenefitSetting>(v, x => x.Id, x => x.Name).From<BenefitSetting>(v).Where<BenefitSetting>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
+        if (data == null) return null;
 
-        var c = new NameList
-        {
-            Id = nData.Id,
-            Name = nData.Name
-        };
-        return c;
-    }
-}
-
-public class PositionByDeptQryHandler : IRequestHandler<PositionByDeptQry, List<NameList>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-
-    public PositionByDeptQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(PositionByDeptQry request, CancellationToken cancellationToken)
-    {
-        var res = await _unitOfWork.Repository<Position>().Find(c => c.DepartmentId == request.Id);
-        var resL = new List<NameList>();
-        var nData = res.ToList();
-        if (nData.Count <= 0) return resL;
-        resL.AddRange(nData.Select(data => new NameList { Id = data.Id, Name = data.Name }));
-
-        return resL;
-    }
-}
-
-public class PositionNameAllQryHandler : IRequestHandler<PositionNameAllQry, List<NameList>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-
-    public PositionNameAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<NameList>> Handle(PositionNameAllQry request, CancellationToken cancellationToken)
-    {
-        var dbData = await _unitOfWork.Repository<Position>().GetAll();
-        return dbData.Select(data => new NameList { Id = data.Id, Name = data.Name }).ToList();
-    }
-}
-
-public class PositionNameByIdQryHandler : IRequestHandler<PositionNameByIdQry, NameList?>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionNameByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<NameList?> Handle(PositionNameByIdQry request, CancellationToken cancellationToken)
-    {
-        var data = await _unitOfWork.Repository<Position>().GetById(request.Id);
-        if (data == null) { return null; }
-
-        var c = new NameList
+        return new NameList
         {
             Id = data.Id,
             Name = data.Name
         };
-        return c;
+    }
+}
+
+public class EduQualNameAllHandler : IRequestHandler<EduQualNameAllQry, List<NameList>>
+{
+    private readonly IDapperHelper _dapper;
+    public EduQualNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<List<NameList>> Handle(EduQualNameAllQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder().Select<EducationQual>(v, x => x.Id, x => x.Name).From<EducationQual>(v);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameList>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new NameList
+            {
+                Id = data.Id,
+                Name = data.Name
+            });
+        }
+        return dataL;
+    }
+}
+
+public class EduQualNameByIdHandler : IRequestHandler<EduQualNameByIdQry, NameList?>
+{
+    private readonly IDapperHelper _dapper;
+    public EduQualNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<NameList?> Handle(EduQualNameByIdQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder().Select<EducationQual>(v, x => x.Id, x => x.Name).From<EducationQual>(v).Where<EducationQual>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new NameList
+        {
+            Id = data.Id,
+            Name = data.Name
+        };
+    }
+}
+
+public class JgStepNameAllHandler : IRequestHandler<JgStepNameAllQry, List<NameList>>
+{
+    private readonly IDapperHelper _dapper;
+    public JgStepNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<List<NameList>> Handle(JgStepNameAllQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<JgStep>(v, x => x.Id, x => x.Name)
+            .SelectAs<JobGrade>(jg, asName: "NameAm", x => x.Name)
+            .From<JgStep>(v)
+            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameAmList>();
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new NameList
+            {
+                Id = data.Id,
+                Name = $"{data.Name} => {data.NameAm}"
+            });
+        }
+        return dataL;
+    }
+}
+
+public class JgStepNameByIdHandler : IRequestHandler<JgStepNameByIdQry, NameList?>
+{
+    private readonly IDapperHelper _dapper;
+    public JgStepNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<NameList?> Handle(JgStepNameByIdQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<JgStep>(v, x => x.Id, x => x.Name)
+            .SelectAs<JobGrade>(jg, asName: "NameAm", x => x.Name)
+            .From<JgStep>(v)
+            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
+            .Where<JgStep>(v, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameAmList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new NameList
+        {
+            Id = data.Id,
+            Name = $"{data.Name} => {data.NameAm}"
+        };
+    }
+}
+
+public class JobGradeNameAllHandler : IRequestHandler<JobGradeNameAllQry, List<NameList>>
+{
+    private readonly IDapperHelper _dapper;
+    public JobGradeNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<List<NameList>> Handle(JobGradeNameAllQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<JobGrade>(v, x => x.Id, x => x.Name)
+            .From<JobGrade>(v)
+            .OrderBy<JobGrade>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameList>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new NameList
+            {
+                Id = data.Id,
+                Name = data.Name
+            });
+        }
+        return dataL;
+    }
+}
+
+public class JobGradeNameByIdHandler : IRequestHandler<JobGradeNameByIdQry, NameList?>
+{
+    private readonly IDapperHelper _dapper;
+    public JobGradeNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<NameList?> Handle(JobGradeNameByIdQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder().Select<JobGrade>(v, x => x.Id, x => x.Name).From<JobGrade>(v).Where<JobGrade>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new NameList
+        {
+            Id = data.Id,
+            Name = data.Name
+        };
+    }
+}
+
+public class PosByDeptHandler : IRequestHandler<PosByDeptQry, List<NameList>>
+{
+    private readonly IDapperHelper _dapper;
+    public PosByDeptHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<List<NameList>> Handle(PosByDeptQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<Position>(v, x => x.Id, x => x.Name)
+            .From<Position>(v)
+            .Where<Position>(v, x => x.DepartmentId == request.Id);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameList>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new NameList
+            {
+                Id = data.Id,
+                Name = data.Name
+            });
+        }
+        return dataL;
+    }
+}
+
+public class PosNameAllHandler : IRequestHandler<PosNameAllQry, List<NameList>>
+{
+    private readonly IDapperHelper _dapper;
+    public PosNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<List<NameList>> Handle(PosNameAllQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder().Select<Position>(v, x => x.Id, x => x.Name).From<Position>(v);
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<NameList>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<NameList>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new NameList
+            {
+                Id = data.Id,
+                Name = data.Name
+            });
+        }
+        return dataL;
+    }
+}
+
+public class PosNameByIdHandler : IRequestHandler<PosNameByIdQry, NameList?>
+{
+    private readonly IDapperHelper _dapper;
+    public PosNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<NameList?> Handle(PosNameByIdQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder().Select<Position>(v, x => x.Id, x => x.Name).From<Position>(v).Where<Position>(v, x => x.Id == request.Id).Limit(1);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new NameList
+        {
+            Id = data.Id,
+            Name = data.Name
+        };
     }
 }
 

@@ -1,12 +1,12 @@
 ﻿namespace Cor.Module.Models.DTOs;
 
-public class NameListDto
+public class NameList
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
 }
 
-public class NameAmListDto
+public class NameAmList
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;

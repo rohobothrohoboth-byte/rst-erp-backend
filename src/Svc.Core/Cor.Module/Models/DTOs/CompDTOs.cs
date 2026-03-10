@@ -1,10 +1,14 @@
-﻿namespace Cor.Module.Models.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Cor.Module.Models.DTOs;
 
 public class CompListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
     public string BranchCount { get; set; } = default!;
+    [JsonIgnore]
+    public int CountBra { get; set; }
 }
 
 public class AddCompDto

@@ -35,11 +35,25 @@ public static class DependencyInjection
                 option.SubstituteApiVersionInUrl = true;
             });
 
-        builder.Services.AddDbContext<HrmProfileDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("HRMProDbCon")));
-        builder.Services.AddScoped<DapperContext>();
-        builder.Services.AddScoped<IUnitOfWorkNew, UnitOfWorkNew>();
-        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddDbContextPool<HrmProfileDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("HRMProDbCon"), npgsql =>
+                    {
+                        npgsql.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsql.CommandTimeout(30);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.EnableSensitiveDataLogging(false);
+            });
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
+
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ILupClient, LupClient>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();
@@ -47,7 +61,6 @@ public static class DependencyInjection
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
-        builder.Services.AddScoped(typeof(IHrmProfileRepo<>), typeof(HrmProfileRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();

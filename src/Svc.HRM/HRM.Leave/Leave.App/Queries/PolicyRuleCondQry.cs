@@ -9,66 +9,64 @@ namespace Leave.App.Queries;
 public class PolicyRuleCondByRuleIdQry : IRequest<List<PolicyRuleCondListDto>> { public Guid Id { get; set; } }
 public class PolicyRuleCondByIdQry : IRequest<PolicyRuleCondListDto?> { public Guid Id { get; set; } }
 
+
+
 public class PolicyRuleCondByPolicyIdHandler : IRequestHandler<PolicyRuleCondByRuleIdQry, List<PolicyRuleCondListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PolicyRuleCondByPolicyIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PolicyRuleCondByPolicyIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PolicyRuleCondListDto>> Handle(PolicyRuleCondByRuleIdQry request, CancellationToken cancellationToken)
+    public async Task<List<PolicyRuleCondListDto>> Handle(PolicyRuleCondByRuleIdQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<PolicyRuleCondition>().Find(c => c.PolicyAssignmentRuleId == request.Id)).ToList();
-        var dataL = new List<PolicyRuleCondListDto>();
-        if (dbData.Count <= 0) { return dataL; }
-        var rule = await _unitOfWork.Repository<PolicyAssignmentRule>().GetById(request.Id);
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<PolicyRuleCondition>(v, x => x.Id, x => x.Field, x => x.Operator, x => x.Value, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<PolicyAssignmentRule, PolicyRuleCondListDto>(c, x => x.Name, d => d.RuleName)
+            .From<PolicyRuleCondition>(v)
+            .Join<PolicyRuleCondition, PolicyAssignmentRule>(v, c, x => x.PolicyAssignmentRuleId, x => x.Id)
+            .Where<PolicyRuleCondition>(v, x => x.PolicyAssignmentRuleId == request.Id)
+            .OrderBy<PolicyRuleCondition>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<PolicyRuleCondListDto>(ct);
+
+        foreach (var data in list)
         {
-            var c = new PolicyRuleCondListDto
-            {
-                Id = data.Id,
-                Field = data.Field,
-                Operator = data.Operator,
-                Value = data.Value,
-                FieldStr = ((ConditionField)Enum.Parse(typeof(ConditionField), data.Field)).ToDisplayName(),
-                OperatorStr = ((ConditionOperator)Enum.Parse(typeof(ConditionOperator), data.Operator)).ToDisplayName(),
-                RuleName = rule != null ? rule.Name : "NOT AVAILABLE",
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            data.FieldStr = MyEnumHelper.FormatEnum<ConditionField>(data.Field);
+            data.OperatorStr = MyEnumHelper.FormatEnum<ConditionOperator>(data.Operator);
+            data.RowVersion = data.xmin.ToString();
         }
 
-        return dataL;
+        return list;
     }
 }
 
 public class PolicyRuleCondByIdHandler : IRequestHandler<PolicyRuleCondByIdQry, PolicyRuleCondListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PolicyRuleCondByIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PolicyRuleCondByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<PolicyRuleCondListDto?> Handle(PolicyRuleCondByIdQry request, CancellationToken cancellationToken)
+    public async Task<PolicyRuleCondListDto?> Handle(PolicyRuleCondByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<PolicyRuleCondition>().GetById(request.Id);
-        if (data == null) { return null; }
-        var rule = await _unitOfWork.Repository<PolicyAssignmentRule>().GetById(data.PolicyAssignmentRuleId);
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<PolicyRuleCondition>(v, x => x.Id, x => x.Field, x => x.Operator, x => x.Value, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<PolicyAssignmentRule, PolicyRuleCondListDto>(c, x => x.Name, d => d.RuleName)
+            .From<PolicyRuleCondition>(v)
+            .Join<PolicyRuleCondition, PolicyAssignmentRule>(v, c, x => x.PolicyAssignmentRuleId, x => x.Id)
+            .Where<PolicyRuleCondition>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PolicyRuleCondListDto
-        {
-            Id = data.Id,
-            Field = data.Field,
-            Operator = data.Operator,
-            Value = data.Value,
-            FieldStr = ((ConditionField)Enum.Parse(typeof(ConditionField), data.Field)).ToDisplayName(),
-            OperatorStr = ((ConditionOperator)Enum.Parse(typeof(ConditionOperator), data.Operator)).ToDisplayName(),
-            RuleName = rule != null ? rule.Name : "NOT AVAILABLE",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PolicyRuleCondListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        data.FieldStr = MyEnumHelper.FormatEnum<ConditionField>(data.Field);
+        data.OperatorStr = MyEnumHelper.FormatEnum<ConditionOperator>(data.Operator);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

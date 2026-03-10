@@ -1,60 +1,77 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
 
 public class EducationQualAllQry : IRequest<List<EducationQualListDto>> { }
-
 public class EducationQualByIdQry : IRequest<EducationQualListDto?> { public Guid Id { get; set; } }
 
-public class EducationQualAllQryHandler : IRequestHandler<EducationQualAllQry, List<EducationQualListDto>>
+
+
+public class EducationQualAllHandler : IRequestHandler<EducationQualAllQry, List<EducationQualListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EducationQualAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public EducationQualAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<EducationQualListDto>> Handle(EducationQualAllQry request, CancellationToken cancellationToken)
+    public async Task<List<EducationQualListDto>> Handle(EducationQualAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<EducationQual>().GetAll();
-        var dataL = new List<EducationQualListDto>();
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<EducationQual>(v)
+            .OrderBy<EducationQual>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<EducationQualListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<EducationQual>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var c = new EducationQualListDto
+            var data = parser(reader);
+            dataL.Add(new EducationQualListDto
             {
                 Id = data.Id,
                 Name = data.Name,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class EducationQualByIdQryHandler : IRequestHandler<EducationQualByIdQry, EducationQualListDto?>
+public class EducationQualByIdHandler : IRequestHandler<EducationQualByIdQry, EducationQualListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EducationQualByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public EducationQualByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<EducationQualListDto?> Handle(EducationQualByIdQry request, CancellationToken cancellationToken)
+    public async Task<EducationQualListDto?> Handle(EducationQualByIdQry request, CancellationToken ct)
     {
-        var nData = await _unitOfWork.Repository<EducationQual>().GetById(request.Id);
-        if (nData == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<EducationQual>(v)
+            .Where<EducationQual>(v, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<EducationQual>(sql, parameters, ct);
+        if (data == null) return null;
 
         var c = new EducationQualListDto
         {
-            Id = nData.Id,
-            Name = nData.Name,
-            IsDeleted = nData.IsDeleted,
-            DateAdd = nData.DateAdd,
-            DateMod = nData.DateMod,
-            RowVersion = Convert.ToBase64String(nData.RowVersion)
+            Id = data.Id,
+            Name = data.Name,
+            IsDeleted = data.IsDeleted,
+            DateAdd = data.DateAdd,
+            DateMod = data.DateMod,
+            RowVersion = data.xmin.ToString()
         };
         return c;
     }

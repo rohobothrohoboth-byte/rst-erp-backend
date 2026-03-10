@@ -23,9 +23,10 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.MapGrpcService<HrmProService>();
+
 if (app.Environment.IsDevelopment())
 {
-    //app.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage();
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference(options => { options.WithTitle("HRM Profile API"); });
     app.ApplyMigration();

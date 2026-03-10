@@ -1,6 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -8,35 +9,43 @@ namespace Cor.HRMM.Queries;
 public class JgStepAllQry : IRequest<List<JgStepListDto>> { public Guid Id { get; set; } }
 public class JgStepByIdQry : IRequest<JgStepListDto?> { public Guid Id { get; set; } }
 
-public class JgStepAllQryHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto>>
+
+public class JgStepAllHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public JgStepAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public JgStepAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<List<JgStepListDto>> Handle(JgStepAllQry request, CancellationToken cancellationToken)
+    public async Task<List<JgStepListDto>> Handle(JgStepAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<JgStep>().Find(c => c.JobGradeId == request.Id);
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<JobGrade>(jg, "JobGrade", x => x.Name)
+            .From<JgStep>(v)
+            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
+            .OrderBy<JgStep>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
         var dataL = new List<JgStepListDto>();
-        var nData = dbData.ToList();
-        if (nData.Count <= 0) return dataL;
-        var jobGradeL = await _unitOfWork.Repository<JobGrade>().GetAll();
-        foreach (var data in nData)
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<JgStepListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var jobGrade = jobGradeL.FirstOrDefault(t => t.Id == data.JobGradeId);
-            var c = new JgStepListDto
+            var data = parser(reader);
+            dataL.Add(new JgStepListDto
             {
                 Id = data.Id,
                 Name = data.Name,
                 Salary = data.Salary,
                 JobGradeId = data.JobGradeId,
-                JobGrade = jobGrade != null ? jobGrade.Name : "JOB GRADE NOT AVAILABLE",
+                JobGrade = data.JobGrade,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
         return dataL;
     }
@@ -44,27 +53,36 @@ public class JgStepAllQryHandler : IRequestHandler<JgStepAllQry, List<JgStepList
 
 public class JgStepByIdQryHandler : IRequestHandler<JgStepByIdQry, JgStepListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JgStepByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public JgStepByIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<JgStepListDto?> Handle(JgStepByIdQry request, CancellationToken cancellationToken)
+    public async Task<JgStepListDto?> Handle(JgStepByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<JgStep>().GetById(request.Id);
-        if (data == null) { return null; }
-        var jobGrade = await _unitOfWork.Repository<JobGrade>().GetById(data.JobGradeId);
+        const string v = "v";
+        const string jg = "jg";
+        var qb = new QueryBuilder()
+            .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<JobGrade>(jg, "JobGrade", x => x.Name)
+            .From<JgStep>(v)
+            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
+            .Where<JgStep>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new JgStepListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<JgStepListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new JgStepListDto
         {
             Id = data.Id,
             Name = data.Name,
             Salary = data.Salary,
             JobGradeId = data.JobGradeId,
-            JobGrade = jobGrade != null ? jobGrade.Name : "JOB GRADE NOT AVAILABLE",
+            JobGrade = data.JobGrade,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }

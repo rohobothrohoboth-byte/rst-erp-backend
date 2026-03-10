@@ -1,6 +1,5 @@
 ﻿using Helpers;
 using MediatR;
-using Profile.App.Helpers;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
@@ -14,12 +13,12 @@ public class EmpAddStep4Cmd : IRequest<EmpAddRes> { public Step4Dto AddDto { get
 
 public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EmpAddStep1CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EmpAddStep1CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
 
-    public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken cancellationToken)
+    public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var per = new Person
@@ -33,12 +32,12 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                 Gender = request.AddDto.Gender,
                 Nationality = request.AddDto.Nationality
             };
-            await _unitOfWork.Repository<Person>().Add(per);
+            await _uow.Add(per, ct);
 
-            var code = await new CodeGen(_unitOfWork).GetEmpCode();
+            var eState = BoolToStr.EnumToString(EmpState.Pen);
             var data = new Employee
             {
-                Code = code,
+                EmpState = eState,
                 EmploymentDate = request.AddDto.EmploymentDate,
                 JobGradeId = request.AddDto.JobGradeId,
                 PositionId = request.AddDto.PositionId,
@@ -48,7 +47,17 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                 WorkArrangement = request.AddDto.WorkArrangement,
                 PersonId = per.Id
             };
-            await _unitOfWork.Repository<Employee>().Add(data);
+            await _uow.Add(data, ct);
+
+            // Get JgStepSalary and convert to BaseSalary
+            var salary = new EmpSalary
+            {
+                BaseSalary = 0.0,
+                EffectiveFrom = request.AddDto.EmploymentDate,
+                JgStepId = request.AddDto.JgStepId,
+                EmployeeId = data.Id
+            };
+            await _uow.Add(salary, ct);
 
             if (request.AddDto.File != null)
             {
@@ -58,17 +67,17 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                     ContentType = request.AddDto.File.ContentType,
                     FileSize = request.AddDto.File.Length
                 };
-                await _unitOfWork.Repository<FileMetaData>().Add(mData);
+                await _uow.Add(mData, ct);
 
                 using var ms = new MemoryStream();
-                await request.AddDto.File.CopyToAsync(ms, cancellationToken);
+                await request.AddDto.File.CopyToAsync(ms, ct);
                 ms.Position = 0;
                 var pBlob = new EmpPhotoBlob
                 {
                     FileMetaDataId = mData.Id,
                     Data = ms.ToArray()
                 };
-                await _unitOfWork.Repository<EmpPhotoBlob>().Add(pBlob);
+                await _uow.Add(pBlob, ct);
 
                 var thumbData = ThumbnailGenerator.GenerateThumbnail(ms);
                 var tData = new FileMetaData
@@ -77,14 +86,14 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                     ContentType = "image/png",
                     FileSize = thumbData.Length
                 };
-                await _unitOfWork.Repository<FileMetaData>().Add(tData);
+                await _uow.Add(tData, ct);
 
                 var tBlob = new EmpPhotoThumbnail
                 {
                     FileMetaDataId = tData.Id,
                     Data = thumbData.ToArray()
                 };
-                await _unitOfWork.Repository<EmpPhotoThumbnail>().Add(tBlob);
+                await _uow.Add(tBlob, ct);
 
                 var emp = new EmpPhoto
                 {
@@ -92,16 +101,16 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                     FileMetaDataId = mData.Id,
                     EmployeeId = data.Id
                 };
-                await _unitOfWork.Repository<EmpPhoto>().Add(emp);
+                await _uow.Add(emp, ct);
             }
 
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
             var res = new EmpAddRes { Id = data.Id };
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -109,12 +118,12 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 
 public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EmpAddStep2CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EmpAddStep2CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
 
-    public async Task<EmpAddRes> Handle(EmpAddStep2Cmd request, CancellationToken cancellationToken)
+    public async Task<EmpAddRes> Handle(EmpAddStep2Cmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var address = new Address
@@ -133,7 +142,7 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 Email = request.AddDto.Email,
                 Website = request.AddDto.Website
             };
-            await _unitOfWork.Repository<Address>().Add(address);
+            await _uow.Add(address, ct);
 
             var fin = new EmpFinance
             {
@@ -142,7 +151,7 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 PensionNumber = request.AddDto.PensionNumber,
                 EmployeeId = request.AddDto.EmployeeId
             };
-            await _unitOfWork.Repository<EmpFinance>().Add(fin);
+            await _uow.Add(fin, ct);
 
             var data = new EmpBio
             {
@@ -155,29 +164,28 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 AddressId = address.Id,
                 EmployeeId = request.AddDto.EmployeeId
             };
-            await _unitOfWork.Repository<EmpBio>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-
 public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EmpAddStep3CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EmpAddStep3CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
 
-    public async Task<EmpAddRes> Handle(EmpAddStep3Cmd request, CancellationToken cancellationToken)
+    public async Task<EmpAddRes> Handle(EmpAddStep3Cmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var address = new Address
@@ -196,7 +204,7 @@ public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
                 Email = request.AddDto.Email,
                 Website = request.AddDto.Website
             };
-            await _unitOfWork.Repository<Address>().Add(address);
+            await _uow.Add(address, ct);
 
             var per = new Person
             {
@@ -209,24 +217,24 @@ public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
                 Gender = request.AddDto.Gender,
                 Nationality = request.AddDto.Nationality
             };
-            await _unitOfWork.Repository<Person>().Add(per);
+            await _uow.Add(per, ct);
 
             var data = new EmergencyContact
             {
                 AddressId = address.Id,
-                RelationId = request.AddDto.RelationId,
+                Relation = request.AddDto.Relation,
                 EmployeeId = request.AddDto.EmployeeId,
                 PersonId = per.Id
             };
-            await _unitOfWork.Repository<EmergencyContact>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -234,12 +242,12 @@ public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
 
 public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EmpAddStep4CmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EmpAddStep4CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
 
-    public async Task<EmpAddRes> Handle(EmpAddStep4Cmd request, CancellationToken cancellationToken)
+    public async Task<EmpAddRes> Handle(EmpAddStep4Cmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var per = new Person
@@ -253,7 +261,7 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
                 Gender = request.AddDto.Gender,
                 Nationality = request.AddDto.Nationality
             };
-            await _unitOfWork.Repository<Person>().Add(per);
+            await _uow.Add(per, ct);
 
             var address = new Address
             {
@@ -272,16 +280,16 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
                 Website = request.AddDto.Website ?? ""
             };
 
-            await _unitOfWork.Repository<Address>().Add(address);
+            await _uow.Add(address, ct);
 
             var data = new EmpGuarantor
             {
                 AddressId = address.Id,
-                RelationId = request.AddDto.RelationId,
+                Relation = request.AddDto.Relation,
                 EmployeeId = request.AddDto.EmployeeId,
                 PersonId = per.Id
             };
-            await _unitOfWork.Repository<EmpGuarantor>().Add(data);
+            await _uow.Add(data, ct);
 
             if (request.AddDto.File != null)
             {
@@ -291,33 +299,33 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
                     ContentType = request.AddDto.File.ContentType,
                     FileSize = request.AddDto.File.Length
                 };
-                await _unitOfWork.Repository<FileMetaData>().Add(mData);
+                await _uow.Add(mData, ct);
 
                 using var ms = new MemoryStream();
-                await request.AddDto.File.CopyToAsync(ms, cancellationToken);
+                await request.AddDto.File.CopyToAsync(ms, ct);
                 ms.Position = 0;
                 var pBlob = new EmpGuarantorFileBlob
                 {
                     FileMetaDataId = mData.Id,
                     Data = ms.ToArray()
                 };
-                await _unitOfWork.Repository<EmpGuarantorFileBlob>().Add(pBlob);
+                await _uow.Add(pBlob, ct);
 
                 var emp = new EmpGuarantorFile
                 {
                     FileMetaDataId = mData.Id,
                     EmpGuarantorId = data.Id
                 };
-                await _unitOfWork.Repository<EmpGuarantorFile>().Add(emp);
+                await _uow.Add(emp, ct);
             }
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
 
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

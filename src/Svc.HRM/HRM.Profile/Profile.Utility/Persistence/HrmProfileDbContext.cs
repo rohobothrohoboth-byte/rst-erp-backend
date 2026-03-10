@@ -1,13 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Profile.Domain.Entities;
-using System.Data.Common;
+using System.Data;
 
 namespace Profile.Utility.Persistence;
 
 public class HrmProfileDbContext : DbContext
 {
-    public HrmProfileDbContext(DbContextOptions<HrmProfileDbContext> options) : base(options) { }
+    public HrmProfileDbContext(DbContextOptions<HrmProfileDbContext> options) : base(options)
+    {
+        ChangeTracker.AutoDetectChangesEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        ChangeTracker.LazyLoadingEnabled = false;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -15,44 +19,46 @@ public class HrmProfileDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+            foreach (var index in indexes)
+            {
+                index.SetFilter("\"IsDeleted\" = false");
+            }
+        }
+
+        modelBuilder.HasSequence<long>("emp_code_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrmProfileDbContext).Assembly);
     }
 
-    public DbConnection GetConnection() => Database.GetDbConnection();
-    public DbTransaction? GetTransaction() => Database.CurrentTransaction?.GetDbTransaction();
-
-    public async Task BeginTransactionAsync(CancellationToken ct = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        if (Database.CurrentTransaction == null)
-            await Database.BeginTransactionAsync(ct);
-    }
-
-    public async Task CommitAsync(CancellationToken ct = default)
-    {
-        if (Database.CurrentTransaction != null)
-            await Database.CurrentTransaction.CommitAsync(ct);
-    }
-
-    public async Task RollbackAsync(CancellationToken ct = default)
-    {
-        if (Database.CurrentTransaction != null)
-            await Database.CurrentTransaction.RollbackAsync(ct);
-    }
-
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
+        var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Added)
-                entry.Entity.DateAdd = DateTime.UtcNow;
-
-            if (entry.State == EntityState.Modified)
-                entry.Entity.DateMod = DateTime.UtcNow;
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.DateAdd = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.DateMod = now;
+                    break;
+            }
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new DBConcurrencyException("The record was modified by another transaction.", ex);
+        }
     }
+
 
     public DbSet<Address> Address { get; set; }
     public DbSet<EmergencyContact> EmergencyContact { get; set; }
@@ -67,11 +73,11 @@ public class HrmProfileDbContext : DbContext
     public DbSet<EmpPhoto> EmpPhoto { get; set; }
     public DbSet<EmpPhotoBlob> EmpPhotoBlob { get; set; }
     public DbSet<EmpPhotoThumbnail> EmpPhotoThumbnail { get; set; }
+    public DbSet<EmpSalary> EmpSalary { get; set; }
     public DbSet<EmpSign> EmpSign { get; set; }
     public DbSet<EmpSignBlob> EmpSignBlob { get; set; }
     public DbSet<EmpStamp> EmpStamp { get; set; }
     public DbSet<EmpStampBlob> EmpStampBlob { get; set; }
-    public DbSet<EmpState> EmpState { get; set; }
     public DbSet<FileMetaData> FileMetaData { get; set; }
     public DbSet<Person> Person { get; set; }
 

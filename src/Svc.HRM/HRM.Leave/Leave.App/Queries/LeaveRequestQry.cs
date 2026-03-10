@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using Helpers;
 using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
@@ -11,157 +12,156 @@ public class LeaveRequestAllQry : IRequest<List<LeaveRequestListDto>> { }
 public class LeaveRequestByIdQry : IRequest<LeaveRequestListDto?> { public Guid Id { get; set; } }
 public class LeaveRequestMyQry : IRequest<List<LeaveRequestListDto>> { public Guid Id { get; set; } }
 
-public class LeaveRequestAllQryHandler : IRequestHandler<LeaveRequestAllQry, List<LeaveRequestListDto>>
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfileClient _hrmPro;
 
-    public LeaveRequestAllQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
+
+public class LeaveRequestAllHandler : IRequestHandler<LeaveRequestAllQry, List<LeaveRequestListDto>>
+{
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
+    public LeaveRequestAllHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
-        _hrmPro = hrmPro;
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<List<LeaveRequestListDto>> Handle(LeaveRequestAllQry request, CancellationToken cancellationToken)
+    public async Task<List<LeaveRequestListDto>> Handle(LeaveRequestAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<LeaveRequest>().GetAll();
-        var dataL = new List<LeaveRequestListDto>();
-        var empL = await _hrmPro.GetListEmp(cancellationToken);
-        var lvtL = await _unitOfWork.Repository<LeaveType>().GetAll();
+        var empTask = await _hrmProfile.GetListEmp(ct);
+        var empDict = empTask.Res.ToDictionary(d => Guid.Parse(d.Id));
 
-        foreach (var data in dbData)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeaveRequest>(v, x => x.Id, x => x.StartDate, x => x.EndDate, x => x.DaysRequested, x => x.IsHalfDay, x => x.Status, x => x.EmployeeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeaveType, LeaveRequestListDto>(c, x => x.Name, d => d.LeaveType)
+            .From<LeaveRequest>(v)
+            .Join<LeaveRequest, LeaveType>(v, c, x => x.LeaveTypeId, x => x.Id)
+            .OrderBy<LeaveRequest>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<LeaveRequestListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<LeaveRequestListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var emp = empL.Res.FirstOrDefault(t => t.Id == data.EmployeeId.ToString());
-            //var app = "";
-            //if (data.ApprovedById != null)
+            var data = parser(reader);
+            //var emp = "Not Assigned";
+            //if (data.EmployeeId != null)
             //{
-            //    var aEmpId = (Guid)data.ApprovedById;
-            //    var aEmp = empL.Res.FirstOrDefault(t => t.Id == aEmpId.ToString());
-            //    app = aEmp != null ? aEmp.Name : "NOT AVAILABLE";
+            //    empDict.TryGetValue((Guid)data.EmployeeId, out var empN);
+            //    emp = empN?.Name ?? "";
             //}
-
-            var lvt = lvtL.FirstOrDefault(t => t.Id == data.LeaveTypeId);
-            var c = new LeaveRequestListDto
+            empDict.TryGetValue(data.EmployeeId, out var emp);
+            result.Add(new LeaveRequestListDto
             {
                 Id = data.Id,
-                LeaveTypeId = data.LeaveTypeId,
                 StartDate = data.StartDate,
                 EndDate = data.EndDate,
                 DateRequested = data.DateAdd,
                 DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
-                IsHalfDayStr = data.IsHalfDay.ToString(),
-                StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
-                Employee = emp != null ? emp.Name : "NOT AVAILABLE",
-                LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
+                IsHalfDayStr = BoolToStr.FormatBool(data.IsHalfDay),
+                StatusStr = MyEnumHelper.FormatEnum<Status>(data.Status),
+                Employee = emp?.Name ?? "",
+                LeaveType = data.LeaveType,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
 
-        return dataL;
+        return result;
     }
 }
 
-public class LeaveRequestByIdQryHandler : IRequestHandler<LeaveRequestByIdQry, LeaveRequestListDto?>
+public class LeaveRequestByIdHandler : IRequestHandler<LeaveRequestByIdQry, LeaveRequestListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfileClient _hrmPro;
-
-    public LeaveRequestByIdQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
+    public LeaveRequestByIdHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
-        _hrmPro = hrmPro;
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<LeaveRequestListDto?> Handle(LeaveRequestByIdQry request, CancellationToken cancellationToken)
+    public async Task<LeaveRequestListDto?> Handle(LeaveRequestByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<LeaveRequest>().GetById(request.Id);
-        if (data == null) { return null; }
-        var emp = await _hrmPro.GetEmp(data.EmployeeId.ToString(), cancellationToken);
-        var lvt = await _unitOfWork.Repository<LeaveType>().GetById(data.LeaveTypeId);
-        //var app = "";
-        //if (data.ApprovedById != null)
-        //{
-        //    var appEmpId = (Guid)data.ApprovedById;
-        //    var appEmp = await _hrmPro.GetEmp(appEmpId.ToString(), cancellationToken);
-        //    app = appEmp.Res.Name != null ? appEmp.Res.Name : "NOT AVAILABLE";
-        //}
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeaveRequest>(v, x => x.Id, x => x.StartDate, x => x.EndDate, x => x.DaysRequested, x => x.IsHalfDay, x => x.Status, x => x.EmployeeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeaveType, LeaveRequestListDto>(c, x => x.Name, d => d.LeaveType)
+            .From<LeaveRequest>(v)
+            .Join<LeaveRequest, LeaveType>(v, c, x => x.LeaveTypeId, x => x.Id)
+            .Where<LeaveRequest>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new LeaveRequestListDto
-        {
-            Id = data.Id,
-            LeaveTypeId = data.LeaveTypeId,
-            StartDate = data.StartDate,
-            EndDate = data.EndDate,
-            DateRequested = data.DateAdd,
-            DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
-            IsHalfDayStr = data.IsHalfDay.ToString(),
-            StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
-            Employee = emp.Res.Name != null ? emp.Res.Name : "NOT AVAILABLE",
-            LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeaveRequestListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var emp = await _hrmProfile.GetEmp((data.EmployeeId).ToString(), ct);
+
+        data.DateRequested = data.DateAdd;
+        data.DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days";
+        data.IsHalfDayStr = BoolToStr.FormatBool(data.IsHalfDay);
+        data.StatusStr = MyEnumHelper.FormatEnum<Status>(data.Status);
+        data.Employee = emp.Res.Name ?? "";
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }
 
-public class LeaveRequestMyQryHandler : IRequestHandler<LeaveRequestMyQry, List<LeaveRequestListDto>>
+public class LeaveRequestMyHandler : IRequestHandler<LeaveRequestMyQry, List<LeaveRequestListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IHrmProfileClient _hrmPro;
-
-    public LeaveRequestMyQryHandler(IUnitOfWork unitOfWork, IHrmProfileClient hrmPro)
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
+    public LeaveRequestMyHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
-        _hrmPro = hrmPro;
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<List<LeaveRequestListDto>> Handle(LeaveRequestMyQry request, CancellationToken cancellationToken)
+    public async Task<List<LeaveRequestListDto>> Handle(LeaveRequestMyQry request, CancellationToken ct)
     {
-        var dataL = new List<LeaveRequestListDto>();
-        var myReq = (await _unitOfWork.Repository<LeaveRequest>().Find(r => r.EmployeeId == request.Id)).ToList();
-        if (myReq.Count <= 0) { return dataL; }
-        var emp = (await _hrmPro.GetEmp(request.Id.ToString(), cancellationToken)).Res.Name;
-        var empL = (await _hrmPro.GetListEmp(cancellationToken));
-        var lvtL = await _unitOfWork.Repository<LeaveType>().GetAll();
+        var emp = (await _hrmProfile.GetEmp(request.Id.ToString(), ct));
 
-        foreach (var data in myReq)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeaveRequest>(v, x => x.Id, x => x.StartDate, x => x.EndDate, x => x.DaysRequested, x => x.IsHalfDay, x => x.Status, x => x.EmployeeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeaveType, LeaveRequestListDto>(c, x => x.Name, d => d.LeaveType)
+            .From<LeaveRequest>(v)
+            .Join<LeaveRequest, LeaveType>(v, c, x => x.LeaveTypeId, x => x.Id)
+            .Where<LeaveRequest>(v, x => x.EmployeeId == request.Id);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<LeaveRequestListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<LeaveRequestListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var lvt = lvtL.FirstOrDefault(l => l.Id == data.LeaveTypeId);
-            //var app = "";
-            //if (data.ApprovedById != null)
-            //{
-            //    var appEmpId = (Guid)data.ApprovedById;
-            //    var appEmp = empL.Res.FirstOrDefault(e => e.Id == appEmpId.ToString());
-            //    app = appEmp.Name ?? "NOT AVAILABLE";
-            //}
-
-            var c = new LeaveRequestListDto
+            var data = parser(reader);
+            result.Add(new LeaveRequestListDto
             {
                 Id = data.Id,
-                LeaveTypeId = data.LeaveTypeId,
                 StartDate = data.StartDate,
                 EndDate = data.EndDate,
                 DateRequested = data.DateAdd,
                 DaysRequestedStr = $"{data.DaysRequested:#,##0.##} days",
-                IsHalfDayStr = data.IsHalfDay.ToString(),
-                StatusStr = ((Status)Enum.Parse(typeof(Status), data.Status)).ToDisplayName(),
-                Employee = emp != null ? emp : "NOT AVAILABLE",
-                LeaveType = lvt != null ? lvt.Name : "NOT AVAILABLE",
+                IsHalfDayStr = BoolToStr.FormatBool(data.IsHalfDay),
+                StatusStr = MyEnumHelper.FormatEnum<Status>(data.Status),
+                Employee = emp.Res?.Name ?? "",
+                LeaveType = data.LeaveType,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-        
-        return dataL;
+
+        return result;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Helpers;
 using MediatR;
-using Profile.App.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;
 using Profile.App.Queries;
 using Profile.Domain.DTOs;
@@ -13,21 +13,24 @@ public class EmployeeDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EmployeeModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<EmployeeListDto> Handle(EmployeeModCmd request, CancellationToken cancellationToken)
+    public EmployeeModCmdHandler(IUnitOfWork uow, IMediator med)
     {
-        var oldData = await _unitOfWork.Repository<Employee>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"EMPLOYEE with Id {request.ModDto.Id} NOT FOUND."); }
+        _uow = uow;
+        _med = med;
+    }
 
-        await _unitOfWork.Begin();
-
+    public async Task<EmployeeListDto> Handle(EmployeeModCmd request, CancellationToken ct)
+    {
+        await _uow.Begin(ct);
         try
         {
-            var oldPer = await _unitOfWork.Repository<Person>().GetById(oldData.PersonId);
+            var oldData = await _uow.Set<Employee>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, cancellationToken: ct);
+            if (oldData == null) { throw new DomainException($"EMPLOYEE with Id {request.ModDto.Id} NOT FOUND."); }
+
+            var oldPer = await _uow.Set<Person>().FirstOrDefaultAsync(x => x.Id == oldData.PersonId, cancellationToken: ct);
             oldPer!.FirstName = request.ModDto.FirstName;
             oldPer.FirstNameAm = request.ModDto.FirstNameAm;
             oldPer.MiddleName = request.ModDto.MiddleName;
@@ -36,7 +39,7 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
             oldPer.LastNameAm = request.ModDto.LastNameAm;
             oldPer.Gender = request.ModDto.Gender;
             oldPer.Nationality = request.ModDto.Nationality;
-            var per = await _unitOfWork.Repository<Person>().Update(oldPer);
+            await _uow.Update(oldPer);
 
             oldData.EmploymentDate = request.ModDto.EmploymentDate;
             oldData.JobGradeId = request.ModDto.JobGradeId;
@@ -44,19 +47,19 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
             oldData.DepartmentId = request.ModDto.DepartmentId;
             oldData.EmploymentType = request.ModDto.EmploymentType;
             oldData.EmploymentNature = request.ModDto.EmploymentNature;
-            oldData.PersonId = per.Id;
-            var data = await _unitOfWork.Repository<Employee>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new EmployeeListDto();
-            var response = await _med.Send(new EmployeeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EmployeeByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -64,22 +67,22 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
 
 public class EmployeeDelCmdHandler : IRequestHandler<EmployeeDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EmployeeDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EmployeeDelCmdHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(EmployeeDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(EmployeeDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<Employee>().GetById(request.Id);
+            var data = await _uow.Set<Employee>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"EMPLOYEE with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<Employee>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

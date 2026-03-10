@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using Helpers;
 using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
@@ -11,29 +12,43 @@ public class PolicyConfigByPolicyIdQry : IRequest<List<LeavePolicyConfigListDto>
 public class LeavePolicyConfigByIdQry : IRequest<LeavePolicyConfigListDto?> { public Guid Id { get; set; } }
 public class ActivePolicyConfigQry : IRequest<LeavePolicyConfigListDto?> { public Guid Id { get; set; } }
 
+
+
 public class PolicyConfigByPolicyIdHandler : IRequestHandler<PolicyConfigByPolicyIdQry, List<LeavePolicyConfigListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _corModClient;
-
-    public PolicyConfigByPolicyIdHandler(IUnitOfWork unitOfWork, ICorModClient corModClient)
+    private readonly IDapperHelper _dapper;
+    private readonly ICorModClient _corMod;
+    public PolicyConfigByPolicyIdHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
-        _corModClient = corModClient;
+        _dapper = dapper;
+        _corMod = corMod;
     }
 
-    public async Task<List<LeavePolicyConfigListDto>> Handle(PolicyConfigByPolicyIdQry request, CancellationToken cancellationToken)
+    public async Task<List<LeavePolicyConfigListDto>> Handle(PolicyConfigByPolicyIdQry request, CancellationToken ct)
     {
-        var dbData = (await _unitOfWork.Repository<LeavePolicyConfig>().Find(c => c.LeavePolicyId == request.Id)).ToList();
-        var dataL = new List<LeavePolicyConfigListDto>();
-        if (dbData.Count <= 0) { return dataL; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(request.Id);
-        var fyL = await _corModClient.GetListFiscalYear(cancellationToken);
+        var fyTask = await _corMod.GetListFiscalYear(ct);
+        var fyDict = fyTask.Res.ToDictionary(d => Guid.Parse(d.Id));
 
-        foreach (var data in dbData)
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeavePolicyConfig>(v, x => x.Id, x => x.AnnualEntitlement, x => x.AccrualFrequency, x => x.AccrualRate, x => x.MaxDaysPerReq, x => x.MaxCarryOverDays, x => x.MinServiceMonths, x => x.IsActive, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeavePolicyConfigListDto>(c, x => x.Name, d => d.LeavePolicy)
+            .From<LeavePolicyConfig>(v)
+            .Join<LeavePolicyConfig, LeavePolicy>(v, c, x => x.LeavePolicyId, x => x.Id)
+            .Where<LeavePolicyConfig>(v, x => x.LeavePolicyId == request.Id);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<LeavePolicyConfigListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<LeavePolicyConfigListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var fy = fyL.Res.FirstOrDefault(f => f.Id == data.FiscalYearId.ToString());
-            var c = new LeavePolicyConfigListDto
+            var data = parser(reader);
+            fyDict.TryGetValue(data.FiscalYearId, out var fy);
+
+            result.Add(new LeavePolicyConfigListDto
             {
                 Id = data.Id,
                 AnnualEntitlement = data.AnnualEntitlement,
@@ -44,114 +59,100 @@ public class PolicyConfigByPolicyIdHandler : IRequestHandler<PolicyConfigByPolic
                 MinServiceMonths = data.MinServiceMonths,
                 IsActive = data.IsActive,
                 AnnualEntitlementStr = $"{data.AnnualEntitlement} day/s",
-                AccrualFrequencyStr = ((AccrualFrequency)Enum.Parse(typeof(AccrualFrequency), data.AccrualFrequency)).ToDisplayName(),
+                AccrualFrequencyStr = MyEnumHelper.FormatEnum<AccrualFrequency>(data.AccrualFrequency),
                 AccrualRateStr = $"{data.AccrualRate} day/s",
                 MaxDaysPerReqStr = $"{data.MaxDaysPerReq} day/s",
                 MaxCarryOverDaysStr = $"{data.MaxCarryOverDays} day/s",
                 MinServiceMonthsStr = $"{data.MinServiceMonths} month/s",
                 IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-                LeavePolicy = lvPo!.Name,
-                FiscalYear = fy!.Name != null ? fy.Name : "NOT AVAILABLE",
+                FiscalYear = fy?.Name ?? "",
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
 
-        return dataL;
+        return result;
     }
 }
 
 public class LeavePolicyConfigByIdHandler : IRequestHandler<LeavePolicyConfigByIdQry, LeavePolicyConfigListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _corModClient;
-
-    public LeavePolicyConfigByIdHandler(IUnitOfWork unitOfWork, ICorModClient corModClient)
+    private readonly IDapperHelper _dapper;
+    private readonly ICorModClient _corMod;
+    public LeavePolicyConfigByIdHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
-        _corModClient = corModClient;
+        _dapper = dapper;
+        _corMod = corMod;
     }
 
-    public async Task<LeavePolicyConfigListDto?> Handle(LeavePolicyConfigByIdQry request, CancellationToken cancellationToken)
+    public async Task<LeavePolicyConfigListDto?> Handle(LeavePolicyConfigByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<LeavePolicyConfig>().GetById(request.Id);
-        if (data == null) { return null; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
-        var fy = await _corModClient.GetFiscalYear(data.FiscalYearId.ToString(), cancellationToken);
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeavePolicyConfig>(v, x => x.Id, x => x.AnnualEntitlement, x => x.AccrualFrequency, x => x.AccrualRate, x => x.MaxDaysPerReq, x => x.MaxCarryOverDays, x => x.MinServiceMonths, x => x.IsActive, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeavePolicyConfigListDto>(c, x => x.Name, d => d.LeavePolicy)
+            .From<LeavePolicyConfig>(v)
+            .Join<LeavePolicyConfig, LeavePolicy>(v, c, x => x.LeavePolicyId, x => x.Id)
+            .Where<LeavePolicyConfig>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new LeavePolicyConfigListDto
-        {
-            Id = data.Id,
-            AnnualEntitlement = data.AnnualEntitlement,
-            AccrualFrequency = data.AccrualFrequency,
-            AccrualRate = data.AccrualRate,
-            MaxDaysPerReq = data.MaxDaysPerReq,
-            MaxCarryOverDays = data.MaxCarryOverDays,
-            MinServiceMonths = data.MinServiceMonths,
-            IsActive = data.IsActive,
-            AnnualEntitlementStr = $"{data.AnnualEntitlement} day/s",
-            AccrualFrequencyStr = ((AccrualFrequency)Enum.Parse(typeof(AccrualFrequency), data.AccrualFrequency)).ToDisplayName(),
-            AccrualRateStr = $"{data.AccrualRate} day/s",
-            MaxDaysPerReqStr = $"{data.MaxDaysPerReq} day/s",
-            MaxCarryOverDaysStr = $"{data.MaxCarryOverDays} day/s",
-            MinServiceMonthsStr = $"{data.MinServiceMonths} month/s",
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            LeavePolicy = lvPo!.Name,
-            FiscalYear = fy.Res.Name != null ? fy.Res.Name : "NOT AVAILABLE",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeavePolicyConfigListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var fy = await _corMod.GetFiscalYear(data.FiscalYearId.ToString(), ct);
+        data.AnnualEntitlementStr = $"{data.AnnualEntitlement} day/s";
+        data.AccrualFrequencyStr = MyEnumHelper.FormatEnum<AccrualFrequency>(data.AccrualFrequency);
+        data.AccrualRateStr = $"{data.AccrualRate} day/s";
+        data.MaxDaysPerReqStr = $"{data.MaxDaysPerReq} day/s";
+        data.MaxCarryOverDaysStr = $"{data.MaxCarryOverDays} day/s";
+        data.MinServiceMonthsStr = $"{data.MinServiceMonths} month/s";
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.FiscalYear = fy.Res.Name != null ? fy.Res.Name : "NOT AVAILABLE";
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }
 
 public class ActivePolicyConfigHandler : IRequestHandler<ActivePolicyConfigQry, LeavePolicyConfigListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorModClient _corModClient;
-
-    public ActivePolicyConfigHandler(IUnitOfWork unitOfWork, ICorModClient corModClient)
+    private readonly IDapperHelper _dapper;
+    private readonly ICorModClient _corMod;
+    public ActivePolicyConfigHandler(IDapperHelper dapper, ICorModClient corMod)
     {
-        _unitOfWork = unitOfWork;
-        _corModClient = corModClient;
+        _dapper = dapper;
+        _corMod = corMod;
     }
 
-    public async Task<LeavePolicyConfigListDto?> Handle(ActivePolicyConfigQry request, CancellationToken cancellationToken)
+    public async Task<LeavePolicyConfigListDto?> Handle(ActivePolicyConfigQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(c => c.IsActive == true && c.LeavePolicyId == request.Id);
-        if (data == null) { return null; }
-        var lvPo = await _unitOfWork.Repository<LeavePolicy>().GetById(data.LeavePolicyId);
-        var fy = await _corModClient.GetFiscalYear(data.FiscalYearId.ToString(), cancellationToken);
+        const string v = "v";
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<LeavePolicyConfig>(v, x => x.Id, x => x.AnnualEntitlement, x => x.AccrualFrequency, x => x.AccrualRate, x => x.MaxDaysPerReq, x => x.MaxCarryOverDays, x => x.MinServiceMonths, x => x.IsActive, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<LeavePolicy, LeavePolicyConfigListDto>(c, x => x.Name, d => d.LeavePolicy)
+            .From<LeavePolicyConfig>(v)
+            .Join<LeavePolicyConfig, LeavePolicy>(v, c, x => x.LeavePolicyId, x => x.Id)
+            .Where<LeavePolicyConfig>(v, x => x.LeavePolicyId == request.Id && x.IsActive == true)
+            .Limit(1);
 
-        var c = new LeavePolicyConfigListDto
-        {
-            Id = data.Id,
-            AnnualEntitlement = data.AnnualEntitlement,
-            AccrualFrequency = data.AccrualFrequency,
-            AccrualRate = data.AccrualRate,
-            MaxDaysPerReq = data.MaxDaysPerReq,
-            MaxCarryOverDays = data.MaxCarryOverDays,
-            MinServiceMonths = data.MinServiceMonths,
-            IsActive = data.IsActive,
-            AnnualEntitlementStr = $"{data.AnnualEntitlement} day/s",
-            AccrualFrequencyStr = ((AccrualFrequency)Enum.Parse(typeof(AccrualFrequency), data.AccrualFrequency)).ToDisplayName(),
-            AccrualRateStr = $"{data.AccrualRate} day/s",
-            MaxDaysPerReqStr = $"{data.MaxDaysPerReq} day/s",
-            MaxCarryOverDaysStr = $"{data.MaxCarryOverDays} day/s",
-            MinServiceMonthsStr = $"{data.MinServiceMonths} month/s",
-            IsActiveStr = BoolToStr.FormatStat(data.IsActive),
-            LeavePolicy = lvPo!.Name,
-            FiscalYear = fy.Res.Name != null ? fy.Res.Name : "NOT AVAILABLE",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<LeavePolicyConfigListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var fy = await _corMod.GetFiscalYear(data.FiscalYearId.ToString(), ct);
+        data.AnnualEntitlementStr = $"{data.AnnualEntitlement} day/s";
+        data.AccrualFrequencyStr = MyEnumHelper.FormatEnum<AccrualFrequency>(data.AccrualFrequency);
+        data.AccrualRateStr = $"{data.AccrualRate} day/s";
+        data.MaxDaysPerReqStr = $"{data.MaxDaysPerReq} day/s";
+        data.MaxCarryOverDaysStr = $"{data.MaxCarryOverDays} day/s";
+        data.MinServiceMonthsStr = $"{data.MinServiceMonths} month/s";
+        data.IsActiveStr = BoolToStr.FormatStat(data.IsActive);
+        data.FiscalYear = fy.Res.Name != null ? fy.Res.Name : "NOT AVAILABLE";
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

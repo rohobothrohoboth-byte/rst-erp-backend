@@ -1,6 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
+using Dapper;
 using Helpers;
 using MediatR;
 
@@ -12,21 +13,28 @@ public class PosReqByPosIdQry : IRequest<PositionReqListDto?> { public Guid Id {
 
 
 
-public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<PositionReqListDto>>
+public class PositionReqAllHandler : IRequestHandler<PositionReqAllQry, List<PositionReqListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionReqAllQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IDapperHelper _dapper;
+    public PositionReqAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<PositionReqListDto>> Handle(PositionReqAllQry request, CancellationToken cancellationToken)
+    public async Task<List<PositionReqListDto>> Handle(PositionReqAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<PositionReq>().Find(c => c.PositionId == request.Id);
-        var dataL = new List<PositionReqListDto>();
-        var nData = dbData.ToList();
-        if (nData.Count <= 0) return dataL;
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PositionReq>(v)
+            .OrderBy<PositionReq>(v, x => x.DateAdd, desc: true);
 
-        foreach (var data in dbData)
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PositionReqListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PositionReqListDto>();
+
+        while (await reader.ReadAsync(ct))
         {
-            var c = new PositionReqListDto
+            var data = parser(reader);
+            dataL.Add(new PositionReqListDto
             {
                 Id = data.Id,
                 PositionId = data.PositionId,
@@ -34,35 +42,40 @@ public class PositionReqAllQryHandler : IRequestHandler<PositionReqAllQry, List<
                 Gender = data.Gender,
                 SaturdayWorkOption = data.SaturdayWorkOption,
                 SundayWorkOption = data.SundayWorkOption,
-                GenderStr = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
-                SaturdayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
-                SundayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
-                ProfessionTypeStr = ((ProfessionType)Enum.Parse(typeof(ProfessionType), data.ProfessionType)).ToDisplayName(),
+                GenderStr = MyEnumHelper.FormatEnum<PositionGender>(data.Gender),
+                SaturdayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SaturdayWorkOption),
+                SundayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SundayWorkOption),
+                ProfessionTypeStr = MyEnumHelper.FormatEnum<ProfessionType>(data.ProfessionType),
                 WorkingHours = data.WorkingHours,
                 IsDeleted = data.IsDeleted,
                 DateAdd = data.DateAdd,
                 DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+                RowVersion = data.xmin.ToString()
+            });
         }
-
         return dataL;
     }
 }
 
-public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, PositionReqListDto?>
+public class PositionReqByIdHandler : IRequestHandler<PositionReqByIdQry, PositionReqListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public PositionReqByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public PositionReqByIdQryHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<PositionReqListDto?> Handle(PositionReqByIdQry request, CancellationToken cancellationToken)
+    public async Task<PositionReqListDto?> Handle(PositionReqByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<PositionReq>().GetById(request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<PositionReq>(v)
+            .Where<PositionReq>(v, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new PositionReqListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PositionReqListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new PositionReqListDto
         {
             Id = data.Id,
             PositionId = data.PositionId,
@@ -70,41 +83,46 @@ public class PositionReqByIdQryHandler : IRequestHandler<PositionReqByIdQry, Pos
             Gender = data.Gender,
             SaturdayWorkOption = data.SaturdayWorkOption,
             SundayWorkOption = data.SundayWorkOption,
-            GenderStr = ((PositionGender)Enum.Parse(typeof(PositionGender), data.Gender)).ToDisplayName(),
-            SaturdayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SaturdayWorkOption)).ToDisplayName(),
-            SundayWorkOptionStr = ((WorkOption)Enum.Parse(typeof(WorkOption), data.SundayWorkOption)).ToDisplayName(),
-            ProfessionTypeStr = ((ProfessionType)Enum.Parse(typeof(ProfessionType), data.ProfessionType)).ToDisplayName(),
+            GenderStr = MyEnumHelper.FormatEnum<PositionGender>(data.Gender),
+            SaturdayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SaturdayWorkOption),
+            SundayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SundayWorkOption),
+            ProfessionTypeStr = MyEnumHelper.FormatEnum<ProfessionType>(data.ProfessionType),
             WorkingHours = data.WorkingHours,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
+            RowVersion = data.xmin.ToString()
         };
-        return c;
     }
 }
 
 public class PosReqByPosIdHandler : IRequestHandler<PosReqByPosIdQry, PositionReqListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDapperHelper _dapper;
+    public PosReqByPosIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public PosReqByPosIdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
-
-    public async Task<PositionReqListDto?> Handle(PosReqByPosIdQry request, CancellationToken cancellationToken)
+    public async Task<PositionReqListDto?> Handle(PosReqByPosIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<PositionReq>().GetFoD(r => r.PositionId == request.Id);
-        if (data == null) { return null; }
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId)
+            .From<PositionReq>(v)
+            .Where<PositionReq>(v, x => x.PositionId == request.Id)
+            .Limit(1);
 
-        var c = new PositionReqListDto
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<PositionReqListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return new PositionReqListDto
         {
             Id = data.Id,
             PositionId = data.PositionId,
             Gender = data.Gender,
             ProfessionType = data.ProfessionType,
             SaturdayWorkOption = data.SaturdayWorkOption,
-            SundayWorkOption = data.SundayWorkOption,            
+            SundayWorkOption = data.SundayWorkOption,
             WorkingHours = data.WorkingHours
         };
-        return c;
     }
 }

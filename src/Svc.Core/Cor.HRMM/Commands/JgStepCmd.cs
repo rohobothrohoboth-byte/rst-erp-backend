@@ -4,6 +4,7 @@ using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cor.HRMM.Commands;
 
@@ -11,16 +12,17 @@ public class JgStepAddCmd : IRequest<JgStepListDto> { public JgStepAddDto AddDto
 public class JgStepModCmd : IRequest<JgStepListDto> { public JgStepModDto ModDto { get; set; } = default!; }
 public class JgStepDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class JgStepAddCmdHandler : IRequestHandler<JgStepAddCmd, JgStepListDto>
+
+
+public class JgStepAddHandler : IRequestHandler<JgStepAddCmd, JgStepListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
+    public JgStepAddHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public JgStepAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<JgStepListDto> Handle(JgStepAddCmd request, CancellationToken cancellationToken)
+    public async Task<JgStepListDto> Handle(JgStepAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new JgStep
@@ -29,53 +31,53 @@ public class JgStepAddCmdHandler : IRequestHandler<JgStepAddCmd, JgStepListDto>
                 Name = request.AddDto.Name,
                 Salary = request.AddDto.Salary
             };
-            await _unitOfWork.Repository<JgStep>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new JgStepListDto();
-            var response = await _med.Send(new JgStepByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JgStepByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class JgStepModCmdHandler : IRequestHandler<JgStepModCmd, JgStepListDto>
+public class JgStepModHandler : IRequestHandler<JgStepModCmd, JgStepListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
+    public JgStepModHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public JgStepModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<JgStepListDto> Handle(JgStepModCmd request, CancellationToken cancellationToken)
+    public async Task<JgStepListDto> Handle(JgStepModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<JgStep>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"JOB GRADE STEP with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<JgStep>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, cancellationToken: ct);
+            if (oldData == null) { throw new DomainException($"JOB GRADE STEP with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.JobGradeId = request.ModDto.JobGradeId;
             oldData.Name = request.ModDto.Name;
             oldData.Salary = request.ModDto.Salary;
-            var data = await _unitOfWork.Repository<JgStep>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new JgStepListDto();
-            var response = await _med.Send(new JgStepByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JgStepByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -83,22 +85,22 @@ public class JgStepModCmdHandler : IRequestHandler<JgStepModCmd, JgStepListDto>
 
 public class JgStepDelCmdHandler : IRequestHandler<JgStepDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JgStepDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public JgStepDelCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(JgStepDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(JgStepDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<JgStep>().GetById(request.Id);
+            var data = await _uow.Set<JgStep>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"JOB GRADE STEP with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<JgStep>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

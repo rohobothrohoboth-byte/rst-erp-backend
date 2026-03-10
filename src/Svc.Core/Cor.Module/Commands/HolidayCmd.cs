@@ -4,6 +4,7 @@ using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
 
 namespace Cor.Module.Commands;
@@ -12,16 +13,18 @@ public class AddHolidayCmd : IRequest<HolidayListDto> { public AddHolidayDto Add
 public class ModHolidayCmd : IRequest<HolidayListDto> { public EditHolidayDto ModDto { get; set; } = default!; }
 public class DelHolidayCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public AddHolidayCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public AddHolidayCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<HolidayListDto> Handle(AddHolidayCmd request, CancellationToken cancellationToken)
+    public async Task<HolidayListDto> Handle(AddHolidayCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var holiday = new Holiday
@@ -31,10 +34,10 @@ public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDt
                 IsPublic = request.AddDto.IsPublic,
                 FiscalYearId = request.AddDto.FiscalYearId
             };
-            await _unitOfWork.Repository<Holiday>().Add(holiday);
-            await _unitOfWork.Commit();
+            await _uow.Add(holiday, ct);
+            await _uow.Commit(ct);
             var res = new HolidayListDto();
-            var response = await _med.Send(new HolidayByIdQry { Id = holiday.Id }, cancellationToken);
+            var response = await _med.Send(new HolidayByIdQry { Id = holiday.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
@@ -42,7 +45,7 @@ public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDt
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -50,34 +53,35 @@ public class AddHolidayCmdHandler : IRequestHandler<AddHolidayCmd, HolidayListDt
 
 public class ModHolidayCmdHandler : IRequestHandler<ModHolidayCmd, HolidayListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public ModHolidayCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public ModHolidayCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<HolidayListDto> Handle(ModHolidayCmd request, CancellationToken cancellationToken)
+    public async Task<HolidayListDto> Handle(ModHolidayCmd request, CancellationToken ct)
     {
-        var oldHoliday = await _unitOfWork.Repository<Holiday>().GetById(request.ModDto.Id);
-        if (oldHoliday == null) { throw new DomainException($"HOLIDAY with id [{request.ModDto.Id}] NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            oldHoliday.Name = request.ModDto.Name;
-            oldHoliday.Date = request.ModDto.Date;
-            oldHoliday.IsPublic = request.ModDto.IsPublic;
-            var nHoliday = await _unitOfWork.Repository<Holiday>().Update(oldHoliday);
-            await _unitOfWork.Commit();
+            var oldData = await _uow.Set<Holiday>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"HOLIDAY with id [{request.ModDto.Id}] NOT FOUND."); }
+
+            oldData.Name = request.ModDto.Name;
+            oldData.Date = request.ModDto.Date;
+            oldData.IsPublic = request.ModDto.IsPublic;
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit();
 
             var res = new HolidayListDto();
-            var response = await _med.Send(new HolidayByIdQry { Id = nHoliday.Id }, cancellationToken);
+            var response = await _med.Send(new HolidayByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch (DBConcurrencyException)
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -85,22 +89,22 @@ public class ModHolidayCmdHandler : IRequestHandler<ModHolidayCmd, HolidayListDt
 
 public class DelHolidayCmdHandler : IRequestHandler<DelHolidayCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public DelHolidayCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public DelHolidayCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(DelHolidayCmd request, CancellationToken cancellationToken)
+    public async Task Handle(DelHolidayCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<Holiday>().GetById(request.Id);
+            var data = await _uow.Set<Holiday>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"HOLIDAY with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<Holiday>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

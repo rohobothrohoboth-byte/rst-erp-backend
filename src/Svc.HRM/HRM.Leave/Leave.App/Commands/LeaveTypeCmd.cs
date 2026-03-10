@@ -4,6 +4,7 @@ using Leave.App.Queries;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Leave.App.Commands;
 
@@ -16,14 +17,14 @@ public class LeaveTypeDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class LeaveTypeAddHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public LeaveTypeAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveTypeAddHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<LeaveTypeListDto> Handle(LeaveTypeAddCmd request, CancellationToken cancellationToken)
+    public async Task<LeaveTypeListDto> Handle(LeaveTypeAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new LeaveType
@@ -35,18 +36,18 @@ public class LeaveTypeAddHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeLis
                 HolidaysAsLeave = request.AddDto.HolidaysAsLeave,
                 IsActive = true
             };
-            await _unitOfWork.Repository<LeaveType>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new LeaveTypeListDto();
-            var response = await _med.Send(new LeaveTypeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new LeaveTypeByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -54,37 +55,38 @@ public class LeaveTypeAddHandler : IRequestHandler<LeaveTypeAddCmd, LeaveTypeLis
 
 public class LeaveTypeModHandler : IRequestHandler<LeaveTypeModCmd, LeaveTypeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public LeaveTypeModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveTypeModHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<LeaveTypeListDto> Handle(LeaveTypeModCmd request, CancellationToken cancellationToken)
+    public async Task<LeaveTypeListDto> Handle(LeaveTypeModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<LeaveType>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.Name = request.ModDto.Name;
             oldData.LeaveCategory = request.ModDto.LeaveCategory;
             oldData.RequiresApproval = request.ModDto.RequiresApproval;
             oldData.AllowHalfDay = request.ModDto.AllowHalfDay;
             oldData.HolidaysAsLeave = request.ModDto.HolidaysAsLeave;
             oldData.IsActive = request.ModDto.IsActive;
-            var data = await _unitOfWork.Repository<LeaveType>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new LeaveTypeListDto();
-            var response = await _med.Send(new LeaveTypeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new LeaveTypeByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -92,32 +94,33 @@ public class LeaveTypeModHandler : IRequestHandler<LeaveTypeModCmd, LeaveTypeLis
 
 public class LeaveTypeStatHandler : IRequestHandler<LeaveTypeStatCmd, LeaveTypeListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public LeaveTypeStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public LeaveTypeStatHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<LeaveTypeListDto> Handle(LeaveTypeStatCmd request, CancellationToken cancellationToken)
+    public async Task<LeaveTypeListDto> Handle(LeaveTypeStatCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<LeaveType>().GetById(request.StatDto.Id);
-        if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.StatDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.StatDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.StatDto.Id} NOT FOUND."); }
+
             oldData.IsActive = request.StatDto.Stat;
-            var data = await _unitOfWork.Repository<LeaveType>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.StatDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new LeaveTypeListDto();
-            var response = await _med.Send(new LeaveTypeByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new LeaveTypeByIdQry { Id = request.StatDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -125,22 +128,22 @@ public class LeaveTypeStatHandler : IRequestHandler<LeaveTypeStatCmd, LeaveTypeL
 
 public class LeaveTypeDelHandler : IRequestHandler<LeaveTypeDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public LeaveTypeDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public LeaveTypeDelHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(LeaveTypeDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(LeaveTypeDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<LeaveType>().GetById(request.Id);
+            var data = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"LEAVE TYPE with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<LeaveType>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

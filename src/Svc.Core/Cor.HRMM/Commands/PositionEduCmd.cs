@@ -4,101 +4,104 @@ using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cor.HRMM.Commands;
 
-public class PositionEduAddCmd : IRequest<PositionEduListDto> { public PositionEduAddDto AddDto { get; set; } = default!; }
-public class PositionEduModCmd : IRequest<PositionEduListDto> { public PositionEduModDto ModDto { get; set; } = default!; }
-public class PositionEduDelCmd : IRequest { public Guid Id { get; set; } }
+public class PosEduAddCmd : IRequest<PositionEduListDto> { public PositionEduAddDto AddDto { get; set; } = default!; }
+public class PosEduModCmd : IRequest<PositionEduListDto> { public PositionEduModDto ModDto { get; set; } = default!; }
+public class PosEduDelCmd : IRequest { public Guid Id { get; set; } }
 
-public class PositionEduAddCmdHandler : IRequestHandler<PositionEduAddCmd, PositionEduListDto>
+
+
+public class PosEduAddHandler : IRequestHandler<PosEduAddCmd, PositionEduListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
+    public PosEduAddHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public PositionEduAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
-
-    public async Task<PositionEduListDto> Handle(PositionEduAddCmd request, CancellationToken cancellationToken)
+    public async Task<PositionEduListDto> Handle(PosEduAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new PositionEducation
             {
                 PositionId = request.AddDto.PositionId,
                 EducationQualId = request.AddDto.EducationQualId,
-                EducationLevelId = request.AddDto.EducationLevelId
+                EducationLevel = request.AddDto.EducationLevel
             };
-            await _unitOfWork.Repository<PositionEducation>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new PositionEduListDto();
-            var response = await _med.Send(new PositionEduByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new PositionEduByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class PositionEduModCmdHandler : IRequestHandler<PositionEduModCmd, PositionEduListDto>
+public class PosEduModHandler : IRequestHandler<PosEduModCmd, PositionEduListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public PositionEduModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public PosEduModHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
 
-    public async Task<PositionEduListDto> Handle(PositionEduModCmd request, CancellationToken cancellationToken)
+    public async Task<PositionEduListDto> Handle(PosEduModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<PositionEducation>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"POSITION EDUCATION with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<PositionEducation>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"POSITION EDUCATION with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.PositionId = request.ModDto.PositionId;
             oldData.EducationQualId = request.ModDto.EducationQualId;
-            oldData.EducationLevelId = request.ModDto.EducationLevelId;
-            var data = await _unitOfWork.Repository<PositionEducation>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.EducationLevel = request.ModDto.EducationLevel;
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new PositionEduListDto();
-            var response = await _med.Send(new PositionEduByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new PositionEduByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class PositionEduDelCmdHandler : IRequestHandler<PositionEduDelCmd>
+public class PosEduDelHandler : IRequestHandler<PosEduDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PositionEduDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public PosEduDelHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
 
-    public async Task Handle(PositionEduDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(PosEduDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<PositionEducation>().GetById(request.Id);
+            var data = await _uow.Set<PositionEducation>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"POSITION EDUCATION with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<PositionEducation>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

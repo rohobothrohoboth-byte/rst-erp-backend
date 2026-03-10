@@ -1,11 +1,17 @@
 ﻿using Cor.HRMM.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Cor.HRMM.Persistence;
 
 public class coreHRMMDbContext : DbContext
 {
-    public coreHRMMDbContext(DbContextOptions<coreHRMMDbContext> options) : base(options) { }
+    public coreHRMMDbContext(DbContextOptions<coreHRMMDbContext> options) : base(options)
+    {
+        ChangeTracker.AutoDetectChangesEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        ChangeTracker.LazyLoadingEnabled = false;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -13,16 +19,43 @@ public class coreHRMMDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+            foreach (var index in indexes)
+            {
+                index.SetFilter("\"IsDeleted\" = false");
+            }
+        }
+
         modelBuilder.HasPostgresExtension("pgcrypto");
-        modelBuilder.Entity<BenefitSetting>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<EducationQual>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<JgStep>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<JobGrade>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<Position>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<PositionBenefit>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<PositionEducation>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<PositionExp>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
-        modelBuilder.Entity<PositionReq>(entity => { entity.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken(); });
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(coreHRMMDbContext).Assembly);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.DateAdd = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.DateMod = now;
+                    break;
+            }
+        }
+
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new DBConcurrencyException("The record was modified by another transaction.", ex);
+        }
     }
 
     public DbSet<BenefitSetting> BenefitSetting { get; set; }
@@ -34,5 +67,4 @@ public class coreHRMMDbContext : DbContext
     public DbSet<PositionEducation> PositionEducation { get; set; }
     public DbSet<PositionExp> PositionExp { get; set; }
     public DbSet<PositionReq> PositionReq { get; set; }
-
 }

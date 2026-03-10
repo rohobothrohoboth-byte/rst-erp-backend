@@ -17,16 +17,19 @@ namespace Profile.Utility.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pgcrypto");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("emp_code_seq")
+                .HasMax(9999999L)
+                .HasAnnotation("Npgsql:Sequence:Cache", 100);
+
             modelBuilder.Entity("Profile.Domain.Entities.Address", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("AddressType")
@@ -80,12 +83,6 @@ namespace Profile.Utility.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<string>("Subcity")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -111,13 +108,17 @@ namespace Profile.Utility.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Country");
 
                     b.HasIndex("Email");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -127,7 +128,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmergencyContact", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AddressId")
@@ -150,14 +150,15 @@ namespace Profile.Utility.Migrations
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("RelationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
+                    b.Property<string>("Relation")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -165,13 +166,9 @@ namespace Profile.Utility.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("PersonId");
-
-                    b.HasIndex("RelationId");
 
                     b.HasIndex("EmployeeId", "PersonId");
 
@@ -181,7 +178,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpBio", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AddressId")
@@ -229,11 +225,11 @@ namespace Profile.Utility.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -241,8 +237,6 @@ namespace Profile.Utility.Migrations
 
                     b.HasIndex("EmployeeId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -252,7 +246,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpFamily", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -272,26 +265,23 @@ namespace Profile.Utility.Migrations
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("RelationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
+                    b.Property<string>("Relation")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("PersonId");
-
-                    b.HasIndex("RelationId");
 
                     b.HasIndex("EmployeeId", "PersonId");
 
@@ -301,7 +291,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpFinance", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("BankAccountNo")
@@ -328,16 +317,16 @@ namespace Profile.Utility.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<string>("Tin")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -345,8 +334,6 @@ namespace Profile.Utility.Migrations
 
                     b.HasIndex("EmployeeId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -358,7 +345,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpGuarantor", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AddressId")
@@ -381,14 +367,15 @@ namespace Profile.Utility.Migrations
                     b.Property<Guid>("PersonId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("RelationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
+                    b.Property<string>("Relation")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -396,13 +383,9 @@ namespace Profile.Utility.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("PersonId");
-
-                    b.HasIndex("RelationId");
 
                     b.HasIndex("EmployeeId", "PersonId");
 
@@ -412,7 +395,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpGuarantorFile", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -432,19 +414,17 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EmpGuarantorId");
 
                     b.HasIndex("FileMetaDataId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -457,7 +437,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpGuarantorFileBlob", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Data")
@@ -478,18 +457,16 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FileMetaDataId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -499,7 +476,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpPensionCard", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -532,21 +508,19 @@ namespace Profile.Utility.Migrations
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<DateTime?>("SentDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -560,7 +534,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpPhoto", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -580,14 +553,14 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<Guid>("ThumbnailId")
                         .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -595,8 +568,6 @@ namespace Profile.Utility.Migrations
                         .IsUnique();
 
                     b.HasIndex("FileMetaDataId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -608,7 +579,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpPhotoBlob", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Data")
@@ -629,18 +599,16 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FileMetaDataId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -650,7 +618,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpPhotoThumbnail", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Data")
@@ -671,28 +638,75 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FileMetaDataId")
                         .IsUnique();
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("IsDeleted");
 
                     b.ToTable("EmpPhotoThumbnail");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpSalary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("BaseSalary")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("JgStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveFrom");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("JgStepId");
+
+                    b.ToTable("EmpSalary");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpSign", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -712,11 +726,11 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -724,8 +738,6 @@ namespace Profile.Utility.Migrations
                         .IsUnique();
 
                     b.HasIndex("FileMetaDataId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -735,7 +747,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpSignBlob", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Data")
@@ -756,18 +767,16 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FileMetaDataId")
                         .IsUnique();
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -777,7 +786,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpStamp", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -797,11 +805,11 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -809,8 +817,6 @@ namespace Profile.Utility.Migrations
                         .IsUnique();
 
                     b.HasIndex("FileMetaDataId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -820,7 +826,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.EmpStampBlob", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<byte[]>("Data")
@@ -841,97 +846,33 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FileMetaDataId")
                         .IsUnique();
 
-                    b.HasIndex("Id");
-
                     b.HasIndex("IsDeleted");
 
                     b.ToTable("EmpStampBlob");
                 });
 
-            modelBuilder.Entity("Profile.Domain.Entities.EmpState", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("IsApproved")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("IsRetired")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("IsStandBy")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("IsTerminated")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("IsUnderProbation")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId")
-                        .IsUnique();
-
-                    b.HasIndex("Id");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.ToTable("EmpState");
-                });
-
             modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValueSql("'EMP' || LPAD(nextval('emp_code_seq')::text, 7, '0')");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -941,6 +882,10 @@ namespace Profile.Utility.Migrations
 
                     b.Property<Guid>("DepartmentId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("EmpState")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("EmploymentDate")
                         .HasColumnType("timestamp with time zone");
@@ -969,16 +914,16 @@ namespace Profile.Utility.Migrations
                     b.Property<Guid>("PositionId")
                         .HasColumnType("uuid");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
-
                     b.Property<string>("WorkArrangement")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -986,8 +931,6 @@ namespace Profile.Utility.Migrations
                         .IsUnique();
 
                     b.HasIndex("DepartmentId");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -1004,7 +947,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.FileMetaData", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContentType")
@@ -1031,19 +973,17 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ContentType");
 
                     b.HasIndex("FileName");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -1053,7 +993,6 @@ namespace Profile.Utility.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.Person", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -1107,17 +1046,15 @@ namespace Profile.Utility.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<byte[]>("RowVersion")
+                    b.Property<uint>("xmin")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Gender");
-
-                    b.HasIndex("Id");
 
                     b.HasIndex("IsDeleted");
 
@@ -1317,6 +1254,17 @@ namespace Profile.Utility.Migrations
                     b.Navigation("FileMetaData");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpSalary", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany("EmpSalary")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpSign", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Employee", "Employee")
@@ -1377,17 +1325,6 @@ namespace Profile.Utility.Migrations
                     b.Navigation("FileMetaData");
                 });
 
-            modelBuilder.Entity("Profile.Domain.Entities.EmpState", b =>
-                {
-                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
-                        .WithOne()
-                        .HasForeignKey("Profile.Domain.Entities.EmpState", "EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Person", "Person")
@@ -1397,6 +1334,11 @@ namespace Profile.Utility.Migrations
                         .IsRequired();
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>
+                {
+                    b.Navigation("EmpSalary");
                 });
 #pragma warning restore 612, 618
         }

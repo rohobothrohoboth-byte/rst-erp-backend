@@ -26,7 +26,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionBenefit(Guid id)
     {
-        var response = await med.Send(new PositionBenefitAllQry { Id = id });
+        var response = await med.Send(new PosBenefitAllQry { Id = id });
         return Ok(ApiResponse<object>.Ok(response));
     }
     
@@ -35,7 +35,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPositionBenefit(Guid id)
     {
-        var response = await med.Send(new PositionBenefitByIdQry { Id = id });
+        var response = await med.Send(new PosBenefitByIdQry { Id = id });
         if (response == null) { throw new DomainException($"POSITION BENEFIT with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
@@ -43,7 +43,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [HttpPost("AddPositionBenefit")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] PositionBenefitAddDto addDto)
+    public async Task<IActionResult> Create([FromBody] PosBenefitAddDto addDto)
     {
         if (!ModelState.IsValid)
         {
@@ -51,7 +51,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionBenefitAddCmd { AddDto = addDto };
+        var command = new PosBenefitAddCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New POSITION BENEFIT successfully created."));
     }
@@ -61,7 +61,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] PositionBenefitModDto modDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] PosBenefitModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -69,7 +69,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var command = new PositionBenefitModCmd { ModDto = modDto };
+        var command = new PosBenefitModCmd { ModDto = modDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected POSITION BENEFIT successfully updated."));
     }
@@ -79,7 +79,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new PositionBenefitDelCmd { Id = id };
+        var command = new PosBenefitDelCmd { Id = id };
         await med.Send(command);
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION BENEFIT with Id {id} successfully deleted."));
     }

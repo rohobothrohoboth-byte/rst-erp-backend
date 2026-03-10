@@ -4,256 +4,330 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Leave.Utility.Persistence;
 
-public class AccrualHistoryConf : IEntityTypeConfiguration<AccrualHistory>
+public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T : BaseEntity
 {
-    public void Configure(EntityTypeBuilder<AccrualHistory> b)
-    {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeavePolicyId, x.LeaveLedgerId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(e => e.LeaveLedger).WithMany().HasForeignKey(e => e.LeaveLedgerId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.AccruedAmount).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.PeriodStart, e.PeriodEnd });
-        b.HasIndex(e => e.Frequency);
-    }
-}
-
-public class AttachmentConf : IEntityTypeConfiguration<Attachment>
-{
-    public void Configure(EntityTypeBuilder<Attachment> b)
+    public virtual void Configure(EntityTypeBuilder<T> b)
     {
         b.HasKey(x => x.Id);
-        b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => new { x.LeaveRequestId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.DateAdd).IsRequired().HasColumnType("timestamp with time zone");
+        b.Property(x => x.DateMod).HasColumnType("timestamp with time zone");
+        b.Property(x => x.IsDeleted).IsRequired().HasDefaultValue(false);
+        b.Property(x => x.xmin).HasColumnName("xmin").HasColumnType("xid").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        b.HasIndex(x => x.IsDeleted);
+        b.HasQueryFilter(x => !x.IsDeleted);
     }
 }
 
-public class AttachmentBlobConf : IEntityTypeConfiguration<AttachmentBlob>
+public class AccrualHistoryConfig : BaseEntityConfig<AccrualHistory>
 {
-    public void Configure(EntityTypeBuilder<AttachmentBlob> b)
+    public override void Configure(EntityTypeBuilder<AccrualHistory> b)
     {
-        b.HasKey(x => x.Id);
-        b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => new { x.AttachmentId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        base.Configure(b);
+        b.Property(a => a.Frequency).IsRequired().HasMaxLength(20);
+        b.Property(a => a.AccruedAmount).IsRequired().HasColumnType("decimal(18,2)");
+        b.Property(a => a.PeriodStart).IsRequired();
+        b.Property(a => a.PeriodEnd).IsRequired();
+        b.Property(a => a.Source).IsRequired().HasMaxLength(20);
+        b.Property(a => a.EmployeeId).IsRequired();
+        b.Property(a => a.LeaveTypeId).IsRequired();
+        b.Property(a => a.LeavePolicyId).IsRequired();
+        b.Property(a => a.LeaveLedgerId).IsRequired();
+        b.HasOne(a => a.LeaveType).WithMany().HasForeignKey(a => a.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(a => a.LeavePolicy).WithMany().HasForeignKey(a => a.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(a => a.LeaveLedger).WithMany().HasForeignKey(a => a.LeaveLedgerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(a => a.EmployeeId);
+        b.HasIndex(a => a.LeaveTypeId);
+        b.HasIndex(a => new { a.EmployeeId, a.LeaveTypeId, a.PeriodStart }).IsUnique();
     }
 }
 
-public class EmpLeavePolicyConf : IEntityTypeConfiguration<EmpLeavePolicy>
+public class AttachmentConfig : BaseEntityConfig<Attachment>
 {
-    public void Configure(EntityTypeBuilder<EmpLeavePolicy> b)
+    public override void Configure(EntityTypeBuilder<Attachment> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeavePolicyId });
-        b.HasKey(e => e.Id);
+        base.Configure(b);
+        b.Property(a => a.FileName).IsRequired().HasMaxLength(250);
+        b.Property(a => a.ContentType).IsRequired().HasMaxLength(100);
+        b.Property(a => a.FileSize).IsRequired();
+        b.Property(a => a.DateUpload).IsRequired();
+        b.Property(a => a.LeaveRequestId).IsRequired();
+        b.HasOne(a => a.LeaveRequest).WithMany().HasForeignKey(a => a.LeaveRequestId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(a => a.LeaveRequestId);
+    }
+}
+
+public class AttachmentBlobConfig : BaseEntityConfig<AttachmentBlob>
+{
+    public override void Configure(EntityTypeBuilder<AttachmentBlob> b)
+    {
+        base.Configure(b);
+        b.Property(ab => ab.Data).IsRequired();
+        b.Property(ab => ab.AttachmentId).IsRequired();
+        b.HasOne(ab => ab.Attachment).WithMany().HasForeignKey(ab => ab.AttachmentId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(ab => ab.AttachmentId).IsUnique();
+    }
+}
+
+public class EmpLeavePolicyConfig : BaseEntityConfig<EmpLeavePolicy>
+{
+    public override void Configure(EntityTypeBuilder<EmpLeavePolicy> b)
+    {
+        base.Configure(b);
+        b.Property(e => e.EffectiveFrom).IsRequired();
+        b.Property(e => e.EffectiveTo);
+        b.Property(e => e.AssignedEntitlement).IsRequired();
+        b.Property(e => e.Reason).IsRequired().HasMaxLength(50);
+        b.Property(e => e.EmployeeId).IsRequired();
+        b.Property(e => e.LeaveTypeId).IsRequired();
+        b.Property(e => e.LeavePolicyId).IsRequired();
         b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.AssignedEntitlement).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.EffectiveFrom });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        b.HasIndex(e => e.EmployeeId);
+        b.HasIndex(e => e.LeavePolicyId);
+        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.LeavePolicyId }).IsUnique();
     }
 }
 
-public class EncashmentAppActionConf : IEntityTypeConfiguration<EncashmentAppAction>
+public class EncashmentAppActionConfig : BaseEntityConfig<EncashmentAppAction>
 {
-    public void Configure(EntityTypeBuilder<EncashmentAppAction> b)
+    public override void Configure(EntityTypeBuilder<EncashmentAppAction> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.LeaveEncashmentId, x.ApprovedById });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
+        base.Configure(b);
+        b.Property(e => e.StepOrder).IsRequired();
+        b.Property(e => e.Role).IsRequired().HasMaxLength(50);
+        b.Property(e => e.Action).IsRequired().HasMaxLength(50);
+        b.Property(e => e.Comment).HasMaxLength(500);
+        b.Property(e => e.ActionAt).IsRequired();
+        b.Property(e => e.LeaveEncashmentId).IsRequired();
+        b.Property(e => e.ApprovedById).IsRequired();
         b.HasOne(e => e.LeaveEncashment).WithMany().HasForeignKey(e => e.LeaveEncashmentId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(e => new { e.LeaveEncashmentId, e.StepOrder });
+        b.HasIndex(e => e.LeaveEncashmentId);
+        b.HasIndex(e => e.ApprovedById);
+        b.HasIndex(e => new { e.LeaveEncashmentId, e.StepOrder }).IsUnique();
     }
 }
 
-public class LeaveAppActionConf : IEntityTypeConfiguration<LeaveAppAction>
+public class LeaveAppActionConfig : BaseEntityConfig<LeaveAppAction>
 {
-    public void Configure(EntityTypeBuilder<LeaveAppAction> b)
+    public override void Configure(EntityTypeBuilder<LeaveAppAction> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.LeaveRequestId, x.ApprovedById });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveRequest).WithMany().HasForeignKey(e => e.LeaveRequestId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(e => new { e.LeaveRequestId, e.StepOrder });
+        base.Configure(b);
+        b.Property(l => l.StepOrder).IsRequired();
+        b.Property(l => l.Role).IsRequired().HasMaxLength(50);
+        b.Property(l => l.Action).IsRequired().HasMaxLength(50);
+        b.Property(l => l.Comment).HasMaxLength(500);
+        b.Property(l => l.ActionAt).IsRequired();
+        b.Property(l => l.LeaveRequestId).IsRequired();
+        b.Property(l => l.ApprovedById).IsRequired();
+        b.HasOne(l => l.LeaveRequest).WithMany().HasForeignKey(l => l.LeaveRequestId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(l => l.LeaveRequestId);
+        b.HasIndex(l => l.ApprovedById);
+        b.HasIndex(l => new { l.LeaveRequestId, l.StepOrder }).IsUnique();
     }
 }
 
-public class LeaveAppChainConf : IEntityTypeConfiguration<LeaveAppChain>
+public class LeaveAppChainConfig : BaseEntityConfig<LeaveAppChain>
 {
-    public void Configure(EntityTypeBuilder<LeaveAppChain> b)
+    public override void Configure(EntityTypeBuilder<LeaveAppChain> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.LeavePolicyId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
-        b.HasMany(e => e.Steps).WithOne().HasForeignKey("LeaveAppChainId").OnDelete(DeleteBehavior.Cascade);
+        base.Configure(b);
+        b.Property(l => l.LeavePolicyId).IsRequired();
+        b.Property(l => l.EffectiveFrom).IsRequired();
+        b.Property(l => l.EffectiveTo);
+        b.Property(l => l.IsActive).IsRequired();
+        b.HasOne(l => l.LeavePolicy).WithMany().HasForeignKey(l => l.LeavePolicyId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(l => l.LeavePolicyId);
+        b.HasIndex(l => new { l.LeavePolicyId, l.EffectiveFrom }).IsUnique();
     }
 }
 
-public class LeaveAppStepConf : IEntityTypeConfiguration<LeaveAppStep>
+public class LeaveAppStepConfig : BaseEntityConfig<LeaveAppStep>
 {
-    public void Configure(EntityTypeBuilder<LeaveAppStep> b)
+    public override void Configure(EntityTypeBuilder<LeaveAppStep> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => x.StepName);
-        //b.HasIndex(x => new { x.LeaveAppChainId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-
-        b.HasKey(x => x.Id);
-        b.Property(x => x.StepOrder).IsRequired();
-        b.Property(x => x.Role).IsRequired();
-        b.HasOne(x => x.LeaveAppChain).WithMany(c => c.Steps).HasForeignKey(x => x.LeaveAppChainId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => new { x.LeaveAppChainId, x.StepOrder }).IsUnique();
+        base.Configure(b);
+        b.Property(l => l.StepName).IsRequired().HasMaxLength(100);
+        b.Property(l => l.StepOrder).IsRequired();
+        b.Property(l => l.Role).IsRequired().HasMaxLength(50);
+        b.Property(l => l.EmployeeId);
+        b.Property(l => l.IsFinal).IsRequired();
+        b.Property(l => l.LeaveAppChainId).IsRequired();
+        b.HasOne(l => l.LeaveAppChain).WithMany(c => c.Steps).HasForeignKey(l => l.LeaveAppChainId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(l => l.LeaveAppChainId);
+        b.HasIndex(l => new { l.LeaveAppChainId, l.StepOrder }).IsUnique();
     }
 }
 
-public class LeaveBalanceConf : IEntityTypeConfiguration<LeaveBalance>
+public class LeaveBalanceConfig : BaseEntityConfig<LeaveBalance>
 {
-    public void Configure(EntityTypeBuilder<LeaveBalance> b)
+    public override void Configure(EntityTypeBuilder<LeaveBalance> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeaveLedgerId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(e => e.LeaveLedger).WithMany().HasForeignKey(e => e.LeaveLedgerId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.Balance).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId }).IsUnique();
+        base.Configure(b);
+        b.Property(l => l.Balance).IsRequired();
+        b.Property(l => l.AsOf).IsRequired();
+        b.Property(l => l.EmployeeId).IsRequired();
+        b.Property(l => l.LeaveTypeId).IsRequired();
+        b.Property(l => l.LeaveLedgerId);
+        b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(l => l.LeaveLedger).WithMany().HasForeignKey(l => l.LeaveLedgerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(l => l.EmployeeId);
+        b.HasIndex(l => l.LeaveTypeId);
+        b.HasIndex(l => new { l.EmployeeId, l.LeaveTypeId }).IsUnique();
     }
 }
 
-public class LeaveEncashmentConf : IEntityTypeConfiguration<LeaveEncashment>
+public class LeaveEncashmentConfig : BaseEntityConfig<LeaveEncashment>
 {
-    public void Configure(EntityTypeBuilder<LeaveEncashment> b)
+    public override void Configure(EntityTypeBuilder<LeaveEncashment> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeavePolicyId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.DaysEncashed).HasPrecision(18, 2);
-        b.Property(e => e.RatePerDay).HasPrecision(18, 2);
-        b.Property(e => e.TotalAmount).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.Status });
+        base.Configure(b);
+        b.Property(l => l.DaysEncashed).IsRequired();
+        b.Property(l => l.RatePerDay).IsRequired();
+        b.Property(l => l.TotalAmount).IsRequired();
+        b.Property(l => l.Status).IsRequired().HasMaxLength(50);
+        b.Property(l => l.CurrentAppStep).IsRequired();
+        b.Property(l => l.EmployeeId).IsRequired();
+        b.Property(l => l.LeaveTypeId).IsRequired();
+        b.Property(l => l.LeavePolicyId);
+        b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(l => l.LeavePolicy).WithMany().HasForeignKey(l => l.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(l => l.EmployeeId);
+        b.HasIndex(l => l.LeaveTypeId);
+        b.HasIndex(l => l.LeavePolicyId);
     }
 }
 
-public class LeaveLedgerConf : IEntityTypeConfiguration<LeaveLedger>
+public class LeaveLedgerConfig : BaseEntityConfig<LeaveLedger>
 {
-    public void Configure(EntityTypeBuilder<LeaveLedger> b)
+    public override void Configure(EntityTypeBuilder<LeaveLedger> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.LeavePolicyId, x.ReferenceId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.Amount).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.LeaveTypeId, e.Date });
-        b.HasIndex(e => e.ReferenceId);
-        b.HasIndex(e => new { e.SourceType, e.Date });
+        base.Configure(b);
+        b.Property(l => l.Date).IsRequired();
+        b.Property(l => l.Amount).IsRequired();
+        b.Property(l => l.EntryType).IsRequired().HasMaxLength(50);
+        b.Property(l => l.SourceType).IsRequired().HasMaxLength(50);
+        b.Property(l => l.EmployeeId).IsRequired();
+        b.Property(l => l.LeaveTypeId).IsRequired();
+        b.Property(l => l.LeavePolicyId);
+        b.Property(l => l.ReferenceId);
+        b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(l => l.LeavePolicy).WithMany().HasForeignKey(l => l.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(l => l.EmployeeId);
+        b.HasIndex(l => l.LeaveTypeId);
+        b.HasIndex(l => new { l.EmployeeId, l.LeaveTypeId, l.Date }).IsUnique();
     }
 }
 
-public class LeavePolicyConf : IEntityTypeConfiguration<LeavePolicy>
+public class LeavePolicyConfigu : BaseEntityConfig<LeavePolicy>
 {
-    public void Configure(EntityTypeBuilder<LeavePolicy> b)
+    public override void Configure(EntityTypeBuilder<LeavePolicy> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Code).IsUnique();
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.LeaveTypeId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(e => e.Code).IsUnique();
-        b.HasIndex(e => e.Status);
+        base.Configure(b);
+        b.Property(l => l.Code).IsRequired().HasMaxLength(50);
+        b.Property(l => l.Name).IsRequired().HasMaxLength(150);
+        b.Property(l => l.AllowEncashment).IsRequired();
+        b.Property(l => l.RequiresAttachment).IsRequired();
+        b.Property(l => l.Status).IsRequired().HasMaxLength(20);
+        b.Property(l => l.LeaveTypeId).IsRequired();
+        b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(l => l.LeaveTypeId).HasFilter("\"IsDeleted\" = false");
+        b.HasIndex(l => l.Code).IsUnique();
+        b.HasIndex(l => l.Name).IsUnique();
     }
 }
 
-public class LeavePolicyConfigConf : IEntityTypeConfiguration<LeavePolicyConfig>
+public class LeavePolicyConfigConfigu : BaseEntityConfig<LeavePolicyConfig>
 {
-    public void Configure(EntityTypeBuilder<LeavePolicyConfig> b)
+    public override void Configure(EntityTypeBuilder<LeavePolicyConfig> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.FiscalYearId, x.LeavePolicyId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeavePolicy).WithMany().HasForeignKey(e => e.LeavePolicyId).OnDelete(DeleteBehavior.Cascade);
-        b.Property(e => e.AnnualEntitlement).HasPrecision(18, 2);
-        b.Property(e => e.AccrualRate).HasPrecision(18, 2);
-        b.Property(e => e.MaxDaysPerReq).HasPrecision(18, 2);
-        b.Property(e => e.MaxCarryOverDays).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.LeavePolicyId, e.FiscalYearId, e.IsActive });
+        base.Configure(b);
+        b.Property(l => l.AnnualEntitlement).IsRequired();
+        b.Property(l => l.AccrualFrequency).IsRequired().HasMaxLength(20);
+        b.Property(l => l.AccrualRate).IsRequired();
+        b.Property(l => l.MaxDaysPerReq).IsRequired();
+        b.Property(l => l.MaxCarryOverDays).IsRequired();
+        b.Property(l => l.MinServiceMonths).IsRequired();
+        b.Property(l => l.IsActive).IsRequired();
+        b.Property(l => l.FiscalYearId).IsRequired();
+        b.Property(l => l.LeavePolicyId).IsRequired();
+        b.HasOne(l => l.LeavePolicy).WithMany().HasForeignKey(l => l.LeavePolicyId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(l => l.FiscalYearId);
+        b.HasIndex(l => l.LeavePolicyId).IsUnique();
     }
 }
 
-public class LeaveRequestConf : IEntityTypeConfiguration<LeaveRequest>
+public class LeaveRequestConfig : BaseEntityConfig<LeaveRequest>
 {
-    public void Configure(EntityTypeBuilder<LeaveRequest> b)
+    public override void Configure(EntityTypeBuilder<LeaveRequest> b)
     {
-        //b.HasKey(x => x.Id);
-        //b.HasIndex(x => x.Id).IsUnique();
-        //b.HasIndex(x => new { x.EmployeeId, x.LeaveTypeId, x.ApprovedById, x.Status });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasKey(e => e.Id);
-        b.HasOne(e => e.LeaveType).WithMany().HasForeignKey(e => e.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(e => e.DaysRequested).HasPrecision(18, 2);
-        b.HasIndex(e => new { e.EmployeeId, e.StartDate, e.EndDate });
-        b.HasIndex(e => e.Status);
+        base.Configure(b);
+        b.Property(l => l.StartDate).IsRequired();
+        b.Property(l => l.EndDate).IsRequired();
+        b.Property(l => l.DaysRequested).IsRequired();
+        b.Property(l => l.IsHalfDay).IsRequired();
+        b.Property(l => l.Status).IsRequired().HasMaxLength(20);
+        b.Property(l => l.DateApproved);
+        b.Property(l => l.Comments).HasMaxLength(500);
+        b.Property(l => l.CurrentAppStep).IsRequired();
+        b.Property(l => l.EmployeeId).IsRequired();
+        b.Property(l => l.ApprovedById);
+        b.Property(l => l.LeaveTypeId).IsRequired();
+        b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(l => l.EmployeeId);
+        b.HasIndex(l => l.LeaveTypeId);
+        b.HasIndex(l => new { l.EmployeeId, l.LeaveTypeId, l.StartDate }).IsUnique();
     }
 }
 
-public class LeaveTypeConf : IEntityTypeConfiguration<LeaveType>
+public class LeaveTypeConfig : BaseEntityConfig<LeaveType>
 {
-    public void Configure(EntityTypeBuilder<LeaveType> b)
+    public override void Configure(EntityTypeBuilder<LeaveType> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Name).IsRequired().HasMaxLength(150);
-        b.HasIndex(x => x.Name).IsUnique();
-        b.HasIndex(x => new { x.LeaveCategory, x.IsActive });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        base.Configure(b);
+        b.Property(l => l.Name).IsRequired().HasMaxLength(150);
+        b.Property(l => l.LeaveCategory).IsRequired().HasMaxLength(50);
+        b.Property(l => l.RequiresApproval).IsRequired();
+        b.Property(l => l.AllowHalfDay).IsRequired();
+        b.Property(l => l.HolidaysAsLeave).IsRequired();
+        b.Property(l => l.IsActive).IsRequired();
+        b.HasIndex(l => l.Name).IsUnique();
+        b.HasIndex(l => l.LeaveCategory);
+        b.HasIndex(l => l.IsActive);
     }
 }
 
-public class PolicyAssignmentRuleConf : IEntityTypeConfiguration<PolicyAssignmentRule>
+public class PolicyAssRuleConfig : BaseEntityConfig<PolicyAssignmentRule>
 {
-    public void Configure(EntityTypeBuilder<PolicyAssignmentRule> b)
+    public override void Configure(EntityTypeBuilder<PolicyAssignmentRule> b)
     {
-        b.HasKey(x => x.Id);
-        b.HasIndex(x => x.Code).IsUnique();
-        b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => x.Priority);
-        b.HasIndex(x => new { x.LeavePolicyId, x.LeaveTypeId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        base.Configure(b);
+        b.Property(p => p.Code).IsRequired().HasMaxLength(50);
+        b.Property(p => p.Name).IsRequired().HasMaxLength(150);
+        b.Property(p => p.Priority).IsRequired().HasMaxLength(20);
+        b.Property(p => p.IsActive).IsRequired();
+        b.Property(p => p.EffectiveFrom).IsRequired();
+        b.Property(p => p.EffectiveTo);
+        b.Property(p => p.LeavePolicyId).IsRequired();
+        b.Property(p => p.LeaveTypeId).IsRequired();
+        b.HasOne(p => p.LeaveType).WithMany().HasForeignKey(p => p.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(p => p.LeavePolicy).WithMany().HasForeignKey(p => p.LeavePolicyId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(p => p.LeavePolicyId);
+        b.HasIndex(p => p.LeaveTypeId);
+        b.HasIndex(p => new { p.LeaveTypeId, p.LeavePolicyId, p.Code }).IsUnique();
     }
 }
 
-public class PolicyRuleConditionConf : IEntityTypeConfiguration<PolicyRuleCondition>
+public class PolicyRuleCondConfi : BaseEntityConfig<PolicyRuleCondition>
 {
-    public void Configure(EntityTypeBuilder<PolicyRuleCondition> b)
+    public override void Configure(EntityTypeBuilder<PolicyRuleCondition> b)
     {
-        b.HasKey(x => x.Id);
-        b.HasIndex(x => x.Id).IsUnique();
-        b.HasIndex(x => new { x.PolicyAssignmentRuleId });
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
+        base.Configure(b);
+        b.Property(p => p.Field).IsRequired().HasMaxLength(50);
+        b.Property(p => p.Operator).IsRequired().HasMaxLength(20);
+        b.Property(p => p.Value).IsRequired().HasMaxLength(100);
+        b.Property(p => p.PolicyAssignmentRuleId).IsRequired();
+        b.HasOne(p => p.PolicyAssignmentRule).WithMany().HasForeignKey(p => p.PolicyAssignmentRuleId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(p => p.PolicyAssignmentRuleId);
     }
 }

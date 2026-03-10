@@ -1,11 +1,17 @@
 ﻿using Leave.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Leave.Utility.Persistence;
 
 public class HrmLeaveDbContext : DbContext
 {
-    public HrmLeaveDbContext(DbContextOptions<HrmLeaveDbContext> options) : base(options) { }
+    public HrmLeaveDbContext(DbContextOptions<HrmLeaveDbContext> options) : base(options)
+    {
+        ChangeTracker.AutoDetectChangesEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        ChangeTracker.LazyLoadingEnabled = false;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -13,9 +19,45 @@ public class HrmLeaveDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+            foreach (var index in indexes)
+            {
+                index.SetFilter("\"IsDeleted\" = false");
+            }
+        }
+
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrmLeaveDbContext).Assembly);
     }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.DateAdd = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.DateMod = now;
+                    break;
+            }
+        }
+
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new DBConcurrencyException("The record was modified by another transaction.", ex);
+        }
+    }
+
 
     public DbSet<AccrualHistory> AccrualHistory { get; set; }
     public DbSet<Attachment> Attachment { get; set; }

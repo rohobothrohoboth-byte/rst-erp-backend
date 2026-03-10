@@ -23,7 +23,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> BranchCompList()
     {
-        var res = await med.Send(new BranchCompListQry());
+        var res = await med.Send(new BraCompListQry());
         return Ok(res);
     }
 
@@ -35,7 +35,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBranchCompList(Guid id)
     {
-        var res = await med.Send(new BranchCompByIdQry { Id = id });
+        var res = await med.Send(new BraCompByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BRANCH with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
@@ -44,7 +44,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranchName()
     {
-        var res = await med.Send(new BranchAllNameQry());
+        var res = await med.Send(new BraAllNameQry());
         return Ok(res);
     }
 
@@ -53,7 +53,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBranchName(Guid id)
     {
-        var res = await med.Send(new BranchNameByIdQry { Id = id });
+        var res = await med.Send(new BraNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"BRANCH with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
@@ -109,7 +109,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllFiscYearName()
     {
-        var res = await med.Send(new FiscalYearAllNameQry());
+        var res = await med.Send(new FiscYearAllNameQry());
         return Ok(res);
     }
 
@@ -118,7 +118,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFiscYearName(Guid id)
     {
-        var res = await med.Send(new FiscalYearNameByIdQry { Id = id });
+        var res = await med.Send(new FiscYearNameByIdQry { Id = id });
         if (res == null) { throw new DomainException($"FISCAL YEAR with id [{id}] NOT FOUND."); }
         return Ok(res);
     }
@@ -127,7 +127,7 @@ public class NameListController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ActiveFiscYear()
     {
-        var res = await med.Send(new FiscalYearActiveQry());
+        var res = await med.Send(new FiscYearActiveQry());
         return Ok(res);
     }
 

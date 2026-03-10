@@ -3,34 +3,35 @@ using Helpers;
 using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
 using Leave.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Leave.App.Services;
 
 public interface ILeaveValService
 {
-    Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay);
+    Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay, CancellationToken ct);
 }
 
 public class LeaveValService : ILeaveValService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly ICorModClient _corModClient;
     private readonly IHrmProfileClient _hrmProfileClient;
     private readonly IHolidayService _hdService;
 
-    public LeaveValService(IUnitOfWork unitOfWork, ICorModClient corModClient, IHrmProfileClient hrmProfileClient, IHolidayService hdService)
+    public LeaveValService(IUnitOfWork uow, ICorModClient corModClient, IHrmProfileClient hrmProfileClient, IHolidayService hdService)
     {
-        _unitOfWork = unitOfWork;
+        _uow = uow;
         _corModClient = corModClient;
         _hrmProfileClient = hrmProfileClient;
         _hdService = hdService;
     }
 
-    public async Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay)
+    public async Task<LeaveReqValResult> ValLeaveRequest(Guid empId, Guid leaveTypeId, DateTime startDate, DateTime endDate, bool isHalfDay, CancellationToken ct)
     {
         var result = new LeaveReqValResult();
         var workingDays = await _hdService.CalEmpLeaveWorkingDays(empId, startDate, endDate, isHalfDay);
-        var empLeavePolicy = await GetActiveEmpLeavePolicy(empId, leaveTypeId, startDate);
+        var empLeavePolicy = GetActiveEmpLeavePolicy(empId, leaveTypeId, startDate);
 
         if (empLeavePolicy == null)
         {
@@ -39,19 +40,18 @@ public class LeaveValService : ILeaveValService
         }
 
         await ValEntitlementBalance(empId, leaveTypeId, workingDays, empLeavePolicy, result);
-        await ValidateOverlap(empId, startDate, endDate, result);
-        await ValProbationEligibility(empId, empLeavePolicy, result);
-        await ValPolicyConstraints(empLeavePolicy, workingDays, startDate, endDate, isHalfDay, result);
+        ValidateOverlap(empId, startDate, endDate, result);
+        await ValProbationEligibility(empId, empLeavePolicy, result, ct);
+        await ValPolicyConstraints(empLeavePolicy, workingDays, startDate, endDate, isHalfDay, result, ct);
         //await ProvideHolidayInfo(startDate, endDate, result);
         result.CalculatedWorkingDays = workingDays;
 
         return result;
     }
 
-    private async Task<EmpLeavePolicy?> GetActiveEmpLeavePolicy(Guid empId, Guid leaveTypeId, DateTime requestDate)
+    private EmpLeavePolicy? GetActiveEmpLeavePolicy(Guid empId, Guid leaveTypeId, DateTime requestDate)
     {
-        //var ePolicy = await _unitOfWork.Repository<EmpLeavePolicy>().GetFoD(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.IsActive(requestDate));
-        var ePolicyL = (await _unitOfWork.Repository<EmpLeavePolicy>().Find(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.EffectiveFrom <= requestDate)).ToList();
+        var ePolicyL = _uow.Set<EmpLeavePolicy>().Where(elp => elp.EmployeeId == empId && elp.LeaveTypeId == leaveTypeId && elp.EffectiveFrom <= requestDate).ToList();
         if (ePolicyL.Count <= 0) { return null; }
         var ePolicy = ePolicyL.FirstOrDefault(e => e.IsActive(requestDate));
         return ePolicy;
@@ -59,10 +59,8 @@ public class LeaveValService : ILeaveValService
 
     private async Task ValEntitlementBalance(Guid empId, Guid leaveTypeId, double daysRequested, EmpLeavePolicy empLeavePolicy, LeaveReqValResult result)
     {
-        // Get total days already approved for this leave type in current period
         var approvedDays = await GetAppLeaveDays(empId, leaveTypeId);
 
-        // Calculate remaining balance
         var assignedEntitlement = empLeavePolicy.AssignedEntitlement;
         var remainingBalance = assignedEntitlement - approvedDays;
 
@@ -71,7 +69,6 @@ public class LeaveValService : ILeaveValService
             result.AddError($"Insufficient leave balance. Requested: {daysRequested} working days, " + $"Available: {remainingBalance} days (Assigned: {assignedEntitlement}, " + $"Used: {approvedDays})");
         }
 
-        // Store balance information for reference
         result.LeaveBalance = new LeaveBalanceInfo
         {
             AssignedEntitlement = assignedEntitlement,
@@ -89,17 +86,17 @@ public class LeaveValService : ILeaveValService
         var cStart = DateTime.Parse(fy.StartDate);
         var cEnd = DateTime.Parse(fy.EndDate);
 
-        var d = (await _unitOfWork.Repository<LeaveRequest>().Find(lr => lr.EmployeeId == empId && lr.LeaveTypeId == leaveTypeId && lr.Status == stat && lr.StartDate >= cStart && lr.EndDate <= cEnd)).ToList().Sum(lr => lr.DaysRequested);
+        var d = _uow.Set<LeaveRequest>().Where(lr => lr.EmployeeId == empId && lr.LeaveTypeId == leaveTypeId && lr.Status == stat && lr.StartDate >= cStart && lr.EndDate <= cEnd).ToList().Sum(lr => lr.DaysRequested);
 
         return d;
     }
 
-    private async Task ValidateOverlap(Guid empId, DateTime startDate, DateTime endDate, LeaveReqValResult result)
+    private void ValidateOverlap(Guid empId, DateTime startDate, DateTime endDate, LeaveReqValResult result)
     {
         var stat = BoolToStr.EnumToString(Status.Approved);
         var stat2 = BoolToStr.EnumToString(Status.Pending);
-        var lvLedger = (await _unitOfWork.Repository<LeaveRequest>().Find(lr => lr.EmployeeId == empId && (lr.Status == stat || lr.Status == stat2)
-                && ((lr.StartDate >= startDate && lr.StartDate <= endDate) || (lr.EndDate >= startDate && lr.EndDate <= endDate) || (lr.StartDate <= startDate && lr.EndDate >= endDate)))).Select(lr => new
+        var lvLedger = _uow.Set<LeaveRequest>().Where(lr => lr.EmployeeId == empId && (lr.Status == stat || lr.Status == stat2)
+                && ((lr.StartDate >= startDate && lr.StartDate <= endDate) || (lr.EndDate >= startDate && lr.EndDate <= endDate) || (lr.StartDate <= startDate && lr.EndDate >= endDate))).Select(lr => new
                 {
                     lr.Id,
                     lr.StartDate,
@@ -115,16 +112,16 @@ public class LeaveValService : ILeaveValService
         }
     }
 
-    private async Task ValProbationEligibility(Guid empId, EmpLeavePolicy empLeavePolicy, LeaveReqValResult result)
+    private async Task ValProbationEligibility(Guid empId, EmpLeavePolicy empLeavePolicy, LeaveReqValResult result, CancellationToken ct)
     {
-        var policyConfig = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(lpc => lpc.LeavePolicyId == empLeavePolicy.LeavePolicyId && lpc.IsActive);
+        var policyConfig = await _uow.Set<LeavePolicyConfig>().FirstOrDefaultAsync(lpc => lpc.LeavePolicyId == empLeavePolicy.LeavePolicyId && lpc.IsActive, ct);
         if (policyConfig == null)
         {
             result.AddWarning("No active policy configuration found.");
             return;
         }
 
-        var employee = await _hrmProfileClient.GetEmpPolicy(empId.ToString());
+        var employee = await _hrmProfileClient.GetEmpPolicy(empId.ToString(), ct);
 
         if (employee.SerYear == null)
         {
@@ -147,11 +144,11 @@ public class LeaveValService : ILeaveValService
         };
     }
 
-    private async Task ValPolicyConstraints(EmpLeavePolicy empLvPolicy, double daysReq, DateTime startDate, DateTime endDate, bool isHalfDay, LeaveReqValResult result)
+    private async Task ValPolicyConstraints(EmpLeavePolicy empLvPolicy, double daysReq, DateTime startDate, DateTime endDate, bool isHalfDay, LeaveReqValResult result, CancellationToken ct)
     {
         var lPolicyId = empLvPolicy.LeavePolicyId;
-        var lPolicy = await _unitOfWork.Repository<LeavePolicy>().GetById(lPolicyId);
-        var pConfig = await _unitOfWork.Repository<LeavePolicyConfig>().GetFoD(lpc => lpc.LeavePolicyId == lPolicyId && lpc.IsActive);
+        var lPolicy = await _uow.Set<LeavePolicy>().FirstOrDefaultAsync(x => x.Id == lPolicyId, ct);
+        var pConfig = await _uow.Set<LeavePolicyConfig>().FirstOrDefaultAsync(lpc => lpc.LeavePolicyId == lPolicyId && lpc.IsActive, ct);
 
         if (lPolicy == null)
         {
