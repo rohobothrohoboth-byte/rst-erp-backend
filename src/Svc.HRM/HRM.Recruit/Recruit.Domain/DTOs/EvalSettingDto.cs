@@ -79,11 +79,10 @@ public class EvalTypeModDto
 
 public class JobEvalFlowListDto : BaseDto
 {
-    public Guid EvalFlowId { get; set; }
+    public Guid EvaluationFlowId { get; set; } // EvaluationFlow
     public Guid JobPostingId { get; set; } // JobPosting
     public string FlowName { get; set; } = default!;
     public string JobPostNum { get; set; } = default!;
-    public int StepsNum { get; set; }
 }
 
 public class JobEvalFlowAddDto

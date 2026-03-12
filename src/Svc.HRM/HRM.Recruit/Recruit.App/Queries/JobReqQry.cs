@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using Helpers;
 using MediatR;
 using Recruit.App.Interfaces;
@@ -10,90 +11,84 @@ namespace Recruit.App.Queries;
 public class JobReqAllQry : IRequest<List<JobReqListDto>> { public Guid Id { get; set; } }
 public class JobReqByIdQry : IRequest<JobReqListDto?> { public Guid Id { get; set; } }
 
+
+
 public class JobReqAllHandler : IRequestHandler<JobReqAllQry, List<JobReqListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHrmmClient _corHrmmClient;
-    public JobReqAllHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHrmmClient)
+    private readonly IDapperHelper _dapper;
+    private readonly ICorHrmmClient _corHrmm;
+    public JobReqAllHandler(IDapperHelper dapper, ICorHrmmClient corHrmm)
     {
-        _unitOfWork = unitOfWork;
-        _corHrmmClient = corHrmmClient;
+        _dapper = dapper;
+        _corHrmm = corHrmm;
     }
-    public async Task<List<JobReqListDto>> Handle(JobReqAllQry request, CancellationToken cancellationToken)
+    public async Task<List<JobReqListDto>> Handle(JobReqAllQry request, CancellationToken ct)
     {
-        var dbData = await _unitOfWork.Repository<JobRequisition>().Find(e => e.WorkforcePlanId == request.Id);
-        var dataL = new List<JobReqListDto>();
-        var posL = await _corHrmmClient.GetListPosition(cancellationToken);
-        var jgsL = await _corHrmmClient.GetListJgStep(cancellationToken);
+        var jgsTask = _corHrmm.GetListJgStep(ct);
+        var posTask = _corHrmm.GetListPosition(ct);
+        await Task.WhenAll(jgsTask, posTask);
+        var jgsDict = jgsTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
 
-        foreach (var data in dbData)
+        const string e = "e";
+        var qb = new QueryBuilder()
+            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<JobRequisition>(e)
+            .Where<JobRequisition>(e, x => x.WorkforcePlanId == request.Id)
+            .OrderBy<JobRequisition>(e, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<JobReqListDto>(ct);
+
+        foreach (var data in list)
         {
-            var jgsV = posL.Res.FirstOrDefault(r => r.Id == data.JgStepId.ToString());
-            var jgs = "NOT AVAILABLE";
-            if (jgsV != null) { jgs = jgsV.Name; }
+            jgsDict.TryGetValue(data.JgStepId, out var jgs);
+            posDict.TryGetValue(data.PositionId, out var pos);
 
-            var posV = posL.Res.FirstOrDefault(r => r.Id == data.PositionId.ToString());
-            var pos = "NOT AVAILABLE";
-            if (posV != null) { pos = posV.Name; }
-            var c = new JobReqListDto
-            {
-                Id = data.Id,
-                JobDecId = data.JobDecId,
-                Status = data.Status,
-                StartDate = data.StartDate,
-                ReqNumber = data.ReqNumber,
-                ReqReason = data.ReqReason,
-                ReqPositions = data.ReqQuantity,
-                BudgetCode = data.BudgetCode,
-                StatusStr = ((ReqStatus)Enum.Parse(typeof(ReqStatus), data.Status)).ToDisplayName(),
-                Position = pos,
-                JgStep = jgs,
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = Convert.ToBase64String(data.RowVersion)
-            };
-            dataL.Add(c);
+            data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
+            data.Position = pos?.Name ?? "";
+            data.JgStep = jgs?.Name ?? "";
+            data.RowVersion = data.xmin.ToString();
         }
 
-        return dataL;
+        return list;
     }
 }
 
 public class JobReqByIdHandler : IRequestHandler<JobReqByIdQry, JobReqListDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICorHrmmClient _corHrmmClient;
-    public JobReqByIdHandler(IUnitOfWork unitOfWork, ICorHrmmClient corHrmmClient)
+    private readonly IDapperHelper _dapper;
+    private readonly ICorHrmmClient _corHrmm;
+    public JobReqByIdHandler(IDapperHelper dapper, ICorHrmmClient corHrmm)
     {
-        _unitOfWork = unitOfWork;
-        _corHrmmClient = corHrmmClient;
+        _dapper = dapper;
+        _corHrmm = corHrmm;
     }
-    public async Task<JobReqListDto?> Handle(JobReqByIdQry request, CancellationToken cancellationToken)
+    public async Task<JobReqListDto?> Handle(JobReqByIdQry request, CancellationToken ct)
     {
-        var data = await _unitOfWork.Repository<JobRequisition>().GetById(request.Id);
-        if (data == null) { return null; }
-        var pos = await _corHrmmClient.GetPosition(data.PositionId.ToString(), cancellationToken);
-        var jgs = await _corHrmmClient.GetJgStep(data.JgStepId.ToString(), cancellationToken);
+        const string e = "e";
+        var qb = new QueryBuilder()
+            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .From<JobRequisition>(e)
+            .Where<JobRequisition>(e, x => x.Id == request.Id)
+            .Limit(1);
 
-        var c = new JobReqListDto
-        {
-            Id = data.Id,
-            JobDecId = data.JobDecId,
-            Status = data.Status,
-            StartDate = data.StartDate,
-            ReqNumber = data.ReqNumber,
-            ReqReason = data.ReqReason,
-            ReqPositions = data.ReqQuantity,
-            BudgetCode = data.BudgetCode,
-            StatusStr = ((ReqStatus)Enum.Parse(typeof(ReqStatus), data.Status)).ToDisplayName(),
-            Position = pos.Res.Name ?? "NOT AVAILABLE",
-            JgStep = jgs.Res.Name ?? "NOT AVAILABLE",
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = Convert.ToBase64String(data.RowVersion)
-        };
-        return c;
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<JobReqListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var jgsTask = _corHrmm.GetJgStep(data.JgStepId.ToString(), ct);
+        var posTask = _corHrmm.GetPosition(data.PositionId.ToString(), ct);
+        await Task.WhenAll(jgsTask, posTask);
+        var jgs = jgsTask.Result.Res;
+        var pos = posTask.Result.Res;
+
+        data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
+        data.Position = pos?.Name ?? "";
+        data.JgStep = jgs?.Name ?? "";
+        data.RowVersion = data.xmin.ToString();
+
+        return data;
     }
 }

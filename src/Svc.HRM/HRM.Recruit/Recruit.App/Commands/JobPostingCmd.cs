@@ -1,6 +1,6 @@
 ﻿using Helpers;
 using MediatR;
-using Recruit.App.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
@@ -20,38 +20,36 @@ public class JobPostingDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class JobPostingAddHandler : IRequestHandler<JobPostingAddCmd, JobPostingListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostingAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostingAddHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostingAddCmd request, CancellationToken cancellationToken)
+    public async Task<JobPostingListDto> Handle(JobPostingAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var code = await new CodeGen(_unitOfWork).GetPostNumber();
             var data = new JobPosting
             {
-                PostNumber = code,
                 Status = BoolToStr.EnumToString(PostingStatus.Pending),
                 PostType = request.AddDto.PostType,
                 PublishedDate = DateTime.UtcNow,
                 DeadlineDate = request.AddDto.DeadlineDate,
                 JobReqId = request.AddDto.Id,
             };
-            await _unitOfWork.Repository<JobPosting>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JobPostingByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -59,48 +57,46 @@ public class JobPostingAddHandler : IRequestHandler<JobPostingAddCmd, JobPosting
 
 public class JobPostingAddAllHandler : IRequestHandler<JobPostingAddAllCmd, JobPostingListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostingAddAllHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostingAddAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostingAddAllCmd request, CancellationToken cancellationToken)
+    public async Task<JobPostingListDto> Handle(JobPostingAddAllCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var stat = BoolToStr.EnumToString(ReqStatus.Approved);
-            var jReqL = (await _unitOfWork.Repository<JobRequisition>().Find(r => r.WorkforcePlanId == request.AddDto.Id && r.Status == stat)).ToList();
+            var jReqL = _uow.Set<JobRequisition>().Where(r => r.WorkforcePlanId == request.AddDto.Id && r.Status == stat).ToList();
             var lId = new Guid();
             if (jReqL.Count > 0)
             {
                 var statP = BoolToStr.EnumToString(PostingStatus.Pending);
                 foreach (var jReq in jReqL)
                 {
-                    var code = await new CodeGen(_unitOfWork).GetPostNumber();
                     var data = new JobPosting
                     {
-                        PostNumber = code,
                         Status = statP,
                         PostType = request.AddDto.PostType,
                         PublishedDate = DateTime.UtcNow,
                         DeadlineDate = request.AddDto.DeadlineDate,
                         JobReqId = jReq.Id,
                     };
-                    await _unitOfWork.Repository<JobPosting>().Add(data);
+                    await _uow.Add(data, ct);
                 }
             }
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
 
             var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = lId }, cancellationToken);
+            var response = await _med.Send(new JobPostingByIdQry { Id = lId }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -108,19 +104,19 @@ public class JobPostingAddAllHandler : IRequestHandler<JobPostingAddAllCmd, JobP
 
 public class JobPostingModHandler : IRequestHandler<JobPostingModCmd, JobPostingListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostingModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostingModHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostingModCmd request, CancellationToken cancellationToken)
+    public async Task<JobPostingListDto> Handle(JobPostingModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<JobPosting>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"JOB POSTING with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"JOB POSTING with Id {request.ModDto.Id} NOT FOUND."); }
+
             if (request.ModDto.Status == BoolToStr.EnumToString(PostStatus.Pending))
             {
                 oldData.Status = BoolToStr.EnumToString(PostingStatus.Pending);
@@ -136,18 +132,19 @@ public class JobPostingModHandler : IRequestHandler<JobPostingModCmd, JobPosting
 
             oldData.PostType = request.ModDto.PostType;
             oldData.DeadlineDate = request.ModDto.DeadlineDate;
-            var data = await _unitOfWork.Repository<JobPosting>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JobPostingByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -155,24 +152,24 @@ public class JobPostingModHandler : IRequestHandler<JobPostingModCmd, JobPosting
 
 public class JobPostPublishHandler : IRequestHandler<JobPostPublishCmd, JobPostingListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostPublishHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostPublishHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostPublishCmd request, CancellationToken cancellationToken)
+    public async Task<JobPostingListDto> Handle(JobPostPublishCmd request, CancellationToken ct)
     {
-        var jPost = await _unitOfWork.Repository<JobPosting>().GetById(request.Rvw.Id);
-        if (jPost == null) { throw new DomainException($"JOB POSTING with Id {request.Rvw.Id} NOT FOUND."); }
-        var pStat = BoolToStr.EnumToString(PostingStatus.Pending);
-        if (jPost.Status != pStat) { throw new DomainException($"Only PENDING Job Posting can be published!"); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var jPost = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.Rvw.Id, ct);
+            if (jPost == null) { throw new DomainException($"JOB POSTING with Id {request.Rvw.Id} NOT FOUND."); }
+            var pStat = BoolToStr.EnumToString(PostingStatus.Pending);
+            if (jPost.Status != pStat) { throw new DomainException($"Only PENDING Job Posting can be published!"); }
+
             jPost.Status = BoolToStr.EnumToString(PostingStatus.Published);
             jPost.PublishedDate = DateTime.UtcNow;
-            await _unitOfWork.Repository<JobPosting>().Update(jPost);
+            await _uow.Update(jPost);
 
             var data = new JobPostReview
             {
@@ -181,18 +178,18 @@ public class JobPostPublishHandler : IRequestHandler<JobPostPublishCmd, JobPosti
                 ReviewById = request.Rvw.ReviewById,
                 Status = BoolToStr.EnumToString(PostingStatus.Published)
             };
-            await _unitOfWork.Repository<JobPostReview>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = request.Rvw.Id }, cancellationToken);
+            var response = await _med.Send(new JobPostingByIdQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -200,16 +197,16 @@ public class JobPostPublishHandler : IRequestHandler<JobPostPublishCmd, JobPosti
 
 public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, List<JobPostingListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostPublishAllHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostPublishAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    private async Task UpdatePosting(Guid id, PostPublish request)
+    private async Task UpdatePosting(Guid id, PostPublish request, CancellationToken ct)
     {
         var dataL = new List<JobPosting>();
         var pStat = BoolToStr.EnumToString(PostingStatus.Pending);
-        var dbData = (await _unitOfWork.Repository<JobPosting>().Find(p => p.JobReqId == id && p.Status == pStat)).ToList();
+        var dbData = _uow.Set<JobPosting>().Where(p => p.JobReqId == id && p.Status == pStat).ToList();
         if (dbData.Count > 0)
         {
             var stat = BoolToStr.EnumToString(PostingStatus.Published);
@@ -217,7 +214,7 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
             {
                 data.Status = stat;
                 data.PublishedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<JobPosting>().Update(data);
+                await _uow.Update(data);
 
                 var dataR = new JobPostReview
                 {
@@ -226,35 +223,35 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
                     JobPostingId = data.Id,
                     Status = stat
                 };
-                await _unitOfWork.Repository<JobPostReview>().Add(dataR);
+                await _uow.Add(dataR, ct);
             }
         }
     }
 
-    public async Task<List<JobPostingListDto>> Handle(JobPostPublishAllCmd request, CancellationToken cancellationToken)
+    public async Task<List<JobPostingListDto>> Handle(JobPostPublishAllCmd request, CancellationToken ct)
     {
-        var stat = BoolToStr.EnumToString(ReqStatus.Approved);
-        var jReqL = (await _unitOfWork.Repository<JobRequisition>().Find(r => r.WorkforcePlanId == request.Rvw.Id && r.Status == stat)).ToList();
-        if (jReqL.Count <= 0) { throw new DomainException($"JOB POST for Workforce Plan with Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var stat = BoolToStr.EnumToString(ReqStatus.Approved);
+            var jReqL = _uow.Set<JobRequisition>().Where(r => r.WorkforcePlanId == request.Rvw.Id && r.Status == stat).ToList();
+            if (jReqL.Count <= 0) { throw new DomainException($"JOB POST for Workforce Plan with Id {request.Rvw.Id} NOT FOUND."); }
+
             foreach (var jReq in jReqL)
             {
-                await UpdatePosting(jReq.Id, request.Rvw);
+                await UpdatePosting(jReq.Id, request.Rvw, ct);
             }
 
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
             var res = new List<JobPostingListDto>();
-            var response = await _med.Send(new JobPostingByWfpIdQry { Id = request.Rvw.Id }, cancellationToken);
+            var response = await _med.Send(new JobPostingByWfpIdQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -262,36 +259,36 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
 
 public class JobPostingCloseHandler : IRequestHandler<JobPostingCloseCmd, JobPostingListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostingCloseHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobPostingCloseHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostingCloseCmd request, CancellationToken cancellationToken)
+    public async Task<JobPostingListDto> Handle(JobPostingCloseCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<JobPosting>().GetById(request.Id);
-        if (oldData == null) { throw new DomainException($"JOB POSTING with Id {request.Id} NOT FOUND."); }
-        var pStat1 = BoolToStr.EnumToString(PostingStatus.Published);
-        var pStat2 = BoolToStr.EnumToString(PostingStatus.OnHold);
-        if (oldData.Status != pStat1 || oldData.Status != pStat2) { throw new DomainException($"Only PUBLISHED or ON_HOLD Job Postings can be closed!"); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
-        {            
+        {
+            var oldData = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+            if (oldData == null) { throw new DomainException($"JOB POSTING with Id {request.Id} NOT FOUND."); }
+            var pStat1 = BoolToStr.EnumToString(PostingStatus.Published);
+            var pStat2 = BoolToStr.EnumToString(PostingStatus.OnHold);
+            if (oldData.Status != pStat1 || oldData.Status != pStat2) { throw new DomainException($"Only PUBLISHED or ON_HOLD Job Postings can be closed!"); }
+
             oldData.Status = BoolToStr.EnumToString(PostingStatus.Closed);
             oldData.ClosedDate = DateTime.UtcNow;
-            var data = await _unitOfWork.Repository<JobPosting>().Update(oldData);
-            await _unitOfWork.Commit();
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new JobPostingByIdQry { Id = request.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -299,22 +296,22 @@ public class JobPostingCloseHandler : IRequestHandler<JobPostingCloseCmd, JobPos
 
 public class JobPostingDelHandler : IRequestHandler<JobPostingDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public JobPostingDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public JobPostingDelHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(JobPostingDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(JobPostingDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<JobPosting>().GetById(request.Id);
+            var data = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"JOB POSTING with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<JobPosting>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

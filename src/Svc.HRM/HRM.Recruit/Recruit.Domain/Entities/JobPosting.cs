@@ -2,7 +2,7 @@
 
 public class JobPosting : BaseEntity
 {
-    public string PostNumber { get; set; } = default!;
+    public string PostNumber { get; private set;} = default!;
     public string Status { get; set; } = default!; // enum.PostingStatus(0/1)
     public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
     public DateTime PublishedDate { get; set; } = DateTime.UtcNow;

@@ -1,5 +1,6 @@
 ﻿using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
@@ -15,19 +16,19 @@ public class JobReqReviewAllCmd : IRequest<List<JobReqListDto>> { public ReviewA
 
 public class WoFoPlReviewHandler : IRequestHandler<WoFoPlReviewCmd, WorkforcePlanListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public WoFoPlReviewHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public WoFoPlReviewHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<WorkforcePlanListDto> Handle(WoFoPlReviewCmd request, CancellationToken cancellationToken)
+    public async Task<WorkforcePlanListDto> Handle(WoFoPlReviewCmd request, CancellationToken ct)
     {
-        var wfp = await _unitOfWork.Repository<WorkforcePlan>().GetById(request.Rvw.Id);
-        if (wfp == null) { throw new DomainException($"WORKFORCE PLAN with Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var wfp = await _uow.Set<WorkforcePlan>().FirstOrDefaultAsync(x => x.Id == request.Rvw.Id, ct);
+            if (wfp == null) { throw new DomainException($"WORKFORCE PLAN with Id {request.Rvw.Id} NOT FOUND."); }
+
             var stat = BoolToStr.EnumToString(ReqStatus.Rejected);
             if (request.Rvw.Status == BoolToStr.EnumToString(ReviewStat.App))
             {
@@ -40,7 +41,7 @@ public class WoFoPlReviewHandler : IRequestHandler<WoFoPlReviewCmd, WorkforcePla
                 wfp.Status = stat;
             }
             wfp.Status = stat;
-            await _unitOfWork.Repository<WorkforcePlan>().Update(wfp);
+            await _uow.Update(wfp);
 
             var data = new WorkforcePlanReview
             {
@@ -51,18 +52,18 @@ public class WoFoPlReviewHandler : IRequestHandler<WoFoPlReviewCmd, WorkforcePla
                 ReviewById = request.Rvw.ReviewById,
                 Status = stat
             };
-            await _unitOfWork.Repository<WorkforcePlanReview>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new WorkforcePlanListDto();
-            var response = await _med.Send(new WorkforcePlanByIdQry { Id = request.Rvw.Id }, cancellationToken);
+            var response = await _med.Send(new WorkforcePlanByIdQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -70,19 +71,19 @@ public class WoFoPlReviewHandler : IRequestHandler<WoFoPlReviewCmd, WorkforcePla
 
 public class JobReqReviewHandler : IRequestHandler<JobReqReviewCmd, JobReqListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobReqReviewHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobReqReviewHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobReqListDto> Handle(JobReqReviewCmd request, CancellationToken cancellationToken)
+    public async Task<JobReqListDto> Handle(JobReqReviewCmd request, CancellationToken ct)
     {
-        var jReq = await _unitOfWork.Repository<JobRequisition>().GetById(request.Rvw.Id);
-        if (jReq == null) { throw new DomainException($"JOB REQUISITION with Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var jReq = await _uow.Set<JobRequisition>().FirstOrDefaultAsync(x => x.Id == request.Rvw.Id, ct);
+            if (jReq == null) { throw new DomainException($"JOB REQUISITION with Id {request.Rvw.Id} NOT FOUND."); }
+
             var stat = BoolToStr.EnumToString(ReqStatus.Rejected);
             if (request.Rvw.Status == BoolToStr.EnumToString(ReviewStat.App))
             {
@@ -95,7 +96,7 @@ public class JobReqReviewHandler : IRequestHandler<JobReqReviewCmd, JobReqListDt
                 jReq.Status = stat;
             }
             jReq.Status = stat;
-            await _unitOfWork.Repository<JobRequisition>().Update(jReq);
+            await _uow.Update(jReq);
 
             var data = new JobReqReview
             {
@@ -106,18 +107,18 @@ public class JobReqReviewHandler : IRequestHandler<JobReqReviewCmd, JobReqListDt
                 ReviewById = request.Rvw.ReviewById,
                 Status = stat
             };
-            await _unitOfWork.Repository<JobReqReview>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new JobReqListDto();
-            var response = await _med.Send(new JobReqByIdQry { Id = request.Rvw.Id }, cancellationToken);
+            var response = await _med.Send(new JobReqByIdQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -125,19 +126,19 @@ public class JobReqReviewHandler : IRequestHandler<JobReqReviewCmd, JobReqListDt
 
 public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<JobReqListDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobReqReviewAllHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public JobReqReviewAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<List<JobReqListDto>> Handle(JobReqReviewAllCmd request, CancellationToken cancellationToken)
+    public async Task<List<JobReqListDto>> Handle(JobReqReviewAllCmd request, CancellationToken ct)
     {
-        var jReqL = (await _unitOfWork.Repository<JobRequisition>().Find(r => r.WorkforcePlanId == request.Rvw.Id)).ToList();
-        if (jReqL.Count <= 0) { throw new DomainException($"JOB REQUISITIONS with Workforce Plan Id {request.Rvw.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var jReqL = _uow.Set<JobRequisition>().Where(r => r.WorkforcePlanId == request.Rvw.Id).ToList();
+            if (jReqL.Count <= 0) { throw new DomainException($"JOB REQUISITIONS with Workforce Plan Id {request.Rvw.Id} NOT FOUND."); }
+
             var stat = BoolToStr.EnumToString(ReqStatus.Rejected);
             foreach (var jReq in jReqL)
             {
@@ -152,7 +153,7 @@ public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<J
                     jReq.Status = stat;
                 }
                 jReq.Status = stat;
-                await _unitOfWork.Repository<JobRequisition>().Update(jReq);
+                await _uow.Update(jReq);
 
                 var data = new JobReqReview
                 {
@@ -163,19 +164,19 @@ public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<J
                     ReviewById = request.Rvw.ReviewById,
                     Status = stat
                 };
-                await _unitOfWork.Repository<JobReqReview>().Add(data);
+                await _uow.Add(data, ct);
             }
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
 
             var res = new List<JobReqListDto>();
-            var response = await _med.Send(new JobReqAllQry { Id = request.Rvw.Id }, cancellationToken);
+            var response = await _med.Send(new JobReqAllQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

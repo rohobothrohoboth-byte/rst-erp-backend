@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
@@ -62,19 +63,33 @@ public sealed class QueryBuilder
     private readonly List<string> _where = new();
     private readonly List<string> _group = new();
     private readonly List<string> _order = new();
-
     private readonly DynamicParameters _params = new();
 
     private string? _from;
-
     private int _paramIndex;
     private int? _limit;
     private int? _offset;
+    private bool _distinct;
+
+    public QueryBuilder Distinct()
+    {
+        _distinct = true;
+        return this;
+    }
 
     public QueryBuilder Select<T>(string alias, params Expression<Func<T, object>>[] cols)
     {
-        foreach (var c in cols)
-            _select.Add(SqlGen.Col(alias, c));
+        foreach (var c in cols) { _select.Add(SqlGen.Col(alias, c)); }
+        return this;
+    }
+
+    public QueryBuilder SelectAll<T>(string alias)
+    {
+        foreach (var prop in typeof(T).GetProperties())
+        {
+            var col = SqlMetadata.Column(prop);
+            _select.Add($"{alias}.\"{col}\"");
+        }
 
         return this;
     }
@@ -106,9 +121,7 @@ public sealed class QueryBuilder
 
         foreach (var prop in entityProps)
         {
-            if (!dtoProps.Contains(prop.Name))
-                continue;
-
+            if (!dtoProps.Contains(prop.Name)) { continue; }
             var col = SqlMetadata.Column(prop);
             _select.Add($"{alias}.\"{col}\"");
         }
@@ -119,23 +132,17 @@ public sealed class QueryBuilder
     public QueryBuilder From<T>(string alias)
     {
         _from = $"\"{SqlMetadata.Table(typeof(T))}\" {alias}";
-
-        if (SqlMetadata.HasSoftDelete(typeof(T)))
-            _where.Add($"{alias}.\"IsDeleted\" = false");
-
+        if (SqlMetadata.HasSoftDelete(typeof(T))) { _where.Add($"{alias}.\"IsDeleted\" = false"); }
         return this;
     }
-
 
     public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
     {
         var type = leftJoin ? "LEFT JOIN" : "JOIN";
-        var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(rightAlias, rightKey)} = {SqlGen.Col(leftAlias, leftKey)}";
+        var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(leftAlias, leftKey)} = {SqlGen.Col(rightAlias, rightKey)}";
+        if (SqlMetadata.HasSoftDelete(typeof(TRight))) { sql += $" AND {rightAlias}.\"IsDeleted\" = false"; }
 
-        if (SqlMetadata.HasSoftDelete(typeof(TRight)))
-            sql += $" AND {rightAlias}.\"IsDeleted\" = false";
         _joins.Add(sql);
-
         return this;
     }
 
@@ -143,7 +150,6 @@ public sealed class QueryBuilder
     {
         return Join(leftAlias, rightAlias, left, right, true);
     }
-
 
     public QueryBuilder Where<T>(string alias, Expression<Func<T, bool>> predicate)
     {
@@ -155,19 +161,24 @@ public sealed class QueryBuilder
     public QueryBuilder WhereRaw<T>(string alias, Expression<Func<T, object>> column, string sqlOperator, object? value = null)
     {
         var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
-        string condition;
-
         if (value == null)
         {
-            condition = $"{alias}.\"{columnName}\" {sqlOperator}";
+            AppendWhere($"{alias}.\"{columnName}\" {sqlOperator}");
         }
         else
         {
-            var paramName = AddParam(value);
-            condition = $"{alias}.\"{columnName}\" {sqlOperator} {paramName}";
+            var param = AddParam(value);
+            AppendWhere($"{alias}.\"{columnName}\" {sqlOperator} {param}");
         }
 
-        AppendWhere(condition);
+        return this;
+    }
+
+    public QueryBuilder WhereIn<T>(string alias, Expression<Func<T, object>> column, IEnumerable values)
+    {
+        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
+        var param = AddParam(values);
+        AppendWhere($"{alias}.\"{columnName}\" = ANY({param})");
         return this;
     }
 
@@ -175,7 +186,12 @@ public sealed class QueryBuilder
     {
         _order.Add($"{SqlGen.Col(alias, col)} {(desc ? "DESC" : "ASC")}");
         return this;
+    }
 
+    public QueryBuilder GroupBy(params string[] cols)
+    {
+        _group.AddRange(cols);
+        return this;
     }
 
     public QueryBuilder Limit(int limit)
@@ -184,9 +200,9 @@ public sealed class QueryBuilder
         return this;
     }
 
-    public QueryBuilder GroupBy(params string[] cols)
+    public QueryBuilder Offset(int offset)
     {
-        _group.AddRange(cols);
+        _offset = offset;
         return this;
     }
 
@@ -201,7 +217,7 @@ public sealed class QueryBuilder
     {
         var sb = new StringBuilder();
 
-        sb.Append("SELECT ");
+        sb.Append(_distinct ? "SELECT DISTINCT " : "SELECT ");
         sb.Append(_select.Count == 0 ? "*" : string.Join(", ", _select));
 
         sb.AppendLine();
@@ -231,23 +247,16 @@ public sealed class QueryBuilder
     public (string Sql, DynamicParameters Params) BuildCount()
     {
         var sb = new StringBuilder();
-
         sb.AppendLine("SELECT COUNT(1)");
         sb.AppendLine($"FROM {_from}");
-
-        foreach (var j in _joins)
-            sb.AppendLine(j);
-
-        if (_where.Count > 0)
-            sb.AppendLine("WHERE " + string.Join(" AND ", _where));
-
+        foreach (var j in _joins) { sb.AppendLine(j); }
+        if (_where.Count > 0) { sb.AppendLine("WHERE " + string.Join(" AND ", _where)); }
         return (sb.ToString(), _params);
     }
 
     private void AppendWhere(string condition)
     {
-        if (!string.IsNullOrWhiteSpace(condition))
-            _where.Add(condition);
+        if (!string.IsNullOrWhiteSpace(condition)) { _where.Add(condition); }
     }
 
     private string AddParam(object? value)
@@ -279,7 +288,7 @@ public sealed class QueryBuilder
             {
                 ExpressionType.Equal => $"{left} IS NULL",
                 ExpressionType.NotEqual => $"{left} IS NOT NULL",
-                _ => throw new NotSupportedException("Invalid NULL comparison")
+                _ => throw new NotSupportedException()
             };
         }
 
@@ -295,7 +304,7 @@ public sealed class QueryBuilder
             ExpressionType.LessThanOrEqual => "<=",
             ExpressionType.AndAlso => "AND",
             ExpressionType.OrElse => "OR",
-            _ => throw new NotSupportedException($"Operator {expr.NodeType} not supported")
+            _ => throw new NotSupportedException()
         };
 
         return expr.NodeType switch
@@ -338,8 +347,27 @@ public sealed class QueryBuilder
             {
                 var column = $"{alias}.\"{SqlMetadata.Column(columnExpr.Member)}\"";
                 var param = AddParam(values);
-                return $"{column} IN {param}";
+
+                return $"{column} = ANY({param})";
             }
+        }
+
+        if (expr.Method.Name == "StartsWith")
+        {
+            var column = ParseExpression(alias, expr.Object!);
+            var value = Expression.Lambda(expr.Arguments[0]).Compile().DynamicInvoke();
+            var param = AddParam($"{value}%");
+
+            return $"{column} LIKE {param}";
+        }
+
+        if (expr.Method.Name == "EndsWith")
+        {
+            var column = ParseExpression(alias, expr.Object!);
+            var value = Expression.Lambda(expr.Arguments[0]).Compile().DynamicInvoke();
+            var param = AddParam($"%{value}");
+
+            return $"{column} LIKE {param}";
         }
 
         throw new NotSupportedException($"Method {expr.Method.Name} not supported");

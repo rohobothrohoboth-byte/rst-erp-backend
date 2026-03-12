@@ -1,11 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Recruit.Domain.Entities;
+using System.Data;
 
 namespace Recruit.Utility.Persistence;
 
 public class HrmRecruitDbContext : DbContext
 {
-    public HrmRecruitDbContext(DbContextOptions<HrmRecruitDbContext> options) : base(options) { }
+    public HrmRecruitDbContext(DbContextOptions<HrmRecruitDbContext> options) : base(options)
+    {
+        ChangeTracker.AutoDetectChangesEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        ChangeTracker.LazyLoadingEnabled = false;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -13,8 +19,45 @@ public class HrmRecruitDbContext : DbContext
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+            foreach (var index in indexes)
+            {
+                index.SetFilter("\"IsDeleted\" = false");
+            }
+        }
+
+        //modelBuilder.HasSequence<long>("post_number_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
+        //modelBuilder.HasSequence<long>("plan_code_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrmRecruitDbContext).Assembly);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.DateAdd = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.DateMod = now;
+                    break;
+            }
+        }
+
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new DBConcurrencyException("The record was modified by another transaction.", ex);
+        }
     }
 
     public DbSet<Applicant> Applicant { get; set; }

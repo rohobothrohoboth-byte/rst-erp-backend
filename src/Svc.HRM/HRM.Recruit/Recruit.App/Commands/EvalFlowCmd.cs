@@ -1,5 +1,6 @@
 ﻿using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
@@ -16,14 +17,14 @@ public class EvalFlowDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class EvalFlowAddHandler : IRequestHandler<EvalFlowAddCmd, EvalFlowListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EvalFlowAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EvalFlowAddHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<EvalFlowListDto> Handle(EvalFlowAddCmd request, CancellationToken cancellationToken)
+    public async Task<EvalFlowListDto> Handle(EvalFlowAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new EvaluationFlow
@@ -32,18 +33,18 @@ public class EvalFlowAddHandler : IRequestHandler<EvalFlowAddCmd, EvalFlowListDt
                 IsGlobal = request.AddDto.IsGlobal,
                 IsActive = true
             };
-            await _unitOfWork.Repository<EvaluationFlow>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new EvalFlowListDto();
-            var response = await _med.Send(new EvalFlowByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EvalFlowByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -51,34 +52,35 @@ public class EvalFlowAddHandler : IRequestHandler<EvalFlowAddCmd, EvalFlowListDt
 
 public class EvalFlowModHandler : IRequestHandler<EvalFlowModCmd, EvalFlowListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EvalFlowModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EvalFlowModHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<EvalFlowListDto> Handle(EvalFlowModCmd request, CancellationToken cancellationToken)
+    public async Task<EvalFlowListDto> Handle(EvalFlowModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<EvaluationFlow>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"EVALUATION FLOW with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<EvaluationFlow>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"EVALUATION FLOW with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.Name = request.ModDto.Name;
             oldData.IsGlobal = request.ModDto.IsGlobal;
             oldData.IsActive = request.ModDto.IsActive;
-            var data = await _unitOfWork.Repository<EvaluationFlow>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new EvalFlowListDto();
-            var response = await _med.Send(new EvalFlowByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EvalFlowByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -86,32 +88,33 @@ public class EvalFlowModHandler : IRequestHandler<EvalFlowModCmd, EvalFlowListDt
 
 public class EvalFlowStatHandler : IRequestHandler<EvalFlowStatCmd, EvalFlowListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EvalFlowStatHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EvalFlowStatHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<EvalFlowListDto> Handle(EvalFlowStatCmd request, CancellationToken cancellationToken)
+    public async Task<EvalFlowListDto> Handle(EvalFlowStatCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<EvaluationFlow>().GetById(request.StatDto.Id);
-        if (oldData == null) { throw new DomainException($"EVALUATION FLOW with Id {request.StatDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<EvaluationFlow>().FirstOrDefaultAsync(x => x.Id == request.StatDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"EVALUATION FLOW with Id {request.StatDto.Id} NOT FOUND."); }
+
             oldData.IsActive = request.StatDto.Stat;
-            var data = await _unitOfWork.Repository<EvaluationFlow>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.StatDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new EvalFlowListDto();
-            var response = await _med.Send(new EvalFlowByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EvalFlowByIdQry { Id = request.StatDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -119,22 +122,22 @@ public class EvalFlowStatHandler : IRequestHandler<EvalFlowStatCmd, EvalFlowList
 
 public class EvalFlowDelHandler : IRequestHandler<EvalFlowDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EvalFlowDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EvalFlowDelHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(EvalFlowDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(EvalFlowDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<EvaluationFlow>().GetById(request.Id);
+            var data = await _uow.Set<EvaluationFlow>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"EVALUATION FLOW with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<EvaluationFlow>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

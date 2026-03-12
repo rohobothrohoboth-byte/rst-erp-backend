@@ -1,5 +1,6 @@
 ﻿using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
@@ -15,14 +16,14 @@ public class EvalStepDelCmd : IRequest { public Guid Id { get; set; } }
 
 public class EvalStepAddHandler : IRequestHandler<EvalStepAddCmd, EvalStepListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EvalStepAddHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EvalStepAddHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<EvalStepListDto> Handle(EvalStepAddCmd request, CancellationToken cancellationToken)
+    public async Task<EvalStepListDto> Handle(EvalStepAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var data = new EvaluationStep
@@ -33,18 +34,18 @@ public class EvalStepAddHandler : IRequestHandler<EvalStepAddCmd, EvalStepListDt
                 EvalTypeId = request.AddDto.EvalTypeId,
                 EvaluationFlowId = request.AddDto.EvaluationFlowId
             };
-            await _unitOfWork.Repository<EvaluationStep>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new EvalStepListDto();
-            var response = await _med.Send(new EvalStepByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EvalStepByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -52,35 +53,36 @@ public class EvalStepAddHandler : IRequestHandler<EvalStepAddCmd, EvalStepListDt
 
 public class EvalStepModHandler : IRequestHandler<EvalStepModCmd, EvalStepListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public EvalStepModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public EvalStepModHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<EvalStepListDto> Handle(EvalStepModCmd request, CancellationToken cancellationToken)
+    public async Task<EvalStepListDto> Handle(EvalStepModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<EvaluationStep>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"EVALUATION STEP with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<EvaluationStep>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"EVALUATION STEP with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.StepName = request.ModDto.StepName;
             oldData.StepOrder = request.ModDto.StepOrder;
             oldData.IsFinal = request.ModDto.IsFinal;
             oldData.EvalTypeId = request.ModDto.EvalTypeId;
-            var data = await _unitOfWork.Repository<EvaluationStep>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new EvalStepListDto();
-            var response = await _med.Send(new EvalStepByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new EvalStepByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -88,22 +90,22 @@ public class EvalStepModHandler : IRequestHandler<EvalStepModCmd, EvalStepListDt
 
 public class EvalStepDelHandler : IRequestHandler<EvalStepDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public EvalStepDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public EvalStepDelHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(EvalStepDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(EvalStepDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<EvaluationStep>().GetById(request.Id);
+            var data = await _uow.Set<EvaluationStep>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"EVALUATION STEP with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<EvaluationStep>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

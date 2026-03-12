@@ -1,4 +1,5 @@
 ﻿using Common;
+using Dapper;
 using Helpers;
 using Recruit.App.Interfaces;
 using Recruit.Domain.DTOs;
@@ -8,97 +9,256 @@ namespace Recruit.App.Services;
 
 public interface IJobAppService
 {
-    Task<JobAppIdDto> GetJobAppId(Guid Id);
-    Task<JobAppInfoDto> GetJobAppInfo(Guid Id, CancellationToken ctx);
+    Task<JobAppIdDto?> GetJobAppId(Guid Id, CancellationToken ctx);
+    Task<JobAppInfoDto?> GetJobAppInfo(Guid Id, CancellationToken ctx);
+    Task<Dictionary<Guid, JobAppInfoDto>> GetJobAppBatchInfo(List<Guid> ids, CancellationToken ctx);
 
 }
 
 public class JobAppService : IJobAppService
 {
+    private readonly IDapperHelper _dapper;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IHrmProfileClient _hrmProfileClient;
     private readonly ICorModClient _corModClient;
     private readonly ICorHrmmClient _corHrmmClient;
 
-    public JobAppService(IUnitOfWork unitOfWork, IHrmProfileClient hrmProfileClient, ICorModClient corModClient, ICorHrmmClient corHrmmClient)
+    public JobAppService(IDapperHelper dapper, IUnitOfWork unitOfWork, IHrmProfileClient hrmProfileClient, ICorModClient corModClient, ICorHrmmClient corHrmmClient)
     {
+        _dapper = dapper;
         _unitOfWork = unitOfWork;
         _hrmProfileClient = hrmProfileClient;
         _corModClient = corModClient;
         _corHrmmClient = corHrmmClient;
     }
 
-    public async Task<JobAppIdDto> GetJobAppId(Guid Id)
+    public async Task<Dictionary<Guid, JobAppInfoDto>> GetJobAppBatchInfo(List<Guid> ids, CancellationToken ct)
     {
-        var idVm = new JobAppIdDto();
-        var jobApp = await _unitOfWork.Repository<JobApplication>().GetById(Id);
-        if (jobApp != null)
-        {
-            var jPost = await _unitOfWork.Repository<JobPosting>().GetById(jobApp.JobPostingId);
-            var jReq = await _unitOfWork.Repository<JobRequisition>().GetById(jPost!.JobReqId);
-            var wfPlan = await _unitOfWork.Repository<WorkforcePlan>().GetById(jReq!.WorkforcePlanId);
+        if (ids == null || ids.Count == 0) { return []; }
 
-            idVm.ApplicantId = jobApp.ApplicantId;
-            idVm.EmployeeId = jobApp.EmployeeId;
-            idVm.JobPostingId = jobApp.JobPostingId;
-            idVm.JobReqId = jPost!.JobReqId;
-            idVm.PositionId = jReq!.PositionId;
-            idVm.JgStepId = jReq.JgStepId;
-            idVm.WorkforcePlanId = jReq.WorkforcePlanId;
-            idVm.JobDecId = jReq.JobDecId;
-            idVm.DepartmentId = wfPlan!.DepartmentId;
-            idVm.PeriodId = wfPlan.PeriodId;
+        var posTask = _corHrmmClient.GetListPosition(ct);
+        var stepTask = _corHrmmClient.GetListJgStep(ct);
+        var deptTask = _corModClient.GetListDept(ct);
+        var periodTask = _corModClient.GetListPeriod(ct);
+        var empTask = _hrmProfileClient.GetListEmp(ct);
+        await Task.WhenAll(posTask, stepTask, deptTask, periodTask, empTask);
+
+        var deptDict = deptTask.Result.Res.ToDictionary(d => Guid.Parse(d.Id));
+        var stepDict = stepTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+        var periodDict = periodTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+        var empDict = empTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+
+        const string ja = "ja";
+        const string jp = "jp";
+        const string jr = "jr";
+        const string jd = "jd";
+        const string wf = "wf";
+        var qb = new QueryBuilder()
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.PostType, x => x.JobPostingId)
+            .Select<JobPosting>(jp, x => x.PostNumber, x => x.JobReqId)
+            .Select<JobRequisition>(jr, x => x.ReqNumber, x => x.PositionId, x => x.JgStepId, x => x.JobDecId, x => x.WorkforcePlanId)
+            .Select<JobDec>(jd, x => x.Title, x => x.Desc, x => x.Qualification, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.ContractType)
+            .Select<WorkforcePlan>(wf, x => x.PlanCode, x => x.DepartmentId, x => x.PeriodId)
+            .From<JobApplication>(ja)
+            .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
+            .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)
+            .Join<JobRequisition, JobDec>(jr, jd, x => x.JobDecId, x => x.Id)
+            .Join<JobRequisition, WorkforcePlan>(jr, wf, x => x.WorkforcePlanId, x => x.Id)
+            .WhereIn<JobApplication>(ja, x => x.Id, ids);
+
+        var (sql, parameters) = qb.Build();
+        var result = new Dictionary<Guid, JobAppInfoDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<JobAppInfoDto>();
+
+        var rows = new List<JobAppInfoDto>();
+        while (await reader.ReadAsync(ct)) { rows.Add(parser(reader)); }
+
+        if (rows.Count == 0) return result;
+
+        var extApplicantIds = rows.Where(x => x.PostType == BoolToStr.EnumToString(JobPostingType.External) && x.ApplicantId.HasValue).Select(x => x.ApplicantId!.Value).Distinct().ToList();
+        const string a = "a";
+        const string p = "p";
+        var applicantDict = new Dictionary<Guid, string>();
+
+        if (extApplicantIds.Count != 0)
+        {
+            var qb2 = new QueryBuilder()
+                .Select<Applicant>(a, x => x.Id, x => x.PersonId)
+                .Select<ApplicantPerson>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName)
+                .From<Applicant>(a)
+                .Join<Applicant, ApplicantPerson>(a, p, x => x.PersonId, x => x.Id)
+                .WhereIn<Applicant>(a, x => x.Id, extApplicantIds);
+            var (sql2, param) = qb2.Build();
+            await using var reader2 = await _dapper.ExecuteReaderAsync(sql2, param, ct);
+            var parser2 = reader2.GetRowParser<ApplicantJoinRow>();
+
+            while (await reader2.ReadAsync(ct))
+            {
+                var row = parser2(reader2);
+                applicantDict[row.Id] = $"{row.FirstName} {row.MiddleName} {row.LastName}";
+            }
         }
 
-        return idVm;
+        foreach (var r in rows)
+        {
+            posDict.TryGetValue(r.PositionId, out var pos);
+            stepDict.TryGetValue(r.JgStepId, out var step);
+            deptDict.TryGetValue(r.DepartmentId, out var dept);
+            periodDict.TryGetValue(r.PeriodId, out var period);
+
+            r.Position = pos?.Name ?? "";
+            r.JgStep = step?.Name ?? "";
+            r.Department = dept?.Name ?? "";
+            r.Period = period?.Name ?? "";
+            r.PreGender = MyEnumHelper.FormatEnum<Gender>(r.PreGender);
+            r.ContractType = MyEnumHelper.FormatEnum<EmpNature>(r.ContractType);
+
+            if (r.PostType == BoolToStr.EnumToString(JobPostingType.External))
+            {
+                if (r.ApplicantId.HasValue && applicantDict.TryGetValue(r.ApplicantId.Value, out var name))
+                    r.Applicant = name;
+                else
+                    r.Applicant = "NOT AVAILABLE";
+            }
+            else
+            {
+                if (r.EmployeeId.HasValue && empDict.TryGetValue(r.EmployeeId.Value, out var name))
+                    r.Applicant = name?.Name ?? "";
+                else
+                    r.Applicant = "NOT AVAILABLE";
+            }
+
+            result[r.JobApplicationId] = r;
+        }
+
+        return result;
     }
 
-    public async Task<JobAppInfoDto> GetJobAppInfo(Guid Id, CancellationToken ctx)
+    public async Task<JobAppIdDto?> GetJobAppId(Guid Id, CancellationToken ct)
     {
-        var jobApp = await _unitOfWork.Repository<JobApplication>().GetById(Id);
-        var pType = BoolToStr.EnumToString(JobPostingType.External);
-        var app = "";
-        if (jobApp!.PostType == pType)
+        const string ja = "ja";
+        const string jp = "jp";
+        const string jr = "jr";
+        const string wf = "wf";
+        var qb = new QueryBuilder()
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.JobPostingId)
+            .Select<JobPosting>(jp, x => x.Id, x => x.JobReqId)
+            .Select<JobRequisition>(jr, x => x.Id, x => x.PositionId, x => x.JgStepId, x => x.WorkforcePlanId, x => x.JobDecId)
+            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId)
+            .From<JobApplication>(ja)
+            .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
+            .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)
+            .Join<JobRequisition, WorkforcePlan>(jr, wf, x => x.WorkforcePlanId, x => x.Id)
+            .Where<JobApplication>(ja, x => x.Id == Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var row = await _dapper.QueryFirstOrDefaultAsync<JobAppIdDto>(sql, parameters, ct);
+        if (row == null) return null;
+        return row;
+    }
+
+    public async Task<JobAppInfoDto?> GetJobAppInfo(Guid Id, CancellationToken ct)
+    {
+        const string ja = "ja";
+        const string jp = "jp";
+        const string jr = "jr";
+        const string jd = "jd";
+        const string wf = "wf";
+        var qb = new QueryBuilder()
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.PostType, x => x.JobPostingId)
+            .Select<JobPosting>(jp, x => x.Id, x => x.PostNumber, x => x.JobReqId)
+            .Select<JobRequisition>(jr, x => x.Id, x => x.PositionId, x => x.JgStepId, x => x.WorkforcePlanId, x => x.JobDecId, x => x.ReqNumber)
+            .Select<JobDec>(jd, x => x.Id, x => x.Title, x => x.Desc, x => x.Qualification, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.ContractType)
+            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId, x => x.PlanCode)
+            .From<JobApplication>(ja)
+            .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
+            .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)
+            .Join<JobRequisition, JobDec>(jr, jd, x => x.JobDecId, x => x.Id)
+            .Join<JobRequisition, WorkforcePlan>(jr, wf, x => x.WorkforcePlanId, x => x.Id)
+            .Where<JobApplication>(ja, x => x.Id == Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var row = await _dapper.QueryFirstOrDefaultAsync<JobAppInfoDto>(sql, parameters, ct);
+        if (row == null) return null;
+
+        string applicantName;
+        var externalType = BoolToStr.EnumToString(JobPostingType.External);
+
+        if (row.PostType == externalType && row.ApplicantId.HasValue)
         {
-            var appV = await _unitOfWork.Repository<Applicant>().GetById((Guid)jobApp.ApplicantId!);
-            var per = await _unitOfWork.Repository<ApplicantPerson>().GetById(appV!.PersonId);
-            app = $"{per!.FirstName} {per.MiddleName} {per.LastName}";
+            const string a = "a";
+            const string p = "p";
+            var qbApp = new QueryBuilder()
+                .Select<Applicant>(a, x => x.Id, x => x.PersonId)
+                .Select<ApplicantPerson>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName)
+                .From<Applicant>(a)
+                .Join<Applicant, ApplicantPerson>(a, p, x => x.PersonId, x => x.Id)
+                .WhereRaw<Applicant>(a, x => x.Id, "=", row.ApplicantId.Value);
+
+            var (sqlApp, paramApp) = qbApp.Build();
+            await using var rApp = await _dapper.ExecuteReaderAsync(sqlApp, paramApp, ct);
+            var parserApp = rApp.GetRowParser<ApplicantJoinRow>();
+            if (await rApp.ReadAsync(ct))
+            {
+                var appRow = parserApp(rApp);
+                applicantName = $"{appRow.FirstName} {appRow.MiddleName} {appRow.LastName}";
+            }
+            else
+            {
+                applicantName = "NOT AVAILABLE";
+            }
+        }
+        else if (row.EmployeeId.HasValue)
+        {
+            var emp = await _hrmProfileClient.GetEmp(row.EmployeeId.Value.ToString(), ct);
+            applicantName = emp?.Res.Name ?? "NOT AVAILABLE";
         }
         else
         {
-            var empV = await _hrmProfileClient.GetEmp(jobApp.EmployeeId.ToString()!, ctx);
-            app = empV != null && empV.Res.Name != null ? empV.Res.Name : "NOT AVAILABLE";
+            applicantName = "NOT AVAILABLE";
         }
 
-        var jPost = await _unitOfWork.Repository<JobPosting>().GetById(jobApp.JobPostingId);
-        var jReq = await _unitOfWork.Repository<JobRequisition>().GetById(jPost!.JobReqId);
-        var jd = await _unitOfWork.Repository<JobDec>().GetById(jReq!.JobDecId);
-        var wfPlan = await _unitOfWork.Repository<WorkforcePlan>().GetById(jReq!.WorkforcePlanId);
-        var pos = await _corHrmmClient.GetPosition(jReq.PositionId.ToString(), ctx);
-        var jStep = await _corHrmmClient.GetJgStep(jReq.JgStepId.ToString(), ctx);
-        var dept = await _corModClient.GetDept(wfPlan!.DepartmentId.ToString(), ctx);
-        var perd = await _corHrmmClient.GetJgStep(wfPlan.PeriodId.ToString()!, ctx);
+        var posTask = _corHrmmClient.GetPosition(row.PositionId.ToString(), ct);
+        var jStepTask = _corHrmmClient.GetJgStep(row.JgStepId.ToString(), ct);
+        var deptTask = _corModClient.GetDept(row.DepartmentId.ToString(), ct);
+        var periodTask = _corHrmmClient.GetJgStep(row.PeriodId.ToString()!, ct);
+        await Task.WhenAll(posTask, jStepTask, deptTask, periodTask);
 
-        var infoV = new JobAppInfoDto
+        var pos = posTask.Result;
+        var jStep = jStepTask.Result;
+        var dept = deptTask.Result;
+        var perd = periodTask.Result;
+
+        return new JobAppInfoDto
         {
-            Applicant = app,
-            PostNumber = jPost.PostNumber,
-            ReqNumber = jReq!.ReqNumber,
-            Position = pos != null && pos.Res.Name != null ? pos.Res.Name : "NOT AVAILABLE",
-            JgStep = jStep != null && jStep.Res.Name != null ? jStep.Res.Name : "NOT AVAILABLE",
-            PlanCode = wfPlan!.PlanCode,
-            Title = jd!.Title,
-            Desc = jd!.Desc,
-            Qualification = jd!.Qualification,
-            KeySkills = jd!.KeySkills,
-            WorkLocation = jd!.WorkLocation,
-            PreGender = ((Gender)Enum.Parse(typeof(Gender), jd!.PreGender)).ToDisplayName(),
-            ContractType = ((EmpNature)Enum.Parse(typeof(EmpNature), jd!.ContractType)).ToDisplayName(),
-            Department = dept != null && dept.Res.Name != null ? dept.Res.Name : "NOT AVAILABLE",
-            Period = perd != null && perd.Res.Name != null ? perd.Res.Name : "NOT AVAILABLE"
+            JobApplicationId = Id,
+            PostType = row.PostType,
+            ApplicantId = row.ApplicantId,
+            EmployeeId = row.EmployeeId,
+            Applicant = applicantName,
+            PostNumber = row.PostNumber,
+            ReqNumber = row.ReqNumber,
+            PlanCode = row.PlanCode,
+            Title = row.Title,
+            Desc = row.Desc,
+            Qualification = row.Qualification,
+            KeySkills = row.KeySkills,
+            WorkLocation = row.WorkLocation,
+            PreGender = MyEnumHelper.FormatEnum<Gender>(row.PreGender),
+            ContractType = MyEnumHelper.FormatEnum<EmpNature>(row.ContractType),
+            PositionId = row.PositionId,
+            JgStepId = row.JgStepId,
+            DepartmentId = row.DepartmentId,
+            PeriodId = row.PeriodId,
+            Position = pos?.Res.Name ?? "NOT AVAILABLE",
+            JgStep = jStep?.Res.Name ?? "NOT AVAILABLE",
+            Department = dept?.Res.Name ?? "NOT AVAILABLE",
+            Period = perd?.Res.Name ?? "NOT AVAILABLE"
         };
-
-        return infoV;
     }
 
 }

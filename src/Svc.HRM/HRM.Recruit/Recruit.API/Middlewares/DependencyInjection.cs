@@ -3,20 +3,20 @@ using Asp.Versioning.Conventions;
 using Common;
 using FluentValidation;
 using Helpers;
-using Recruit.App;
-using Recruit.App.Interfaces;
-using Recruit.Utility.Extensions;
-using Recruit.Utility.Persistence;
-using Recruit.Utility.Repos;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Recruit.App;
+using Recruit.App.Interfaces;
+using Recruit.App.Services;
+using Recruit.Utility.Extensions;
+using Recruit.Utility.Persistence;
+using Recruit.Utility.Repos;
 using System.Reflection;
 using System.Text;
-using Recruit.App.Services;
 
 namespace Recruit.API.Middlewares;
 
@@ -40,22 +40,34 @@ public static class DependencyInjection
                 option.SubstituteApiVersionInUrl = true;
             });
 
-        builder.Services.AddDbContext<HrmRecruitDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("HRMRecruitDbCon")));
-        builder.Services.AddScoped<DapperContext>();
+        builder.Services.AddDbContextPool<HrmRecruitDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("HRMRecruitDbCon"), npgsql =>
+                    {
+                        npgsql.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsql.CommandTimeout(30);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.EnableSensitiveDataLogging(false);
+            });
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-        builder.Services.AddScoped<IAuthClient, AuthClient>();
-        builder.Services.AddScoped<PerValService, PerValService>();
+        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
 
         builder.Services.AddScoped<IJobAppService, JobAppService>();
-        //builder.Services.AddScoped<IHolidayService, HolidayService>();
-        //builder.Services.AddScoped<IApprovalEngine, ApprovalEngine>();
-        //builder.Services.AddScoped<IRecruitLedgerService, RecruitLedgerService>();
 
         builder.Services.AddScoped<ICorModClient, CorModClient>();
+        builder.Services.AddScoped<ICorHrmmClient, CorHrmmClient>();
         builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
+        builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
-        builder.Services.AddScoped(typeof(IHrmRecruitRepo<>), typeof(HrmRecruitRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(AppAssemblyMarker).Assembly));
         builder.Services.AddOpenApi();

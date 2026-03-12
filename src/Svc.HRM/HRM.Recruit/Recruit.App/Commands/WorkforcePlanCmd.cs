@@ -1,7 +1,7 @@
 ﻿using Common;
 using Helpers;
 using MediatR;
-using Recruit.App.Helpers;
+using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
@@ -14,30 +14,29 @@ public class WorkforcePlanModCmd : IRequest<WorkforcePlanListDto> { public Workf
 public class WorkforcePlanDelCmd : IRequest { public Guid Id { get; set; } }
 
 
+
 public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, WorkforcePlanListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
-    private readonly IHrmProfileClient _hrmProfileClient;
+    private readonly IHrmProfileClient _hrmProfile;
 
-    public WorkforcePlanAddHandler(IUnitOfWork unitOfWork, IMediator med, IHrmProfileClient hrmProfileClient)
+    public WorkforcePlanAddHandler(IUnitOfWork uow, IMediator med, IHrmProfileClient hrmProfile)
     {
-        _unitOfWork = unitOfWork;
+        _uow = uow;
         _med = med;
-        _hrmProfileClient = hrmProfileClient;
+        _hrmProfile = hrmProfile;
     }
 
-    public async Task<WorkforcePlanListDto> Handle(WorkforcePlanAddCmd request, CancellationToken cancellationToken)
+    public async Task<WorkforcePlanListDto> Handle(WorkforcePlanAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var code = await new CodeGen(_unitOfWork).GetPlanCode();
             var stat = BoolToStr.EnumToString(ReqStatus.Pending);
-            var dept = await _hrmProfileClient.GetEmpId(request.AddDto.RequistionById.ToString());
+            var dept = await _hrmProfile.GetEmpId(request.AddDto.RequistionById.ToString(), ct);
             var data = new WorkforcePlan
             {
-                PlanCode = code,
                 Title = request.AddDto.Title,
                 Desc = request.AddDto.Desc,
                 StartDate = request.AddDto.StartDate,
@@ -49,18 +48,18 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
                 PeriodId = request.AddDto.PeriodId,
                 RequistionById = request.AddDto.RequistionById
             };
-            await _unitOfWork.Repository<WorkforcePlan>().Add(data);
-            await _unitOfWork.Commit();
+            await _uow.Add(data, ct);
+            await _uow.Commit(ct);
 
             var res = new WorkforcePlanListDto();
-            var response = await _med.Send(new WorkforcePlanByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new WorkforcePlanByIdQry { Id = data.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -68,36 +67,37 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
 
 public class WorkforcePlanModHandler : IRequestHandler<WorkforcePlanModCmd, WorkforcePlanListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public WorkforcePlanModHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public WorkforcePlanModHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<WorkforcePlanListDto> Handle(WorkforcePlanModCmd request, CancellationToken cancellationToken)
+    public async Task<WorkforcePlanListDto> Handle(WorkforcePlanModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<WorkforcePlan>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"WORKFORCE PLAN with Id {request.ModDto.Id} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<WorkforcePlan>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"WORKFORCE PLAN with Id {request.ModDto.Id} NOT FOUND."); }
+
             oldData.Title = request.ModDto.Title;
             oldData.Desc = request.ModDto.Desc;
             oldData.StartDate = request.ModDto.StartDate;
             oldData.EndDate = request.ModDto.EndDate;
             oldData.TotalPositions = request.ModDto.TotalPositions;
-            var data = await _unitOfWork.Repository<WorkforcePlan>().Update(oldData);
-            await _unitOfWork.Commit();
+            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new WorkforcePlanListDto();
-            var response = await _med.Send(new WorkforcePlanByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new WorkforcePlanByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -105,22 +105,22 @@ public class WorkforcePlanModHandler : IRequestHandler<WorkforcePlanModCmd, Work
 
 public class WorkforcePlanDelHandler : IRequestHandler<WorkforcePlanDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public WorkforcePlanDelHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public WorkforcePlanDelHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(WorkforcePlanDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(WorkforcePlanDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<WorkforcePlan>().GetById(request.Id);
+            var data = await _uow.Set<WorkforcePlan>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"WORKFORCE PLAN with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<WorkforcePlan>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

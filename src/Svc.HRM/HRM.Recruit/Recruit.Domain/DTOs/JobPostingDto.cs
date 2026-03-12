@@ -1,10 +1,16 @@
-﻿namespace Recruit.Domain.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Recruit.Domain.DTOs;
 
 public class JobPostingListDto : BaseDto
 {
+    public int? ReqQuantity { get; set; }
+    public int? AppQuantity { get; set; }
     public DateTime PublishedDate { get; set; } = DateTime.UtcNow;
     public DateTime DeadlineDate { get; set; }
     public DateTime? ClosedDate { get; set; }
+    public string Status { get; set; } = default!; // enum.PostingStatus(0/1)
+    public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
     public string PostNumber { get; set; } = default!;
     public string ReqNumber { get; set; } = default!;
     public string StatusStr { get; set; } = default!;
@@ -13,8 +19,6 @@ public class JobPostingListDto : BaseDto
     public string PublishedDateStr => $"{PublishedDate:MMMM dd, yyyy}";
     public string DeadlineDateStr => $"{DeadlineDate:MMMM dd, yyyy}";
     public string ClosedDateStr => ClosedDate.HasValue ? $"{ClosedDate:MMMM dd, yyyy}" : "";
-    public string Status { get; set; } = default!; // enum.PostingStatus(0/1)
-    public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
 }
 
 public class JobPostingAddDto
@@ -35,19 +39,41 @@ public class JobPostingModDto
 
 public class JobPostingViewDto : BaseDto
 {
+    [JsonIgnore]
+    public Guid DepartmentId { get; set; }
+    [JsonIgnore]
+    public Guid RequistionById { get; set; }
+    [JsonIgnore]
+    public Guid JgStepId { get; set; }
+    [JsonIgnore]
+    public Guid PositionId { get; set; }
+    [JsonIgnore]
+    public Guid? PeriodId { get; set; }
+    [JsonIgnore]
+    public string Status { get; set; } = default!; // enum.PostingStatus(0/1)
+    [JsonIgnore]
+    public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
+    [JsonIgnore]
+    public string PreGender { get; set; } = default!; // enum.Gender
+    [JsonIgnore]
+    public string ContractType { get; set; } = default!; // enum.EmpNature
+    [JsonIgnore]
     public DateTime PublishedDate { get; set; } = DateTime.UtcNow;
+    [JsonIgnore]
     public DateTime DeadlineDate { get; set; }
+    [JsonIgnore]
     public DateTime? ClosedDate { get; set; }
+
     public string PublishedDateStr => $"{PublishedDate:MMMM dd, yyyy}";
     public string DeadlineDateStr => $"{DeadlineDate:MMMM dd, yyyy}";
     public string ClosedDateStr => ClosedDate.HasValue ? $"{ClosedDate:MMMM dd, yyyy}" : "";
     public string PostNumber { get; set; } = default!;
     public string ReqNumber { get; set; } = default!;
-    public string Status { get; set; } = default!;
-    public string PostType { get; set; } = default!;
+    public string StatusStr { get; set; } = default!;
+    public string PostTypeStr { get; set; } = default!;
     public string ReqReason { get; set; } = default!;
-    public int ReqQuantity { get; set; }
-    public int AppQuantity { get; set; }
+    public int? ReqQuantity { get; set; }
+    public int? AppQuantity { get; set; }
     public string BudgetCode { get; set; } = default!;
     public string Position { get; set; } = default!; // Cor.HRMM.Position
     public string JgStep { get; set; } = default!; // Cor.HRMM.JgStep
@@ -60,6 +86,6 @@ public class JobPostingViewDto : BaseDto
     public string Qualification { get; set; } = default!;
     public string KeySkills { get; set; } = default!;
     public string WorkLocation { get; set; } = default!;
-    public string PreGender { get; set; } = default!; // enum.Gender
-    public string ContractType { get; set; } = default!; // enum.EmpNature
+    public string PreGenderStr { get; set; } = default!; // enum.Gender
+    public string ContractTypeStr { get; set; } = default!; // enum.EmpNature
 }

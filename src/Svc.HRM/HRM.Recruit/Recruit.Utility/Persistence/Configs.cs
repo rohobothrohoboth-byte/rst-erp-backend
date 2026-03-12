@@ -1,436 +1,423 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Recruit.Domain.Entities;
 
 namespace Recruit.Utility.Persistence;
 
-public class ApplicantConfig : IEntityTypeConfiguration<Applicant>
+public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T : BaseEntity
 {
-    public void Configure(EntityTypeBuilder<Applicant> b)
+    public virtual void Configure(EntityTypeBuilder<T> b)
     {
         b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.DateAdd).IsRequired().HasColumnType("timestamp with time zone");
+        b.Property(x => x.DateMod).HasColumnType("timestamp with time zone");
+        b.Property(x => x.IsDeleted).IsRequired().HasDefaultValue(false);
+        b.Property(x => x.xmin).HasColumnName("xmin").HasColumnType("xid").IsConcurrencyToken().ValueGeneratedOnAddOrUpdate();
+        b.HasIndex(x => x.IsDeleted);
+        b.HasQueryFilter(x => !x.IsDeleted);
+    }
+}
+
+public class ApplicantConfig : BaseEntityConfig<Applicant>
+{
+    public override void Configure(EntityTypeBuilder<Applicant> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.RegisteredBy).HasMaxLength(50).IsRequired();
         b.Property(x => x.RegisteredDate).IsRequired();
-        b.Property(x => x.RegisteredBy).HasMaxLength(150).IsRequired();
-        b.HasOne(x => x.Person).WithMany().HasForeignKey(x => x.PersonId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(x => x.Contact).WithMany().HasForeignKey(x => x.ContactId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(x => x.PersonId); b.HasIndex(x => x.ContactId); b.HasIndex(x => x.AddressId);
-        b.HasIndex(x => x.IsDeleted); b.HasIndex(x => x.DateAdd);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasOne(x => x.Address).WithMany().HasForeignKey(x => x.AddressId);
+        b.HasOne(x => x.Contact).WithMany().HasForeignKey(x => x.ContactId);
+        b.HasOne(x => x.Person).WithMany().HasForeignKey(x => x.PersonId);
     }
 }
 
-public class ApplicantAddressConfig : IEntityTypeConfiguration<ApplicantAddress>
+public class ApplicantAddressConfig : BaseEntityConfig<ApplicantAddress>
 {
-    public void Configure(EntityTypeBuilder<ApplicantAddress> b)
+    public override void Configure(EntityTypeBuilder<ApplicantAddress> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.AddressType).HasMaxLength(20).IsRequired();
+        base.Configure(b);
+        b.Property(x => x.AddressType).HasMaxLength(2).IsRequired();
         b.Property(x => x.Country).HasMaxLength(100).IsRequired();
-        b.Property(x => x.Region).HasMaxLength(100).IsRequired();
-        b.Property(x => x.Subcity).HasMaxLength(100);
-        b.Property(x => x.Zone).HasMaxLength(100);
-        b.Property(x => x.Woreda).HasMaxLength(100);
-        b.Property(x => x.Kebele).HasMaxLength(100);
         b.Property(x => x.HouseNo).HasMaxLength(50);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.Property(x => x.Kebele).HasMaxLength(50);
+        b.Property(x => x.Region).HasMaxLength(100);
+        b.Property(x => x.Subcity).HasMaxLength(100);
+        b.Property(x => x.Woreda).HasMaxLength(50);
+        b.Property(x => x.Zone).HasMaxLength(50);
+        b.HasIndex(x => x.Country);
     }
 }
 
-public class ApplicantContactConfig : IEntityTypeConfiguration<ApplicantContact>
+public class ApplicantContactConfig : BaseEntityConfig<ApplicantContact>
 {
-    public void Configure(EntityTypeBuilder<ApplicantContact> b)
+    public override void Configure(EntityTypeBuilder<ApplicantContact> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Phone).HasMaxLength(20).IsRequired();
-        b.Property(x => x.AlternatePhone).HasMaxLength(20);
-        b.Property(x => x.Email).HasMaxLength(150).IsRequired();
+        base.Configure(b);
+        b.Property(x => x.AlternatePhone).HasMaxLength(30);
+        b.Property(x => x.Email).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Fax).HasMaxLength(30);
+        b.Property(x => x.Phone).HasMaxLength(30).IsRequired();
         b.Property(x => x.PoBox).HasMaxLength(50);
-        b.Property(x => x.Fax).HasMaxLength(50);
-        b.HasIndex(x => x.Email);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasIndex(x => x.Email).IsUnique();
     }
 }
 
-public class ApplicantPersonConfig : IEntityTypeConfiguration<ApplicantPerson>
+public class ApplicantPersonConfig : BaseEntityConfig<ApplicantPerson>
 {
-    public void Configure(EntityTypeBuilder<ApplicantPerson> b)
+    public override void Configure(EntityTypeBuilder<ApplicantPerson> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
-        b.Property(x => x.FirstNameAm).HasMaxLength(100);
-        b.Property(x => x.MiddleName).HasMaxLength(100);
-        b.Property(x => x.MiddleNameAm).HasMaxLength(100);
-        b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
-        b.Property(x => x.LastNameAm).HasMaxLength(100);
-        b.Property(x => x.Gender).HasMaxLength(20).IsRequired();
-        b.Property(x => x.Nationality).HasMaxLength(100).IsRequired();
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        base.Configure(b);
+        b.Property(x => x.FirstName).HasMaxLength(50).IsRequired();
+        b.Property(x => x.FirstNameAm).HasMaxLength(50);
+        b.Property(x => x.Gender).HasMaxLength(10).IsRequired();
+        b.Property(x => x.LastName).HasMaxLength(50).IsRequired();
+        b.Property(x => x.LastNameAm).HasMaxLength(50);
+        b.Property(x => x.MiddleName).HasMaxLength(50).IsRequired();
+        b.Property(x => x.MiddleNameAm).HasMaxLength(50);
+        b.Property(x => x.Nationality).HasMaxLength(50).IsRequired();
     }
 }
 
-public class ApplicationRankingConfig : IEntityTypeConfiguration<ApplicationRanking>
+public class ApplicationRankingConfig : BaseEntityConfig<ApplicationRanking>
 {
-    public void Configure(EntityTypeBuilder<ApplicationRanking> b)
+    public override void Configure(EntityTypeBuilder<ApplicationRanking> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.TotalScore).IsRequired();
+        base.Configure(b);
         b.Property(x => x.Rank).IsRequired();
+        b.Property(x => x.TotalScore).IsRequired();
         b.Property(x => x.JobAppId).IsRequired();
-        b.HasIndex(x => x.JobAppId).IsUnique(); // One ranking per application
-        b.HasIndex(x => x.Rank);
-        b.HasIndex(x => x.TotalScore);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId);
+        b.HasIndex(x => new { x.TotalScore, x.Rank });
     }
 }
 
-public class CoverLetterConfig : IEntityTypeConfiguration<CoverLetter>
+public class CoverLetterConfig : BaseEntityConfig<CoverLetter>
 {
-    public void Configure(EntityTypeBuilder<CoverLetter> b)
+    public override void Configure(EntityTypeBuilder<CoverLetter> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Content).HasColumnType("text").IsRequired();
-        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.JobAppId).IsUnique();
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        base.Configure(b);
+        b.Property(x => x.Content).IsRequired();
+        b.Property(x => x.JobAppId).IsRequired();
+        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId);
     }
 }
 
-public class EvaluationFlowConfig : IEntityTypeConfiguration<EvaluationFlow>
+public class EvaluationFlowConfig : BaseEntityConfig<EvaluationFlow>
 {
-    public void Configure(EntityTypeBuilder<EvaluationFlow> b)
+    public override void Configure(EntityTypeBuilder<EvaluationFlow> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Name).HasMaxLength(150).IsRequired();
-        b.HasIndex(x => x.Name).IsUnique();
-        b.Property(x => x.IsGlobal).IsRequired();
+        base.Configure(b);
         b.Property(x => x.IsActive).IsRequired();
-        b.HasMany(x => x.Steps).WithOne(x => x.EvaluationFlow).HasForeignKey(x => x.EvaluationFlowId).OnDelete(DeleteBehavior.Cascade);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.Property(x => x.IsGlobal).IsRequired();
+        b.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        b.HasMany(x => x.Steps).WithOne(x => x.EvaluationFlow).HasForeignKey(x => x.EvaluationFlowId);
+        b.HasIndex(x => x.Name);
     }
 }
 
-public class EvaluationScoreConfig : IEntityTypeConfiguration<EvaluationScore>
+public class EvaluationScoreConfig : BaseEntityConfig<EvaluationScore>
 {
-    public void Configure(EntityTypeBuilder<EvaluationScore> b)
+    public override void Configure(EntityTypeBuilder<EvaluationScore> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Score).HasPrecision(5, 2).IsRequired();
-        b.Property(x => x.IsCurrent).IsRequired();
-        b.Property(x => x.Feedback).HasMaxLength(1000);
+        base.Configure(b);
+        b.Property(x => x.EvalTypeId).IsRequired();
+        b.Property(x => x.EvaluationStepId).IsRequired();
         b.Property(x => x.EvaluatorId).IsRequired();
-        b.HasOne(x => x.EvaluationStep).WithMany().HasForeignKey(x => x.EvaluationStepId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.EvalType).WithMany().HasForeignKey(x => x.EvalTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.Property(x => x.Feedback).IsRequired();
+        b.Property(x => x.IsCurrent).IsRequired();
+        b.Property(x => x.Score).IsRequired();
+        b.HasOne(x => x.EvalType).WithMany().HasForeignKey(x => x.EvalTypeId);
+        b.HasOne(x => x.EvaluationStep).WithMany().HasForeignKey(x => x.EvaluationStepId);
+        b.HasIndex(x => new { x.EvalTypeId, x.EvaluationStepId });
     }
 }
 
-public class EvaluationStepConfig : IEntityTypeConfiguration<EvaluationStep>
+public class EvaluationStepConfig : BaseEntityConfig<EvaluationStep>
 {
-    public void Configure(EntityTypeBuilder<EvaluationStep> b)
+    public override void Configure(EntityTypeBuilder<EvaluationStep> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.StepName).HasMaxLength(150).IsRequired();
-        b.Property(x => x.StepOrder).IsRequired();
+        base.Configure(b);
+        b.Property(x => x.EvalTypeId).IsRequired();
+        b.Property(x => x.EvaluationFlowId).IsRequired();
         b.Property(x => x.IsFinal).IsRequired();
-        b.HasOne(x => x.EvaluationFlow).WithMany(x => x.Steps).HasForeignKey(x => x.EvaluationFlowId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => new { x.EvaluationFlowId, x.StepOrder }).IsUnique();
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class EvaluationTypeConfig : IEntityTypeConfiguration<EvaluationType>
-{
-    public void Configure(EntityTypeBuilder<EvaluationType> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Name).HasMaxLength(150).IsRequired();
-        b.Property(x => x.MaxScore).HasPrecision(5, 2).IsRequired();
-        b.HasIndex(x => x.Name).IsUnique();
-        b.HasIndex(x => x.IsActive);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobApplicationConfig : IEntityTypeConfiguration<JobApplication>
-{
-    public void Configure(EntityTypeBuilder<JobApplication> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
-        b.Property(x => x.PostType).HasMaxLength(50).IsRequired();
-        b.Property(x => x.AppliedDate).IsRequired();
-        b.HasOne(x => x.JobPosting).WithMany(x => x.Applications).HasForeignKey(x => x.JobPostingId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.JobPostingId);
-        b.HasIndex(x => x.ApplicantId);
-        b.HasIndex(x => x.EmployeeId);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobDecConfig : IEntityTypeConfiguration<JobDec>
-{
-    public void Configure(EntityTypeBuilder<JobDec> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Title).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Desc).HasColumnType("text").IsRequired();
-        b.Property(x => x.Qualification).HasColumnType("text");
-        b.Property(x => x.KeySkills).HasColumnType("text");
-        b.Property(x => x.WorkLocation).HasMaxLength(150);
-        b.Property(x => x.PreGender).HasMaxLength(20);
-        b.Property(x => x.ContractType).HasMaxLength(50);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobOfferConfig : IEntityTypeConfiguration<JobOffer>
-{
-    public void Configure(EntityTypeBuilder<JobOffer> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.OfferNumber).HasMaxLength(50).IsRequired();
-        b.HasIndex(x => x.OfferNumber).IsUnique();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
-        b.Property(x => x.OfferDate).IsRequired();
-        b.Property(x => x.ExpirationDate).IsRequired();
-        b.Property(x => x.OfferDocument).HasMaxLength(500);
-        b.HasOne(x => x.JobApplication).WithMany().HasForeignKey(x => x.JobApplicationId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId).OnDelete(DeleteBehavior.Restrict);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobOfferApprovalConfig : IEntityTypeConfiguration<JobOfferApproval>
-{
-    public void Configure(EntityTypeBuilder<JobOfferApproval> b)
-    {
-        b.HasKey(x => x.Id);
+        b.Property(x => x.StepName).HasMaxLength(100).IsRequired();
         b.Property(x => x.StepOrder).IsRequired();
-        b.Property(x => x.Role).HasMaxLength(50).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(30).IsRequired();
-        b.Property(x => x.ApprovedDate).HasColumnType("datetime2").IsRequired(false);
-        b.Property(x => x.ApprovedById).IsRequired(false);
-        b.Property(x => x.JobOfferId).IsRequired();
-        b.HasIndex(x => x.JobOfferId);
-        b.HasIndex(x => new { x.JobOfferId, x.StepOrder }).IsUnique(); // Prevent duplicate step order per offer
+        b.HasOne(x => x.EvalType).WithMany().HasForeignKey(x => x.EvalTypeId);
+        b.HasOne(x => x.EvaluationFlow).WithMany().HasForeignKey(x => x.EvaluationFlowId);
+        b.HasIndex(x => new { x.EvaluationFlowId, x.StepOrder });
+    }
+}
+
+public class EvaluationTypeConfig : BaseEntityConfig<EvaluationType>
+{
+    public override void Configure(EntityTypeBuilder<EvaluationType> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.IsActive).IsRequired();
+        b.Property(x => x.MaxScore).IsRequired();
+        b.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        b.HasIndex(x => x.Name).IsUnique();
+    }
+}
+
+public class JobApplicationConfig : BaseEntityConfig<JobApplication>
+{
+    public override void Configure(EntityTypeBuilder<JobApplication> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.AppliedDate).IsRequired();
+        b.Property(x => x.ApplicantId);
+        b.Property(x => x.EmployeeId);
+        b.Property(x => x.JobPostingId).IsRequired();
+        b.Property(x => x.PostType).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasOne(x => x.JobPosting).WithMany(x => x.Applications).HasForeignKey(x => x.JobPostingId);
         b.HasIndex(x => x.Status);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasIndex(x => x.AppliedDate);
     }
 }
 
-public class JobOfferReviewConfig : IEntityTypeConfiguration<JobOfferReview>
+public class JobDecConfig : BaseEntityConfig<JobDec>
 {
-    public void Configure(EntityTypeBuilder<JobOfferReview> b)
+    public override void Configure(EntityTypeBuilder<JobDec> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.AcceptanceDate);
-        b.Property(x => x.RejectionDate);
-        b.Property(x => x.RejectionReason).HasMaxLength(1000);
-        b.Property(x => x.ApprovalComments).HasMaxLength(1000);
-        b.HasOne(x => x.JobOffer).WithMany().HasForeignKey(x => x.JobOfferId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.JobOfferId);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobPostEvalFlowConfig : IEntityTypeConfiguration<JobPostEvalFlow>
-{
-    public void Configure(EntityTypeBuilder<JobPostEvalFlow> b)
-    {
-        b.HasKey(x => x.Id);
-        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.EvaluationFlow).WithMany().HasForeignKey(x => x.EvaluationFlowId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(x => x.JobPostingId).IsUnique(); // One flow per posting
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobPostingConfig : IEntityTypeConfiguration<JobPosting>
-{
-    public void Configure(EntityTypeBuilder<JobPosting> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.PostNumber).HasMaxLength(50).IsRequired();
-        b.HasIndex(x => x.PostNumber).IsUnique();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
-        b.Property(x => x.PostType).HasMaxLength(50).IsRequired();
-        b.Property(x => x.PublishedDate).IsRequired();
-        b.Property(x => x.DeadlineDate).IsRequired();
-        b.HasOne(x => x.JobReq).WithMany().HasForeignKey(x => x.JobReqId).OnDelete(DeleteBehavior.Restrict);
-        b.HasMany(x => x.Applications).WithOne(x => x.JobPosting).HasForeignKey(x => x.JobPostingId).OnDelete(DeleteBehavior.Cascade);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobPostReviewConfig : IEntityTypeConfiguration<JobPostReview>
-{
-    public void Configure(EntityTypeBuilder<JobPostReview> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Comment).HasMaxLength(1000).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
-        b.Property(x => x.ReviewById).IsRequired();
-        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.JobPostingId);
-        b.HasIndex(x => x.ReviewById);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobReqReviewConfig : IEntityTypeConfiguration<JobReqReview>
-{
-    public void Configure(EntityTypeBuilder<JobReqReview> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Comment).HasMaxLength(1000).IsRequired();
-        b.Property(x => x.ReqQuantity).IsRequired();
-        b.Property(x => x.AppQuantity).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
-        b.Property(x => x.ReviewById).IsRequired();
-        b.HasOne(x => x.JobReq).WithMany(x => x.Reviews).HasForeignKey(x => x.JobReqId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.JobReqId);
-        b.HasIndex(x => x.ReviewById);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class JobRequisitionConfig : IEntityTypeConfiguration<JobRequisition>
-{
-    public void Configure(EntityTypeBuilder<JobRequisition> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.ReqNumber).HasMaxLength(50).IsRequired();
-        b.HasIndex(x => x.ReqNumber).IsUnique();
-        b.Property(x => x.ReqReason).HasMaxLength(500).IsRequired();
-        b.Property(x => x.ReqQuantity).IsRequired();
-        b.Property(x => x.BudgetCode).HasMaxLength(100).IsRequired();
-        b.Property(x => x.Status).IsRequired();
-        b.Property(x => x.StartDate).IsRequired();
-        b.HasOne(x => x.WorkforcePlan).WithMany(w => w.JobRequisitions).HasForeignKey(x => x.WorkforcePlanId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(x => x.JobDec).WithMany().HasForeignKey(x => x.JobDecId).OnDelete(DeleteBehavior.Restrict);
-        b.HasMany(x => x.Reviews).WithOne(r => r.JobReq).HasForeignKey(r => r.JobReqId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.WorkforcePlanId);
-        b.HasIndex(x => x.JobDecId);
-        b.HasIndex(x => new { x.WorkforcePlanId, x.PositionId }).HasDatabaseName("IX_JobReq_WorkforcePlan_Position");
-        b.Property(e => e.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class OnboardingAssignConfig : IEntityTypeConfiguration<OnboardingAssign>
-{
-    public void Configure(EntityTypeBuilder<OnboardingAssign> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.IsMandatory).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(30).IsRequired();
-        b.Property(x => x.ScheduledDate).IsRequired();
-        b.Property(x => x.CompletedDate).IsRequired(false);
-        b.Property(x => x.VerifyById).IsRequired(false);
-        b.Property(x => x.EmployeeId).IsRequired();
-        b.Property(x => x.OnboardingTaskId).IsRequired();
-        b.HasIndex(x => x.EmployeeId);
-        b.HasIndex(x => x.OnboardingTaskId);
-        b.HasIndex(x => x.Status);
-        b.HasIndex(x => x.ScheduledDate);
-        b.HasIndex(x => new { x.EmployeeId, x.OnboardingTaskId }).IsUnique();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class OnboardingTaskConfig : IEntityTypeConfiguration<OnboardingTask>
-{
-    public void Configure(EntityTypeBuilder<OnboardingTask> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.TaskName).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Description).HasColumnType("text");
-        b.Property(x => x.SequenceOrder).IsRequired();
-        b.HasIndex(x => x.SequenceOrder);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class ResumeConfig : IEntityTypeConfiguration<Resume>
-{
-    public void Configure(EntityTypeBuilder<Resume> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.FileName).HasMaxLength(250).IsRequired();
-        b.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
-        b.Property(x => x.FileSize).IsRequired();
-        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId).OnDelete(DeleteBehavior.Cascade);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class ResumeBlobConfig : IEntityTypeConfiguration<ResumeBlob>
-{
-    public void Configure(EntityTypeBuilder<ResumeBlob> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Data).HasColumnType("bytea").IsRequired();
-        b.HasOne(x => x.Resume).WithOne().HasForeignKey<ResumeBlob>(x => x.ResumeId).OnDelete(DeleteBehavior.Cascade);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-
-public class WorkforcePlanConfig : IEntityTypeConfiguration<WorkforcePlan>
-{
-    public void Configure(EntityTypeBuilder<WorkforcePlan> b)
-    {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.PlanCode).HasMaxLength(50).IsRequired();
-        b.HasIndex(x => x.PlanCode).IsUnique();
+        base.Configure(b);
+        b.Property(x => x.ContractType).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Desc).IsRequired();
+        b.Property(x => x.KeySkills).IsRequired();
+        b.Property(x => x.PreGender).HasMaxLength(10);
+        b.Property(x => x.Qualification).IsRequired();
         b.Property(x => x.Title).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Desc).HasMaxLength(1000);
-        b.Property(x => x.TotalPositions).IsRequired();
+        b.Property(x => x.WorkLocation).IsRequired();
+    }
+}
+
+public class JobOfferConfig : BaseEntityConfig<JobOffer>
+{
+    public override void Configure(EntityTypeBuilder<JobOffer> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.ExpirationDate).IsRequired();
+        b.Property(x => x.JobApplicationId).IsRequired();
+        b.Property(x => x.JobPostingId).IsRequired();
+        b.Property(x => x.OfferDate).IsRequired();
+        b.Property(x => x.OfferDocument).IsRequired();
+        b.Property(x => x.OfferNumber).HasMaxLength(50).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasOne(x => x.JobApplication).WithMany().HasForeignKey(x => x.JobApplicationId);
+        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId);
+        b.HasIndex(x => x.Status);
+        b.HasIndex(x => x.OfferNumber).IsUnique();
+    }
+}
+
+public class JobOfferApprovalConfig : BaseEntityConfig<JobOfferApproval>
+{
+    public override void Configure(EntityTypeBuilder<JobOfferApproval> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.ApprovedById);
+        b.Property(x => x.ApprovedDate);
+        b.Property(x => x.JobOfferId).IsRequired();
+        b.Property(x => x.Role).HasMaxLength(50).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.StepOrder).IsRequired();
+        b.HasOne(x => x.JobOffer).WithMany().HasForeignKey(x => x.JobOfferId);
+    }
+}
+
+public class JobOfferReviewConfig : BaseEntityConfig<JobOfferReview>
+{
+    public override void Configure(EntityTypeBuilder<JobOfferReview> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.AcceptanceDate);
+        b.Property(x => x.ApprovalComments);
+        b.Property(x => x.JobOfferId).IsRequired();
+        b.Property(x => x.RejectionDate);
+        b.Property(x => x.RejectionReason);
+        b.HasOne(x => x.JobOffer).WithMany().HasForeignKey(x => x.JobOfferId);
+    }
+}
+
+public class JobPostEvalFlowConfig : BaseEntityConfig<JobPostEvalFlow>
+{
+    public override void Configure(EntityTypeBuilder<JobPostEvalFlow> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.EvaluationFlowId).IsRequired();
+        b.Property(x => x.JobPostingId).IsRequired();
+        b.HasOne(x => x.EvaluationFlow).WithMany().HasForeignKey(x => x.EvaluationFlowId);
+        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId);
+        b.HasIndex(x => new { x.JobPostingId, x.EvaluationFlowId }).IsUnique();
+    }
+}
+
+public class JobPostingConfig : BaseEntityConfig<JobPosting>
+{
+    public override void Configure(EntityTypeBuilder<JobPosting> b)
+    {
+        base.Configure(b);
+        var p = b.Property(x => x.PostNumber)
+            .HasMaxLength(15)
+            .IsRequired()
+            .HasDefaultValueSql("generate_code('JOB'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+            .ValueGeneratedOnAdd();
+        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+        b.Property(x => x.ClosedDate);
+        b.Property(x => x.DeadlineDate).IsRequired();
+        b.Property(x => x.JobReqId).IsRequired();
+        b.Property(x => x.PostType).HasMaxLength(20).IsRequired();
+        b.Property(x => x.PublishedDate).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasOne(x => x.JobReq).WithMany().HasForeignKey(x => x.JobReqId);
+        b.HasMany(x => x.Applications).WithOne(x => x.JobPosting).HasForeignKey(x => x.JobPostingId);
+        b.HasIndex(x => x.PostNumber).IsUnique();
+        b.HasIndex(x => x.Status);
+    }
+}
+
+public class JobPostReviewConfig : BaseEntityConfig<JobPostReview>
+{
+    public override void Configure(EntityTypeBuilder<JobPostReview> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Comment).IsRequired();
+        b.Property(x => x.JobPostingId).IsRequired();
+        b.Property(x => x.ReviewById).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId);
+    }
+}
+
+public class JobReqReviewConfig : BaseEntityConfig<JobReqReview>
+{
+    public override void Configure(EntityTypeBuilder<JobReqReview> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.AppQuantity).IsRequired();
+        b.Property(x => x.Comment).IsRequired();
+        b.Property(x => x.JobReqId).IsRequired();
+        b.Property(x => x.ReqQuantity).IsRequired();
+        b.Property(x => x.ReviewById).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.HasOne(x => x.JobReq).WithMany(x => x.Reviews).HasForeignKey(x => x.JobReqId);
+    }
+}
+
+public class JobRequisitionConfig : BaseEntityConfig<JobRequisition>
+{
+    public override void Configure(EntityTypeBuilder<JobRequisition> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.BudgetCode).HasMaxLength(50).IsRequired();
+        b.Property(x => x.JgStepId).IsRequired();
+        b.Property(x => x.JobDecId).IsRequired();
+        b.Property(x => x.PositionId).IsRequired();
+        b.Property(x => x.ReqNumber).HasMaxLength(50).IsRequired();
+        b.Property(x => x.ReqQuantity).IsRequired();
+        b.Property(x => x.ReqReason).IsRequired();
+        b.Property(x => x.StartDate).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.WorkforcePlanId).IsRequired();
+        b.HasOne(x => x.WorkforcePlan).WithMany(x => x.JobRequisitions).HasForeignKey(x => x.WorkforcePlanId);
+        b.HasOne(x => x.JobDec).WithMany().HasForeignKey(x => x.JobDecId);
+    }
+}
+
+public class OnboardingAssignConfig : BaseEntityConfig<OnboardingAssign>
+{
+    public override void Configure(EntityTypeBuilder<OnboardingAssign> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.CompletedDate);
+        b.Property(x => x.EmployeeId).IsRequired();
+        b.Property(x => x.IsMandatory).IsRequired();
+        b.Property(x => x.OnboardingTaskId).IsRequired();
+        b.Property(x => x.ScheduledDate).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.VerifyById);
+        b.HasOne(x => x.OnboardingTask).WithMany().HasForeignKey(x => x.OnboardingTaskId);
+    }
+}
+
+public class OnboardingTaskConfig : BaseEntityConfig<OnboardingTask>
+{
+    public override void Configure(EntityTypeBuilder<OnboardingTask> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Description).IsRequired();
+        b.Property(x => x.SequenceOrder).IsRequired();
+        b.Property(x => x.TaskName).HasMaxLength(100).IsRequired();
+        b.HasIndex(x => x.SequenceOrder);
+    }
+}
+
+public class ResumeConfig : BaseEntityConfig<Resume>
+{
+    public override void Configure(EntityTypeBuilder<Resume> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.ContentType).HasMaxLength(50).IsRequired();
+        b.Property(x => x.FileName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.FileSize).IsRequired();
+        b.Property(x => x.JobAppId).IsRequired();
+        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId);
+    }
+}
+
+public class ResumeBlobConfig : BaseEntityConfig<ResumeBlob>
+{
+    public override void Configure(EntityTypeBuilder<ResumeBlob> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Data).IsRequired();
+        b.Property(x => x.ResumeId).IsRequired();
+        b.HasOne(x => x.Resume).WithMany().HasForeignKey(x => x.ResumeId);
+    }
+}
+
+public class WorkforcePlanConfig : BaseEntityConfig<WorkforcePlan>
+{
+    public override void Configure(EntityTypeBuilder<WorkforcePlan> b)
+    {
+        base.Configure(b);
+        var p = b.Property(x => x.PlanCode)
+                    .HasMaxLength(15)
+                    .IsRequired()
+                    .HasDefaultValueSql("generate_code('WFP'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+                    .ValueGeneratedOnAdd();
+        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         b.Property(x => x.AppPositions).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
+        b.Property(x => x.DepartmentId).IsRequired();
+        b.Property(x => x.Desc).IsRequired();
+        b.Property(x => x.EndDate).IsRequired();
+        b.Property(x => x.RequistionById).IsRequired();
+        b.Property(x => x.StartDate).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Title).IsRequired();
+        b.Property(x => x.TotalPositions).IsRequired();
+        b.Property(x => x.PeriodId);
         b.HasMany(x => x.JobRequisitions).WithOne(x => x.WorkforcePlan).HasForeignKey(x => x.WorkforcePlanId);
         b.HasMany(x => x.Reviews).WithOne(x => x.WorkforcePlan).HasForeignKey(x => x.WorkforcePlanId);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasIndex(x => x.PlanCode).IsUnique();
     }
 }
 
-public class WorkforcePlanReviewConfig : IEntityTypeConfiguration<WorkforcePlanReview>
+public class WorkforcePlanReviewConfig : BaseEntityConfig<WorkforcePlanReview>
 {
-    public void Configure(EntityTypeBuilder<WorkforcePlanReview> b)
+    public override void Configure(EntityTypeBuilder<WorkforcePlanReview> b)
     {
-        b.HasKey(x => x.Id);
-        b.Property(x => x.Comment).HasMaxLength(1000).IsRequired();
-        b.Property(x => x.ReqPositions).IsRequired();
+        base.Configure(b);
         b.Property(x => x.AppPositions).IsRequired();
-        b.Property(x => x.Status).HasMaxLength(50).IsRequired();
+        b.Property(x => x.Comment).IsRequired();
+        b.Property(x => x.ReqPositions).IsRequired();
         b.Property(x => x.ReviewById).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.WorkforcePlanId).IsRequired();
         b.HasOne(x => x.WorkforcePlan).WithMany(x => x.Reviews).HasForeignKey(x => x.WorkforcePlanId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(x => x.WorkforcePlanId);
-        b.HasIndex(x => x.ReviewById);
-        b.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken();
-        b.HasQueryFilter(x => !x.IsDeleted);
+        b.HasIndex(x => new { x.WorkforcePlanId, x.Status });
     }
 }

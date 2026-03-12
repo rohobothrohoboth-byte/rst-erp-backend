@@ -64,10 +64,10 @@ public static class DependencyInjection
         builder.Services.AddScoped<IApprovalEngine, ApprovalEngine>();
         builder.Services.AddScoped<ILeaveLedgerService, LeaveLedgerService>();
 
-        builder.Services.AddScoped<IAuthClient, AuthClient>();
-        builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
+        builder.Services.AddScoped<IAuthClient, AuthClient>();
+        builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
         builder.Services.AddScoped<ILogService, LogService>();

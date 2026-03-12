@@ -2,7 +2,7 @@
 
 public class WorkforcePlan : BaseEntity
 {
-    public string PlanCode { get; set; } = default!;
+    public string PlanCode { get; private set;} = default!;
     public string Title { get; set; } = default!;
     public string Desc { get; set; } = default!;
     public DateTime StartDate { get; set; }
