@@ -1,6 +1,5 @@
 using Scalar.AspNetCore;
 using Serilog;
-using Svc.Auth.Extensions;
 using Svc.Auth.Middlewares;
 using Svc.Auth.Services;
 
@@ -21,7 +20,6 @@ builder.AddApiServices()
     .AddAuthService();
 
 var app = builder.Build();
-
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();

@@ -21,7 +21,7 @@ public class JgStepAllHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto
         const string jg = "jg";
         var qb = new QueryBuilder()
             .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<JobGrade>(jg, "JobGrade", x => x.Name)
+            .SelectAs<JobGrade, JgStepListDto>(jg, x => x.Name, d => d.JobGrade)
             .From<JgStep>(v)
             .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
             .OrderBy<JgStep>(v, x => x.DateAdd, desc: true);
@@ -62,7 +62,7 @@ public class JgStepByIdQryHandler : IRequestHandler<JgStepByIdQry, JgStepListDto
         const string jg = "jg";
         var qb = new QueryBuilder()
             .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<JobGrade>(jg, "JobGrade", x => x.Name)
+            .SelectAs<JobGrade, JgStepListDto>(jg, x => x.Name, d => d.JobGrade)
             .From<JgStep>(v)
             .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
             .Where<JgStep>(v, x => x.Id == request.Id)

@@ -22,6 +22,7 @@ public class PositionExpAllHandler : IRequestHandler<PositionExpAllQry, List<Pos
         var qb = new QueryBuilder()
             .Select<PositionExp>(v, x => x.Id, x => x.SamePosExp, x => x.OtherPosExp, x => x.MinAge, x => x.MaxAge, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<PositionExp>(v)
+            .Where<PositionExp>(v, x => x.PositionId == request.Id)
             .OrderBy<PositionExp>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();

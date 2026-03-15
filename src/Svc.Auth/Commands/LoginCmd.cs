@@ -10,22 +10,24 @@ namespace Svc.Auth.Commands;
 
 public class LoginCmd : IRequest<LoginResDto> { public LoginDto Login { get; set; } = default!; }
 
+
+
 public class LoginCmdHandler : IRequestHandler<LoginCmd, LoginResDto>
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly ITokenService _tokenService;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
 
-    public LoginCmdHandler(UserManager<AppUser> userManager, ITokenService tokenService, IUnitOfWork unitOfWork)
+    public LoginCmdHandler(UserManager<AppUser> userManager, ITokenService tokenService, IUnitOfWork uow)
     {
         _userManager = userManager;
         _tokenService = tokenService;
-        _unitOfWork = unitOfWork;
+        _uow = uow;
     }
 
-    public async Task<LoginResDto> Handle(LoginCmd request, CancellationToken cancellationToken)
+    public async Task<LoginResDto> Handle(LoginCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var user = await _userManager.FindByNameAsync(request.Login.Username);
@@ -37,7 +39,7 @@ public class LoginCmdHandler : IRequestHandler<LoginCmd, LoginResDto>
             var aToken = await _tokenService.GenerateAccessToken(user);
             var rToken = await _tokenService.GenerateRefreshToken(user.Id);
 
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
 
             return new LoginResDto
             {
@@ -48,7 +50,7 @@ public class LoginCmdHandler : IRequestHandler<LoginCmd, LoginResDto>
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

@@ -2,6 +2,7 @@
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;
@@ -14,32 +15,34 @@ public class RefreshTokenCmd : IRequest<LoginResDto>
     public RefreshTokenDto Input { get; set; } = default!;
 }
 
+
+
 public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResDto>
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly ITokenService _tokenService;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
 
-    public RefreshTokenCmdHandler(UserManager<AppUser> userManager, ITokenService tokenService, IUnitOfWork unitOfWork)
+    public RefreshTokenCmdHandler(UserManager<AppUser> userManager, ITokenService tokenService, IUnitOfWork uow)
     {
         _userManager = userManager;
         _tokenService = tokenService;
-        _unitOfWork = unitOfWork;
+        _uow = uow;
     }
 
-    public async Task<LoginResDto> Handle(RefreshTokenCmd request, CancellationToken cancellationToken)
+    public async Task<LoginResDto> Handle(RefreshTokenCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var rToken = await _unitOfWork.Repository<RefreshToken>().GetFoD(p => p.UserId == request.UserId && p.Token == request.Input.Token);
+            var rToken = await _uow.Set<RefreshToken>().FirstOrDefaultAsync(p => p.UserId == request.UserId && p.Token == request.Input.Token, ct);
             if (rToken == null || rToken.IsRevoked) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
 
             var user = await _userManager.FindByIdAsync(request.UserId);
             if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
 
             var newRefresh = await _tokenService.RefreshToken(user);
-            await _unitOfWork.Commit();
+            await _uow.Commit(ct);
 
             return new LoginResDto
             {
@@ -50,7 +53,7 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

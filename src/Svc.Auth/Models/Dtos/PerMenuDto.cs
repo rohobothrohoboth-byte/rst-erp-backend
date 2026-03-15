@@ -7,6 +7,49 @@ public class ModPerMenuListDto
     public List<NameList> PerMenuList { get; set; } = default!;
 }
 
+public class ModuleMenuRow
+{
+    public Guid PerModuleId { get; set; }
+    public string ModuleDesc { get; set; } = default!;
+
+    public Guid MenuId { get; set; }
+    public string MenuLabel { get; set; } = default!;
+}
+
+public class UserModuleMenuRow
+{
+    public Guid ModuleId { get; set; }
+    public string ModuleDesc { get; set; } = default!;
+
+    public Guid MenuId { get; set; }
+    public string MenuLabel { get; set; } = default!;
+}
+
+public class PerMenuJoinRow
+{
+    public Guid Id { get; set; }
+    public Guid PerModuleId { get; set; }
+    public Guid? ParentId { get; set; }
+
+    public int Order { get; set; }
+    public bool IsChild { get; set; }
+    public string Key { get; set; } = default!;
+    public string Label { get; set; } = default!;
+    public string Path { get; set; } = default!;
+    public string Icon { get; set; } = default!;
+
+    public bool IsDeleted { get; set; }
+    public DateTime DateAdd { get; set; }
+    public DateTime? DateMod { get; set; }
+
+    // Parent menu
+    public string? ParentLabel { get; set; }
+    public string? ParentKey { get; set; }
+
+    // Module
+    public string ModuleDesc { get; set; } = default!;
+}
+
 public class PerMenuListDto : BaseDto
 {
     public string Path { get; set; } = default!;

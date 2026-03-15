@@ -130,7 +130,7 @@ public class JgStepNameAllHandler : IRequestHandler<JgStepNameAllQry, List<NameL
         const string jg = "jg";
         var qb = new QueryBuilder()
             .Select<JgStep>(v, x => x.Id, x => x.Name)
-            .SelectAs<JobGrade>(jg, asName: "NameAm", x => x.Name)
+            .SelectAs<JobGrade, NameAmList>(jg, x => x.Name, x => x.NameAm)
             .From<JgStep>(v)
             .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id);
 
@@ -162,7 +162,7 @@ public class JgStepNameByIdHandler : IRequestHandler<JgStepNameByIdQry, NameList
         const string jg = "jg";
         var qb = new QueryBuilder()
             .Select<JgStep>(v, x => x.Id, x => x.Name)
-            .SelectAs<JobGrade>(jg, asName: "NameAm", x => x.Name)
+            .SelectAs<JobGrade, NameAmList>(jg, x => x.Name, x => x.NameAm)
             .From<JgStep>(v)
             .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
             .Where<JgStep>(v, x => x.Id == request.Id)

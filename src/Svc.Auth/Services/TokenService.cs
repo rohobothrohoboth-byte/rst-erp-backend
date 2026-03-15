@@ -11,17 +11,17 @@ using System.Text;
 
 namespace Svc.Auth.Services;
 
-
-
 public class TokenService : ITokenService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly UserManager<AppUser> _userManager;
+    private readonly IDapperHelper _dapper;
 
-    public TokenService(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+    public TokenService(IUnitOfWork uow, UserManager<AppUser> userManager, IDapperHelper dapper)
     {
-        _unitOfWork = unitOfWork;
+        _uow = uow;
         _userManager = userManager;
+        _dapper = dapper;
     }
 
     private static string GenRefToken()
@@ -32,80 +32,79 @@ public class TokenService : ITokenService
 
     public async Task<string> GenerateAccessToken(AppUser user)
     {
-        var pModule = (await _unitOfWork.Repository<UserPerModule>().Find(p => p.UserId == user.Id)).ToList();
-        var pMenu = (await _unitOfWork.Repository<UserPerMenu>().Find(p => p.UserId == user.Id)).ToList();
-        var pApi = (await _unitOfWork.Repository<UserPerApi>().Find(p => p.UserId == user.Id)).ToList();
-        var roles = (await _userManager.GetRolesAsync(user)).ToList();
+        const string upm = "upm";
+        const string pm = "pm";
+        const string upn = "upn";
+        const string mn = "mn";
+        const string upa = "upa";
+        const string pa = "pa";
 
+        // -------- Module Permissions --------
+        var qbModule = new QueryBuilder()
+            .Select<PerModule>(pm, x => x.Key)
+            .From<UserPerModule>(upm)
+            .Join<UserPerModule, PerModule>(upm, pm, x => x.PerModuleId, x => x.Id)
+            .Where<UserPerModule>(upm, x => x.UserId == user.Id);
+        var (sqlMod, paramMod) = qbModule.Build();
+        var moduleKeys = await _dapper.QueryAsync<string>(sqlMod, paramMod);
+
+        // -------- Menu Permissions --------
+        var qbMenu = new QueryBuilder()
+            .Select<PerMenu>(mn, x => x.Key)
+            .From<UserPerMenu>(upn)
+            .Join<UserPerMenu, PerMenu>(upn, mn, x => x.PerMenuId, x => x.Id)
+            .Where<UserPerMenu>(upn, x => x.UserId == user.Id);
+        var (sqlMenu, paramMenu) = qbMenu.Build();
+        var menuKeys = await _dapper.QueryAsync<string>(sqlMenu, paramMenu);
+
+        // -------- API Permissions --------
+        var qbApi = new QueryBuilder()
+            .Select<PerApi>(pa, x => x.Key)
+            .From<UserPerApi>(upa)
+            .Join<UserPerApi, PerApi>(upa, pa, x => x.PerApiId, x => x.Id)
+            .Where<UserPerApi>(upa, x => x.UserId == user.Id);
+
+        var (sqlApi, paramApi) = qbApi.Build();
+        var apiKeys = await _dapper.QueryAsync<string>(sqlApi, paramApi);
+
+        // -------- Roles --------
+        var roles = await _userManager.GetRolesAsync(user);
         var claims = new List<Claim>
         {
             new(AuthCons.UserId, user.Id),
             new(AuthCons.UserName, user.UserName!),
-            user.EmployeeId != null
-                ? new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!)
-                : new Claim(AuthCons.EmployeeId, "")
+            user.EmployeeId != null ? new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!) : new Claim(AuthCons.EmployeeId, "")
         };
 
         if (roles.Count > 0)
-        {
-            claims.AddRange(roles.Select(p => new Claim(AuthCons.Role, p)));
-        }
+            claims.AddRange(roles.Select(r => new Claim(AuthCons.Role, r)));
 
-        if (pModule.Count > 0)
-        {
-            foreach (var api in pModule)
-            {
-                var per = await _unitOfWork.Repository<PerModule>().GetById(api.PerModuleId);
-                if (per != null)
-                {
-                    claims.Add(new Claim(AuthCons.PerModule, per.Key));
-                }
-            }
-        }
+        // Module claims
+        if (moduleKeys.Any())
+            claims.AddRange(moduleKeys.Select(k => new Claim(AuthCons.PerModule, k)));
         else
-        {
             claims.Add(new Claim(AuthCons.PerModule, ""));
-        }
 
-        if (pMenu.Count > 0)
-        {
-            foreach (var api in pMenu)
-            {
-                var per = await _unitOfWork.Repository<PerMenu>().GetById(api.PerMenuId);
-                if (per != null)
-                {
-                    claims.Add(new Claim(AuthCons.PerMenu, per.Key));
-                }
-            }
-        }
+        // Menu claims
+        if (menuKeys.Any())
+            claims.AddRange(menuKeys.Select(k => new Claim(AuthCons.PerMenu, k)));
         else
-        {
             claims.Add(new Claim(AuthCons.PerMenu, ""));
-        }
 
-        if (pApi.Count > 0)
-        {
-            foreach (var api in pApi)
-            {
-                var per = await _unitOfWork.Repository<PerApi>().GetById(api.PerApiId);
-                if (per != null)
-                {
-                    claims.Add(new Claim(AuthCons.PerApi, per.Key));
-                }
-            }
-        }
+        // API claims
+        if (apiKeys.Any())
+            claims.AddRange(apiKeys.Select(k => new Claim(AuthCons.PerApi, k)));
         else
-        {
             claims.Add(new Claim(AuthCons.PerApi, ""));
-        }
 
         var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: JwtCons.Issuer,
             audience: JwtCons.Audience,
             claims: claims,
-            expires: DateTime.Now.AddMinutes(JwtCons.ExpiryInMinutes),
+            expires: DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes),
             signingCredentials: creds);
+
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
@@ -115,12 +114,13 @@ public class TokenService : ITokenService
         var refreshToken = new RefreshToken
         {
             Token = GenRefToken(),
-            ExpiryDate = DateTime.Now.AddDays(JwtCons.RefreshTokenExpireDays),
+            ExpiryDate = DateTime.UtcNow.AddDays(JwtCons.RefreshTokenExpireDays),
             IsRevoked = false,
+            IsDeleted = false,
             UserId = userId
         };
 
-        await _unitOfWork.Repository<RefreshToken>().Add(refreshToken);
+        await _uow.Add(refreshToken);
         return refreshToken;
     }
 
@@ -138,7 +138,7 @@ public class TokenService : ITokenService
 
     public async Task RevokeToken(string userId)
     {
-        var rToken = (await _unitOfWork.Repository<RefreshToken>().Find(p => p.UserId == userId)).ToList();
+        var rToken = _uow.Set<RefreshToken>().Where(p => p.UserId == userId).ToList();
         if (rToken.Count > 0)
         {
             foreach (var token in rToken)
@@ -146,7 +146,7 @@ public class TokenService : ITokenService
                 token.IsRevoked = true;
                 token.IsDeleted = true;
                 token.RevokedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<RefreshToken>().Update(token);
+                await _uow.Update(token);
             }
         }
     }

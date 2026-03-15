@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.Svc_Lup>("API-lup");
+//builder.AddProject<Projects.Svc_Lup>("API-lup");
 
 builder.AddProject<Projects.Svc_Gateway>("svc-gateway");
 

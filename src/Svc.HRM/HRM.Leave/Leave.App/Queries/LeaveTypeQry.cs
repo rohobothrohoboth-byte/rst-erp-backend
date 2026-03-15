@@ -30,7 +30,7 @@ public class LeaveTypeAllHandler : IRequestHandler<LeaveTypeAllQry, List<LeaveTy
 
         foreach (var data in list)
         {
-            data.LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName();
+            data.LeaveCategoryStr = MyEnumHelper.FormatEnum<LeaveCategory>(data.LeaveCategory);
             data.RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval);
             data.AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay);
             data.HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave);
@@ -61,7 +61,7 @@ public class LeaveTypeByIdHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTypeL
         var data = await _dapper.QueryFirstOrDefaultAsync<LeaveTypeListDto>(sql, parameters, ct);
         if (data == null) return null;
 
-        data.LeaveCategoryStr = ((LeaveCategory)Enum.Parse(typeof(LeaveCategory), data.LeaveCategory)).ToDisplayName();
+        data.LeaveCategoryStr = MyEnumHelper.FormatEnum<LeaveCategory>(data.LeaveCategory);
         data.RequiresApprovalStr = BoolToStr.FormatBool(data.RequiresApproval);
         data.AllowHalfDayStr = BoolToStr.FormatBool(data.AllowHalfDay);
         data.HolidaysAsLeaveStr = BoolToStr.FormatBool(data.HolidaysAsLeave);

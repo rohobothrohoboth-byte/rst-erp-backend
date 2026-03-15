@@ -1,5 +1,6 @@
 ﻿using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;
@@ -11,20 +12,22 @@ public class PerApiAddCmd : IRequest<PerApiListDto> { public PerApiAddDto AddDto
 public class PerApiModCmd : IRequest<PerApiListDto> { public PerApiModDto ModDto { get; set; } = default!; }
 public class PerApiDelCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public PerApiAddCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public PerApiAddCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<PerApiListDto> Handle(PerApiAddCmd request, CancellationToken cancellationToken)
+    public async Task<PerApiListDto> Handle(PerApiAddCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
             var res = new PerApiListDto();
-            var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.AddDto.PerMenuKey }, cancellationToken);
+            var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.AddDto.PerMenuKey }, ct);
             if (pMenu != null)
             {
                 var data = new PerApi
@@ -33,18 +36,18 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
                     Key = request.AddDto.Key,
                     Desc = request.AddDto.Desc
                 };
-                await _unitOfWork.Repository<PerApi>().Add(data);
-                await _unitOfWork.Commit();
-                var response = await _med.Send(new PerApiByIdQry { Id = data.Id }, cancellationToken);
+                await _uow.Add(data, ct);
+                await _uow.Commit(ct);
+                var response = await _med.Send(new PerApiByIdQry { Id = data.Id }, ct);
                 if (response == null) { return res; }
                 res = response;
-            }            
+            }
 
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -52,36 +55,36 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
 
 public class PerApiModCmdHandler : IRequestHandler<PerApiModCmd, PerApiListDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public PerApiModCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _unitOfWork = unitOfWork; _med = med; }
+    public PerApiModCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<PerApiListDto> Handle(PerApiModCmd request, CancellationToken cancellationToken)
+    public async Task<PerApiListDto> Handle(PerApiModCmd request, CancellationToken ct)
     {
-        var oldData = await _unitOfWork.Repository<PerApi>().GetById(request.ModDto.Id);
-        if (oldData == null) { throw new DomainException($"ACCESS PERMISSION with Id {request.ModDto.Id} NOT FOUND."); }
-        var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.ModDto.PerMenuKey }, cancellationToken);
-        if (pMenu == null) { throw new DomainException($"MENU PERMISSION with Key {request.ModDto.PerMenuKey} NOT FOUND."); }
-
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
+            var oldData = await _uow.Set<PerApi>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
+            if (oldData == null) { throw new DomainException($"ACCESS PERMISSION with Id {request.ModDto.Id} NOT FOUND."); }
+            var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.ModDto.PerMenuKey }, ct);
+            if (pMenu == null) { throw new DomainException($"MENU PERMISSION with Key {request.ModDto.PerMenuKey} NOT FOUND."); }
+
             oldData.PerMenuId = pMenu.Id;
             oldData.Key = request.ModDto.Key;
             oldData.Desc = request.ModDto.Desc;
-            var data = await _unitOfWork.Repository<PerApi>().Update(oldData);
-            await _unitOfWork.Commit();
+            await _uow.Update(oldData);
+            await _uow.Commit(ct);
 
             var res = new PerApiListDto();
-            var response = await _med.Send(new PerApiByIdQry { Id = data.Id }, cancellationToken);
+            var response = await _med.Send(new PerApiByIdQry { Id = request.ModDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
@@ -89,22 +92,22 @@ public class PerApiModCmdHandler : IRequestHandler<PerApiModCmd, PerApiListDto>
 
 public class PerApiDelCmdHandler : IRequestHandler<PerApiDelCmd>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public PerApiDelCmdHandler(IUnitOfWork unitOfWork) { _unitOfWork = unitOfWork; }
+    private readonly IUnitOfWork _uow;
+    public PerApiDelCmdHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(PerApiDelCmd request, CancellationToken cancellationToken)
+    public async Task Handle(PerApiDelCmd request, CancellationToken ct)
     {
-        await _unitOfWork.Begin();
+        await _uow.Begin(ct);
         try
         {
-            var data = await _unitOfWork.Repository<PerApi>().GetById(request.Id);
+            var data = await _uow.Set<PerApi>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
             if (data == null) { throw new DomainException($"ACCESS PERMISSION with id [{request.Id}] NOT FOUND."); }
-            await _unitOfWork.Repository<PerApi>().Delete(request.Id);
-            await _unitOfWork.Commit();
+            await _uow.Delete(data);
+            await _uow.Commit(ct);
         }
         catch
         {
-            await _unitOfWork.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }

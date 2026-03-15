@@ -19,7 +19,6 @@
     <ProjectReference Include="..\Svc.HRM\HRM.Leave\Leave.API\Leave.API.csproj" />
     <ProjectReference Include="..\Svc.HRM\HRM.Profile\Profile.API\Profile.API.csproj" />
     <ProjectReference Include="..\Svc.HRM\HRM.Recruit\Recruit.API\Recruit.API.csproj" />
-    <ProjectReference Include="..\Svc.Lup\Svc.Lup.csproj" />
   </ItemGroup>
 
 </Project>

@@ -26,6 +26,7 @@ public class AllDeptsHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
             .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
             .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
             .From<Department>(v)
+            .Join<Department, Branch>(v, b, x => x.BranchId, x => x.Id)
             .OrderBy<Department>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
@@ -69,6 +70,7 @@ public class DeptByIdHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
             .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
             .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
             .From<Department>(v)
+            .Join<Department, Branch>(v, b, x => x.BranchId, x => x.Id)
             .Where<Department>(v, x => x.Id == request.Id)
             .Limit(1);
 

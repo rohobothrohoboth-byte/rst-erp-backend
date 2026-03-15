@@ -12,15 +12,15 @@ using Svc.Auth.Persistence;
 namespace Svc.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260113083255_MigAuth02")]
-    partial class MigAuth02
+    [Migration("20260315112542_MigAuth00")]
+    partial class MigAuth00
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
@@ -229,7 +229,6 @@ namespace Svc.Auth.Migrations
             modelBuilder.Entity("Svc.Auth.Models.Entities.PerApi", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -240,27 +239,35 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Desc")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("PerMenuId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
+                    b.HasIndex("Desc");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("Key")
                         .IsUnique();
 
                     b.HasIndex("PerMenuId");
+
+                    b.HasIndex("PerMenuId", "Key")
+                        .IsUnique();
 
                     b.ToTable("PerApi");
                 });
@@ -268,7 +275,6 @@ namespace Svc.Auth.Migrations
             modelBuilder.Entity("Svc.Auth.Models.Entities.PerMenu", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -279,21 +285,26 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Icon")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsChild")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Label")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<int>("Order")
                         .HasColumnType("integer");
@@ -303,15 +314,15 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("PerModuleId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("Key")
                         .IsUnique();
@@ -320,13 +331,15 @@ namespace Svc.Auth.Migrations
 
                     b.HasIndex("PerModuleId");
 
+                    b.HasIndex("PerModuleId", "Key")
+                        .IsUnique();
+
                     b.ToTable("PerMenu");
                 });
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.PerModule", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -337,16 +350,24 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Desc")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Desc");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("Key")
                         .IsUnique();
@@ -357,11 +378,7 @@ namespace Svc.Auth.Migrations
             modelBuilder.Entity("Svc.Auth.Models.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("AppUserId")
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -373,7 +390,9 @@ namespace Svc.Auth.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsRevoked")
                         .HasColumnType("boolean");
@@ -383,17 +402,21 @@ namespace Svc.Auth.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppUserId");
+                    b.HasIndex("ExpiryDate");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("IsRevoked");
+
+                    b.HasIndex("RevokedDate");
 
                     b.HasIndex("Token")
                         .IsUnique();
@@ -405,10 +428,7 @@ namespace Svc.Auth.Migrations
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.UserPerApi", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PerApiId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -417,26 +437,37 @@ namespace Svc.Auth.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("Id")
+                    b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("PerApiId")
+                        .HasMaxLength(100)
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.HasKey("UserId", "PerApiId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("PerApiId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "PerApiId")
+                        .IsUnique();
 
                     b.ToTable("UserPerApi");
                 });
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.UserPerMenu", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PerMenuId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -445,26 +476,37 @@ namespace Svc.Auth.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("Id")
+                    b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("PerMenuId")
+                        .HasMaxLength(100)
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.HasKey("UserId", "PerMenuId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("PerMenuId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "PerMenuId")
+                        .IsUnique();
 
                     b.ToTable("UserPerMenu");
                 });
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.UserPerModule", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PerModuleId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("DateAdd")
@@ -473,16 +515,30 @@ namespace Svc.Auth.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("Id")
+                    b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<Guid>("PerModuleId")
+                        .HasMaxLength(100)
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.HasKey("UserId", "PerModuleId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("PerModuleId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "PerModuleId")
+                        .IsUnique();
 
                     b.ToTable("UserPerModule");
                 });
@@ -494,12 +550,6 @@ namespace Svc.Auth.Migrations
                     b.Property<string>("Desc")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("Name")
-                        .IsUnique();
 
                     b.ToTable("AppRole", (string)null);
                 });
@@ -514,12 +564,6 @@ namespace Svc.Auth.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.HasIndex("EmployeeId")
-                        .IsUnique();
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.ToTable("AppUser", (string)null);
                 });
 
@@ -528,7 +572,7 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -537,7 +581,7 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -546,7 +590,7 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -555,13 +599,13 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -570,7 +614,7 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -579,7 +623,7 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Svc.Auth.Models.Entities.PerMenu", "PerMenu")
                         .WithMany()
                         .HasForeignKey("PerMenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerMenu");
@@ -589,12 +633,13 @@ namespace Svc.Auth.Migrations
                 {
                     b.HasOne("Svc.Auth.Models.Entities.PerMenu", "Parent")
                         .WithMany()
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Svc.Auth.Models.Entities.PerModule", "PerModule")
                         .WithMany()
                         .HasForeignKey("PerModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Parent");
@@ -604,14 +649,10 @@ namespace Svc.Auth.Migrations
 
             modelBuilder.Entity("Svc.Auth.Models.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("Svc.Auth.Models.Entities.AppUser", null)
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("AppUserId");
-
                     b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
-                        .WithMany()
+                        .WithMany("RefreshTokens")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -622,13 +663,13 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Svc.Auth.Models.Entities.PerApi", "PerApi")
                         .WithMany()
                         .HasForeignKey("PerApiId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
                         .WithMany("PerApi")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerApi");
@@ -641,13 +682,13 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Svc.Auth.Models.Entities.PerMenu", "PerMenu")
                         .WithMany()
                         .HasForeignKey("PerMenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
                         .WithMany("PerMenu")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerMenu");
@@ -660,13 +701,13 @@ namespace Svc.Auth.Migrations
                     b.HasOne("Svc.Auth.Models.Entities.PerModule", "PerModule")
                         .WithMany()
                         .HasForeignKey("PerModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Svc.Auth.Models.Entities.AppUser", "User")
                         .WithMany("PerModule")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("PerModule");

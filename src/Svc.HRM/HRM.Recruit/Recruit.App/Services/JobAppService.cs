@@ -197,7 +197,7 @@ public class JobAppService : IJobAppService
                 .Select<ApplicantPerson>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName)
                 .From<Applicant>(a)
                 .Join<Applicant, ApplicantPerson>(a, p, x => x.PersonId, x => x.Id)
-                .WhereRaw<Applicant>(a, x => x.Id, "=", row.ApplicantId.Value);
+                .Where<Applicant>(a, x => x.Id == row.ApplicantId.Value);
 
             var (sqlApp, paramApp) = qbApp.Build();
             await using var rApp = await _dapper.ExecuteReaderAsync(sqlApp, paramApp, ct);

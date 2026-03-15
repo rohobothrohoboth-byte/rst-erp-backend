@@ -2,64 +2,96 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Models.Entities;
+using System.Data;
 
 namespace Svc.Auth.Persistence;
 
-public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDbContext(options)
+public class AuthDbContext : IdentityDbContext
 {
-    protected override void OnModelCreating(ModelBuilder builder)
+    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
     {
-        base.OnModelCreating(builder);
-        builder.HasPostgresExtension("pg_trgm");
+        ChangeTracker.AutoDetectChangesEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        ChangeTracker.LazyLoadingEnabled = false;
+    }
 
-        builder.Entity<AppUser>().ToTable("AppUser");
-        builder.Entity<AppRole>().ToTable("AppRole");
-        builder.Entity<IdentityUser>().ToTable("User");
-        builder.Entity<IdentityRole>().ToTable("Role");
-        builder.Entity<IdentityUserRole<string>>().ToTable("UserRole");
-        builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaim");
-        builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaim");
-        builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogin");
-        builder.Entity<IdentityUserToken<string>>().ToTable("UserToken");
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+            relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
-        builder.Entity<PerModule>().HasIndex(p => p.Key).IsUnique();
-        builder.Entity<UserPerModule>().HasKey(up => new { up.UserId, up.PerModuleId });
-        builder.Entity<UserPerMenu>().HasKey(up => new { up.UserId, up.PerMenuId });
-        builder.Entity<UserPerApi>().HasKey(up => new { up.UserId, up.PerApiId });
-        builder.Entity<AppUser>(en =>
-        {
-            en.HasIndex(e => e.EmployeeId).IsUnique();
-            en.HasIndex(e => e.Id).IsUnique();
-        });
-        builder.Entity<AppRole>(en =>
-        {
-            en.HasIndex(e => e.Name).IsUnique();
-            en.HasIndex(e => e.Id).IsUnique();
-        });
+        modelBuilder.Entity<AppUser>().ToTable("AppUser");
+        modelBuilder.Entity<AppRole>().ToTable("AppRole");
+        modelBuilder.Entity<IdentityUser>().ToTable("User");
+        modelBuilder.Entity<IdentityRole>().ToTable("Role");
+        modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UserRole");
+        modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaim");
+        modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UserClaim");
+        modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UserLogin");
+        modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserToken");
 
-        builder.Entity<RefreshToken>(en =>
+        ////foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        ////{
+        ////    var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+        ////    foreach (var index in indexes)
+        ////    {
+        ////        index.SetFilter("\"IsDeleted\" = false");
+        ////    }
+        ////}
+        //foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(e => typeof(BaseEntity).IsAssignableFrom(e.ClrType)))
+        //{
+        //    var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
+        //    foreach (var index in indexes)
+        //    {
+        //        index.SetFilter("\"IsDeleted\" = false");
+        //    }
+        //}
+
+        var baseEntities = modelBuilder.Model.GetEntityTypes().Where(t => typeof(BaseEntity).IsAssignableFrom(t.ClrType));
+        foreach (var entityType in baseEntities)
         {
-            en.HasKey(e => e.Id);
-            en.Property(e => e.UserId).HasMaxLength(300);
-            en.Property(e => e.Token).HasMaxLength(1000);
-            en.HasIndex(e => e.Token).IsUnique();
-            en.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-        });
-        builder.Entity<PerMenu>(en =>
+            foreach (var index in entityType.GetIndexes().Where(i => i.IsUnique))
+            {
+                index.SetFilter("\"IsDeleted\" = false");
+            }
+        }
+
+        modelBuilder.HasPostgresExtension("pg_trgm");
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AuthDbContext).Assembly);
+
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            en.HasIndex(e => e.Id).IsUnique();
-            en.HasIndex(e => e.Key).IsUnique();
-        });
-        builder.Entity<PerApi>(en =>
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.DateAdd = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.DateMod = now;
+                    break;
+            }
+        }
+
+        try
         {
-            en.HasIndex(e => e.Id).IsUnique();
-            en.HasIndex(e => e.Key).IsUnique();
-        });
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new DBConcurrencyException("The record was modified by another transaction.", ex);
+        }
     }
 
     public DbSet<PerModule> PerModule { get; set; }
     public DbSet<PerMenu> PerMenu { get; set; }
     public DbSet<PerApi> PerApi { get; set; }
+    public DbSet<RefreshToken> RefreshToken { get; set; }
     public DbSet<UserPerModule> UserPerModule { get; set; }
     public DbSet<UserPerMenu> UserPerMenu { get; set; }
     public DbSet<UserPerApi> UserPerApi { get; set; }

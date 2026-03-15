@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Svc.Auth.Extensions;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Entities;
 using Svc.Auth.Persistence;
@@ -13,7 +14,7 @@ using Svc.Auth.Services;
 using System.Reflection;
 using System.Text;
 
-namespace Svc.Auth.Extensions;
+namespace Svc.Auth.Middlewares;
 
 public static class DependencyInjection
 {
@@ -34,11 +35,28 @@ public static class DependencyInjection
                 option.SubstituteApiVersionInUrl = true;
             });
 
-        builder.Services.AddDbContext<AuthDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("authMgrCon")));
-        builder.Services.AddScoped<DapperContext>();
+        builder.Services.AddDbContextPool<AuthDbContext>(options =>
+            {
+                options.UseNpgsql(builder.Configuration.GetConnectionString("authMgrCon"), npgsql =>
+                    {
+                        npgsql.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                        npgsql.CommandTimeout(30);
+                        npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    });
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.EnableSensitiveDataLogging(false);
+            });
+
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped<IDapperHelper, DapperHelper>();
+        builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
+
+        //builder.Services.AddScoped<ILeaveValService, LeaveValService>();
+
         builder.Services.AddScoped<IHrmProfileClient, HrmProfileClient>();
-        builder.Services.AddScoped(typeof(IAuthMngrRepo<>), typeof(AuthMngrRepo<>));
         builder.Services.AddScoped<ILogService, LogService>();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
         builder.Services.AddOpenApi();

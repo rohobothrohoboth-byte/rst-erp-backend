@@ -100,11 +100,11 @@ public sealed class QueryBuilder
         return this;
     }
 
-    public QueryBuilder SelectAs<T>(string alias, string asName, Expression<Func<T, object>> col)
-    {
-        _select.Add($"{SqlGen.Col(alias, col)} AS \"{asName}\"");
-        return this;
-    }
+    //public QueryBuilder SelectAs<T>(string alias, string asName, Expression<Func<T, object>> col)
+    //{
+    //    _select.Add($"{SqlGen.Col(alias, col)} AS \"{asName}\"");
+    //    return this;
+    //}
 
     public QueryBuilder SelectAs<TSource, TDest>(string alias, Expression<Func<TSource, object>> source, Expression<Func<TDest, object>> dest)
     {

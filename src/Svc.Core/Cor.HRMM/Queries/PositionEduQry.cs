@@ -23,9 +23,10 @@ public class PositionEduAllHandler : IRequestHandler<PositionEduAllQry, List<Pos
         const string q = "q";
         var qb = new QueryBuilder()
             .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<EducationQual>(q, asName: "EducationQual", x => x.Name)
+            .SelectAs<EducationQual, PositionEduListDto>(q, x => x.Name, x => x.EducationQual)
             .From<PositionEducation>(v)
             .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
+            .Where<PositionEducation>(v, x => x.PositionId == request.Id)
             .OrderBy<PositionEducation>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
@@ -65,7 +66,7 @@ public class PositionEduByIdHandler : IRequestHandler<PositionEduByIdQry, Positi
         const string q = "q";
         var qb = new QueryBuilder()
             .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<EducationQual>(q, asName: "EducationQual", x => x.Name)
+            .SelectAs<EducationQual, PositionEduListDto>(q, x => x.Name, x => x.EducationQual)
             .From<PositionEducation>(v)
             .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
             .Where<PositionEducation>(v, x => x.Id == request.Id)

@@ -1,5 +1,23 @@
 ﻿namespace Svc.Auth.Models.Dtos;
 
+public class PerMenuApiRow
+{
+    public Guid PerMenuId { get; set; }
+    public string Label { get; set; } = default!;
+
+    public Guid ApiId { get; set; }
+    public string Desc { get; set; } = default!;
+}
+
+public class UserMenuApiRow
+{
+    public Guid PerMenuId { get; set; }
+    public string Label { get; set; } = default!;
+
+    public Guid ApiId { get; set; }
+    public string Desc { get; set; } = default!;
+}
+
 public class MenuPerApiListDto
 {
     public Guid PerMenuId { get; set; }
