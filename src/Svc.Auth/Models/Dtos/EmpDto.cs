@@ -14,12 +14,6 @@ public class EmpListDto
     public bool HasAccount { get; set; }
 }
 
-public class HasAccountDto
-{
-    public Guid EmpId { get; set; }
-    public bool HasAccount { get; set; }
-}
-
 public class IdDto
 {
     public Guid Id { get; set; }

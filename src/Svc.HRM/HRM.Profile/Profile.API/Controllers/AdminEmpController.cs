@@ -19,14 +19,6 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class AdminEmpController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllEmployee")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllEmployee()
-    {
-        var response = await med.Send(new EmployeeAllQry());
-        return Ok(ApiResponse<object>.Ok(response));
-    }
-
     [HttpPost("Step1")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]

@@ -24,33 +24,38 @@ public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmpListDt
     {
         var empTask = await _hrmProfile.GetAdminEmpList(ct);
         var empList = empTask.Res.ToList();
-        var empDict = empTask.Res.ToDictionary(d => Guid.Parse(d.Id));
-
-        var result = new List<EmpListDto>();
-        foreach (var item in empList)
+        var empMap = empList.Select(x => new
         {
-            var empId = Guid.Parse(item.Id);
-            const string v = "v";
-            var qb = new QueryBuilder()
-                .SelectAs<AppUser, IdDto>(v, x => x.EmployeeId, x => x.Id)
-                .From<AppUser>(v)
-                .Where<AppUser>(v, x => x.EmployeeId == empId)
-                .Limit(1);
-            var (sql, parameters) = qb.Build();
-            var data = await _dapper.QueryFirstOrDefaultAsync<IdDto>(sql, parameters, ct);
-            var emp = new EmpListDto
+            Raw = x,
+            Id = Guid.TryParse(x.Id, out var g) ? g : Guid.Empty
+        }).Where(x => x.Id != Guid.Empty).ToList();
+        var empIds = empMap.Select(x => x.Id).ToArray();
+
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .SelectAs<AppUser, IdDto>(v, x => x.EmployeeId, x => x.Id)
+            .From<AppUser>(v)
+            .WhereIn<AppUser>(v, x => x.EmployeeId, empIds);
+        var (sql, parameters) = qb.Build();
+        var users = await _dapper.QueryAsync<IdDto>(sql, parameters, ct);
+        var userSet = users.Select(x => x.Id).ToHashSet();
+        var result = new List<EmpListDto>();
+
+        foreach (var x in empMap)
+        {
+            result.Add(new EmpListDto
             {
-                Code = item.Code,
-                EmpFullName = item.Name,
-                EmpFullNameAm = item.NameAm,
-                Gender = item.Gender,
-                Branch = item.Branch,
-                Department = item.Dept,
-                Position = item.Position,
-                EmpState = item.Status,
-                HasAccount = data != null
-            };
-            result.Add(emp);
+                Id = x.Id,
+                Code = x.Raw.Code,
+                EmpFullName = x.Raw.Name,
+                EmpFullNameAm = x.Raw.NameAm,
+                Gender = x.Raw.Gender,
+                Branch = x.Raw.Branch,
+                Department = x.Raw.Dept,
+                Position = x.Raw.Position,
+                EmpState = x.Raw.Status,
+                HasAccount = userSet.Contains(x.Id)
+            });
         }
         return result;
     }

@@ -71,26 +71,9 @@ public sealed class QueryBuilder
     private int? _offset;
     private bool _distinct;
 
-    public QueryBuilder Distinct()
-    {
-        _distinct = true;
-        return this;
-    }
-
     public QueryBuilder Select<T>(string alias, params Expression<Func<T, object>>[] cols)
     {
         foreach (var c in cols) { _select.Add(SqlGen.Col(alias, c)); }
-        return this;
-    }
-
-    public QueryBuilder SelectAll<T>(string alias)
-    {
-        foreach (var prop in typeof(T).GetProperties())
-        {
-            var col = SqlMetadata.Column(prop);
-            _select.Add($"{alias}.\"{col}\"");
-        }
-
         return this;
     }
 
@@ -176,39 +159,6 @@ public sealed class QueryBuilder
         return this;
     }
 
-    public QueryBuilder WhereInBulk<T>(string alias, Expression<Func<T, object>> column, IEnumerable values)
-    {
-        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
-        var list = values.Cast<object>().ToArray();
-        if (list.Length == 0)
-        {
-            AppendWhere("1=0");
-            return this;
-        }
-
-        var param = AddParam(list);
-        AppendWhere($"{alias}.\"{columnName}\" = ANY({param})");
-        return this;
-    }
-
-    public QueryBuilder WhereIf<T>(bool condition, string alias, Expression<Func<T, bool>> predicate)
-    {
-        if (!condition) return this;
-
-        var sql = ParseExpression(alias, predicate.Body);
-        AppendWhere(sql);
-        return this;
-    }
-
-    public QueryBuilder WhereBetween<T>(string alias, Expression<Func<T, object>> column, object start, object end)
-    {
-        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
-        var p1 = AddParam(start);
-        var p2 = AddParam(end);
-        AppendWhere($"{alias}.\"{columnName}\" BETWEEN {p1} AND {p2}");
-        return this;
-    }
-
     public QueryBuilder OrderBy<T>(string alias, Expression<Func<T, object>> col, bool desc = false)
     {
         _order.Add($"{SqlGen.Col(alias, col)} {(desc ? "DESC" : "ASC")}");
@@ -224,19 +174,6 @@ public sealed class QueryBuilder
     public QueryBuilder Limit(int limit)
     {
         _limit = limit;
-        return this;
-    }
-
-    public QueryBuilder Offset(int offset)
-    {
-        _offset = offset;
-        return this;
-    }
-
-    public QueryBuilder Page(int page, int pageSize)
-    {
-        _limit = pageSize;
-        _offset = (page - 1) * pageSize;
         return this;
     }
 
@@ -285,6 +222,11 @@ public sealed class QueryBuilder
 
     private string ParseExpression(string alias, Expression expr)
     {
+        if (expr is UnaryExpression u && expr.NodeType == ExpressionType.Convert)
+        {
+            return ParseExpression(alias, u.Operand);
+        }
+
         return expr switch
         {
             BinaryExpression b => ParseBinary(alias, b),
