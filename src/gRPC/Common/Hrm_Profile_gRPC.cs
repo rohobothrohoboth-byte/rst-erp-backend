@@ -15,6 +15,7 @@ public interface IHrmProfileClient
     Task<HrmEmpPlcy> GetEmpPolicy(string id, CancellationToken ct = default);
     Task<HrmEmpId> GetEmpId(string id, CancellationToken ct = default);
     Task<HrmListEmpId> GetListEmpId(CancellationToken ct = default);
+    Task<AdminEmpList> GetAdminEmpList(CancellationToken ct = default);
 
 
 }
@@ -91,6 +92,14 @@ public class HrmProfileClient : IHrmProfileClient
         var client = new HrmProfileService.HrmProfileServiceClient(channel);
         var req = new HrmProListRqst();
         return await client.GetListEmpIdAsync(req);
+    }
+
+    public async Task<AdminEmpList> GetAdminEmpList(CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new HrmProfileService.HrmProfileServiceClient(channel);
+        var req = new HrmProListRqst();
+        return await client.GetAdminEmpListAsync(req);
     }
 
 }

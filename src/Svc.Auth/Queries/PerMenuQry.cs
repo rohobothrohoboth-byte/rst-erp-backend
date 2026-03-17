@@ -17,9 +17,7 @@ public class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public str
 public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
     private readonly IDapperHelper _dapper;
-    private readonly IMediator _med;
-
-    public PerMenuAllQryHandler(IDapperHelper dapper, IMediator med) { _dapper = dapper; _med = med; }
+    public PerMenuAllQryHandler(IDapperHelper dapper) { _dapper = dapper;}
 
     public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken ct)
     {
@@ -28,7 +26,8 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
         const string d = "d";
         var qb = new QueryBuilder()
             .Select<PerMenu>(v, x => x.Id, x => x.PerModuleId, x => x.ParentId, x => x.Order, x => x.IsChild, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.IsDeleted, x => x.DateAdd, x => x.DateMod)
-            .Select<PerMenu>(c, x => x.Label, x => x.Key)
+            .SelectAs<PerMenu, PerMenuJoinRow>(c, x => x.Label, x => x.ParentLabel)
+            .SelectAs<PerMenu, PerMenuJoinRow>(c, x => x.Key, x => x.ParentKey)
             .Select<PerModule>(d, x => x.Id)
             .SelectAs<PerModule, PerMenuJoinRow>(d, x => x.Desc, x => x.ModuleDesc)
             .From<PerMenu>(v)
@@ -194,8 +193,7 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
 public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, List<ModPerMenuListDto>>
 {
     private readonly IDapperHelper _dapper;
-    private readonly IMediator _med;
-    public PerMenuByUserIdQryHandler(IDapperHelper dapper, IMediator med) { _dapper = dapper; _med = med; }
+    public PerMenuByUserIdQryHandler(IDapperHelper dapper) { _dapper = dapper;  }
 
     public async Task<List<ModPerMenuListDto>> Handle(PerMenuByUserIdQry request, CancellationToken ct)
     {

@@ -9,6 +9,7 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Queries;
 
+public class EmpAllAdminQry : IRequest<List<EmployeeListDto>> { }
 public class EmployeeAllQry : IRequest<List<EmployeeListDto>> { }
 public class EmployeeByIdQry : IRequest<EmployeeListDto?> { public Guid Id { get; set; } }
 public class Step5Qry : IRequest<Step5Dto?> { public Guid Id { get; set; } }
@@ -17,13 +18,80 @@ public class EmpCodeByIdQry : IRequest<string?> { public Guid Id { get; set; } }
 
 
 
-public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
+public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmployeeListDto>>
 {
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeAllQryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmpAllAdminHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    {
+        _dapper = dapper;
+        _corHRMM = corHRMM;
+        _corMod = corMod;
+    }
+
+    public async Task<List<EmployeeListDto>> Handle(EmpAllAdminQry request, CancellationToken ct)
+    {
+        var deptTask = _corMod.GetListDept(ct);
+        var posTask = _corHRMM.GetListPosition(ct);
+
+        await Task.WhenAll(deptTask, posTask);
+        var deptDict = deptTask.Result.Res.ToDictionary(d => Guid.Parse(d.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+
+        const string e = "e";
+        const string p = "p";
+        var qb = new QueryBuilder()
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.DepartmentId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
+            .From<Employee>(e)
+            .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
+            .OrderBy<Employee>(e, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        var result = new List<EmployeeListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<EmpJoinRow>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var row = parser(reader);
+            deptDict.TryGetValue(row.DepartmentId, out var dept);
+            posDict.TryGetValue(row.PositionId, out var pos);
+
+            result.Add(new EmployeeListDto
+            {
+                Id = row.Id,
+                Code = row.Code,
+                EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
+                EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+                EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
+                Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
+                Branch = dept?.NameAm ?? "",
+                Department = dept?.Name ?? "",
+                Position = pos?.Name ?? "",
+                EmpType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
+                EmpNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
+                WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
+                IsDeleted = false,
+                DateAdd = row.DateAdd,
+                DateMod = row.DateMod,
+                RowVersion = row.xmin.ToString()
+            });
+        }
+
+        return result;
+    }
+}
+
+public class EmployeeAllHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
+{
+    private readonly IDapperHelper _dapper;
+    private readonly ICorHrmmClient _corHRMM;
+    private readonly ICorModClient _corMod;
+
+    public EmployeeAllHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _dapper = dapper;
         _corHRMM = corHRMM;
@@ -88,13 +156,13 @@ public class EmployeeAllQryHandler : IRequestHandler<EmployeeAllQry, List<Employ
     }
 }
 
-public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
+public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
 {
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public EmployeeByIdQryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeByIdHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _dapper = dapper;
         _corHRMM = corHRMM;
@@ -154,13 +222,13 @@ public class EmployeeByIdQryHandler : IRequestHandler<EmployeeByIdQry, EmployeeL
     }
 }
 
-public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
+public class Step5Handler : IRequestHandler<Step5Qry, Step5Dto?>
 {
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public Step5QryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public Step5Handler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _dapper = dapper;
         _corHRMM = corHRMM;
@@ -339,13 +407,13 @@ public class Step5QryHandler : IRequestHandler<Step5Qry, Step5Dto?>
     }
 }
 
-public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
+public class Step2Handler : IRequestHandler<Step2Qry, BasicInfoDto?>
 {
     private readonly IDapperHelper _dapper;
     private readonly ICorHrmmClient _corHRMM;
     private readonly ICorModClient _corMod;
 
-    public Step2QryHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public Step2Handler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
     {
         _dapper = dapper;
         _corHRMM = corHRMM;
@@ -403,10 +471,10 @@ public class Step2QryHandler : IRequestHandler<Step2Qry, BasicInfoDto?>
     }
 }
 
-public class EmpCodeByIdQryHandler : IRequestHandler<EmpCodeByIdQry, string?>
+public class EmpCodeByIdHandler : IRequestHandler<EmpCodeByIdQry, string?>
 {
     private readonly IDapperHelper _dapper;
-    public EmpCodeByIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
+    public EmpCodeByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
     public async Task<string?> Handle(EmpCodeByIdQry request, CancellationToken ct)
     {

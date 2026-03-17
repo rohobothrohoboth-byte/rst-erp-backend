@@ -100,12 +100,6 @@ public sealed class QueryBuilder
         return this;
     }
 
-    //public QueryBuilder SelectAs<T>(string alias, string asName, Expression<Func<T, object>> col)
-    //{
-    //    _select.Add($"{SqlGen.Col(alias, col)} AS \"{asName}\"");
-    //    return this;
-    //}
-
     public QueryBuilder SelectAs<TSource, TDest>(string alias, Expression<Func<TSource, object>> source, Expression<Func<TDest, object>> dest)
     {
         var sourceCol = SqlGen.Col(alias, source);
@@ -117,7 +111,7 @@ public sealed class QueryBuilder
     public QueryBuilder SelectDto<TEntity, TDto>(string alias)
     {
         var entityProps = typeof(TEntity).GetProperties();
-        var dtoProps = typeof(TDto).GetProperties().Select(p => p.Name).ToHashSet();
+        var dtoProps = typeof(TDto).GetProperties().Select(p => SqlMetadata.Column(p)).ToHashSet();
 
         foreach (var prop in entityProps)
         {
@@ -182,6 +176,39 @@ public sealed class QueryBuilder
         return this;
     }
 
+    public QueryBuilder WhereInBulk<T>(string alias, Expression<Func<T, object>> column, IEnumerable values)
+    {
+        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
+        var list = values.Cast<object>().ToArray();
+        if (list.Length == 0)
+        {
+            AppendWhere("1=0");
+            return this;
+        }
+
+        var param = AddParam(list);
+        AppendWhere($"{alias}.\"{columnName}\" = ANY({param})");
+        return this;
+    }
+
+    public QueryBuilder WhereIf<T>(bool condition, string alias, Expression<Func<T, bool>> predicate)
+    {
+        if (!condition) return this;
+
+        var sql = ParseExpression(alias, predicate.Body);
+        AppendWhere(sql);
+        return this;
+    }
+
+    public QueryBuilder WhereBetween<T>(string alias, Expression<Func<T, object>> column, object start, object end)
+    {
+        var columnName = SqlMetadata.Column(SqlGen.GetMember(column));
+        var p1 = AddParam(start);
+        var p2 = AddParam(end);
+        AppendWhere($"{alias}.\"{columnName}\" BETWEEN {p1} AND {p2}");
+        return this;
+    }
+
     public QueryBuilder OrderBy<T>(string alias, Expression<Func<T, object>> col, bool desc = false)
     {
         _order.Add($"{SqlGen.Col(alias, col)} {(desc ? "DESC" : "ASC")}");
@@ -241,16 +268,6 @@ public sealed class QueryBuilder
         if (_offset.HasValue)
             sb.AppendLine($"OFFSET {_offset}");
 
-        return (sb.ToString(), _params);
-    }
-
-    public (string Sql, DynamicParameters Params) BuildCount()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("SELECT COUNT(1)");
-        sb.AppendLine($"FROM {_from}");
-        foreach (var j in _joins) { sb.AppendLine(j); }
-        if (_where.Count > 0) { sb.AppendLine("WHERE " + string.Join(" AND ", _where)); }
         return (sb.ToString(), _params);
     }
 

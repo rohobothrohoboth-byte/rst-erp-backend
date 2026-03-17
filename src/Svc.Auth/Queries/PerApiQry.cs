@@ -118,8 +118,7 @@ public class PerApiByMenuIdQryHandler : IRequestHandler<PerApiByMenuIdQry, MenuP
 public class PerApiByUserIdQryHandler : IRequestHandler<PerApiByUserIdQry, List<MenuPerApiListDto>>
 {
     private readonly IDapperHelper _dapper;
-    private readonly IMediator _med;
-    public PerApiByUserIdQryHandler(IDapperHelper dapper, IMediator med) { _dapper = dapper; _med = med; }
+    public PerApiByUserIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
 
     public async Task<List<MenuPerApiListDto>> Handle(PerApiByUserIdQry request, CancellationToken ct)
     {
@@ -127,15 +126,14 @@ public class PerApiByUserIdQryHandler : IRequestHandler<PerApiByUserIdQry, List<
         const string c = "c";
         const string d = "d";
         var qb = new QueryBuilder()
-            .Select<UserPerApi>(v, x => x.UserId, x => x.PerApiId)
+            .Select<UserPerMenu>(v, x => x.UserId, x => x.PerMenuId)
             .Select<PerMenu>(c, x => x.Label)
-            .SelectAs<PerMenu, UserMenuApiRow>(c, x => x.Id, x => x.PerMenuId)
-            .Select<PerApi>(d, x => x.Desc)
+            .Select<PerApi>(d, x => x.Desc, x => x.PerMenuId)
             .SelectAs<PerApi, UserMenuApiRow>(d, x => x.Id, x => x.ApiId)
-            .From<UserPerApi>(v)
-            .Join<UserPerApi, PerMenu>(v, c, x => x.PerApiId, x => x.Id)
+            .From<UserPerMenu>(v)
+            .Join<UserPerMenu, PerMenu>(v, c, x => x.PerMenuId, x => x.Id)
             .LeftJoin<PerMenu, PerApi>(c, d, x => x.Id, x => x.PerMenuId)
-            .Where<UserPerApi>(v, x => x.UserId == request.Id)
+            .Where<UserPerMenu>(v, x => x.UserId == request.Id)
             .OrderBy<PerMenu>(c, x => x.Label, desc: false);
 
         var (sql, param) = qb.Build();

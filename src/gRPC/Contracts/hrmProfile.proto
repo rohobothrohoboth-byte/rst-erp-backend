@@ -13,6 +13,19 @@ service HrmProfileService {
   rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
   rpc GetEmpId (HrmProRqst) returns (HrmEmpId);
   rpc GetListEmpId (HrmProListRqst) returns (HrmListEmpId);
+  rpc GetAdminEmpList (HrmProListRqst) returns (AdminEmpList);
+}
+
+message AdminEmp {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+  string Gender = 4;
+  string Code = 5;
+  string Branch = 6;
+  string Dept = 7;
+  string Position = 8;
+  string Status = 9;
 }
 
 message HrmEmpId {
@@ -61,6 +74,10 @@ message HrmProRqst {
 
 message HrmListEmpId { 
   repeated HrmEmpId Res = 1; 
+}
+
+message AdminEmpList { 
+  repeated AdminEmp Res = 1; 
 }
 
 message HrmProListPlcy { 

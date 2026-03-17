@@ -18,15 +18,13 @@ public interface IJobAppService
 public class JobAppService : IJobAppService
 {
     private readonly IDapperHelper _dapper;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IHrmProfileClient _hrmProfileClient;
     private readonly ICorModClient _corModClient;
     private readonly ICorHrmmClient _corHrmmClient;
 
-    public JobAppService(IDapperHelper dapper, IUnitOfWork unitOfWork, IHrmProfileClient hrmProfileClient, ICorModClient corModClient, ICorHrmmClient corHrmmClient)
+    public JobAppService(IDapperHelper dapper, IHrmProfileClient hrmProfileClient, ICorModClient corModClient, ICorHrmmClient corHrmmClient)
     {
         _dapper = dapper;
-        _unitOfWork = unitOfWork;
         _hrmProfileClient = hrmProfileClient;
         _corModClient = corModClient;
         _corHrmmClient = corHrmmClient;

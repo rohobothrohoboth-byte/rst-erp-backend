@@ -151,5 +151,24 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
+    public override async Task<AdminEmpList> GetAdminEmpList(HrmProListRqst request, ServerCallContext context)
+    {
+        var res = new AdminEmpList();
+        var response = (await _med.Send(new EmpAllAdminQry())).ToList();
+        if (response.Count <= 0)
+        {
+            var nList = new AdminEmp { Id = null, Name = null, NameAm = null, Gender = null, Code = null, Branch = null, Dept = null, Position = null , Status = null  };
+            res.Res.Add(nList);
+            return res;
+        }
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new AdminEmp { Id = dbItem.Id.ToString(), Name = dbItem.EmpFullName, NameAm = dbItem.EmpFullNameAm, Gender = dbItem.Gender, Code = dbItem.Code, Branch = dbItem.Branch, Dept = dbItem.Department, Position = dbItem.Position, Status = dbItem.EmpState });
+        }
+
+        return res;
+    }
+
 
 }
