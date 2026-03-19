@@ -1,0 +1,81 @@
+﻿using Asp.Versioning;
+using Helpers;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Recruit.App.Commands;
+using Recruit.App.Queries;
+using Recruit.Domain.DTOs;
+
+namespace Recruit.API.Controllers;
+
+/// <summary>
+/// WorkforcePlan Management end points
+/// </summary>
+
+[ApiController]
+[Route("api/hrm/recruit/v{version:apiVersion}/WorkforcePlan")]
+[ApiVersion("1.0")]
+public class WorkforcePlanController(IMediator med) : ControllerBase
+{
+    [HttpGet("AllWorkforcePlan")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> AllWorkforcePlan()
+    {
+        var response = await med.Send(new WorkforcePlanAllQry());
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetWorkforcePlan/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetWorkforcePlan(Guid id)
+    {
+        var response = await med.Send(new WorkforcePlanByIdQry { Id = id });
+        if (response == null) { throw new DomainException($"WORKFORCE PLAN with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpPost("AddWorkforcePlan")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] WorkforcePlanAddDto addDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var command = new WorkforcePlanAddCmd { AddDto = addDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "New WORKFORCE PLAN successfully created."));
+    }
+
+    [HttpPut("ModWorkforcePlan/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] WorkforcePlanModDto modDto)
+    {
+        if (!ModelState.IsValid || modDto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var command = new WorkforcePlanModCmd { ModDto = modDto };
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, "Selected WORKFORCE PLAN successfully updated."));
+    }
+
+    [HttpDelete("DelWorkforcePlan/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var command = new WorkforcePlanDelCmd { Id = id };
+        await med.Send(command);
+        return Ok(ApiResponse<string>.Ok(null!, $"WORKFORCE PLAN with Id {id} successfully deleted."));
+    }
+}

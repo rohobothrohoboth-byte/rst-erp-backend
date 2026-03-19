@@ -28,8 +28,6 @@ public class HrmRecruitDbContext : DbContext
             }
         }
 
-        //modelBuilder.HasSequence<long>("post_number_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
-        //modelBuilder.HasSequence<long>("plan_code_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
         modelBuilder.HasPostgresExtension("pgcrypto");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HrmRecruitDbContext).Assembly);
     }

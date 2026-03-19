@@ -5,9 +5,9 @@ namespace Svc.Auth.Interfaces;
 
 public interface ITokenService
 {
-    Task<string> GenerateAccessToken(AppUser user);
+    Task<string> GenerateAccessToken(AppUser user, CancellationToken ct = default);
     Task<RefreshToken> GenerateRefreshToken(string userId);
-    Task<TokenDto> RefreshToken(AppUser user);
+    Task<TokenDto> RefreshToken(AppUser user, CancellationToken ct = default);
     Task RevokeToken(string userId);
     bool ValidateToken(string token);
     UserDto GetUserFromToken(string token);

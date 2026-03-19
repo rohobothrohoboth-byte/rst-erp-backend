@@ -9,6 +9,7 @@ public static class AuthCons
     public const string PerModule = "perModule";
     public const string PerMenu = "perMenu";
     public const string PerApi = "perApi";
+    public const string Permissions = "permissions";
 }
 
 public static class JwtCons

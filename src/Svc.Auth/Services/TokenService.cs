@@ -1,4 +1,5 @@
 ﻿using Common;
+using Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Svc.Auth.Interfaces;
@@ -8,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Svc.Auth.Services;
 
@@ -30,45 +32,39 @@ public class TokenService : ITokenService
         return Convert.ToBase64String(rByte);
     }
 
-    public async Task<string> GenerateAccessToken(AppUser user)
+    public async Task<string> GenerateAccessToken(AppUser user, CancellationToken ct)
     {
-        const string upm = "upm";
-        const string pm = "pm";
-        const string upn = "upn";
-        const string mn = "mn";
-        const string upa = "upa";
-        const string pa = "pa";
-
-        // -------- Module Permissions --------
-        var qbModule = new QueryBuilder()
-            .Select<PerModule>(pm, x => x.Key)
-            .From<UserPerModule>(upm)
-            .Join<UserPerModule, PerModule>(upm, pm, x => x.PerModuleId, x => x.Id)
-            .Where<UserPerModule>(upm, x => x.UserId == user.Id);
-        var (sqlMod, paramMod) = qbModule.Build();
-        var moduleKeys = await _dapper.QueryAsync<string>(sqlMod, paramMod);
-
-        // -------- Menu Permissions --------
-        var qbMenu = new QueryBuilder()
-            .Select<PerMenu>(mn, x => x.Key)
-            .From<UserPerMenu>(upn)
-            .Join<UserPerMenu, PerMenu>(upn, mn, x => x.PerMenuId, x => x.Id)
-            .Where<UserPerMenu>(upn, x => x.UserId == user.Id);
-        var (sqlMenu, paramMenu) = qbMenu.Build();
-        var menuKeys = await _dapper.QueryAsync<string>(sqlMenu, paramMenu);
-
-        // -------- API Permissions --------
-        var qbApi = new QueryBuilder()
-            .Select<PerApi>(pa, x => x.Key)
-            .From<UserPerApi>(upa)
-            .Join<UserPerApi, PerApi>(upa, pa, x => x.PerApiId, x => x.Id)
-            .Where<UserPerApi>(upa, x => x.UserId == user.Id);
-
-        var (sqlApi, paramApi) = qbApi.Build();
-        var apiKeys = await _dapper.QueryAsync<string>(sqlApi, paramApi);
-
-        // -------- Roles --------
         var roles = await _userManager.GetRolesAsync(user);
+
+        var qb = new QueryBuilder()
+            .SelectAs<PerModule, FlatPermissionDto>("pm", x => x.Key, x => x.ModuleKey)
+            .SelectAs<PerMenu, FlatPermissionDto>("mn", x => x.Key, x => x.MenuKey)
+            .SelectAs<PerApi, FlatPermissionDto>("pa", x => x.Key, x => x.ApiKey)
+            .From<UserPerModule>("upm")
+            .Join<UserPerModule, PerModule>("upm", "pm", x => x.PerModuleId, x => x.Id)
+            .ThenInclude<PerModule, PerMenu>("pm", "mn", x => x.Id, x => x.PerModuleId)
+            .ThenInclude<PerMenu, UserPerMenu>("mn", "upn", x => x.Id, x => x.PerMenuId).AndOn<UserPerMenu>("upn", x => x.UserId == user.Id)
+            .ThenInclude<PerMenu, PerApi>("mn", "pa", x => x.Id, x => x.PerMenuId)
+            .ThenInclude<PerApi, UserPerApi>("pa", "upa", x => x.Id, x => x.PerApiId).AndOn<UserPerApi>("upa", x => x.UserId == user.Id)
+            .Where<UserPerModule>("upm", x => x.UserId == user.Id)
+            .OrderBy<PerModule>("pm", x => x.Key)
+            .OrderBy<PerMenu>("mn", x => x.Key)
+            .OrderBy<PerApi>("pa", x => x.Key);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var data = await reader.ToListAsync<FlatPermissionDto>(ct);
+
+        var result = data.GroupBy(x => x.ModuleKey).Select(module => new ModuleDto
+        {
+            Key = module.Key,
+            Menus = [.. module.Where(x => x.MenuKey != null).GroupBy(x => x.MenuKey).Select(menu => new MenuDto
+            {
+                Key = menu.Key!,
+                Apis = [.. menu.Where(x => x.ApiKey != null).Select(x => x.ApiKey!).Distinct()]
+            })]
+        }).ToList();
+
         var claims = new List<Claim>
         {
             new(AuthCons.UserId, user.Id),
@@ -79,23 +75,7 @@ public class TokenService : ITokenService
         if (roles.Count > 0)
             claims.AddRange(roles.Select(r => new Claim(AuthCons.Role, r)));
 
-        // Module claims
-        if (moduleKeys.Any())
-            claims.AddRange(moduleKeys.Select(k => new Claim(AuthCons.PerModule, k)));
-        else
-            claims.Add(new Claim(AuthCons.PerModule, ""));
-
-        // Menu claims
-        if (menuKeys.Any())
-            claims.AddRange(menuKeys.Select(k => new Claim(AuthCons.PerMenu, k)));
-        else
-            claims.Add(new Claim(AuthCons.PerMenu, ""));
-
-        // API claims
-        if (apiKeys.Any())
-            claims.AddRange(apiKeys.Select(k => new Claim(AuthCons.PerApi, k)));
-        else
-            claims.Add(new Claim(AuthCons.PerApi, ""));
+        claims.Add(new Claim(AuthCons.Permissions, JsonSerializer.Serialize(result)));
 
         var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
@@ -106,6 +86,7 @@ public class TokenService : ITokenService
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+
     }
 
     public async Task<RefreshToken> GenerateRefreshToken(string userId)
@@ -124,9 +105,9 @@ public class TokenService : ITokenService
         return refreshToken;
     }
 
-    public async Task<TokenDto> RefreshToken(AppUser user)
+    public async Task<TokenDto> RefreshToken(AppUser user, CancellationToken ct)
     {
-        var newAccessToken = await GenerateAccessToken(user);
+        var newAccessToken = await GenerateAccessToken(user, ct);
         var newRefresh = await GenerateRefreshToken(user.Id);
 
         return new TokenDto

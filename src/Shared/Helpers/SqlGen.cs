@@ -56,14 +56,25 @@ public static class SqlGen
     }
 }
 
+public class JoinClause
+{
+    public string JoinType { get; set; } = default!;
+    public string Table { get; set; } = default!;
+    public string Alias { get; set; } = default!;
+    public List<string> Conditions { get; set; } = new();
+}
+
 public sealed class QueryBuilder
 {
     private readonly List<string> _select = new();
-    private readonly List<string> _joins = new();
+    //private readonly List<string> _joins = new();
     private readonly List<string> _where = new();
     private readonly List<string> _group = new();
     private readonly List<string> _order = new();
     private readonly DynamicParameters _params = new();
+
+    private readonly List<JoinClause> _joins = new();
+    private JoinClause? _lastJoin;
 
     private string? _from;
     private int _paramIndex;
@@ -113,14 +124,54 @@ public sealed class QueryBuilder
         return this;
     }
 
+    //public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
+    //{
+    //    var type = leftJoin ? "LEFT JOIN" : "JOIN";
+    //    var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(leftAlias, leftKey)} = {SqlGen.Col(rightAlias, rightKey)}";
+    //    if (SqlMetadata.HasSoftDelete(typeof(TRight))) { sql += $" AND {rightAlias}.\"IsDeleted\" = false"; }
+
+    //    _joins.Add(sql);
+    //    return this;
+    //}
+
     public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
     {
-        var type = leftJoin ? "LEFT JOIN" : "JOIN";
-        var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(leftAlias, leftKey)} = {SqlGen.Col(rightAlias, rightKey)}";
-        if (SqlMetadata.HasSoftDelete(typeof(TRight))) { sql += $" AND {rightAlias}.\"IsDeleted\" = false"; }
+        var join = new JoinClause
+        {
+            JoinType = leftJoin ? "LEFT JOIN" : "JOIN",
+            Table = SqlMetadata.Table(typeof(TRight)),
+            Alias = rightAlias
+        };
 
-        _joins.Add(sql);
+        join.Conditions.Add(
+            $"{SqlGen.Col(leftAlias, leftKey)} = {SqlGen.Col(rightAlias, rightKey)}"
+        );
+
+        if (SqlMetadata.HasSoftDelete(typeof(TRight)))
+        {
+            join.Conditions.Add($"{rightAlias}.\"IsDeleted\" = false");
+        }
+
+        _joins.Add(join);
+        _lastJoin = join;
+
         return this;
+    }
+
+    public QueryBuilder AndOn<T>(string alias, Expression<Func<T, bool>> predicate)
+    {
+        if (_lastJoin == null)
+            throw new InvalidOperationException("No JOIN available for AndOn.");
+
+        var sql = ParseExpression(alias, predicate.Body);
+        _lastJoin.Conditions.Add(sql);
+
+        return this;
+    }
+
+    public QueryBuilder ThenInclude<TParent, TChild>(string parentAlias, string childAlias, Expression<Func<TParent, object>> parentKey, Expression<Func<TChild, object>> childKey)
+    {
+        return Join<TParent, TChild>(parentAlias, childAlias, parentKey, childKey, leftJoin: true);
     }
 
     public QueryBuilder LeftJoin<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> left, Expression<Func<TRight, object>> right)
@@ -187,8 +238,12 @@ public sealed class QueryBuilder
         sb.AppendLine();
         sb.AppendLine($"FROM {_from}");
 
+        //foreach (var j in _joins)
+        //    sb.AppendLine(j);
         foreach (var j in _joins)
-            sb.AppendLine(j);
+        {
+            sb.AppendLine($"{j.JoinType} \"{j.Table}\" {j.Alias} ON " + string.Join(" AND ", j.Conditions));
+        }
 
         if (_where.Count > 0)
             sb.AppendLine("WHERE " + string.Join(" AND ", _where));

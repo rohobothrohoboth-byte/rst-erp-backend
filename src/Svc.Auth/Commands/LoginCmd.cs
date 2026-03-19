@@ -36,7 +36,7 @@ public class LoginCmdHandler : IRequestHandler<LoginCmd, LoginResDto>
                 throw new UnauthorizedException("Invalid credentials.");
             }
 
-            var aToken = await _tokenService.GenerateAccessToken(user);
+            var aToken = await _tokenService.GenerateAccessToken(user, ct);
             var rToken = await _tokenService.GenerateRefreshToken(user.Id);
 
             await _uow.Commit(ct);

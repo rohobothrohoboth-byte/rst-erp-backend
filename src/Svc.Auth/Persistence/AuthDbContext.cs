@@ -31,23 +31,6 @@ public class AuthDbContext : IdentityDbContext
         modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UserLogin");
         modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserToken");
 
-        ////foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        ////{
-        ////    var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
-        ////    foreach (var index in indexes)
-        ////    {
-        ////        index.SetFilter("\"IsDeleted\" = false");
-        ////    }
-        ////}
-        //foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(e => typeof(BaseEntity).IsAssignableFrom(e.ClrType)))
-        //{
-        //    var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
-        //    foreach (var index in indexes)
-        //    {
-        //        index.SetFilter("\"IsDeleted\" = false");
-        //    }
-        //}
-
         var baseEntities = modelBuilder.Model.GetEntityTypes().Where(t => typeof(BaseEntity).IsAssignableFrom(t.ClrType));
         foreach (var entityType in baseEntities)
         {
