@@ -1,7 +1,9 @@
 ﻿using Asp.Versioning;
+using Common;
 using Cor.Module.Queries;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cor.Module.Controllers;
@@ -10,7 +12,7 @@ namespace Cor.Module.Controllers;
 /// End point to get the list of names and Ids of Core.Module entities
 /// </summary>
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/core/module/v{version:apiVersion}/Names")]
 [ApiVersion("1.0")]

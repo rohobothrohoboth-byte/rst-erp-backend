@@ -1,12 +1,10 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 
 namespace Common;
 
 public sealed class PerAuthAttribute : AuthorizeAttribute
 {
-    public PerAuthAttribute(string permission) { Policy = PerPolicy.Name(permission); }
+    public PerAuthAttribute(string permission) { Policy = $"api:{permission}"; }
 }
 
 public interface IPerValService
@@ -16,39 +14,29 @@ public interface IPerValService
 
 public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
 {
-    private readonly PerValService _validator;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public PerAuthHandler(PerValService validator, IHttpContextAccessor httpContextAccessor)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PerReq requirement)
     {
-        _validator = validator;
-        _httpContextAccessor = httpContextAccessor;
-    }
+        var hash = context.User.FindFirst("ph")?.Value;
 
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PerReq requirement)
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null) { return; }
+        if (string.IsNullOrEmpty(hash)) { return Task.CompletedTask; }
 
-        var token = httpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var bytes = Convert.FromBase64String(hash);
 
-        if (string.IsNullOrWhiteSpace(token)) { return; }
+        var hasPermission = (bytes[requirement.BitIndex / 8] & (1 << (requirement.BitIndex % 8))) != 0;
 
-        var allowed = await _validator.Validate(token, requirement.Permission);
-        if (allowed) { context.Succeed(requirement); }
+        if (hasPermission)
+        {
+            context.Succeed(requirement);
+        }
+
+        return Task.CompletedTask;
     }
 }
 
 public sealed class PerValService : IPerValService
 {
     private readonly IAuthClient _client;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public PerValService(IAuthClient client, IHttpContextAccessor httpContextAccessor)
-    {
-        _client = client;
-        _httpContextAccessor = httpContextAccessor;
-    }
+    public PerValService(IAuthClient client) { _client = client; }
 
     public async Task<bool> Validate(string token, string permission)
     {

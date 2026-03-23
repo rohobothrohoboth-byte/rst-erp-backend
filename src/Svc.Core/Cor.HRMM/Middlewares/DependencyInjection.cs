@@ -55,7 +55,6 @@ public static class DependencyInjection
         builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
 
         builder.Services.AddScoped<IAuthClient, AuthClient>();
-        builder.Services.AddScoped<ILupClient, LupClient>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<PerValService, PerValService>();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();

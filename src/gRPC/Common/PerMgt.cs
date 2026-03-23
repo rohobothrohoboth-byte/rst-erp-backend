@@ -5,17 +5,13 @@ namespace Common;
 
 public sealed class PerReq : IAuthorizationRequirement
 {
-    public string Permission { get; }
-    public PerReq(string permission) { Permission = permission; }
+    public int BitIndex { get; }
+    public PerReq(int bitIndex) { BitIndex = bitIndex; }
 }
-
-
-public static class PerPolicy { public static string Name(string permission) => $"api:{permission}"; } //PERMISSION=api}
 
 public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
 {
     private readonly DefaultAuthorizationPolicyProvider _fallback;
-
     public PermissionPolicyProvider(IOptions<AuthorizationOptions> options)
     {
         _fallback = new DefaultAuthorizationPolicyProvider(options);
@@ -26,7 +22,8 @@ public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
         if (policyName.StartsWith("api:"))
         {
             var permission = policyName["api:".Length..];
-            var policy = new AuthorizationPolicyBuilder().AddRequirements(new PerReq(permission)).Build();
+            if (!PermissionMap.IndexMap.TryGetValue(permission, out var index)) { return Task.FromResult<AuthorizationPolicy?>(null); }
+            var policy = new AuthorizationPolicyBuilder().AddRequirements(new PerReq(index)).Build();
             return Task.FromResult<AuthorizationPolicy?>(policy);
         }
 

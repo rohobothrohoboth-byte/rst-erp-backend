@@ -67,7 +67,6 @@ public class JoinClause
 public sealed class QueryBuilder
 {
     private readonly List<string> _select = new();
-    //private readonly List<string> _joins = new();
     private readonly List<string> _where = new();
     private readonly List<string> _group = new();
     private readonly List<string> _order = new();
@@ -123,16 +122,6 @@ public sealed class QueryBuilder
         if (SqlMetadata.HasSoftDelete(typeof(T))) { _where.Add($"{alias}.\"IsDeleted\" = false"); }
         return this;
     }
-
-    //public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
-    //{
-    //    var type = leftJoin ? "LEFT JOIN" : "JOIN";
-    //    var sql = $"{type} \"{SqlMetadata.Table(typeof(TRight))}\" {rightAlias} " + $"ON {SqlGen.Col(leftAlias, leftKey)} = {SqlGen.Col(rightAlias, rightKey)}";
-    //    if (SqlMetadata.HasSoftDelete(typeof(TRight))) { sql += $" AND {rightAlias}.\"IsDeleted\" = false"; }
-
-    //    _joins.Add(sql);
-    //    return this;
-    //}
 
     public QueryBuilder Join<TLeft, TRight>(string leftAlias, string rightAlias, Expression<Func<TLeft, object>> leftKey, Expression<Func<TRight, object>> rightKey, bool leftJoin = false)
     {
@@ -234,12 +223,9 @@ public sealed class QueryBuilder
 
         sb.Append(_distinct ? "SELECT DISTINCT " : "SELECT ");
         sb.Append(_select.Count == 0 ? "*" : string.Join(", ", _select));
-
         sb.AppendLine();
         sb.AppendLine($"FROM {_from}");
 
-        //foreach (var j in _joins)
-        //    sb.AppendLine(j);
         foreach (var j in _joins)
         {
             sb.AppendLine($"{j.JoinType} \"{j.Table}\" {j.Alias} ON " + string.Join(" AND ", j.Conditions));

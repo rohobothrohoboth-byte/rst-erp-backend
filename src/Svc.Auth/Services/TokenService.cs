@@ -32,13 +32,29 @@ public class TokenService : ITokenService
         return Convert.ToBase64String(rByte);
     }
 
+    private static List<MenuTokenDto> SortMenus(List<MenuTokenDto> menus)
+    {
+        foreach (var menu in menus)
+        {
+            if (menu.C != null && menu.C.Count > 0)
+            {
+                menu.C = SortMenus(menu.C);
+            }
+        }
+
+        menus.Sort((a, b) => a.O.CompareTo(b.O));
+        return menus;
+    }
+
     public async Task<string> GenerateAccessToken(AppUser user, CancellationToken ct)
     {
         var roles = await _userManager.GetRolesAsync(user);
-
         var qb = new QueryBuilder()
-            .SelectAs<PerModule, FlatPermissionDto>("pm", x => x.Key, x => x.ModuleKey)
+            .SelectAs<PerModule, FlatPermissionDto>("pm", x => x.Key, x => x.ModKey)
+            .SelectAs<PerModule, FlatPermissionDto>("pm", x => x.Desc, x => x.ModDesc)
             .SelectAs<PerMenu, FlatPermissionDto>("mn", x => x.Key, x => x.MenuKey)
+            .SelectAs<PerMenu, FlatPermissionDto>("mn", x => x.Id, x => x.MenuId)
+            .Select<PerMenu>("mn", x => x.Label, x => x.Path, x => x.Icon, x => x.IsChild, x => x.Order, x => x.ParentId)
             .SelectAs<PerApi, FlatPermissionDto>("pa", x => x.Key, x => x.ApiKey)
             .From<UserPerModule>("upm")
             .Join<UserPerModule, PerModule>("upm", "pm", x => x.PerModuleId, x => x.Id)
@@ -55,27 +71,75 @@ public class TokenService : ITokenService
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
         var data = await reader.ToListAsync<FlatPermissionDto>(ct);
 
-        var result = data.GroupBy(x => x.ModuleKey).Select(module => new ModuleDto
+        var permissionBits = new byte[(PermissionMap.IndexMap.Count + 7) / 8];
+        foreach (var api in data.Where(x => x.ApiKey != null).Select(x => x.ApiKey!).Distinct())
         {
-            Key = module.Key,
-            Menus = [.. module.Where(x => x.MenuKey != null).GroupBy(x => x.MenuKey).Select(menu => new MenuDto
+            if (PermissionMap.IndexMap.TryGetValue(api, out var index))
             {
-                Key = menu.Key!,
-                Apis = [.. menu.Where(x => x.ApiKey != null).Select(x => x.ApiKey!).Distinct()]
-            })]
-        }).ToList();
+                permissionBits[index / 8] |= (byte)(1 << (index % 8));
+            }
+        }
+        var permissionHash = Convert.ToBase64String(permissionBits);
+
+        var modules = data.GroupBy(x => x.ModKey).Select(module =>
+        {
+            var moduleFirst = module.First();
+            var menuDict = module.Where(x => x.MenuKey != null).GroupBy(x => x.MenuId).ToDictionary(g => g.Key, g =>
+                {
+                    var first = g.First();
+                    return new MenuTokenDto
+                    {
+                        K = first.MenuKey,
+                        L = first.Label,
+                        P = first.Path,
+                        I = first.Icon,
+                        O = first.Order,
+                        A = g.Where(x => x.ApiKey != null).Select(x => x.ApiKey!).Distinct().ToList()
+                    };
+                });
+
+            var roots = new List<MenuTokenDto>();
+            foreach (var item in module.GroupBy(x => x.MenuId))
+            {
+                var first = item.First();
+                var current = menuDict[first.MenuId];
+                if (first.ParentId == null)
+                {
+                    roots.Add(current);
+                }
+                else if (menuDict.TryGetValue(first.ParentId.Value, out var parent))
+                {
+                    parent.C ??= new List<MenuTokenDto>();
+                    parent.C.Add(current);
+                }
+                else
+                {
+                    roots.Add(current);
+                }
+            }
+
+            return new ModuleTokenDto
+            {
+                K = module.Key,
+                L = moduleFirst.ModDesc,
+                M = SortMenus(roots)
+            };
+        }).OrderBy(m => m.K).ToList();
 
         var claims = new List<Claim>
         {
-            new(AuthCons.UserId, user.Id),
-            new(AuthCons.UserName, user.UserName!),
-            user.EmployeeId != null ? new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!) : new Claim(AuthCons.EmployeeId, "")
+            //new(AuthCons.UserId, user.Id),
+            new(AuthCons.UserName, user.UserName ?? "")
         };
 
-        if (roles.Count > 0)
-            claims.AddRange(roles.Select(r => new Claim(AuthCons.Role, r)));
+        //if (user.EmployeeId != null)
+        //    claims.Add(new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!));
 
-        claims.Add(new Claim(AuthCons.Permissions, JsonSerializer.Serialize(result)));
+        if (roles.Count > 0) { claims.AddRange(roles.Select(r => new Claim(AuthCons.Role, r))); }
+
+        var permissionsJson = JsonSerializer.Serialize(modules);
+        claims.Add(new Claim(AuthCons.Permissions, permissionsJson));
+        claims.Add(new Claim("ph", permissionHash));
 
         var creds = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
@@ -84,9 +148,7 @@ public class TokenService : ITokenService
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes),
             signingCredentials: creds);
-
         return new JwtSecurityTokenHandler().WriteToken(token);
-
     }
 
     public async Task<RefreshToken> GenerateRefreshToken(string userId)

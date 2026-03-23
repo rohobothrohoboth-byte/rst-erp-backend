@@ -2,8 +2,8 @@
 
 public class LoginDto
 {
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
+    public string Username { get; set; } = default!;
+    public string Password { get; set; } = default!;
 }
 
 public class LoginResDto
@@ -54,51 +54,37 @@ public class ModuleListDto
     public string Name { get; set; } = default!;
 }
 
-public class MenuNode
+public class FlatPermissionDto
 {
-    public Guid Id { get; set; }
-    public string Key { get; set; } = default!;
+    public string ModKey { get; set; } = default!;
+    public string ModDesc { get; set; } = default!;
+
+    public Guid MenuId { get; set; }
+    public string MenuKey { get; set; } = default!;
     public string Label { get; set; } = default!;
     public string Path { get; set; } = default!;
     public string Icon { get; set; } = default!;
+    public bool IsChild { get; set; } = false!;
     public int Order { get; set; }
     public Guid? ParentId { get; set; }
 
-    public HashSet<string> ApiSet { get; set; } = new();
-    public List<MenuNode> Children { get; set; } = new();
-}
-
-//public class MenuDto
-//{
-//    public Guid Id { get; set; }
-//    public string Key { get; set; } = default!;
-//    public string Label { get; set; } = default!;
-//    public string Path { get; set; } = default!;
-//    public string Icon { get; set; } = default!;
-//    public int Order { get; set; }
-//    public bool IsChild { get; set; }
-//    public Guid? ParentId { get; set; }
-
-//    public List<MenuDto> Childs { get; set; } = [];
-//    public List<string> Apis { get; set; } = [];
-//    public Guid PerModuleId { get; set; }
-//}
-
-public class FlatPermissionDto
-{
-    public string ModuleKey { get; set; } = default!;
-    public string MenuKey { get; set; } = default!;
     public string ApiKey { get; set; } = default!;
 }
 
-public class ModuleDto
+public class ModuleTokenDto
 {
-    public string Key { get; set; } = default!;
-    public List<MenuDto> Menus { get; set; } = new();
+    public string K { get; set; } = default!;
+    public string? L { get; set; }
+    public List<MenuTokenDto> M { get; set; } = new();
 }
 
-public class MenuDto
+public class MenuTokenDto
 {
-    public string Key { get; set; } = default!;
-    public List<string> Apis { get; set; } = new();
+    public string K { get; set; } = default!;
+    public string L { get; set; } = default!;
+    public string? P { get; set; }
+    public string? I { get; set; }
+    public int O { get; set; }
+    public List<string> A { get; set; } = new();
+    public List<MenuTokenDto>? C { get; set; }
 }
