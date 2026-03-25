@@ -18,6 +18,19 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class EvalStepController(IMediator med) : ControllerBase
 {
+    /// <summary>
+    /// All EVALUATION STEP by EVALUATION FLOW id
+    /// </summary>
+    [HttpGet("EvalFlowAllStep/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EvalFlowAllStep(Guid id)
+    {
+        var response = await med.Send(new EvalStepByFlowIdQry { Id = id });
+        if (response == null) { throw new DomainException($"EVALUATION STEPS with EVALUATION FLOW id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     [HttpGet("AllEvalStep")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEvalStep()

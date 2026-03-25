@@ -14,6 +14,7 @@ public class EvalFlowActiveQry : IRequest<List<EvalFlowListDto>> { }
 public class EvalFlowByIdQry : IRequest<EvalFlowListDto?> { public Guid Id { get; set; } }
 public class EvalStepAllQry : IRequest<List<EvalStepListDto>> { public Guid Id { get; set; } }
 public class EvalStepByIdQry : IRequest<EvalStepListDto?> { public Guid Id { get; set; } }
+public class EvalStepByFlowIdQry : IRequest<EvalStepListDto?> { public Guid Id { get; set; } }
 public class JobEvalFlowAllQry : IRequest<List<JobEvalFlowListDto>> { }
 public class JobEvalFlowByIdQry : IRequest<JobEvalFlowListDto?> { public Guid Id { get; set; } }
 
@@ -230,6 +231,36 @@ public class EvalStepByIdHandler : IRequestHandler<EvalStepByIdQry, EvalStepList
             .LeftJoin<EvaluationStep, EvaluationType>(v, t, x => x.EvalTypeId, x => x.Id)
             .LeftJoin<EvaluationStep, EvaluationFlow>(v, f, x => x.EvaluationFlowId, x => x.Id)
             .Where<EvaluationStep>(v, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<EvalStepListDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        data.IsFinalStr = BoolToStr.FormatBool(data.IsFinal);
+        data.RowVersion = data.xmin.ToString();
+        return data;
+    }
+}
+
+public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, EvalStepListDto?>
+{
+    private readonly IDapperHelper _dapper;
+    public EvalStepByFlowIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<EvalStepListDto?> Handle(EvalStepByFlowIdQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        const string f = "f";
+        const string t = "t";
+        var qb = new QueryBuilder()
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
+            .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
+            .From<EvaluationStep>(v)
+            .LeftJoin<EvaluationStep, EvaluationType>(v, t, x => x.EvalTypeId, x => x.Id)
+            .LeftJoin<EvaluationStep, EvaluationFlow>(v, f, x => x.EvaluationFlowId, x => x.Id)
+            .Where<EvaluationStep>(v, x => x.EvaluationFlowId == request.Id)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
