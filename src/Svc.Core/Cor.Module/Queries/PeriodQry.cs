@@ -24,6 +24,7 @@ public class AllPeriodHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto
         var qb = new QueryBuilder()
             .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
+            .Join<Period, FiscalYear>(v, b, x => x.FiscalYearId, x => x.Id)
             .From<Period>(v)
             .OrderBy<Period>(v, x => x.DateAdd, desc: true);
 

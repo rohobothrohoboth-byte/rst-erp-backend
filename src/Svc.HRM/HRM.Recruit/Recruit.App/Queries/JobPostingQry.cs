@@ -30,7 +30,7 @@ public class JobPostingAllHandler : IRequestHandler<JobPostingAllQry, List<JobPo
             .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
             .From<JobPosting>(v)
             .Join<JobPosting, JobRequisition>(v, r, x => x.JobReqId, x => x.Id)
-            .Join<JobReqReview, JobRequisition>(rr, r, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(r, rr, x => x.Id, x => x.JobReqId)
             .OrderBy<JobPosting>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
@@ -198,7 +198,7 @@ public class JobPostingViewHandler : IRequestHandler<JobPostingViewQry, JobPosti
         var deptTask = _corMod.GetDept(data.DepartmentId.ToString(), ct);
         var periodTask = _corMod.GetPeriod(data.PeriodId.ToString()!, ct);
         var empTask = _hrmProfile.GetEmp(data.RequistionById.ToString(), ct);
-        await Task.WhenAll(posTask, jStepTask, deptTask, periodTask,empTask);
+        await Task.WhenAll(posTask, jStepTask, deptTask, periodTask, empTask);
 
         var pos = posTask.Result;
         var jgs = jStepTask.Result;

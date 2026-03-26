@@ -23,7 +23,7 @@ public class CorHrmmClient : ICorHrmmClient
 
     public CorHrmmClient(IConfiguration config)
     {
-        _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core Module Service Address not configured");
+        _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core HRMM Service Address not configured");
     }
 
     public async Task<CorHrmmListRes> GetListJgStep(CancellationToken ct = default)
