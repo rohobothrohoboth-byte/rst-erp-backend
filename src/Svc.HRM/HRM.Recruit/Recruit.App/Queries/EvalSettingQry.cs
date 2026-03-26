@@ -196,7 +196,6 @@ public class EvalStepAllHandler : IRequestHandler<EvalStepAllQry, List<EvalStepL
             .From<EvaluationStep>(v)
             .LeftJoin<EvaluationStep, EvaluationType>(v, t, x => x.EvalTypeId, x => x.Id)
             .LeftJoin<EvaluationStep, EvaluationFlow>(v, f, x => x.EvaluationFlowId, x => x.Id)
-            //.Where<EvaluationStep>(v, x => x.EvaluationFlowId == request.Id)
             .OrderBy<EvaluationStep>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();

@@ -71,6 +71,7 @@ public class PeriodByIdHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
             .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
             .From<Period>(v)
+            .Join<Period, FiscalYear>(v, b, x => x.FiscalYearId, x => x.Id)
             .Where<Period>(v, x => x.Id == request.Id)
             .Limit(1);
 
