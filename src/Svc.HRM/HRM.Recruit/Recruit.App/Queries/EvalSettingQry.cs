@@ -12,9 +12,9 @@ public class EvalTypeByIdQry : IRequest<EvalTypeListDto?> { public Guid Id { get
 public class EvalFlowAllQry : IRequest<List<EvalFlowListDto>> { }
 public class EvalFlowActiveQry : IRequest<List<EvalFlowListDto>> { }
 public class EvalFlowByIdQry : IRequest<EvalFlowListDto?> { public Guid Id { get; set; } }
-public class EvalStepAllQry : IRequest<List<EvalStepListDto>> { public Guid Id { get; set; } }
+public class EvalStepAllQry : IRequest<List<EvalStepListDto>> { }
 public class EvalStepByIdQry : IRequest<EvalStepListDto?> { public Guid Id { get; set; } }
-public class EvalStepByFlowIdQry : IRequest<EvalStepListDto?> { public Guid Id { get; set; } }
+public class EvalStepByFlowIdQry : IRequest<List<EvalStepListDto>> { public Guid Id { get; set; } }
 public class JobEvalFlowAllQry : IRequest<List<JobEvalFlowListDto>> { }
 public class JobEvalFlowByIdQry : IRequest<JobEvalFlowListDto?> { public Guid Id { get; set; } }
 
@@ -196,7 +196,7 @@ public class EvalStepAllHandler : IRequestHandler<EvalStepAllQry, List<EvalStepL
             .From<EvaluationStep>(v)
             .LeftJoin<EvaluationStep, EvaluationType>(v, t, x => x.EvalTypeId, x => x.Id)
             .LeftJoin<EvaluationStep, EvaluationFlow>(v, f, x => x.EvaluationFlowId, x => x.Id)
-            .Where<EvaluationStep>(v, x => x.EvaluationFlowId == request.Id)
+            //.Where<EvaluationStep>(v, x => x.EvaluationFlowId == request.Id)
             .OrderBy<EvaluationStep>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
@@ -243,12 +243,12 @@ public class EvalStepByIdHandler : IRequestHandler<EvalStepByIdQry, EvalStepList
     }
 }
 
-public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, EvalStepListDto?>
+public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, List<EvalStepListDto>>
 {
     private readonly IDapperHelper _dapper;
     public EvalStepByFlowIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<EvalStepListDto?> Handle(EvalStepByFlowIdQry request, CancellationToken ct)
+    public async Task<List<EvalStepListDto>> Handle(EvalStepByFlowIdQry request, CancellationToken ct)
     {
         const string v = "v";
         const string f = "f";
@@ -261,15 +261,19 @@ public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, Eval
             .LeftJoin<EvaluationStep, EvaluationType>(v, t, x => x.EvalTypeId, x => x.Id)
             .LeftJoin<EvaluationStep, EvaluationFlow>(v, f, x => x.EvaluationFlowId, x => x.Id)
             .Where<EvaluationStep>(v, x => x.EvaluationFlowId == request.Id)
-            .Limit(1);
+            .OrderBy<EvaluationStep>(v, x => x.StepOrder, desc: false);
 
         var (sql, parameters) = qb.Build();
-        var data = await _dapper.QueryFirstOrDefaultAsync<EvalStepListDto>(sql, parameters, ct);
-        if (data == null) return null;
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<EvalStepListDto>(ct);
 
-        data.IsFinalStr = BoolToStr.FormatBool(data.IsFinal);
-        data.RowVersion = data.xmin.ToString();
-        return data;
+        foreach (var data in list)
+        {
+            data.IsFinalStr = BoolToStr.FormatBool(data.IsFinal);
+            data.RowVersion = data.xmin.ToString();
+        }
+
+        return list;
     }
 }
 
