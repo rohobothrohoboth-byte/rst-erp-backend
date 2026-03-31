@@ -26,7 +26,7 @@ public class JobReqListDto : BaseDto
 
 public class JobReqAddDto
 {
-    public string ReqNumber { get; set; } = default!;
+    //public string ReqNumber { get; set; } = default!;
     public string ReqReason { get; set; } = default!;
     public int ReqPositions { get; set; }
     public string BudgetCode { get; set; } = default!;

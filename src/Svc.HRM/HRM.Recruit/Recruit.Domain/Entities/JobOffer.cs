@@ -2,7 +2,7 @@
 
 public class JobOffer : BaseEntity
 {
-    public string OfferNumber { get; set; } = default!;
+    public string OfferNumber { get; private set;} = default!;
     public string Status { get; set; } = default!; // enum.OfferStatus(0/1)
     public DateTime OfferDate { get; set; }
     public DateTime ExpirationDate { get; set; }

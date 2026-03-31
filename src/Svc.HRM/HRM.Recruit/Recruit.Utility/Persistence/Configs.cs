@@ -199,17 +199,22 @@ public class JobOfferConfig : BaseEntityConfig<JobOffer>
     public override void Configure(EntityTypeBuilder<JobOffer> b)
     {
         base.Configure(b);
+        var p = b.Property(x => x.OfferNumber)
+                    .HasMaxLength(15)
+                    .IsRequired()
+                    .HasDefaultValueSql("generate_code('JO'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+                    .ValueGeneratedOnAdd();
+        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         b.Property(x => x.ExpirationDate).IsRequired();
         b.Property(x => x.JobApplicationId).IsRequired();
         b.Property(x => x.JobPostingId).IsRequired();
         b.Property(x => x.OfferDate).IsRequired();
         b.Property(x => x.OfferDocument).IsRequired();
-        b.Property(x => x.OfferNumber).HasMaxLength(50).IsRequired();
         b.Property(x => x.Status).HasMaxLength(20).IsRequired();
         b.HasOne(x => x.JobApplication).WithMany().HasForeignKey(x => x.JobApplicationId);
         b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId);
         b.HasIndex(x => x.Status);
-        b.HasIndex(x => x.OfferNumber).IsUnique();
+        b.HasIndex(x => x.OfferNumber);
     }
 }
 
@@ -312,11 +317,16 @@ public class JobRequisitionConfig : BaseEntityConfig<JobRequisition>
     public override void Configure(EntityTypeBuilder<JobRequisition> b)
     {
         base.Configure(b);
+        var p = b.Property(x => x.ReqNumber)
+                    .HasMaxLength(15)
+                    .IsRequired()
+                    .HasDefaultValueSql("generate_code('JR'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+                    .ValueGeneratedOnAdd();
+        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         b.Property(x => x.BudgetCode).HasMaxLength(50).IsRequired();
         b.Property(x => x.JgStepId).IsRequired();
         b.Property(x => x.JobDecId).IsRequired();
         b.Property(x => x.PositionId).IsRequired();
-        b.Property(x => x.ReqNumber).HasMaxLength(50).IsRequired();
         b.Property(x => x.ReqQuantity).IsRequired();
         b.Property(x => x.ReqReason).IsRequired();
         b.Property(x => x.StartDate).IsRequired();

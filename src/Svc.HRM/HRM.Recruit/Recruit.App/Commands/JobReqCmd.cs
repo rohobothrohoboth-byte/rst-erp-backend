@@ -40,7 +40,6 @@ public class JobRequisitionAddCmdHandler : IRequestHandler<JobRequisitionAddCmd,
 
             var data = new JobRequisition
             {
-                ReqNumber = request.AddDto.ReqNumber,
                 ReqReason = request.AddDto.ReqReason,
                 ReqQuantity = request.AddDto.ReqPositions,
                 BudgetCode = request.AddDto.BudgetCode,

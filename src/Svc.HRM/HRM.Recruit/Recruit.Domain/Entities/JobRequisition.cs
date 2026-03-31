@@ -2,7 +2,7 @@
 
 public class JobRequisition : BaseEntity
 {
-    public string ReqNumber { get; set; } = default!;
+    public string ReqNumber { get; private set;} = default!;
     public string ReqReason { get; set; } = default!;
     public int ReqQuantity { get; set; }
     public string BudgetCode { get; set; } = default!;
