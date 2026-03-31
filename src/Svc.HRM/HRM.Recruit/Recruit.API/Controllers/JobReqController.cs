@@ -18,11 +18,13 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobReqController(IMediator med) : ControllerBase
 {
-    [HttpGet("AllJobReq")]
+    [HttpGet("AllJobReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> AllJobReq()
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AllJobReq(Guid id)
     {
-        var response = await med.Send(new JobReqAllQry());
+        var response = await med.Send(new JobReqAllQry { Id = id });
+        if (response == null) { throw new DomainException($"JOB REQUISITIONS with Worfk force plan id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
 
