@@ -1,9 +1,11 @@
 ﻿using Asp.Versioning;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruit.App.Commands;
 using Recruit.Domain.DTOs;
+using System.Security.Claims;
 
 namespace Recruit.API.Controllers;
 
@@ -28,6 +30,10 @@ public class JobAppController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        addDto.EmployeeId = Guid.Parse(empId!);
         var command = new JobAppIntAddCmd { AddDto = addDto };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New JOB APPLICATION successfully created."));

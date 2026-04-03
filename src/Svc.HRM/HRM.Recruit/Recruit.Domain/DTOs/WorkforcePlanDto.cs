@@ -28,13 +28,14 @@ public class WorkforcePlanListDto : BaseDto
 
 public class WorkforcePlanAddDto
 {
+    [JsonIgnore]
+    public Guid RequistionById { get; set; } // HRM.Profile.Employee
     public string Title { get; set; } = default!;
     public string Desc { get; set; } = default!;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int TotalPositions { get; set; }
     public Guid? PeriodId { get; set; } // Cor.Module.Period (or FiscalYear)
-    public Guid RequistionById { get; set; } // HRM.Profile.Employee
 }
 
 public class WorkforcePlanModDto

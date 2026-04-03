@@ -132,9 +132,7 @@ public class TokenService : ITokenService
             new(AuthCons.UserName, user.UserName ?? "")
         };
 
-        //if (user.EmployeeId != null)
-        //    claims.Add(new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!));
-
+        if (user.EmployeeId != null) { claims.Add(new Claim(AuthCons.EmployeeId, user.EmployeeId.ToString()!)); }
         if (roles.Count > 0) { claims.AddRange(roles.Select(r => new Claim(AuthCons.Role, r))); }
 
         var permissionsJson = JsonSerializer.Serialize(modules);

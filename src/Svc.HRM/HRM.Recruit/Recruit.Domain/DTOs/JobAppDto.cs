@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
 
 namespace Recruit.Domain.DTOs;
 
@@ -17,6 +18,7 @@ public class JobAppListDto : BaseDto
 
 public class JobAppIntAddDto
 {
+    [JsonIgnore]
     public Guid EmployeeId { get; set; } // HRM.Profile.Employee
     public Guid JobPostingId { get; set; } // JobPosting
     public string CoverLetter { get; set; } = default!;

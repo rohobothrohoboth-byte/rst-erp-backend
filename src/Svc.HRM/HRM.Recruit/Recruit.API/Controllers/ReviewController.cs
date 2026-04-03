@@ -1,9 +1,11 @@
 ﻿using Asp.Versioning;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruit.App.Commands;
 using Recruit.Domain.DTOs;
+using System.Security.Claims;
 
 namespace Recruit.API.Controllers;
 
@@ -28,6 +30,10 @@ public class ReviewController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        rvw.ReviewById = Guid.Parse(empId!);
         var command = new WoFoPlReviewCmd { Rvw = rvw };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected WORKFORCE PLAN successfully REVIEWED."));
@@ -44,6 +50,10 @@ public class ReviewController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        rvw.ReviewById = Guid.Parse(empId!);
         var command = new JobReqReviewCmd { Rvw = rvw };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "Selected JOB REQUISITION successfully REVIEWED."));
@@ -60,6 +70,10 @@ public class ReviewController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        rvw.ReviewById = Guid.Parse(empId!);
         var command = new JobReqReviewAllCmd { Rvw = rvw };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "All JOB REQUISITIONS successfully REVIEWED."));

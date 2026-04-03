@@ -1,10 +1,12 @@
 ﻿using Asp.Versioning;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Recruit.App.Commands;
 using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
+using System.Security.Claims;
 
 namespace Recruit.API.Controllers;
 
@@ -79,6 +81,10 @@ public class JobPostingController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        rvw.ReviewById = Guid.Parse(empId!);
         var command = new JobPostPublishCmd { Rvw = rvw };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "New JOB POSTING successfully PUBLISHED."));
@@ -95,6 +101,10 @@ public class JobPostingController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        rvw.ReviewById = Guid.Parse(empId!);
         var command = new JobPostPublishAllCmd { Rvw = rvw };
         var response = await med.Send(command);
         return Ok(ApiResponse<object>.Ok(response, "All JOB POSTINGS successfully PUBLISHED."));
