@@ -184,12 +184,13 @@ public class JobDecConfig : BaseEntityConfig<JobDec>
     public override void Configure(EntityTypeBuilder<JobDec> b)
     {
         base.Configure(b);
-        b.Property(x => x.ContractType).HasMaxLength(20).IsRequired();
+        b.Property(x => x.EmpNature).HasMaxLength(20).IsRequired();
+        b.Property(x => x.WorkArr).HasMaxLength(20).IsRequired();
         b.Property(x => x.Desc).IsRequired();
         b.Property(x => x.KeySkills).IsRequired();
         b.Property(x => x.PreGender).HasMaxLength(10);
-        b.Property(x => x.Qualification).IsRequired();
-        b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        b.Property(x => x.ReqQual).IsRequired();
+        b.Property(x => x.KeyRespo).HasMaxLength(200).IsRequired();
         b.Property(x => x.WorkLocation).IsRequired();
     }
 }

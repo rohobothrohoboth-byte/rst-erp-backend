@@ -26,15 +26,26 @@ public class JobRequisitionAddCmdHandler : IRequestHandler<JobRequisitionAddCmd,
         await _uow.Begin(ct);
         try
         {
+            var wfpId = request.AddDto.WorkforcePlanId;
+            var appPos = await _uow.Set<WorkforcePlan>().Where(x => x.Id == wfpId).Select(x => x.AppPositions).FirstOrDefaultAsync(ct);
+            var addJr = _uow.Set<JobRequisition>().Where(x => x.WorkforcePlanId == wfpId).Sum(x => x.ReqQuantity);
+
+            var rmn = appPos - addJr;
+            if (request.AddDto.ReqPositions > rmn)
+            {
+                throw new DomainException($"MAXIMUM ALLOWED Requested Position for selected Work force plan is {rmn}.");
+            }
+
             var jd = new JobDec
             {
-                Title = request.AddDto.Title,
+                KeyRespo = request.AddDto.KeyRespo,
                 Desc = request.AddDto.Desc,
-                Qualification = request.AddDto.Qualification,
+                ReqQual = request.AddDto.ReqQual,
                 KeySkills = request.AddDto.KeySkills,
                 WorkLocation = request.AddDto.WorkLocation,
                 PreGender = request.AddDto.PreGender,
-                ContractType = request.AddDto.ContractType
+                EmpNature = request.AddDto.EmpNature,
+                WorkArr = request.AddDto.WorkArr
             };
             await _uow.Add(jd, ct);
 
@@ -82,17 +93,29 @@ public class JobRequisitionModCmdHandler : IRequestHandler<JobRequisitionModCmd,
             var oldData = await _uow.Set<JobRequisition>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
             if (oldData == null) { throw new DomainException($"JOB REQUISITION with Id {request.ModDto.Id} NOT FOUND."); }
 
+            var wfpId = oldData.WorkforcePlanId;
+            var appPos = await _uow.Set<WorkforcePlan>().Where(x => x.Id == wfpId).Select(x => x.AppPositions).FirstOrDefaultAsync(ct);
+            var addJr = _uow.Set<JobRequisition>().Where(x => x.WorkforcePlanId == wfpId && x.Id != request.ModDto.Id).Sum(x => x.ReqQuantity);
+
+            var rmn = appPos - addJr;
+            if (request.ModDto.ReqPositions > rmn)
+            {
+                throw new DomainException($"MAXIMUM ALLOWED Requested Position for selected Work force plan is {rmn}.");
+            }
+
             var oldJd = await _uow.Set<JobDec>().FirstOrDefaultAsync(x => x.Id == oldData.JobDecId, ct);
-            oldJd!.Title = request.ModDto.Title;
+            oldJd!.KeyRespo = request.ModDto.KeyRespo;
             oldJd.Desc = request.ModDto.Desc;
-            oldJd.Qualification = request.ModDto.Qualification;
+            oldJd.ReqQual = request.ModDto.ReqQual;
             oldJd.KeySkills = request.ModDto.KeySkills;
             oldJd.WorkLocation = request.ModDto.WorkLocation;
             oldJd.PreGender = request.ModDto.PreGender;
-            oldJd.ContractType = request.ModDto.ContractType;
+            oldJd.EmpNature = request.ModDto.EmpNature;
+            oldJd.WorkArr = request.ModDto.WorkArr;
             await _uow.Update(oldJd);
 
             oldData.ReqReason = request.ModDto.ReqReason;
+            oldData.ReqQuantity = request.ModDto.ReqPositions;
             oldData.BudgetCode = request.ModDto.BudgetCode;
             oldData.StartDate = request.ModDto.StartDate;
             oldData.PositionId = request.ModDto.PositionId;

@@ -22,15 +22,15 @@ public class JobPostingAllHandler : IRequestHandler<JobPostingAllQry, List<JobPo
     public async Task<List<JobPostingListDto>> Handle(JobPostingAllQry request, CancellationToken ct)
     {
         const string v = "v";
-        const string r = "r";
+        const string rq = "rq";
         const string rr = "rr";
         var qb = new QueryBuilder()
-            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<JobRequisition, JobPostingListDto>(r, x => x.ReqNumber, d => d.ReqNumber)
+            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.JobReqId, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
+            .SelectAs<JobRequisition, JobPostingListDto>(rq, x => x.ReqNumber, d => d.ReqNumber)
             .From<JobPosting>(v)
-            .Join<JobPosting, JobRequisition>(v, r, x => x.JobReqId, x => x.Id)
-            .LeftJoin<JobRequisition, JobReqReview>(r, rr, x => x.Id, x => x.JobReqId)
+            .Join<JobPosting, JobRequisition>(v, rq, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(rq, rr, x => x.Id, x => x.JobReqId)
             .OrderBy<JobPosting>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
@@ -57,15 +57,15 @@ public class JobPostingByIdHandler : IRequestHandler<JobPostingByIdQry, JobPosti
     public async Task<JobPostingListDto?> Handle(JobPostingByIdQry request, CancellationToken ct)
     {
         const string v = "v";
-        const string r = "r";
+        const string rq = "rq";
         const string rr = "rr";
         var qb = new QueryBuilder()
-            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<JobRequisition, JobPostingListDto>(r, x => x.ReqNumber, d => d.ReqNumber)
+            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.JobReqId, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
+            .SelectAs<JobRequisition, JobPostingListDto>(rq, x => x.ReqNumber, d => d.ReqNumber)
             .From<JobPosting>(v)
-            .Join<JobPosting, JobRequisition>(v, r, x => x.JobReqId, x => x.Id)
-            .Join<JobReqReview, JobRequisition>(rr, r, x => x.JobReqId, x => x.Id)
+            .Join<JobPosting, JobRequisition>(v, rq, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(rq, rr, x => x.Id, x => x.JobReqId)
             .Where<JobPosting>(v, x => x.Id == request.Id)
             .Limit(1);
 
@@ -89,15 +89,15 @@ public class JobPostingByJobReqIdHandler : IRequestHandler<JobPostingByJobReqIdQ
     public async Task<List<JobPostingListDto>> Handle(JobPostingByJobReqIdQry request, CancellationToken ct)
     {
         const string v = "v";
-        const string r = "r";
+        const string rq = "rq";
         const string rr = "rr";
         var qb = new QueryBuilder()
-            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .SelectAs<JobRequisition, JobPostingListDto>(r, x => x.ReqNumber, d => d.ReqNumber)
+            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.JobReqId, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
+            .SelectAs<JobRequisition, JobPostingListDto>(rq, x => x.ReqNumber, d => d.ReqNumber)
             .From<JobPosting>(v)
-            .Join<JobPosting, JobRequisition>(v, r, x => x.JobReqId, x => x.Id)
-            .Join<JobReqReview, JobRequisition>(rr, r, x => x.JobReqId, x => x.Id)
+            .Join<JobPosting, JobRequisition>(v, rq, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(rq, rr, x => x.Id, x => x.JobReqId)
             .Where<JobPosting>(v, x => x.JobReqId == request.Id)
             .OrderBy<JobPosting>(v, x => x.DateAdd, desc: true);
 
@@ -124,19 +124,19 @@ public class JobPostingByWfpIdHandler : IRequestHandler<JobPostingByWfpIdQry, Li
 
     public async Task<List<JobPostingListDto>> Handle(JobPostingByWfpIdQry request, CancellationToken ct)
     {
-        const string jr = "jr";
-        const string jp = "jp";
-        const string jrr = "jrr";
         var stat = BoolToStr.EnumToString(ReqStatus.Approved);
+        const string v = "v";
+        const string rq = "rq";
+        const string rr = "rr";
         var qb = new QueryBuilder()
-            .Select<JobRequisition>(jr, x => x.Id, x => x.ReqNumber)
-            .Select<JobPosting>(jp, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.IsDeleted, x => x.DateAdd, x => x.DateMod, x => x.xmin, x => x.JobReqId)
-            .Select<JobReqReview>(jrr, x => x.JobReqId, x => x.ReqQuantity, x => x.AppQuantity)
-            .From<JobRequisition>(jr)
-            .Join<JobRequisition, JobPosting>(jr, jp, x => x.Id, x => x.JobReqId)
-            .LeftJoin<JobPosting, JobReqReview>(jp, jrr, x => x.Id, x => x.JobReqId)
-            .Where<JobRequisition>(jr, x => x.WorkforcePlanId == request.Id && x.Status == stat)
-            .OrderBy<JobPosting>(jp, x => x.DateAdd, desc: true);
+            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.JobReqId, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
+            .SelectAs<JobRequisition, JobPostingListDto>(rq, x => x.ReqNumber, d => d.ReqNumber)
+            .From<JobPosting>(v)
+            .Join<JobPosting, JobRequisition>(v, rq, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(rq, rr, x => x.Id, x => x.JobReqId)
+            .Where<JobRequisition>(rq, x => x.WorkforcePlanId == request.Id && x.Status == stat)
+            .OrderBy<JobPosting>(rq, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
@@ -179,7 +179,7 @@ public class JobPostingViewHandler : IRequestHandler<JobPostingViewQry, JobPosti
             .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<JobRequisition>(jr, x => x.ReqNumber, x => x.ReqReason, x => x.BudgetCode, x => x.JgStepId, x => x.PositionId)
             .Select<JobReqReview>(jrr, x => x.ReqQuantity, x => x.AppQuantity)
-            .Select<JobDec>(jd, x => x.Title, x => x.Desc, x => x.Qualification, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.ContractType)
+            .Select<JobDec>(jd, x => x.KeyRespo, x => x.Desc, x => x.ReqQual, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.EmpNature, x => x.WorkArr)
             .Select<WorkforcePlan>(jd, x => x.DepartmentId, x => x.RequistionById, x => x.PeriodId)
             .From<JobPosting>(v)
             .Join<JobPosting, JobRequisition>(v, jr, x => x.JobReqId, x => x.Id)

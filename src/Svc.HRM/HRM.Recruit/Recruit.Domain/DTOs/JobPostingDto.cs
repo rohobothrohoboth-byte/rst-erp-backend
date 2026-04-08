@@ -4,13 +4,22 @@ namespace Recruit.Domain.DTOs;
 
 public class JobPostingListDto : BaseDto
 {
+    [JsonIgnore]
     public int? ReqQuantity { get; set; }
+    [JsonIgnore]
     public int? AppQuantity { get; set; }
+    [JsonIgnore]
     public DateTime PublishedDate { get; set; } = DateTime.UtcNow;
+    [JsonIgnore]
     public DateTime DeadlineDate { get; set; }
+    [JsonIgnore]
     public DateTime? ClosedDate { get; set; }
+    [JsonIgnore]
     public string Status { get; set; } = default!; // enum.PostingStatus(0/1)
+    [JsonIgnore]
     public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
+
+
     public string PostNumber { get; set; } = default!;
     public string ReqNumber { get; set; } = default!;
     public string StatusStr { get; set; } = default!;

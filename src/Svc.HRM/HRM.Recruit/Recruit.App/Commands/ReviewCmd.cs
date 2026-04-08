@@ -10,7 +10,7 @@ namespace Recruit.App.Commands;
 
 public class WoFoPlReviewCmd : IRequest<WorkforcePlanListDto> { public ReviewDto Rvw { get; set; } = default!; }
 public class JobReqReviewCmd : IRequest<JobReqListDto> { public ReviewDto Rvw { get; set; } = default!; }
-public class JobReqReviewAllCmd : IRequest<List<JobReqListDto>> { public ReviewAllDto Rvw { get; set; } = default!; }
+public class JobReqReviewAllCmd : IRequest<List<WfpJobReqListDto>> { public ReviewAllDto Rvw { get; set; } = default!; }
 
 
 
@@ -40,6 +40,7 @@ public class WoFoPlReviewHandler : IRequestHandler<WoFoPlReviewCmd, WorkforcePla
                 stat = BoolToStr.EnumToString(ReqStatus.Pending);
                 wfp.Status = stat;
             }
+            wfp.AppPositions = request.Rvw.AppCount;
             wfp.Status = stat;
             await _uow.Update(wfp);
 
@@ -124,14 +125,14 @@ public class JobReqReviewHandler : IRequestHandler<JobReqReviewCmd, JobReqListDt
     }
 }
 
-public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<JobReqListDto>>
+public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<WfpJobReqListDto>>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
     public JobReqReviewAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<List<JobReqListDto>> Handle(JobReqReviewAllCmd request, CancellationToken ct)
+    public async Task<List<WfpJobReqListDto>> Handle(JobReqReviewAllCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -157,7 +158,7 @@ public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<J
 
                 var data = new JobReqReview
                 {
-                    JobReqId = request.Rvw.Id,
+                    JobReqId = jReq.Id,
                     Comment = request.Rvw.Comment,
                     ReqQuantity = jReq.ReqQuantity,
                     AppQuantity = jReq.ReqQuantity,
@@ -168,8 +169,8 @@ public class JobReqReviewAllHandler : IRequestHandler<JobReqReviewAllCmd, List<J
             }
             await _uow.Commit(ct);
 
-            var res = new List<JobReqListDto>();
-            var response = await _med.Send(new JobReqAllQry { Id = request.Rvw.Id }, ct);
+            var res = new List<WfpJobReqListDto>();
+            var response = await _med.Send(new JobReqAllByWfpIdQry { Id = request.Rvw.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
