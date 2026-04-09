@@ -223,7 +223,7 @@ public class JobAppService : IJobAppService
         var posTask = _corHrmmClient.GetPosition(row.PositionId.ToString(), ct);
         var jStepTask = _corHrmmClient.GetJgStep(row.JgStepId.ToString(), ct);
         var deptTask = _corModClient.GetDept(row.DepartmentId.ToString(), ct);
-        var periodTask = _corHrmmClient.GetJgStep(row.PeriodId.ToString()!, ct);
+        var periodTask = _corModClient.GetPeriod(row.PeriodId.ToString()!, ct);
         await Task.WhenAll(posTask, jStepTask, deptTask, periodTask);
 
         var pos = posTask.Result;
@@ -255,7 +255,7 @@ public class JobAppService : IJobAppService
             Position = pos?.Res.Name ?? "NOT AVAILABLE",
             JgStep = jStep?.Res.Name ?? "NOT AVAILABLE",
             Department = dept?.Res.Name ?? "NOT AVAILABLE",
-            Period = perd?.Res.Name ?? "NOT AVAILABLE"
+            Period = perd?.Name ?? "NOT AVAILABLE"
         };
     }
 

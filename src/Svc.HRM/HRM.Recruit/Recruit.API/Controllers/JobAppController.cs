@@ -13,16 +13,17 @@ namespace Recruit.API.Controllers;
 /// JOB APPLICATION end points
 /// </summary>
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/hrm/recruit/v{version:apiVersion}/JobApp")]
 [ApiVersion("1.0")]
 public class JobAppController(IMediator med) : ControllerBase
 {
     [HttpPost("AddJobAppInt")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AddJobAppInt([FromBody] JobAppIntAddDto addDto)
+    public async Task<IActionResult> AddJobAppInt([FromForm] JobAppIntAddDto addDto)
     {
         if (!ModelState.IsValid)
         {
@@ -44,7 +45,7 @@ public class JobAppController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> ModJobAppInt(Guid id, [FromBody] JobAppIntModDto modDto)
+    public async Task<IActionResult> ModJobAppInt(Guid id, [FromForm] JobAppIntModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {

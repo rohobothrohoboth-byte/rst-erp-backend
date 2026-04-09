@@ -130,6 +130,18 @@ public class CorHrmmListService : CorHrmmService.CorHrmmServiceBase
         return res;
     }
 
+    public override async Task<JgStepSalary> GetJgStepSalary(CorHrmmRqst request, ServerCallContext context)
+    {
+        var res = new JgStepSalary();
+        var response = await _med.Send(new SalaryQry { Id = Guid.Parse(request.Id) });
+        if (response == null)
+        {
+            res = new JgStepSalary { Salary = null };
+        };
+        res.Salary = response;
+        return res;
+    }
+
 
 
 

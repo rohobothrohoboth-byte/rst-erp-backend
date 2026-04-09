@@ -24,6 +24,16 @@ public class VacancyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpGet("VacancyDetail/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> VacancyDetail(Guid id)
+    {
+        var response = await med.Send(new VacancyDetailQry { Id = id });
+        if (response == null) { throw new DomainException($"VACANCY with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
 
 
 

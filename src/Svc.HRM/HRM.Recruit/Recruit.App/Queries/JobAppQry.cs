@@ -8,8 +8,8 @@ using Recruit.Domain.Entities;
 namespace Recruit.App.Queries;
 
 public class JobAppAllQry : IRequest<List<JobAppListDto>> { }
-public class JobAppByJobPostQry : IRequest<List<JobAppListDto>> { public Guid Id { get; set; } }
 public class JobAppByIdQry : IRequest<JobAppListDto?> { public Guid Id { get; set; } }
+public class JobAppByJobPostQry : IRequest<List<JobAppListDto>> { public Guid Id { get; set; } }
 
 
 
@@ -28,7 +28,7 @@ public class JobAppAllHandler : IRequestHandler<JobAppAllQry, List<JobAppListDto
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<JobApplication>(v)
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);
         var (sql, parameters) = qb.Build();
@@ -71,7 +71,7 @@ public class JobAppByIdHandler : IRequestHandler<JobAppByIdQry, JobAppListDto?>
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<JobApplication>(v)
             .Where<JobApplication>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -106,7 +106,7 @@ public class JobAppByJobPostHandler : IRequestHandler<JobAppByJobPostQry, List<J
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<JobApplication>(v)
             .Where<JobApplication>(v, x => x.JobPostingId == request.Id)
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);

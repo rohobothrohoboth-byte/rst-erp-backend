@@ -16,8 +16,7 @@ service CorHrmmService {
 }
 
 message JgStepSalary {
-  string Id = 1;
-  string Salary = 2;  
+  string Salary = 2;
 }
 
 message PosReqRes {

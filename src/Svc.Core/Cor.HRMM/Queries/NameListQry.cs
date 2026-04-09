@@ -18,6 +18,7 @@ public class JobGradeNameByIdQry : IRequest<NameList?> { public Guid Id { get; s
 public class PosByDeptQry : IRequest<List<NameList>> { public Guid Id { get; set; } }
 public class PosNameAllQry : IRequest<List<NameList>> { }
 public class PosNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class SalaryQry : IRequest<string?> { public Guid Id { get; set; } }
 
 
 
@@ -308,6 +309,28 @@ public class PosNameByIdHandler : IRequestHandler<PosNameByIdQry, NameList?>
             Id = data.Id,
             Name = data.Name
         };
+    }
+}
+
+public class SalaryHandler : IRequestHandler<SalaryQry, string?>
+{
+    private readonly IDapperHelper _dapper;
+    public SalaryHandler(IDapperHelper dapper) { _dapper = dapper; }
+
+    public async Task<string?> Handle(SalaryQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .SelectAs<JgStep, DoubleList>(v, x => x.Salary, x => x.Name)
+            .From<JgStep>(v)
+            .Where<JgStep>(v, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<DoubleList>(sql, parameters, ct);
+        if (data == null) return null;
+
+        return $"{data.Name:#,##0.##} ETB";
     }
 }
 

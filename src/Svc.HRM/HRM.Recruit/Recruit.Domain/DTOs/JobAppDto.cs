@@ -7,6 +7,7 @@ public class JobAppListDto : BaseDto
 {
     public DateTime AppliedDate { get; set; }
     public string Status { get; set; } = default!; // enum.ApplicationStatus(0/1)
+     
     public string StatusStr { get; set; } = default!;
     public string Applicant { get; set; } = default!; // HRM.Profile.Employee OR Applicant
     public string JobPostingNum { get; set; } = default!;
