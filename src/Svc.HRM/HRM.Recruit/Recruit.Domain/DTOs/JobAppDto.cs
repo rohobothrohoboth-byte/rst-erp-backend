@@ -86,6 +86,7 @@ public class ApplicantJoinRow
 
 public class JobAppInfoDto
 {
+    public Guid Id { get; set; }
     public string PostType { get; set; } = default!; // enum.JobPostingType(0/1) 
     public Guid? ApplicantId { get; set; } // Applicant
     public Guid? EmployeeId { get; set; } // HRM.Profile.Employee

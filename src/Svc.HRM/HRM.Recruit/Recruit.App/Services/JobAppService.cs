@@ -64,11 +64,10 @@ public class JobAppService : IJobAppService
             .Join<JobRequisition, JobDec>(jr, jd, x => x.JobDecId, x => x.Id)
             .Join<JobRequisition, WorkforcePlan>(jr, wf, x => x.WorkforcePlanId, x => x.Id)
             .WhereIn<JobApplication>(ja, x => x.Id, ids);
-
         var (sql, parameters) = qb.Build();
-        var result = new Dictionary<Guid, JobAppInfoDto>();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
         var parser = reader.GetRowParser<JobAppInfoDto>();
+        var result = new Dictionary<Guid, JobAppInfoDto>();
 
         var rows = new List<JobAppInfoDto>();
         while (await reader.ReadAsync(ct)) { rows.Add(parser(reader)); }
@@ -105,7 +104,8 @@ public class JobAppService : IJobAppService
             stepDict.TryGetValue(r.JgStepId, out var step);
             deptDict.TryGetValue(r.DepartmentId, out var dept);
             periodDict.TryGetValue(r.PeriodId, out var period);
-
+            
+            r.JobApplicationId = r.Id;
             r.Position = pos?.Name ?? "";
             r.JgStep = step?.Name ?? "";
             r.Department = dept?.Name ?? "";

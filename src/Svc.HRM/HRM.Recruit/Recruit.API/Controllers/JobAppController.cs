@@ -19,11 +19,11 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobAppController(IMediator med) : ControllerBase
 {
-    [HttpPost("AddJobAppInt")]
+    [HttpPost("InternalApp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AddJobAppInt([FromForm] JobAppIntAddDto addDto)
+    public async Task<IActionResult> InternalApp([FromForm] JobAppIntAddDto addDto)
     {
         if (!ModelState.IsValid)
         {
@@ -40,12 +40,12 @@ public class JobAppController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New JOB APPLICATION successfully created."));
     }
 
-    [HttpPut("ModJobAppInt/{id:guid}")]
+    [HttpPut("InternalMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> ModJobAppInt(Guid id, [FromForm] JobAppIntModDto modDto)
+    public async Task<IActionResult> InternalMod(Guid id, [FromForm] JobAppIntModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -63,10 +63,10 @@ public class JobAppController(IMediator med) : ControllerBase
 
 
 
-    [HttpDelete("DelJobApp/{id:guid}")]
+    [HttpDelete("InternalDel/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> InternalDel(Guid id)
     {
         var command = new JobAppDelCmd { Id = id };
         await med.Send(command);
