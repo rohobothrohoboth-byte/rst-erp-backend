@@ -33,8 +33,6 @@ public class JobAppAllHandler : IRequestHandler<JobAppAllQry, List<JobAppListDto
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);
         var (sql, parameters) = qb.Build();
         var list = (await _dapper.QueryAsync<JobAppListDto>(sql, parameters, ct)).ToList();
-        //await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
-        //var list = await reader.ToListAsync<JobAppListDto>(ct);
         if (list.Count == 0) { return []; }
 
         var ids = list.Select(x => x.Id).ToList();
@@ -111,9 +109,7 @@ public class JobAppByJobPostHandler : IRequestHandler<JobAppByJobPostQry, List<J
             .Where<JobApplication>(v, x => x.JobPostingId == request.Id)
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);
         var (sql, parameters) = qb.Build();
-        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
-        var list = await reader.ToListAsync<JobAppListDto>(ct);
-
+        var list = (await _dapper.QueryAsync<JobAppListDto>(sql, parameters, ct)).ToList();        
         if (list.Count == 0) { return []; }
 
         var ids = list.Select(x => x.Id).ToList();

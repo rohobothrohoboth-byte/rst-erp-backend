@@ -33,7 +33,21 @@ public class ApplicantController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetIntApp(Guid id)
     {
         var response = await med.Send(new JobAppByIdQry { Id = id });
-        if (response == null) { throw new DomainException($"JOB APPLICATION with id [{id}] NOT FOUND."); }
+        if (response == null) { throw new DomainException($"JOB APPLICANT with id [{id}] NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
+
+    [HttpGet("JobPostAllIntApp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> JobPostAllIntApp(Guid id)
+    {
+        var response = await med.Send(new JobAppByJobPostQry { Id = id });
+        if (response == null) { throw new DomainException($"JOB APPLICANTS with Job Post id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+
+
+
 }
