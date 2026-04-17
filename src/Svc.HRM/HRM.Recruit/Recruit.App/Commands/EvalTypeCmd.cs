@@ -30,7 +30,6 @@ public class EvalTypeAddHandler : IRequestHandler<EvalTypeAddCmd, EvalTypeListDt
             var data = new EvaluationType
             {
                 Name = request.AddDto.Name,
-                MaxScore = request.AddDto.MaxScore,
                 IsActive = true
             };
             await _uow.Add(data, ct);
@@ -66,7 +65,6 @@ public class EvalTypeModHandler : IRequestHandler<EvalTypeModCmd, EvalTypeListDt
             if (oldData == null) { throw new DomainException($"EVALUATION TYPE with Id {request.ModDto.Id} NOT FOUND."); }
 
             oldData.Name = request.ModDto.Name;
-            oldData.MaxScore = request.ModDto.MaxScore;
             oldData.IsActive = request.ModDto.IsActive;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
             await _uow.Update(oldData);

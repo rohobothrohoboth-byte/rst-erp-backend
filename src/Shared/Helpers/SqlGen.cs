@@ -66,15 +66,13 @@ public class JoinClause
 
 public sealed class QueryBuilder
 {
-    private readonly List<string> _select = new();
-    private readonly List<string> _where = new();
-    private readonly List<string> _group = new();
-    private readonly List<string> _order = new();
+    private readonly List<string> _select = [];
+    private readonly List<string> _where = [];
+    private readonly List<string> _group = [];
+    private readonly List<string> _order = [];
     private readonly DynamicParameters _params = new();
-
-    private readonly List<JoinClause> _joins = new();
+    private readonly List<JoinClause> _joins = [];
     private JoinClause? _lastJoin;
-
     private string? _from;
     private int _paramIndex;
     private int? _limit;

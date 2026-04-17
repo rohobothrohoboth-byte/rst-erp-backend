@@ -28,6 +28,8 @@ public class EvalStepListDto : BaseDto
 {
     public string StepName { get; set; } = default!;
     public int StepOrder { get; set; }    // 1, 2, 3 ...
+    public double MaxScore { get; set; }
+    public double MinScore { get; set; }
     public bool IsFinal { get; set; } = false;
     public string IsFinalStr { get; set; } = default!;
     public string EvaluationFlow { get; set; } = default!; // EvaluationFlow
@@ -38,6 +40,8 @@ public class EvalStepAddDto
 {
     public string StepName { get; set; } = default!;
     public int StepOrder { get; set; }    // 1, 2, 3 ...
+    public double MaxScore { get; set; } = 100;
+    public double MinScore { get; set; } = 0;
     public bool IsFinal { get; set; } = false;
     public Guid EvalTypeId { get; set; } // EvaluationType
     public Guid EvaluationFlowId { get; set; } // EvaluationFlow
@@ -48,6 +52,8 @@ public class EvalStepModDto
     public Guid Id { get; set; }
     public string StepName { get; set; } = default!;
     public int StepOrder { get; set; }    // 1, 2, 3 ...
+    public double MaxScore { get; set; }
+    public double MinScore { get; set; }
     public bool IsFinal { get; set; } = false;
     public Guid EvalTypeId { get; set; } // EvaluationType
     public Guid EvaluationFlowId { get; set; } // EvaluationFlow
@@ -57,7 +63,6 @@ public class EvalStepModDto
 public class EvalTypeListDto : BaseDto
 {
     public string Name { get; set; } = default!;
-    public double MaxScore { get; set; }
     public bool IsActive { get; set; } = true;
     public string IsActiveStr { get; set; } = default!;
 }
@@ -65,14 +70,12 @@ public class EvalTypeListDto : BaseDto
 public class EvalTypeAddDto
 {
     public string Name { get; set; } = default!;
-    public double MaxScore { get; set; }
 }
 
 public class EvalTypeModDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
-    public double MaxScore { get; set; }
     public bool IsActive { get; set; } = true;
     public string RowVersion { get; set; } = default!;
 }

@@ -122,15 +122,16 @@ public class EvaluationScoreConfig : BaseEntityConfig<EvaluationScore>
     public override void Configure(EntityTypeBuilder<EvaluationScore> b)
     {
         base.Configure(b);
-        b.Property(x => x.EvalTypeId).IsRequired();
+        b.Property(x => x.JobAppId).IsRequired();
         b.Property(x => x.EvaluationStepId).IsRequired();
         b.Property(x => x.EvaluatorId).IsRequired();
         b.Property(x => x.Feedback).IsRequired();
         b.Property(x => x.IsCurrent).IsRequired();
         b.Property(x => x.Score).IsRequired();
-        b.HasOne(x => x.EvalType).WithMany().HasForeignKey(x => x.EvalTypeId);
+        b.HasOne(x => x.JobApp).WithMany().HasForeignKey(x => x.JobAppId);
         b.HasOne(x => x.EvaluationStep).WithMany().HasForeignKey(x => x.EvaluationStepId);
-        b.HasIndex(x => new { x.EvalTypeId, x.EvaluationStepId });
+        b.HasIndex(x => x.JobAppId);
+        b.HasIndex(x => new { x.JobAppId, x.EvaluationStepId });
     }
 }
 
@@ -144,6 +145,8 @@ public class EvaluationStepConfig : BaseEntityConfig<EvaluationStep>
         b.Property(x => x.IsFinal).IsRequired();
         b.Property(x => x.StepName).HasMaxLength(100).IsRequired();
         b.Property(x => x.StepOrder).IsRequired();
+        b.Property(x => x.MaxScore).IsRequired();
+        b.Property(x => x.MinScore).IsRequired();
         b.HasOne(x => x.EvalType).WithMany().HasForeignKey(x => x.EvalTypeId);
         b.HasOne(x => x.EvaluationFlow).WithMany().HasForeignKey(x => x.EvaluationFlowId);
         b.HasIndex(x => new { x.EvaluationFlowId, x.StepOrder });
@@ -156,7 +159,6 @@ public class EvaluationTypeConfig : BaseEntityConfig<EvaluationType>
     {
         base.Configure(b);
         b.Property(x => x.IsActive).IsRequired();
-        b.Property(x => x.MaxScore).IsRequired();
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
         b.HasIndex(x => x.Name).IsUnique();
     }

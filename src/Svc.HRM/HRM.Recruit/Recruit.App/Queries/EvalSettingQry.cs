@@ -29,7 +29,7 @@ public class EvalTypeAllHandler : IRequestHandler<EvalTypeAllQry, List<EvalTypeL
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.MaxScore, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<EvaluationType>(v)
             .OrderBy<EvaluationType>(v, x => x.DateAdd, desc: true);
 
@@ -56,7 +56,7 @@ public class EvalTypeActiveHandler : IRequestHandler<EvalTypeActiveQry, List<Eva
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.MaxScore, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<EvaluationType>(v)
             .Where<EvaluationType>(v, x => x.IsActive == true);
 
@@ -83,7 +83,7 @@ public class EvalTypeByIdHandler : IRequestHandler<EvalTypeByIdQry, EvalTypeList
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.MaxScore, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<EvaluationType>(v)
             .Where<EvaluationType>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -190,7 +190,7 @@ public class EvalStepAllHandler : IRequestHandler<EvalStepAllQry, List<EvalStepL
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)
@@ -223,7 +223,7 @@ public class EvalStepByIdHandler : IRequestHandler<EvalStepByIdQry, EvalStepList
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)
@@ -253,7 +253,7 @@ public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, List
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)

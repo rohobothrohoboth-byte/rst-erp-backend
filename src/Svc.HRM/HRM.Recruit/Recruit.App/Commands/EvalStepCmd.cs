@@ -30,6 +30,8 @@ public class EvalStepAddHandler : IRequestHandler<EvalStepAddCmd, EvalStepListDt
             {
                 StepName = request.AddDto.StepName,
                 StepOrder = request.AddDto.StepOrder,
+                MaxScore = request.AddDto.MaxScore,
+                MinScore = request.AddDto.MinScore,
                 IsFinal = request.AddDto.IsFinal,
                 EvalTypeId = request.AddDto.EvalTypeId,
                 EvaluationFlowId = request.AddDto.EvaluationFlowId
@@ -68,6 +70,8 @@ public class EvalStepModHandler : IRequestHandler<EvalStepModCmd, EvalStepListDt
 
             oldData.StepName = request.ModDto.StepName;
             oldData.StepOrder = request.ModDto.StepOrder;
+            oldData.MaxScore = request.ModDto.MaxScore;
+            oldData.MinScore = request.ModDto.MinScore;
             oldData.IsFinal = request.ModDto.IsFinal;
             oldData.EvalTypeId = request.ModDto.EvalTypeId;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));

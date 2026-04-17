@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Recruit.Utility.Persistence;
@@ -11,9 +12,11 @@ using Recruit.Utility.Persistence;
 namespace Recruit.Utility.Migrations
 {
     [DbContext(typeof(HrmRecruitDbContext))]
-    partial class HrmRecruitDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417141127_MigHrmRecruit03")]
+    partial class MigHrmRecruit03
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -404,6 +407,9 @@ namespace Recruit.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("EvalTypeId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("EvaluationStepId")
                         .HasColumnType("uuid");
 
@@ -422,9 +428,6 @@ namespace Recruit.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<Guid>("JobAppId")
-                        .HasColumnType("uuid");
-
                     b.Property<double>("Score")
                         .HasColumnType("double precision");
 
@@ -440,9 +443,7 @@ namespace Recruit.Utility.Migrations
 
                     b.HasIndex("IsDeleted");
 
-                    b.HasIndex("JobAppId");
-
-                    b.HasIndex("JobAppId", "EvaluationStepId");
+                    b.HasIndex("EvalTypeId", "EvaluationStepId");
 
                     b.ToTable("EvaluationScore");
                 });
@@ -1467,21 +1468,21 @@ namespace Recruit.Utility.Migrations
 
             modelBuilder.Entity("Recruit.Domain.Entities.EvaluationScore", b =>
                 {
+                    b.HasOne("Recruit.Domain.Entities.EvaluationType", "EvalType")
+                        .WithMany()
+                        .HasForeignKey("EvalTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Recruit.Domain.Entities.EvaluationStep", "EvaluationStep")
                         .WithMany()
                         .HasForeignKey("EvaluationStepId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Recruit.Domain.Entities.JobApplication", "JobApp")
-                        .WithMany()
-                        .HasForeignKey("JobAppId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("EvalType");
 
                     b.Navigation("EvaluationStep");
-
-                    b.Navigation("JobApp");
                 });
 
             modelBuilder.Entity("Recruit.Domain.Entities.EvaluationStep", b =>
