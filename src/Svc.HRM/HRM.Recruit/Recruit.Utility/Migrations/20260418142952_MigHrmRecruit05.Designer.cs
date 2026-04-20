@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Recruit.Utility.Persistence;
@@ -11,9 +12,11 @@ using Recruit.Utility.Persistence;
 namespace Recruit.Utility.Migrations
 {
     [DbContext(typeof(HrmRecruitDbContext))]
-    partial class HrmRecruitDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418142952_MigHrmRecruit05")]
+    partial class MigHrmRecruit05
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -546,50 +549,6 @@ namespace Recruit.Utility.Migrations
                         .IsUnique();
 
                     b.ToTable("EvaluationType");
-                });
-
-            modelBuilder.Entity("Recruit.Domain.Entities.JobAppEvalProgress", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CurrentStepId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateAdd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DateMod")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("JobAppId")
-                        .HasColumnType("uuid");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CurrentStepId");
-
-                    b.HasIndex("IsCompleted");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("JobAppId");
-
-                    b.ToTable("JobAppEvalProgress");
                 });
 
             modelBuilder.Entity("Recruit.Domain.Entities.JobApplication", b =>
@@ -1555,25 +1514,6 @@ namespace Recruit.Utility.Migrations
                     b.Navigation("EvalType");
 
                     b.Navigation("EvaluationFlow");
-                });
-
-            modelBuilder.Entity("Recruit.Domain.Entities.JobAppEvalProgress", b =>
-                {
-                    b.HasOne("Recruit.Domain.Entities.EvaluationStep", "CurrentStep")
-                        .WithMany()
-                        .HasForeignKey("CurrentStepId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Recruit.Domain.Entities.JobApplication", "JobApp")
-                        .WithMany()
-                        .HasForeignKey("JobAppId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CurrentStep");
-
-                    b.Navigation("JobApp");
                 });
 
             modelBuilder.Entity("Recruit.Domain.Entities.JobApplication", b =>

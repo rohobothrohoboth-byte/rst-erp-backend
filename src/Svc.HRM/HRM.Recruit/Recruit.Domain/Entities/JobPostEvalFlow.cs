@@ -2,6 +2,8 @@
 
 public class JobPostEvalFlow : BaseEntity
 {
+    public DateTime EffectiveFrom { get; set; }
+    public DateTime? EffectiveTo { get; set; }
     public Guid EvaluationFlowId { get; set; } // EvaluationFlow
     public Guid JobPostingId { get; set; } // JobPosting
 

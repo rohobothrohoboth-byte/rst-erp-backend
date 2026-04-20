@@ -164,6 +164,20 @@ public class EvaluationTypeConfig : BaseEntityConfig<EvaluationType>
     }
 }
 
+public class JobAppEvalProgressConfig : BaseEntityConfig<JobAppEvalProgress>
+{
+    public override void Configure(EntityTypeBuilder<JobAppEvalProgress> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.IsCompleted).IsRequired();
+        b.Property(x => x.JobAppId).IsRequired();
+        b.Property(x => x.CurrentStepId).IsRequired();
+        b.HasIndex(x => x.IsCompleted);
+        b.HasIndex(x => x.JobAppId);
+        b.HasIndex(x => x.CurrentStepId);
+    }
+}
+
 public class JobApplicationConfig : BaseEntityConfig<JobApplication>
 {
     public override void Configure(EntityTypeBuilder<JobApplication> b)

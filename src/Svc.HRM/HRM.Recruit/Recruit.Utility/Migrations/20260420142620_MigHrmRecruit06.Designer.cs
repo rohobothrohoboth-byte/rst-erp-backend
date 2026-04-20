@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Recruit.Utility.Persistence;
@@ -11,9 +12,11 @@ using Recruit.Utility.Persistence;
 namespace Recruit.Utility.Migrations
 {
     [DbContext(typeof(HrmRecruitDbContext))]
-    partial class HrmRecruitDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420142620_MigHrmRecruit06")]
+    partial class MigHrmRecruit06
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

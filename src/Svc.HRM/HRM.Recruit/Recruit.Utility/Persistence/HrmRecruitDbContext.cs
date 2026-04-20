@@ -68,6 +68,7 @@ public class HrmRecruitDbContext : DbContext
     public DbSet<EvaluationScore> EvaluationScore { get; set; }
     public DbSet<EvaluationStep> EvaluationStep { get; set; }
     public DbSet<EvaluationType> EvaluationType { get; set; }
+    public DbSet<JobAppEvalProgress> JobAppEvalProgress { get; set; }
     public DbSet<JobApplication> JobApplication { get; set; }
     public DbSet<JobDec> JobDec { get; set; }
     public DbSet<JobOffer> JobOffer { get; set; }

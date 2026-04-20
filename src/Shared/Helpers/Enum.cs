@@ -477,10 +477,8 @@ public enum ApplicationStatus
     Rejected,
     [Display(Name = "Withdrawn")]
     Withdrawn,
-    [Display(Name = "Interview Scheduled")]
-    InterviewScheduled,
-    [Display(Name = "Interview Completed")]
-    InterviewCompleted,
+    [Display(Name = "Evaluation Passed")]
+    PassEval,
     [Display(Name = "Offer Extended")]
     OfferExtended,
     [Display(Name = "Offer Accepted")]
