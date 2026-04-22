@@ -6,3 +6,8 @@ public class StatChangeDto
     public bool Stat { get; set; } = true;
     public string RowVersion { get; set; } = default!;
 }
+
+public class IdListDto
+{
+    public Guid Id { get; set; }
+}

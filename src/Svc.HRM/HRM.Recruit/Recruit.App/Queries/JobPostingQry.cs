@@ -11,6 +11,7 @@ public class JobPostingAllQry : IRequest<List<JobPostingListDto>> { }
 public class JobPostingByIdQry : IRequest<JobPostingListDto?> { public Guid Id { get; set; } }
 public class JobPostingByJobReqIdQry : IRequest<List<JobPostingListDto>> { public Guid Id { get; set; } }
 public class JobPostingByWfpIdQry : IRequest<List<JobPostingListDto>> { public Guid Id { get; set; } }
+public class JobPostingByDeptIdQry : IRequest<List<JobPostingListDto>> { public Guid Id { get; set; } }
 public class JobPostingViewQry : IRequest<JobPostingViewDto> { public Guid Id { get; set; } }
 
 
@@ -154,6 +155,72 @@ public class JobPostingByWfpIdHandler : IRequestHandler<JobPostingByWfpIdQry, Li
     }
 }
 
+public class JobPostingByDeptIdHandler : IRequestHandler<JobPostingByDeptIdQry, List<JobPostingListDto>>
+{
+    private readonly IDapperHelper _dapper;
+    private readonly IHrmProfileClient _hrmProfile;
+    public JobPostingByDeptIdHandler(IDapperHelper dapper, IHrmProfileClient hrmProfile)
+    {
+        _dapper = dapper;
+        _hrmProfile = hrmProfile;
+    }
+
+    private async Task<List<Guid>> GetWfp(Guid id, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<WorkforcePlan>(v, x => x.Id)
+            .From<WorkforcePlan>(v)
+            .Where<WorkforcePlan>(v, x => x.DepartmentId == id);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<IdListDto>(ct);
+        var ids = list.Select(x => x.Id).ToList();
+        return ids;
+    }
+
+
+    public async Task<List<JobPostingListDto>> Handle(JobPostingByDeptIdQry request, CancellationToken ct)
+    {
+        var dept = await _hrmProfile.GetEmpId(request.Id.ToString(), ct);
+        if (dept.DeptId == null)
+        {
+            throw new DomainException("WORKFORCE PLANS for your department are NOT AVAILABLE.");
+        }
+
+        var deptId = new Guid(dept.DeptId);
+        var dWfp = await GetWfp(deptId, ct);
+        if (dWfp.Count <= 0) { return []; }
+
+        const string v = "v";
+        const string rq = "rq";
+        const string rr = "rr";
+        var qb = new QueryBuilder()
+            .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.JobReqId, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobReqReview>(rr, x => x.ReqQuantity, x => x.AppQuantity)
+            .SelectAs<JobRequisition, JobPostingListDto>(rq, x => x.ReqNumber, d => d.ReqNumber)
+            .From<JobPosting>(v)
+            .Join<JobPosting, JobRequisition>(v, rq, x => x.JobReqId, x => x.Id)
+            .LeftJoin<JobRequisition, JobReqReview>(rq, rr, x => x.Id, x => x.JobReqId)
+            .WhereIn<JobRequisition>(rq, x => x.WorkforcePlanId, dWfp);
+
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<JobPostingListDto>(ct);
+
+        foreach (var data in list)
+        {
+            data.ReqAppQuan = data.ReqQuantity.HasValue && data.AppQuantity.HasValue ? $"{data.ReqQuantity.Value} | {data.AppQuantity.Value}" : "0 | 0";
+            data.StatusStr = MyEnumHelper.FormatEnum<PostingStatus>(data.Status);
+            data.PostTypeStr = MyEnumHelper.FormatEnum<JobPostingType>(data.PostType);
+            data.RowVersion = data.xmin.ToString();
+        }
+
+        return list;
+    }
+}
+
 public class JobPostingViewHandler : IRequestHandler<JobPostingViewQry, JobPostingViewDto>
 {
     private readonly IDapperHelper _dapper;
@@ -174,7 +241,6 @@ public class JobPostingViewHandler : IRequestHandler<JobPostingViewQry, JobPosti
         const string jr = "jr";
         const string jrr = "jrr";
         const string jd = "jd";
-        const string wp = "wp";
         var qb = new QueryBuilder()
             .Select<JobPosting>(v, x => x.Id, x => x.PostNumber, x => x.Status, x => x.PostType, x => x.PublishedDate, x => x.DeadlineDate, x => x.ClosedDate, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<JobRequisition>(jr, x => x.ReqNumber, x => x.ReqReason, x => x.BudgetCode, x => x.JgStepId, x => x.PositionId)

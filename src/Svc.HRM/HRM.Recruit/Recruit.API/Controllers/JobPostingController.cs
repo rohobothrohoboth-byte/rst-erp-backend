@@ -28,6 +28,37 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    /// <summary>
+    /// JOB POSTINGS by WORK FORCE PLAN Id
+    /// </summary>
+    [HttpGet("JobPostByWfp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> JobPostByWfp(Guid id)
+    {
+        var response = await med.Send(new JobPostingByWfpIdQry { Id = id });
+        if (response == null) { throw new DomainException($"JOB POSTING with Work force plan id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
+    /// <summary>
+    /// JOB POSTINGS by Department Id
+    /// </summary>
+    [HttpGet("JobPostByDept")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> JobPostByDept()
+    {
+
+        var empId = User.FindFirstValue("employeeId");
+        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+
+        var id = Guid.Parse(empId!);
+        var response = await med.Send(new JobPostingByDeptIdQry { Id = id });
+        if (response == null) { throw new DomainException("WORKFORCE PLANS for your department are NOT AVAILABLE."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     [HttpGet("GetJobPosting/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

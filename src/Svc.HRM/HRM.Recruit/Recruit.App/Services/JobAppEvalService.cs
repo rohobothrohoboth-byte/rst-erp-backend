@@ -59,7 +59,6 @@ public class JobAppEvalService : IJobAppEvalService
         }
     }
 
-    // 🪜 EVALUATE & MOVE
     public async Task EvaluateAsync(Guid jobAppId, double score, string feedback, Guid evaluatorId, CancellationToken ct)
     {
         await _uow.Begin(ct);
@@ -73,7 +72,6 @@ public class JobAppEvalService : IJobAppEvalService
 
             if (score < currentStep.MinScore || score > currentStep.MaxScore) { throw new DomainException("Score out of allowed range."); }
 
-            // Save score
             var evalScore = new EvaluationScore
             {
                 JobAppId = jobAppId,
@@ -87,10 +85,9 @@ public class JobAppEvalService : IJobAppEvalService
             await _uow.Add(evalScore, ct);
             await _uow.Commit(ct);
 
-            // Decision
             if (score < currentStep.MinScore)
             {
-                await RejectApplication(jobAppId, progress, ct);
+                await RejectApp(jobAppId, progress, ct);
                 return;
             }
 
@@ -105,7 +102,6 @@ public class JobAppEvalService : IJobAppEvalService
 
     }
 
-    // 🔄 MOVE NEXT
     private async Task MoveToNextStep(Guid jobAppId, JobAppEvalProgress progress, EvaluationStep currentStep, CancellationToken ct)
     {
         await _uow.Begin(ct);
@@ -135,8 +131,7 @@ public class JobAppEvalService : IJobAppEvalService
         }
     }
 
-    // ❌ REJECT
-    private async Task RejectApplication(Guid jobAppId, JobAppEvalProgress progress, CancellationToken ct)
+    private async Task RejectApp(Guid jobAppId, JobAppEvalProgress progress, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
