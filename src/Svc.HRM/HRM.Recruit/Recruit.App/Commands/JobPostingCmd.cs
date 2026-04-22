@@ -9,7 +9,7 @@ using Recruit.Domain.Entities;
 namespace Recruit.App.Commands;
 
 public class JobPostingAddCmd : IRequest<JobPostingListDto> { public JobPostingAddDto AddDto { get; set; } = default!; }
-public class JobPostingAddAllCmd : IRequest<JobPostingListDto> { public JobPostingAddDto AddDto { get; set; } = default!; }
+public class JobPostingAddAllCmd : IRequest<List<JobPostingListDto>> { public JobPostingAddDto AddDto { get; set; } = default!; }
 public class JobPostingModCmd : IRequest<JobPostingListDto> { public JobPostingModDto ModDto { get; set; } = default!; }
 public class JobPostPublishCmd : IRequest<JobPostingListDto> { public PostPublish Rvw { get; set; } = default!; }
 public class JobPostPublishAllCmd : IRequest<List<JobPostingListDto>> { public PostPublish Rvw { get; set; } = default!; }
@@ -55,41 +55,38 @@ public class JobPostingAddHandler : IRequestHandler<JobPostingAddCmd, JobPosting
     }
 }
 
-public class JobPostingAddAllHandler : IRequestHandler<JobPostingAddAllCmd, JobPostingListDto>
+public class JobPostingAddAllHandler : IRequestHandler<JobPostingAddAllCmd, List<JobPostingListDto>>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
     public JobPostingAddAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
 
-    public async Task<JobPostingListDto> Handle(JobPostingAddAllCmd request, CancellationToken ct)
+    public async Task<List<JobPostingListDto>> Handle(JobPostingAddAllCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
             var stat = BoolToStr.EnumToString(ReqStatus.Approved);
             var jReqL = _uow.Set<JobRequisition>().Where(r => r.WorkforcePlanId == request.AddDto.Id && r.Status == stat).ToList();
-            var lId = new Guid();
-            if (jReqL.Count > 0)
+            if (jReqL.Count <= 0) { throw new DomainException($"APPROVED JOB REQUISITIONS NOT FOUND for selected work force plan."); }
+            var statP = BoolToStr.EnumToString(PostingStatus.Pending);
+            foreach (var jReq in jReqL)
             {
-                var statP = BoolToStr.EnumToString(PostingStatus.Pending);
-                foreach (var jReq in jReqL)
+                var data = new JobPosting
                 {
-                    var data = new JobPosting
-                    {
-                        Status = statP,
-                        PostType = request.AddDto.PostType,
-                        PublishedDate = DateTime.UtcNow,
-                        DeadlineDate = request.AddDto.DeadlineDate,
-                        JobReqId = jReq.Id,
-                    };
-                    await _uow.Add(data, ct);
-                }
+                    Status = statP,
+                    PostType = request.AddDto.PostType,
+                    PublishedDate = DateTime.UtcNow,
+                    DeadlineDate = request.AddDto.DeadlineDate,
+                    JobReqId = jReq.Id,
+                };
+                await _uow.Add(data, ct);
             }
             await _uow.Commit(ct);
 
-            var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = lId }, ct);
+            var res = new List<JobPostingListDto>();
+            var response = await _med.Send(new JobPostingByWfpIdQry { Id = request.AddDto.Id }, ct);
             if (response == null) { return res; }
             res = response;
             return res;
