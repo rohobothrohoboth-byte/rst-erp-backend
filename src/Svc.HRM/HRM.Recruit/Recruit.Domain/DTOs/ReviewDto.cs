@@ -28,3 +28,12 @@ public class PostPublish
     public Guid ReviewById { get; set; }
     public string Comment { get; set; } = default!;
 }
+
+public class JpAppEvalDto
+{
+    [JsonIgnore]
+    public Guid EvaluatorId { get; set; }
+    public Guid Id { get; set; }
+    public double Score { get; set; }
+    public string Feedback { get; set; } = default!;
+}

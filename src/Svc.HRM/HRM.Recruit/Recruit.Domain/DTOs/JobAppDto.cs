@@ -34,32 +34,6 @@ public class JobAppIntModDto
     public string RowVersion { get; set; } = default!;
 }
 
-public class JobAppExtAddDto
-{
-    public string Status { get; set; } = default!; // enum.ApplicationStatus(0/1)
-    public DateTime AppliedDate { get; set; }
-    public int ScreeningScore { get; set; }
-    public string? ScreeningComments { get; set; }
-    public string? UpdatedBy { get; set; }
-    public Guid CandidateId { get; set; } // Candidate
-    public Guid JobPostingId { get; set; } // JobPosting
-    public Guid CoverLetterId { get; set; } // CoverLetter
-}
-
-public class JobAppExtModDto
-{
-    public Guid Id { get; set; }
-    public string Status { get; set; } = default!; // enum.ApplicationStatus(0/1)
-    public DateTime AppliedDate { get; set; }
-    public int ScreeningScore { get; set; }
-    public string? ScreeningComments { get; set; }
-    public string? UpdatedBy { get; set; }
-    public Guid CandidateId { get; set; } // Candidate
-    public Guid JobPostingId { get; set; } // JobPosting
-    public Guid CoverLetterId { get; set; } // CoverLetter
-    public string RowVersion { get; set; } = default!;
-}
-
 public class JobAppIdDto
 {
     public Guid? ApplicantId { get; set; } // Applicant

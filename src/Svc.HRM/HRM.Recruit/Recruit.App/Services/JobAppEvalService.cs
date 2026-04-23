@@ -1,6 +1,7 @@
 ﻿using Helpers;
 using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
+using Recruit.Domain.DTOs;
 using Recruit.Domain.Entities;
 
 namespace Recruit.App.Services;
@@ -8,7 +9,7 @@ namespace Recruit.App.Services;
 public interface IJobAppEvalService
 {
     Task StartEvaluation(Guid jobPostingId, CancellationToken ct);
-    Task EvalScore(Guid jobAppId, double score, string feedback, Guid evaluatorId, CancellationToken ct);
+    Task EvalScore(JpAppEvalDto evalDto, CancellationToken ct);
 }
 
 public class JobAppEvalService : IJobAppEvalService
@@ -40,34 +41,29 @@ public class JobAppEvalService : IJobAppEvalService
         }
     }
 
-    public async Task EvalScore(Guid jobAppId, double score, string feedback, Guid evaluatorId, CancellationToken ct)
+    public async Task EvalScore(JpAppEvalDto evalDto, CancellationToken ct)
     {
-        var progress = await _uow.Set<JobAppEvalProgress>().FirstOrDefaultAsync(x => x.Id == jobAppId, ct);
-        if (progress == null || progress.IsCompleted) { throw new DomainException("Evaluation not started or already completed."); }
-
-        var currentStep = await _uow.Set<EvaluationStep>().FirstOrDefaultAsync(x => x.Id == progress.CurrentStepId, ct);
-        if (currentStep == null) { throw new DomainException("Invalid evaluation step."); }
-
-        if (score < currentStep.MinScore || score > currentStep.MaxScore) { throw new DomainException("Score out of allowed range."); }
+        var progress = await _uow.Set<JobAppEvalProgress>().FirstOrDefaultAsync(x => x.JobAppId == evalDto.Id, ct);
+        var currentStep = await _uow.Set<EvaluationStep>().FirstOrDefaultAsync(x => x.Id == progress!.CurrentStepId, ct);
 
         var evalScore = new EvaluationScore
         {
-            JobAppId = jobAppId,
-            EvaluationStepId = currentStep.Id,
-            Score = score,
-            Feedback = feedback,
-            EvaluatorId = evaluatorId,
+            JobAppId = evalDto.Id,
+            EvaluationStepId = currentStep!.Id,
+            Score = evalDto.Score,
+            Feedback = evalDto.Feedback,
+            EvaluatorId = evalDto.EvaluatorId,
             IsCurrent = true
         };
         await _uow.Add(evalScore, ct);
 
-        if (score < currentStep.MinScore)
+        if (evalDto.Score < currentStep.MinScore)
         {
-            await RejectApp(jobAppId, progress, ct);
+            await RejectApp(evalDto.Id, progress!, ct);
             return;
         }
 
-        await MoveToNextStep(jobAppId, progress, currentStep, ct);
+        await MoveToNextStep(evalDto.Id, progress!, currentStep, ct);
     }
 
     private async Task MoveToNextStep(Guid jobAppId, JobAppEvalProgress progress, EvaluationStep currentStep, CancellationToken ct)

@@ -9,24 +9,23 @@ using Recruit.Domain.Entities;
 
 namespace Recruit.App.Commands;
 
-public class JobPostStartEvalCmd : IRequest<JobPostingListDto> { public Guid Id { get; set; } }
+public class JobPostStartEvalCmd : IRequest<string> { public Guid Id { get; set; } }
+public class JobAppEvaluateCmd : IRequest<string> { public JpAppEvalDto EvalDto { get; set; } = default!; }
 
 
 
-public class JobPostStartEvalHandler : IRequestHandler<JobPostStartEvalCmd, JobPostingListDto>
+public class JobPostStartEvalHandler : IRequestHandler<JobPostStartEvalCmd, string>
 {
     private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
     private readonly IJobAppEvalService _jobAppEvalService;
 
-    public JobPostStartEvalHandler(IUnitOfWork uow, IMediator med, IJobAppEvalService jobAppEvalService)
+    public JobPostStartEvalHandler(IUnitOfWork uow, IJobAppEvalService jobAppEvalService)
     {
         _uow = uow;
-        _med = med;
         _jobAppEvalService = jobAppEvalService;
     }
 
-    public async Task<JobPostingListDto> Handle(JobPostStartEvalCmd request, CancellationToken ct)
+    public async Task<string> Handle(JobPostStartEvalCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -46,11 +45,44 @@ public class JobPostStartEvalHandler : IRequestHandler<JobPostStartEvalCmd, JobP
             await _jobAppEvalService.StartEvaluation(request.Id, ct);
             await _uow.Commit(ct);
 
-            var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = request.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            return "";
+        }
+        catch
+        {
+            await _uow.Rollback(ct);
+            throw;
+        }
+    }
+}
+
+public class JobAppEvaluateHandler : IRequestHandler<JobAppEvaluateCmd, string>
+{
+    private readonly IUnitOfWork _uow;
+    private readonly IJobAppEvalService _jobAppEvalService;
+
+    public JobAppEvaluateHandler(IUnitOfWork uow, IJobAppEvalService jobAppEvalService)
+    {
+        _uow = uow;
+        _jobAppEvalService = jobAppEvalService;
+    }
+
+    public async Task<string> Handle(JobAppEvaluateCmd request, CancellationToken ct)
+    {
+        await _uow.Begin(ct);
+        try
+        {
+            var progress = await _uow.Set<JobAppEvalProgress>().FirstOrDefaultAsync(x => x.JobAppId == request.EvalDto.Id, ct);
+            if (progress == null || progress.IsCompleted) { throw new DomainException("Evaluation not started or already completed."); }
+
+            var currentStep = await _uow.Set<EvaluationStep>().FirstOrDefaultAsync(x => x.Id == progress.CurrentStepId, ct);
+            if (currentStep == null) { throw new DomainException("Invalid evaluation step."); }
+
+            var score = request.EvalDto.Score;
+            if (score < currentStep.MinScore || score > currentStep.MaxScore) { throw new DomainException("Score out of allowed range."); }
+
+            await _jobAppEvalService.EvalScore(request.EvalDto, ct);
+            await _uow.Commit(ct);
+            return "";
         }
         catch
         {
