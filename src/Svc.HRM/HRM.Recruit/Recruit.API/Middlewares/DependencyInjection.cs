@@ -60,6 +60,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
 
         builder.Services.AddScoped<IJobAppService, JobAppService>();
+        builder.Services.AddScoped<IJobAppEvalService, JobAppEvalService>();
 
         builder.Services.AddScoped<ICorModClient, CorModClient>();
         builder.Services.AddScoped<ICorHrmmClient, CorHrmmClient>();
