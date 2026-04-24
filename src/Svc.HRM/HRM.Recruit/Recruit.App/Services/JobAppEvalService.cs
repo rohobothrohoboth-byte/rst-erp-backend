@@ -74,7 +74,7 @@ public class JobAppEvalService : IJobAppEvalService
 
         if (currentStep.IsFinal || nextStep == null)
         {
-            app.Status = BoolToStr.EnumToString(ApplicationStatus.PassEval);
+            app.Status = BoolToStr.EnumToString(ApplicationStatus.UnderReview);
             await _uow.Update(app);
             progress.IsCompleted = true;
             await _uow.Update(progress);

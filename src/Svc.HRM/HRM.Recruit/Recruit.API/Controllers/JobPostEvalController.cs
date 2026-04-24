@@ -40,7 +40,11 @@ public class JobPostEvalController(IMediator med) : ControllerBase
         }
 
         var empId = User.FindFirstValue("employeeId");
-        if (empId is { Length: <= 0 }) { throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access."); }
+        if (empId is { Length: <= 0 })
+        {
+            throw new DomainException("AUTHORIZATION REQUIRED to gain access.");
+            throw new UnauthorizedException("AUTHORIZATION REQUIRED to gain access.");
+        }
 
         evalDto.EvaluatorId = Guid.Parse(empId!);
         await med.Send(new JobAppEvaluateCmd { EvalDto = evalDto });
