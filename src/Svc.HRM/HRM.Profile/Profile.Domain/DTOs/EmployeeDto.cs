@@ -32,10 +32,10 @@ public sealed class EmpJoinRow
 public sealed class EmpBioJoin
 {
     public DateTime? BirthDate { get; init; }
-    public string? BirthLocation { get; init; }
-    public string? MotherFullName { get; init; }
-    public string?    HasBirthCert { get; init; }
-    public string? HasMarriageCert { get; init; }
+    //public string? BirthLocation { get; init; }
+    //public string? MotherFullName { get; init; }
+    //public string? HasBirthCert { get; init; }
+    //public string? HasMarriageCert { get; init; }
     public string? MaritalStatus { get; init; }
     public string? AddressType { get; init; }
     public string? Region { get; init; }
@@ -44,9 +44,9 @@ public sealed class EmpBioJoin
     public string? Woreda { get; init; }
     public string? Kebele { get; init; }
     public string? Telephone { get; init; }
-    public string? Tin { get; init; }
-    public string? BankAccountNo { get; init; }
-    public string? PensionNumber { get; init; }
+    //public string? Tin { get; init; }
+    //public string? BankAccountNo { get; init; }
+    //public string? PensionNumber { get; init; }
 }
 
 public sealed class EmpContJoin

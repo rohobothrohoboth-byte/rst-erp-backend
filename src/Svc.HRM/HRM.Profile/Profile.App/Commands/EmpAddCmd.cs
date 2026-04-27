@@ -1,4 +1,5 @@
-﻿using Helpers;
+﻿using Common;
+using Helpers;
 using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
@@ -8,13 +9,14 @@ namespace Profile.App.Commands;
 
 public class EmpAddStep1Cmd : IRequest<EmpAddRes> { public Step1Dto AddDto { get; set; } = default!; }
 public class EmpAddStep2Cmd : IRequest<EmpAddRes> { public Step2Dto AddDto { get; set; } = default!; }
-public class EmpAddStep3Cmd : IRequest<EmpAddRes> { public Step3Dto AddDto { get; set; } = default!; }
-public class EmpAddStep4Cmd : IRequest<EmpAddRes> { public Step4Dto AddDto { get; set; } = default!; }
+//public class EmpAddStep2Cmd : IRequest<EmpAddRes> { public Step2Dto AddDto { get; set; } = default!; }
+//public class EmpAddStep3Cmd : IRequest<EmpAddRes> { public Step3Dto AddDto { get; set; } = default!; }
 
 public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _uow;
-    public EmpAddStep1CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
+    private readonly ICorHrmmClient _hrmmClient;
+    public EmpAddStep1CmdHandler(IUnitOfWork uow, ICorHrmmClient hrmmClient) { _uow = uow; _hrmmClient = hrmmClient;}
 
     public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken ct)
     {
@@ -49,10 +51,46 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             };
             await _uow.Add(data, ct);
 
-            // Get JgStepSalary and convert to BaseSalary
+            var address = new Address
+            {
+                AddressType = request.AddDto.AddressType,
+                Country = request.AddDto.Country,
+                Region = request.AddDto.Region,
+                Subcity = request.AddDto.Subcity,
+                Zone = request.AddDto.Zone,
+                Woreda = request.AddDto.Woreda,
+                Kebele = request.AddDto.Kebele,
+                HouseNo = request.AddDto.HouseNo,
+                Telephone = request.AddDto.Telephone,
+                PoBox = request.AddDto.PoBox,
+                Fax = request.AddDto.Fax,
+                Email = request.AddDto.Email,
+                Website = request.AddDto.Website
+            };
+            await _uow.Add(address, ct);
+
+            var empBio = new EmpBio
+            {
+                BirthDate = request.AddDto.BirthDate,
+                BirthLocation = "",
+                MotherFullName = "",
+                HasBirthCert = BoolToStr.EnumToString(YesNo.No),
+                HasMarriageCert = BoolToStr.EnumToString(YesNo.No),
+                MaritalStatus = request.AddDto.MaritalStatus,
+                AddressId = address.Id,
+                EmployeeId = data.Id
+            };
+            await _uow.Add(empBio, ct);
+
+            var slyTask = await _hrmmClient.GetJgStepSalary((request.AddDto.JgStepId).ToString(), ct);
+            var sal = 0.0;
+            if (slyTask.Salary != null)
+            {
+                sal = double.Parse(slyTask.Salary);
+            }
             var salary = new EmpSalary
             {
-                BaseSalary = 0.0,
+                BaseSalary = sal,
                 EffectiveFrom = request.AddDto.EmploymentDate,
                 JgStepId = request.AddDto.JgStepId,
                 EmployeeId = data.Id
@@ -126,138 +164,14 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
         await _uow.Begin(ct);
         try
         {
-            var address = new Address
-            {
-                AddressType = request.AddDto.AddressType,
-                Country = request.AddDto.Country,
-                Region = request.AddDto.Region,
-                Subcity = request.AddDto.Subcity,
-                Zone = request.AddDto.Zone,
-                Woreda = request.AddDto.Woreda,
-                Kebele = request.AddDto.Kebele,
-                HouseNo = request.AddDto.HouseNo,
-                Telephone = request.AddDto.Telephone,
-                PoBox = request.AddDto.PoBox,
-                Fax = request.AddDto.Fax,
-                Email = request.AddDto.Email,
-                Website = request.AddDto.Website
-            };
-            await _uow.Add(address, ct);
-
-            var fin = new EmpFinance
-            {
-                Tin = request.AddDto.Tin,
-                BankAccountNo = request.AddDto.BankAccountNo,
-                PensionNumber = request.AddDto.PensionNumber,
-                EmployeeId = request.AddDto.EmployeeId
-            };
-            await _uow.Add(fin, ct);
-
-            var data = new EmpBio
-            {
-                BirthDate = request.AddDto.BirthDate,
-                BirthLocation = request.AddDto.BirthLocation,
-                MotherFullName = request.AddDto.MotherFullName,
-                HasBirthCert = request.AddDto.HasBirthCert,
-                HasMarriageCert = request.AddDto.HasMarriageCert,
-                MaritalStatus = request.AddDto.MaritalStatus,
-                AddressId = address.Id,
-                EmployeeId = request.AddDto.EmployeeId
-            };
-            await _uow.Add(data, ct);
-            await _uow.Commit(ct);
-
-            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
-            return res;
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
-    }
-}
-
-public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
-{
-    private readonly IUnitOfWork _uow;
-    public EmpAddStep3CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
-
-    public async Task<EmpAddRes> Handle(EmpAddStep3Cmd request, CancellationToken ct)
-    {
-        await _uow.Begin(ct);
-        try
-        {
-            var address = new Address
-            {
-                AddressType = request.AddDto.AddressType,
-                Country = request.AddDto.Country,
-                Region = request.AddDto.Region,
-                Subcity = request.AddDto.Subcity,
-                Zone = request.AddDto.Zone,
-                Woreda = request.AddDto.Woreda,
-                Kebele = request.AddDto.Kebele,
-                HouseNo = request.AddDto.HouseNo,
-                Telephone = request.AddDto.Telephone,
-                PoBox = request.AddDto.PoBox,
-                Fax = request.AddDto.Fax,
-                Email = request.AddDto.Email,
-                Website = request.AddDto.Website
-            };
-            await _uow.Add(address, ct);
-
             var per = new Person
             {
                 FirstName = request.AddDto.FirstName,
-                FirstNameAm = request.AddDto.FirstNameAm,
+                FirstNameAm = "",
                 MiddleName = request.AddDto.MiddleName,
-                MiddleNameAm = request.AddDto.MiddleNameAm,
+                MiddleNameAm = "",
                 LastName = request.AddDto.LastName,
-                LastNameAm = request.AddDto.LastNameAm,
-                Gender = request.AddDto.Gender,
-                Nationality = request.AddDto.Nationality
-            };
-            await _uow.Add(per, ct);
-
-            var data = new EmergencyContact
-            {
-                AddressId = address.Id,
-                Relation = request.AddDto.Relation,
-                EmployeeId = request.AddDto.EmployeeId,
-                PersonId = per.Id
-            };
-            await _uow.Add(data, ct);
-            await _uow.Commit(ct);
-
-            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
-            return res;
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
-    }
-}
-
-public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
-{
-    private readonly IUnitOfWork _uow;
-    public EmpAddStep4CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
-
-    public async Task<EmpAddRes> Handle(EmpAddStep4Cmd request, CancellationToken ct)
-    {
-        await _uow.Begin(ct);
-        try
-        {
-            var per = new Person
-            {
-                FirstName = request.AddDto.FirstName,
-                FirstNameAm = request.AddDto.FirstNameAm,
-                MiddleName = request.AddDto.MiddleName,
-                MiddleNameAm = request.AddDto.MiddleNameAm,
-                LastName = request.AddDto.LastName,
-                LastNameAm = request.AddDto.LastNameAm,
+                LastNameAm = "",
                 Gender = request.AddDto.Gender,
                 Nationality = request.AddDto.Nationality
             };
@@ -330,3 +244,127 @@ public class EmpAddStep4CmdHandler : IRequestHandler<EmpAddStep4Cmd, EmpAddRes>
         }
     }
 }
+
+//public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
+//{
+//    private readonly IUnitOfWork _uow;
+//    public EmpAddStep2CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
+
+//    public async Task<EmpAddRes> Handle(EmpAddStep2Cmd request, CancellationToken ct)
+//    {
+//        await _uow.Begin(ct);
+//        try
+//        {
+//            var address = new Address
+//            {
+//                AddressType = request.AddDto.AddressType,
+//                Country = request.AddDto.Country,
+//                Region = request.AddDto.Region,
+//                Subcity = request.AddDto.Subcity,
+//                Zone = request.AddDto.Zone,
+//                Woreda = request.AddDto.Woreda,
+//                Kebele = request.AddDto.Kebele,
+//                HouseNo = request.AddDto.HouseNo,
+//                Telephone = request.AddDto.Telephone,
+//                PoBox = request.AddDto.PoBox,
+//                Fax = request.AddDto.Fax,
+//                Email = request.AddDto.Email,
+//                Website = request.AddDto.Website
+//            };
+//            await _uow.Add(address, ct);
+
+//            var fin = new EmpFinance
+//            {
+//                Tin = request.AddDto.Tin,
+//                BankAccountNo = request.AddDto.BankAccountNo,
+//                PensionNumber = request.AddDto.PensionNumber,
+//                EmployeeId = request.AddDto.EmployeeId
+//            };
+//            await _uow.Add(fin, ct);
+
+//            var data = new EmpBio
+//            {
+//                BirthDate = request.AddDto.BirthDate,
+//                BirthLocation = request.AddDto.BirthLocation,
+//                MotherFullName = request.AddDto.MotherFullName,
+//                HasBirthCert = request.AddDto.HasBirthCert,
+//                HasMarriageCert = request.AddDto.HasMarriageCert,
+//                MaritalStatus = request.AddDto.MaritalStatus,
+//                AddressId = address.Id,
+//                EmployeeId = request.AddDto.EmployeeId
+//            };
+//            await _uow.Add(data, ct);
+//            await _uow.Commit(ct);
+
+//            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
+//            return res;
+//        }
+//        catch
+//        {
+//            await _uow.Rollback(ct);
+//            throw;
+//        }
+//    }
+//}
+
+//public class EmpAddStep3CmdHandler : IRequestHandler<EmpAddStep3Cmd, EmpAddRes>
+//{
+//    private readonly IUnitOfWork _uow;
+//    public EmpAddStep3CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
+
+//    public async Task<EmpAddRes> Handle(EmpAddStep3Cmd request, CancellationToken ct)
+//    {
+//        await _uow.Begin(ct);
+//        try
+//        {
+//            var address = new Address
+//            {
+//                AddressType = request.AddDto.AddressType,
+//                Country = request.AddDto.Country,
+//                Region = request.AddDto.Region,
+//                Subcity = request.AddDto.Subcity,
+//                Zone = request.AddDto.Zone,
+//                Woreda = request.AddDto.Woreda,
+//                Kebele = request.AddDto.Kebele,
+//                HouseNo = request.AddDto.HouseNo,
+//                Telephone = request.AddDto.Telephone,
+//                PoBox = request.AddDto.PoBox,
+//                Fax = request.AddDto.Fax,
+//                Email = request.AddDto.Email,
+//                Website = request.AddDto.Website
+//            };
+//            await _uow.Add(address, ct);
+
+//            var per = new Person
+//            {
+//                FirstName = request.AddDto.FirstName,
+//                FirstNameAm = request.AddDto.FirstNameAm,
+//                MiddleName = request.AddDto.MiddleName,
+//                MiddleNameAm = request.AddDto.MiddleNameAm,
+//                LastName = request.AddDto.LastName,
+//                LastNameAm = request.AddDto.LastNameAm,
+//                Gender = request.AddDto.Gender,
+//                Nationality = request.AddDto.Nationality
+//            };
+//            await _uow.Add(per, ct);
+
+//            var data = new EmergencyContact
+//            {
+//                AddressId = address.Id,
+//                Relation = request.AddDto.Relation,
+//                EmployeeId = request.AddDto.EmployeeId,
+//                PersonId = per.Id
+//            };
+//            await _uow.Add(data, ct);
+//            await _uow.Commit(ct);
+
+//            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
+//            return res;
+//        }
+//        catch
+//        {
+//            await _uow.Rollback(ct);
+//            throw;
+//        }
+//    }
+//}
