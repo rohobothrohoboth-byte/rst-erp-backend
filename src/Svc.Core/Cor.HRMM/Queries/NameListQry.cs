@@ -329,8 +329,8 @@ public class SalaryHandler : IRequestHandler<SalaryQry, string?>
         var (sql, parameters) = qb.Build();
         var data = await _dapper.QueryFirstOrDefaultAsync<DoubleList>(sql, parameters, ct);
         if (data == null) return null;
-
-        return $"{data.Name:#,##0.##} ETB";
+        return data.Name.ToString();
+        //return $"{data.Name:#,##0.##} ETB";
     }
 }
 
