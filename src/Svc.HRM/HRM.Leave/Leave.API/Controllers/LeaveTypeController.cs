@@ -32,7 +32,7 @@ public class LeaveTypeController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetLeaveType(Guid id)
     {
         var response = await med.Send(new LeaveTypeByIdQry { Id = id });
-        if (response == null) { throw new DomainException($"LEAVE TYPE with id [{id}] NOT FOUND."); }
+        if (response == null) { throw new DomainException("LEAVE TYPE with given parameter NOT FOUND."); }
         return Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -49,7 +49,7 @@ public class LeaveTypeController(IMediator med) : ControllerBase
 
         var command = new LeaveTypeStatCmd { StatDto = statDto };
         var response = await med.Send(command);
-        return Ok(ApiResponse<object>.Ok(response, "LEAVE TYPE status successfully changed."));
+        return Ok(ApiResponse<object>.Ok(response, "Selected LEAVE TYPE status successfully changed."));
     }
 
     [HttpPost("AddLeaveType")]
@@ -93,6 +93,6 @@ public class LeaveTypeController(IMediator med) : ControllerBase
     {
         var command = new LeaveTypeDelCmd { Id = id };
         await med.Send(command);
-        return Ok(ApiResponse<string>.Ok(null!, $"LEAVE TYPE with Id {id} successfully deleted."));
+        return Ok(ApiResponse<string>.Ok(null!, "Selected LEAVE TYPE successfully deleted."));
     }
 }

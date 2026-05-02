@@ -11,6 +11,8 @@ namespace Profile.App.Commands;
 public class EmployeeModCmd : IRequest<EmployeeListDto> { public EmployeeModDto ModDto { get; set; } = default!; }
 public class EmployeeDelCmd : IRequest { public Guid Id { get; set; } }
 
+
+
 public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeListDto>
 {
     private readonly IUnitOfWork _uow;

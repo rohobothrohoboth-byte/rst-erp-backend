@@ -24,7 +24,7 @@ public class JgStepAllHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto
             .SelectAs<JobGrade, JgStepListDto>(jg, x => x.Name, d => d.JobGrade)
             .From<JgStep>(v)
             .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
-            .Where<JgStep>(v, x => x.Id == request.Id)
+            .Where<JgStep>(v, x => x.JobGradeId == request.Id)
             .OrderBy<JgStep>(v, x => x.DateAdd, desc: true);
 
         var (sql, parameters) = qb.Build();

@@ -49,26 +49,6 @@ public sealed class EmpBioJoin
     //public string? PensionNumber { get; init; }
 }
 
-public sealed class EmpContJoin
-{
-    public string FirstName { get; init; } = default!;
-    public string MiddleName { get; init; } = default!;
-    public string LastName { get; init; } = default!;
-    public string FirstNameAm { get; init; } = default!;
-    public string MiddleNameAm { get; init; } = default!;
-    public string LastNameAm { get; init; } = default!;
-    public string Gender { get; init; } = default!;
-    public string Nationality { get; init; } = default!;
-    public string Relation { get; init; } = default!;
-    public string AddressType { get; init; } = default!; // enum.AddressType (0/1)
-    public string Region { get; init; } = default!;
-    public string Subcity { get; init; } = default!;
-    public string Zone { get; init; } = default!;
-    public string Woreda { get; init; } = default!;
-    public string Kebele { get; init; } = default!;
-    public string Telephone { get; init; } = default!;
-}
-
 public sealed class EmpGuaJoin
 {
     public string FirstName { get; init; } = default!;

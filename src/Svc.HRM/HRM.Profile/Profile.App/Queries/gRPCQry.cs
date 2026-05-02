@@ -7,28 +7,28 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Queries;
 
-public class EmpNameAllQry : IRequest<List<NameList>> { }
-public class EmpNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
+public class EmpPolicyAllQry : IRequest<List<EmpPolicyCtx>> { }
+public class EmpPolicyByIdQry : IRequest<EmpPolicyCtx?> { public Guid Id { get; set; } }
 
 
 
-public class EmpNameAllHandler : IRequestHandler<EmpNameAllQry, List<NameList>>
+public class EmpPolicyAllHandler : IRequestHandler<EmpPolicyAllQry, List<EmpPolicyCtx>>
 {
     private readonly IDapperHelper _dapper;
-    public EmpNameAllHandler(IDapperHelper dapper) { _dapper = dapper; }
+    public EmpPolicyAllHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<List<NameList>> Handle(EmpNameAllQry request, CancellationToken ct)
+    public async Task<List<EmpPolicyCtx>> Handle(EmpPolicyAllQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id)
+            .Select<Employee>(e, x => x.Id, x => x.EmploymentType, x => x.WorkArrangement, x => x.JobGradeId)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id);
 
         var (sql, parameters) = qb.Build();
-        var dataL = new List<NameList>();
+        var dataL = new List<EmpPolicyCtx>();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
         var parser = reader.GetRowParser<EmpJoinRow>();
 
@@ -38,10 +38,15 @@ public class EmpNameAllHandler : IRequestHandler<EmpNameAllQry, List<NameList>>
             //var ser = new NumToWord().GetMonths(data.EmploymentDate, DateTime.UtcNow);
             var ser = NumToWord.GetMonths(data.EmploymentDate, DateTime.UtcNow);
 
-            dataL.Add(new NameList
+            dataL.Add(new EmpPolicyCtx
             {
-                Id = data.Id,
-                Name = $"{data.FirstName} {data.MiddleName} {data.LastName}"
+                EmployeeId = data.Id,
+                Name = $"{data.FirstName} {data.MiddleName} {data.LastName}",
+                Gender = data.Gender,
+                EmpType = data.EmploymentType,
+                Jg = data.JobGradeId.ToString(),
+                WorkAr = data.WorkArrangement,
+                SerYear = ser
             });
         }
 
@@ -49,17 +54,17 @@ public class EmpNameAllHandler : IRequestHandler<EmpNameAllQry, List<NameList>>
     }
 }
 
-public class EmpNameByIdHandler : IRequestHandler<EmpNameByIdQry, NameList?>
+public class EmpPolicyByIdHandler : IRequestHandler<EmpPolicyByIdQry, EmpPolicyCtx?>
 {
     private readonly IDapperHelper _dapper;
-    public EmpNameByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
+    public EmpPolicyByIdHandler(IDapperHelper dapper) { _dapper = dapper; }
 
-    public async Task<NameList?> Handle(EmpNameByIdQry request, CancellationToken ct)
+    public async Task<EmpPolicyCtx?> Handle(EmpPolicyByIdQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.EmploymentType, x => x.WorkArrangement, x => x.JobGradeId)
+            .Select<Employee>(e, x => x.Id, x => x.EmploymentDate, x => x.EmploymentType, x => x.WorkArrangement, x => x.JobGradeId)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
@@ -72,10 +77,15 @@ public class EmpNameByIdHandler : IRequestHandler<EmpNameByIdQry, NameList?>
 
         //var ser = new NumToWord().GetMonths(data.EmploymentDate, DateTime.UtcNow);
         var ser = NumToWord.GetMonths(data.EmploymentDate, DateTime.UtcNow);
-        var c = new NameList
+        var c = new EmpPolicyCtx
         {
-            Id = data.Id,
-            Name = $"{data.FirstName} {data.MiddleName} {data.LastName}"
+            EmployeeId = data.Id,
+            Name = $"{data.FirstName} {data.MiddleName} {data.LastName}",
+            Gender = data.Gender,
+            EmpType = data.EmploymentType,
+            Jg = data.JobGradeId.ToString(),
+            WorkAr = data.WorkArrangement,
+            SerYear = ser
         };
         return c;
     }

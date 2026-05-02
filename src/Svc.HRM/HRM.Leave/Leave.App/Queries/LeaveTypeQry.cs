@@ -22,7 +22,7 @@ public class LeaveTypeAllHandler : IRequestHandler<LeaveTypeAllQry, List<LeaveTy
         var qb = new QueryBuilder()
             .Select<LeaveType>(v, x => x.Id, x => x.Name, x => x.LeaveCategory, x => x.RequiresApproval, x => x.AllowHalfDay, x => x.HolidaysAsLeave, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<LeaveType>(v)
-            .OrderBy<LeaveType>(v, x => x.DateAdd, desc: true);
+            .OrderBy<LeaveType>(v, x => x.Name, desc: false);
 
         var (sql, parameters) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
@@ -53,7 +53,6 @@ public class LeaveTypeByIdHandler : IRequestHandler<LeaveTypeByIdQry, LeaveTypeL
         var qb = new QueryBuilder()
             .Select<LeaveType>(v, x => x.Id, x => x.Name, x => x.LeaveCategory, x => x.RequiresApproval, x => x.AllowHalfDay, x => x.HolidaysAsLeave, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .From<LeaveType>(v)
-            .OrderBy<LeaveType>(v, x => x.DateAdd, desc: true)
             .Where<LeaveType>(v, x => x.Id == request.Id)
             .Limit(1);
 

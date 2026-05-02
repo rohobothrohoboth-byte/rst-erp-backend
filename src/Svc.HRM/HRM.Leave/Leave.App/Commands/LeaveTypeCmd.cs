@@ -66,7 +66,7 @@ public class LeaveTypeModHandler : IRequestHandler<LeaveTypeModCmd, LeaveTypeLis
         try
         {
             var oldData = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
-            if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.ModDto.Id} NOT FOUND."); }
+            if (oldData == null) { throw new DomainException("LEAVE TYPE with given parameter NOT FOUND."); }
 
             oldData.Name = request.ModDto.Name;
             oldData.LeaveCategory = request.ModDto.LeaveCategory;
@@ -105,7 +105,7 @@ public class LeaveTypeStatHandler : IRequestHandler<LeaveTypeStatCmd, LeaveTypeL
         try
         {
             var oldData = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.StatDto.Id, ct);
-            if (oldData == null) { throw new DomainException($"LEAVE TYPE with Id {request.StatDto.Id} NOT FOUND."); }
+            if (oldData == null) { throw new DomainException("LEAVE TYPE with given parameter NOT FOUND."); }
 
             oldData.IsActive = request.StatDto.Stat;
             oldData.SetRowVersion(uint.Parse(request.StatDto.RowVersion));
@@ -137,7 +137,7 @@ public class LeaveTypeDelHandler : IRequestHandler<LeaveTypeDelCmd>
         try
         {
             var data = await _uow.Set<LeaveType>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (data == null) { throw new DomainException($"LEAVE TYPE with id [{request.Id}] NOT FOUND."); }
+            if (data == null) { throw new DomainException("LEAVE TYPE with given parameter NOT FOUND."); }
             await _uow.Delete(data);
             await _uow.Commit(ct);
         }

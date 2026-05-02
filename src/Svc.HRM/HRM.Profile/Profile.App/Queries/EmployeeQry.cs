@@ -178,7 +178,6 @@ public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeList
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
-            //.SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
             .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
@@ -244,19 +243,15 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
     private async Task<EmpBioJoin?> GetBio(Guid id, CancellationToken ct)
     {
         const string e = "e";
-        //const string ef = "ef";
         const string eb = "eb";
         const string ad = "ad";
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
-            //.Select<EmpBio>(eb, x => x.BirthDate, x => x.BirthLocation, x => x.MotherFullName, x => x.HasBirthCert, x => x.HasMarriageCert, x => x.MaritalStatus)
             .Select<EmpBio>(eb, x => x.BirthDate, x => x.MaritalStatus)
             .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
-            //.Select<EmpFinance>(ef, x => x.Tin, x => x.BankAccountNo, x => x.PensionNumber)
             .From<Employee>(e)
             .LeftJoin<Employee, EmpBio>(e, eb, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpBio, Address>(eb, ad, x => x.AddressId, x => x.Id)
-            //.LeftJoin<Employee, EmpFinance>(e, ef, x => x.Id, x => x.EmployeeId)
             .Where<Employee>(e, x => x.Id == id)
             .Limit(1);
 
@@ -264,29 +259,6 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
         var row = await _dapper.QueryFirstOrDefaultAsync<EmpBioJoin>(sql, parameters, ct);
         return row;
     }
-
-    //private async Task<EmpContJoin?> GetCon(Guid id, CancellationToken ct)
-    //{
-    //    const string e = "e";
-    //    const string p = "p";
-    //    const string ec = "ec";
-    //    const string ad = "ad";
-    //    var qb = new QueryBuilder()
-    //        .Select<Employee>(e, x => x.Id)
-    //        .Select<EmergencyContact>(ec, x => x.Relation)
-    //        .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
-    //        .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-    //        .From<Employee>(e)
-    //        .Join<Employee, EmergencyContact>(e, ec, x => x.Id, x => x.EmployeeId)
-    //        .LeftJoin<EmergencyContact, Address>(ec, ad, x => x.AddressId, x => x.Id)
-    //        .Join<EmergencyContact, Person>(ec, p, x => x.PersonId, x => x.Id)
-    //        .Where<Employee>(e, x => x.Id == id)
-    //        .Limit(1);
-
-    //    var (sql, parameters) = qb.Build();
-    //    var row = await _dapper.QueryFirstOrDefaultAsync<EmpContJoin>(sql, parameters, ct);
-    //    return row;
-    //}
 
     private async Task<EmpGuaJoin?> GetGra(Guid id, CancellationToken ct)
     {
@@ -326,7 +298,6 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-            //.SelectAs<EmpPhotoThumbnail>(th, "PhotoThumbnail", x => x.Data)
             .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
@@ -341,14 +312,12 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
         if (row is null) { return null; }
 
         var bioTask = await GetBio(request.Id, ct);
-        //var conTask = await GetCon(request.Id, ct);
         var garTask = await GetGra(request.Id, ct);
         var deptTask = _corMod.GetDept(row.DepartmentId.ToString(), ct);
         var jobGradeTask = _corHRMM.GetJobGrade(row.JobGradeId.ToString(), ct);
         var positionTask = _corHRMM.GetPosition(row.PositionId.ToString(), ct);
         await Task.WhenAll(deptTask, jobGradeTask, positionTask);
         var eBio = bioTask ?? new EmpBioJoin();
-        //var eCon = conTask ?? new EmpContJoin();
         var eGar = garTask ?? new EmpGuaJoin();
         var dept = deptTask.Result?.Res;
         var jobGrade = jobGradeTask.Result?.Res;
@@ -375,27 +344,10 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
             // BIO
             BirthDate = eBio.BirthDate?.ToString("MMMM dd, yyyy") ?? "",
             BirthDateAm = eBio.BirthDate?.ToEthiopianDateString("MMMM dd, yyyy") ?? "",
-                //BirthLocation = eBio.BirthLocation ?? "",
-                //MotherFullName = eBio.MotherFullName ?? "",
-                //HasBirthCert = MyEnumHelper.FormatEnum<YesNo>(eBio.HasBirthCert),
-                //HasMarriageCert = MyEnumHelper.FormatEnum<YesNo>(eBio.HasMarriageCert),
-            MaritalStatus = MyEnumHelper.FormatEnum<MaritalStat>(eBio.MaritalStatus),
             Address = BuildAddress(eBio.AddressType, eBio.Region, eBio.Zone, eBio.Subcity, eBio.Woreda, eBio.Kebele),
             Telephone = eBio.Telephone ?? "",
-                //Tin = eBio.Tin ?? "",
-                //BankAccountNo = eBio.BankAccountNo ?? "",
-                //PensionNumber = eBio.PensionNumber ?? "",
-            // CONTACT
-                //ConFullName = $"{eCon.FirstName} {eCon.MiddleName} {eCon.LastName}".Trim(),
-                //ConFullNameAm = $"{eCon.FirstNameAm} {eCon.MiddleNameAm} {eCon.LastNameAm}".Trim(),
-                //ConNationality = eCon.Nationality ?? "",
-                //ConGender = MyEnumHelper.FormatEnum<Gender>(eCon.Gender),
-                //ConRelation = MyEnumHelper.FormatEnum<Relation>(eCon.Relation),
-                //ConAddress = BuildAddress(eCon.AddressType, eCon.Region, eCon.Zone, eCon.Subcity, eCon.Woreda, eCon.Kebele),
-                //ConTelephone = eCon.Telephone ?? "",
             // GUARANTOR
             GuaFullName = $"{eGar.FirstName} {eGar.MiddleName} {eGar.LastName}".Trim(),
-                //GuaFullNameAm = $"{eGar.FirstNameAm} {eGar.MiddleNameAm} {eGar.LastNameAm}".Trim(),   
             GuaNationality = eGar.Nationality ?? "",
             GuaGender = MyEnumHelper.FormatEnum<Gender>(eGar.Gender),
             GuaRelation = MyEnumHelper.FormatEnum<Relation>(eGar.Relation),
@@ -430,7 +382,6 @@ public class Step2Handler : IRequestHandler<Step2Qry, BasicInfoDto?>
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-            //.SelectAs<EmpPhotoThumbnail>(th, asName: "PhotoThumbnail", x => x.Data)
             .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
