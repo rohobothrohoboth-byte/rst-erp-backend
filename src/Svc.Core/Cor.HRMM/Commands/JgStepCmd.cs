@@ -29,7 +29,9 @@ public class JgStepAddHandler : IRequestHandler<JgStepAddCmd, JgStepListDto>
             {
                 JobGradeId = request.AddDto.JobGradeId,
                 Name = request.AddDto.Name,
-                Salary = request.AddDto.Salary
+                Salary = request.AddDto.Salary,
+                Currency = request.AddDto.Currency,
+                SalaryPayFreq = request.AddDto.SalaryPayFreq
             };
             await _uow.Add(data, ct);
             await _uow.Commit(ct);
@@ -65,6 +67,8 @@ public class JgStepModHandler : IRequestHandler<JgStepModCmd, JgStepListDto>
             oldData.JobGradeId = request.ModDto.JobGradeId;
             oldData.Name = request.ModDto.Name;
             oldData.Salary = request.ModDto.Salary;
+            oldData.Currency = request.ModDto.Currency;
+            oldData.SalaryPayFreq = request.ModDto.SalaryPayFreq;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
             await _uow.Update(oldData);
             await _uow.Commit(ct);

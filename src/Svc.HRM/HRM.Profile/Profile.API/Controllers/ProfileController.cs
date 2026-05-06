@@ -23,10 +23,8 @@ public class ProfileController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetEmpPhoto()
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
-
         var response = await med.Send(new EmpPhotoQry { Id = id });
-        if (response == null) { throw new DomainException("EMPLOYEE PHOTO NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(response));
+        return response == null ? throw new DomainException("EMPLOYEE PHOTO NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetPhotoThumbnail")]
@@ -35,10 +33,8 @@ public class ProfileController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetPhotoThumbnail()
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
-
         var response = await med.Send(new EmpPhotoThumbnailQry { Id = id });
-        if (response == null) { throw new DomainException("EMPLOYEE'S PHOTO THUMBNAIL NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(response));
+        return response == null ? throw new DomainException("EMPLOYEE'S PHOTO THUMBNAIL NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetProfileInfo")]
@@ -47,10 +43,8 @@ public class ProfileController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetProfileInfo()
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
-
         var response = await med.Send(new ProfileInfoQry { Id = id });
-        if (response == null) { throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(response));
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
     }
 
     [HttpGet("GetProfileCard")]
@@ -59,10 +53,48 @@ public class ProfileController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetProfileCard()
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
-
         var response = await med.Send(new ProfileCardQry { Id = id });
-        if (response == null) { throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(response));
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProBasic")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProBasic()
+    {
+        if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
+        var response = await med.Send(new ProBasicQry { Id = id });
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProSalary")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProSalary()
+    {
+        if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
+        var response = await med.Send(new ProSalaryQry { Id = id });
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProAddress")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProAddress()
+    {
+        if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
+        var response = await med.Send(new ProAddressQry { Id = id });
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProBio")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProBio()
+    {
+        if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
+        var response = await med.Send(new ProBioQry { Id = id });
+        return response == null ? throw new DomainException("EMPLOYEE'S Profile Info NOT FOUND.") : Ok(ApiResponse<object>.Ok(response));
     }
 
 

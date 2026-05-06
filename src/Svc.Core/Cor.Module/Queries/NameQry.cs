@@ -152,12 +152,12 @@ public class DeptAllNameHandler : IRequestHandler<DeptAllNameQry, List<NameAmLis
     public async Task<List<NameAmList>> Handle(DeptAllNameQry request, CancellationToken ct)
     {
         const string v = "v";
-        const string c = "c";
+        const string b = "b";
         var qb = new QueryBuilder()
             .Select<Department>(v, x => x.Id, x => x.Name)
-            .SelectAs<Branch, NameAmList>(c, x => x.Name, d => d.NameAm)
+            .SelectAs<Branch, NameAmList>(b, x => x.Name, d => d.NameAm)
             .From<Department>(v)
-            .Join<Department, Branch>(v, c, x => x.BranchId, x => x.Id);
+            .Join<Department, Branch>(v, b, x => x.BranchId, x => x.Id);
 
         var (sql, parameters) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
@@ -174,12 +174,12 @@ public class DeptNameByIdHandler : IRequestHandler<DeptNameByIdQry, NameAmList?>
     public async Task<NameAmList?> Handle(DeptNameByIdQry request, CancellationToken ct)
     {
         const string v = "v";
-        const string jg = "jg";
+        const string b = "b";
         var qb = new QueryBuilder()
             .Select<Department>(v, x => x.Id, x => x.Name)
-            .SelectAs<Branch, NameAmList>(v, x => x.Name, d => d.NameAm)
+            .SelectAs<Branch, NameAmList>(b, x => x.Name, d => d.NameAm)
             .From<Department>(v)
-            .Join<Department, Branch>(v, jg, x => x.BranchId, x => x.Id)
+            .Join<Department, Branch>(v, b, x => x.BranchId, x => x.Id)
             .Where<Department>(v, x => x.Id == request.Id)
             .Limit(1);
 

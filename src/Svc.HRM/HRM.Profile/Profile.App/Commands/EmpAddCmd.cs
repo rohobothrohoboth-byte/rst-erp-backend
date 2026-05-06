@@ -82,19 +82,31 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             };
             await _uow.Add(empBio, ct);
 
-            var slyTask = await _hrmmClient.GetJgStepSalary((request.AddDto.JgStepId).ToString(), ct);
-            var sal = 0.0;
-            if (slyTask.Salary != null)
+            var empFin = new EmpFinance
             {
-                sal = double.Parse(slyTask.Salary);
-            }
+                Tin = "",
+                BankAccountNo = "",
+                PensionNumber = "",
+                EmployeeId = data.Id
+            };
+            await _uow.Add(empFin, ct);
+
             var salary = new EmpSalary
             {
-                BaseSalary = sal,
+                BaseSalary = 0,
+                Currency = "",
+                SalaryPayFreq = "",
                 EffectiveFrom = request.AddDto.EmploymentDate,
                 JgStepId = request.AddDto.JgStepId,
                 EmployeeId = data.Id
             };
+            var slyTask = await _hrmmClient.GetSalaryJgs((request.AddDto.JgStepId).ToString(), ct);
+            if (slyTask.Salary != null)
+            {
+                salary.BaseSalary = double.Parse(slyTask.Salary);
+                salary.Currency = slyTask.Currency;
+                salary.SalaryPayFreq = slyTask.SalaryPayFreq;
+            }
             await _uow.Add(salary, ct);
 
             if (request.AddDto.File != null)

@@ -1,7 +1,7 @@
 ﻿using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
-using Dapper;
+using Helpers;
 using MediatR;
 
 namespace Cor.HRMM.Queries;
@@ -10,80 +10,58 @@ public class JgStepAllQry : IRequest<List<JgStepListDto>> { public Guid Id { get
 public class JgStepByIdQry : IRequest<JgStepListDto?> { public Guid Id { get; set; } }
 
 
-public class JgStepAllHandler : IRequestHandler<JgStepAllQry, List<JgStepListDto>>
+public class JgStepAllHandler(IDapperHelper dapper) : IRequestHandler<JgStepAllQry, List<JgStepListDto>>
 {
-    private readonly IDapperHelper _dapper;
-    public JgStepAllHandler(IDapperHelper dapper) { _dapper = dapper; }
-
     public async Task<List<JgStepListDto>> Handle(JgStepAllQry request, CancellationToken ct)
     {
-        const string v = "v";
+        const string jgs = "jgs";
         const string jg = "jg";
         var qb = new QueryBuilder()
-            .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JgStep>(jgs, x => x.Id, x => x.Name, x => x.Salary, x => x.Currency, x => x.SalaryPayFreq, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<JobGrade, JgStepListDto>(jg, x => x.Name, d => d.JobGrade)
-            .From<JgStep>(v)
-            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
-            .Where<JgStep>(v, x => x.JobGradeId == request.Id)
-            .OrderBy<JgStep>(v, x => x.DateAdd, desc: true);
-
+            .From<JgStep>(jgs)
+            .Join<JgStep, JobGrade>(jgs, jg, x => x.JobGradeId, x => x.Id)
+            .Where<JgStep>(jgs, x => x.JobGradeId == request.Id)
+            .OrderBy<JgStep>(jgs, x => x.DateAdd, desc: true);
         var (sql, parameters) = qb.Build();
-        var dataL = new List<JgStepListDto>();
-        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
-        var parser = reader.GetRowParser<JgStepListDto>();
+        await using var reader = await dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var list = await reader.ToListAsync<JgStepListDto>(ct);
 
-        while (await reader.ReadAsync(ct))
+        foreach (var data in list)
         {
-            var data = parser(reader);
-            dataL.Add(new JgStepListDto
-            {
-                Id = data.Id,
-                Name = data.Name,
-                Salary = data.Salary,
-                JobGradeId = data.JobGradeId,
-                JobGrade = data.JobGrade,
-                IsDeleted = data.IsDeleted,
-                DateAdd = data.DateAdd,
-                DateMod = data.DateMod,
-                RowVersion = data.xmin.ToString()
-            });
+            var cur = MyEnumHelper.FormatEnum<Currency>(data.Currency);
+            data.SalaryStr = $"{data.Salary:#,##0.##} {cur}";
+            data.CurrencyStr = cur;
+            data.SalaryPayFreqStr = MyEnumHelper.FormatEnum<SalaryPayFreq>(data.SalaryPayFreq);
+            data.RowVersion = data.xmin.ToString();
         }
-        return dataL;
+
+        return list;
     }
 }
 
-public class JgStepByIdQryHandler : IRequestHandler<JgStepByIdQry, JgStepListDto?>
+public class JgStepByIdQryHandler(IDapperHelper dapper) : IRequestHandler<JgStepByIdQry, JgStepListDto?>
 {
-    private readonly IDapperHelper _dapper;
-    public JgStepByIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
-
     public async Task<JgStepListDto?> Handle(JgStepByIdQry request, CancellationToken ct)
     {
-        const string v = "v";
+        const string jgs = "jgs";
         const string jg = "jg";
         var qb = new QueryBuilder()
-            .Select<JgStep>(v, x => x.Id, x => x.Name, x => x.Salary, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JgStep>(jgs, x => x.Id, x => x.Name, x => x.Salary, x => x.Currency, x => x.SalaryPayFreq, x => x.JobGradeId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
             .SelectAs<JobGrade, JgStepListDto>(jg, x => x.Name, d => d.JobGrade)
-            .From<JgStep>(v)
-            .Join<JgStep, JobGrade>(v, jg, x => x.JobGradeId, x => x.Id)
-            .Where<JgStep>(v, x => x.Id == request.Id)
+            .From<JgStep>(jgs)
+            .Join<JgStep, JobGrade>(jgs, jg, x => x.JobGradeId, x => x.Id)
+            .Where<JgStep>(jgs, x => x.Id == request.Id)
             .Limit(1);
-
         var (sql, parameters) = qb.Build();
-        var data = await _dapper.QueryFirstOrDefaultAsync<JgStepListDto>(sql, parameters, ct);
+        var data = await dapper.QueryFirstOrDefaultAsync<JgStepListDto>(sql, parameters, ct);
         if (data == null) return null;
 
-        return new JgStepListDto
-        {
-            Id = data.Id,
-            Name = data.Name,
-            Salary = data.Salary,
-            JobGradeId = data.JobGradeId,
-            JobGrade = data.JobGrade,
-            IsDeleted = data.IsDeleted,
-            DateAdd = data.DateAdd,
-            DateMod = data.DateMod,
-            RowVersion = data.xmin.ToString()
-        };
+        var cur = MyEnumHelper.FormatEnum<Currency>(data.Currency);
+        data.SalaryStr = $"{data.Salary:#,##0.##} {cur}";
+        data.CurrencyStr = cur;
+        data.SalaryPayFreqStr = MyEnumHelper.FormatEnum<SalaryPayFreq>(data.SalaryPayFreq);
+        data.RowVersion = data.xmin.ToString();
+        return data;
     }
 }

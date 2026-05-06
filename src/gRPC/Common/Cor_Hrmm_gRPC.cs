@@ -14,18 +14,14 @@ public interface ICorHrmmClient
     Task<CorHrmmRes> GetPosition(string id, CancellationToken ct = default);
     Task<PosReqRes> GetPosReq(string id, CancellationToken ct = default);
     Task<JgStepSalary> GetJgStepSalary(string id, CancellationToken ct = default);
+    Task<SalaryJgs> GetSalaryJgs(string id, CancellationToken ct = default);
 
 }
 
 
-public class CorHrmmClient : ICorHrmmClient
+public class CorHrmmClient(IConfiguration config) : ICorHrmmClient
 {
-    private readonly string _servUrl;
-
-    public CorHrmmClient(IConfiguration config)
-    {
-        _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core HRMM Service Address not configured");
-    }
+    private readonly string _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core HRMM Service Address not configured");
 
     public async Task<CorHrmmListRes> GetListJgStep(CancellationToken ct = default)
     {
@@ -89,6 +85,14 @@ public class CorHrmmClient : ICorHrmmClient
         var client = new CorHrmmService.CorHrmmServiceClient(channel);
         var req = new CorHrmmRqst { Id = id };
         return await client.GetJgStepSalaryAsync(req);
+    }
+
+    public async Task<SalaryJgs> GetSalaryJgs(string id, CancellationToken ct = default)
+    {
+        using var channel = GrpcChannel.ForAddress(_servUrl);
+        var client = new CorHrmmService.CorHrmmServiceClient(channel);
+        var req = new CorHrmmRqst { Id = id };
+        return await client.GetSalaryJgsAsync(req);
     }
 
 

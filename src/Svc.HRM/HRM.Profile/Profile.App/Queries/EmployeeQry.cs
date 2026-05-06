@@ -221,19 +221,8 @@ public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeList
     }
 }
 
-public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto?>
+public class EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorModClient corMod) : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto?>
 {
-    private readonly IDapperHelper _dapper;
-    private readonly ICorHrmmClient _corHRMM;
-    private readonly ICorModClient _corMod;
-
-    public EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
-    {
-        _dapper = dapper;
-        _corHRMM = corHRMM;
-        _corMod = corMod;
-    }
-
     private static string BuildAddress(string type, string? region, string? zone, string? subcity, string? woreda, string? kebele)
     {
         if (string.IsNullOrWhiteSpace(region)) return "";
@@ -256,7 +245,7 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
-        var row = await _dapper.QueryFirstOrDefaultAsync<EmpBioJoin>(sql, parameters, ct);
+        var row = await dapper.QueryFirstOrDefaultAsync<EmpBioJoin>(sql, parameters, ct);
         return row;
     }
 
@@ -284,7 +273,7 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
-        var row = await _dapper.QueryFirstOrDefaultAsync<EmpGuaJoin>(sql, parameters, ct);
+        var row = await dapper.QueryFirstOrDefaultAsync<EmpGuaJoin>(sql, parameters, ct);
         return row;
     }
 
@@ -307,15 +296,15 @@ public class EmpAddPrintHandler : IRequestHandler<EmpAddPrintQry, EmpAddPrintDto
             .Limit(1);
 
         var (sql, parameters) = qb.Build();
-        var row = await _dapper.QueryFirstOrDefaultAsync<EmpJoinRow>(sql, parameters, ct);
+        var row = await dapper.QueryFirstOrDefaultAsync<EmpJoinRow>(sql, parameters, ct);
 
         if (row is null) { return null; }
 
         var bioTask = await GetBio(request.Id, ct);
         var garTask = await GetGra(request.Id, ct);
-        var deptTask = _corMod.GetDept(row.DepartmentId.ToString(), ct);
-        var jobGradeTask = _corHRMM.GetJobGrade(row.JobGradeId.ToString(), ct);
-        var positionTask = _corHRMM.GetPosition(row.PositionId.ToString(), ct);
+        var deptTask = corMod.GetDept(row.DepartmentId.ToString(), ct);
+        var jobGradeTask = corHrmm.GetJobGrade(row.JobGradeId.ToString(), ct);
+        var positionTask = corHrmm.GetPosition(row.PositionId.ToString(), ct);
         await Task.WhenAll(deptTask, jobGradeTask, positionTask);
         var eBio = bioTask ?? new EmpBioJoin();
         var eGar = garTask ?? new EmpGuaJoin();

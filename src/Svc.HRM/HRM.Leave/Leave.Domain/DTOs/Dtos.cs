@@ -1,4 +1,6 @@
-﻿namespace Leave.Domain.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Leave.Domain.DTOs;
 
 public class StatChangeDto
 {
@@ -139,6 +141,31 @@ public class ApproverInfo
     public string Role { get; set; } = default!;
     public Guid? SpecificEmployeeId { get; set; }
     public bool IsFinalStep { get; set; }
+}
+
+public class EmpLeaveBal
+{
+    [JsonIgnore]
+    public double Balance { get; set; }
+    [JsonIgnore]
+    public double AssignedEntitlement { get; set; }
+    [JsonIgnore]
+    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
+    [JsonIgnore]
+    public Guid LeaveTypeId { get; set; } // LeaveType
+    [JsonIgnore]
+    public Guid LeavePolicyId { get; set; } // LeavePolicy
+
+    public string LeaveType { get; set; } = default!;
+    public double Percent { get; set; } = 100;
+    public string TotalDays { get; set; } = default!;
+    public string RemainDays { get; set; } = default!;
+    public string UsedDays { get; set; } = default!;
+}
+
+public class DoubleDto
+{
+    public double Value { get; set; }
 }
 
 public class PendingApprovalInfo

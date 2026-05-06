@@ -224,6 +224,8 @@ public class EmpSalaryConfig : BaseEntityConfig<EmpSalary>
     {
         base.Configure(b);
         b.Property(es => es.BaseSalary).IsRequired().HasColumnType("double precision");
+        b.Property(js => js.Currency).IsRequired().HasMaxLength(15);
+        b.Property(js => js.SalaryPayFreq).IsRequired().HasMaxLength(15);
         b.Property(es => es.EffectiveFrom).IsRequired();
         b.HasIndex(es => es.EffectiveFrom);
         b.HasIndex(es => es.JgStepId);

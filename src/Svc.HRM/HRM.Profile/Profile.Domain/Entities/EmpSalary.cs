@@ -3,6 +3,8 @@
 public class EmpSalary : BaseEntity
 {
     public double BaseSalary { get; set; } = default!;
+    public string Currency { get; set; } = default!;
+    public string SalaryPayFreq { get; set; } = default!;
     public DateTime EffectiveFrom { get; set; } = DateTime.UtcNow;
     public DateTime? EffectiveTo { get; set; }
     public Guid EmployeeId { get; set; } = default!;

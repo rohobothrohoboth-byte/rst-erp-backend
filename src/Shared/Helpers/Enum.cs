@@ -62,6 +62,32 @@ public enum ProfessionType
     NonPro
 }
 
+public enum SalaryPayFreq
+{
+    [Display(Name = "Daily")]
+    Day,
+    [Display(Name = "Weekly")]
+    Week,
+    [Display(Name = "Monthly")]
+    Month,
+    [Display(Name = "Yearly")]
+    Year
+}
+
+public enum Currency
+{
+    [Display(Name = "ETB")]
+    Etb,
+    [Display(Name = "$")]
+    Dollar,
+    [Display(Name = "€")]
+    Euro,
+    [Display(Name = "£")]
+    Pound ,
+    [Display(Name = "CN¥")]
+    Yuan
+}
+
 #endregion
 
 #region Cor.Module Enums
@@ -335,7 +361,7 @@ public enum WorkArrangement
     Rota
 }
 
-public enum MaritalStat
+public enum MaritalStatus
 {
     [Display(Name = "Single / Not Married")]
     NotMar,

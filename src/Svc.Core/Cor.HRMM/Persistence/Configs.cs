@@ -49,6 +49,8 @@ public class JgStepConfig : BaseEntityConfig<JgStep>
         base.Configure(b);
         b.Property(js => js.Name).IsRequired().HasMaxLength(200);
         b.Property(js => js.Salary).IsRequired();
+        b.Property(js => js.Currency).IsRequired().HasMaxLength(5);
+        b.Property(js => js.SalaryPayFreq).IsRequired().HasMaxLength(5);
         b.Property(js => js.JobGradeId).IsRequired();
         b.HasIndex(js => js.JobGradeId);
         b.HasIndex(js => new { js.JobGradeId, js.Name }).IsUnique();

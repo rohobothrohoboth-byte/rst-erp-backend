@@ -6,10 +6,10 @@ public class LeaveBalance : BaseEntity
     public DateTime AsOf { get; set; } = DateTime.UtcNow;
     public Guid EmployeeId { get; set; } // HRM.Profile.Employee
     public Guid LeaveTypeId { get; set; } // LeaveType
-    public Guid? LeaveLedgerId { get; set; } // LeaveLedger
+    public Guid LeavePolicyId { get; set; } // LeavePolicy
 
     //******************************************//
 
     public LeaveType LeaveType { get; set; } = null!;
-    public LeaveLedger LeaveLedger { get; set; } = null!;
+    public LeavePolicy LeavePolicy { get; set; } = null!;
 }

@@ -168,12 +168,12 @@ public class LeaveBalanceConfig : BaseEntityConfig<LeaveBalance>
         b.Property(l => l.AsOf).IsRequired();
         b.Property(l => l.EmployeeId).IsRequired();
         b.Property(l => l.LeaveTypeId).IsRequired();
-        b.Property(l => l.LeaveLedgerId);
+        b.Property(l => l.LeavePolicyId);
         b.HasOne(l => l.LeaveType).WithMany().HasForeignKey(l => l.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne(l => l.LeaveLedger).WithMany().HasForeignKey(l => l.LeaveLedgerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(l => l.LeavePolicy).WithMany().HasForeignKey(l => l.LeavePolicyId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(l => l.EmployeeId);
         b.HasIndex(l => l.LeaveTypeId);
-        b.HasIndex(l => new { l.EmployeeId, l.LeaveTypeId }).IsUnique();
+        b.HasIndex(l => new { l.LeavePolicyId, l.LeaveTypeId, l.EmployeeId }).IsUnique();
     }
 }
 

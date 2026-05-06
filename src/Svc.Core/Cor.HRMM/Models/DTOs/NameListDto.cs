@@ -1,4 +1,6 @@
-﻿namespace Cor.HRMM.Models.DTOs;
+﻿using System.Text.Json.Serialization;
+
+namespace Cor.HRMM.Models.DTOs;
 
 public class NameList
 {
@@ -17,4 +19,3 @@ public class NameAmList
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
 }
-

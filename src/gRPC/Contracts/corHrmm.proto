@@ -13,10 +13,20 @@ service CorHrmmService {
   rpc GetListPosition (CorHrmmListRqst) returns (CorHrmmListRes);
   rpc GetPosReq (CorHrmmRqst) returns (PosReqRes);
   rpc GetJgStepSalary (CorHrmmRqst) returns (JgStepSalary);
+  rpc GetSalaryJgs (CorHrmmRqst) returns (SalaryJgs);
+}
+
+message SalaryJgs {
+  string Name = 1;
+  string SalaryStr = 2;
+  string Currency = 3;
+  string SalaryPayFreq = 4;
+  string JobGrade = 5;
+  string Salary = 6;
 }
 
 message JgStepSalary {
-  string Salary = 2;
+  string Salary = 1;
 }
 
 message PosReqRes {
