@@ -67,9 +67,10 @@ public class ProfileCardHandler(IDapperHelper dapper) : IRequestHandler<ProfileC
         return new ProfileCard
         {
             Tenure = serStr,
-            Performance = $"{4.5} / {5}".Trim(),
+            PerStr = $"{4.5} / {5}".Trim(),
             Training = "2",
-            Attendance = "95%",
+            AttendPer = 78.0,
+            AttendMonth = "May 2026",
             RepToName = "Sarah Johnson",
             RepToPos = "Team Lead"
         };

@@ -45,9 +45,10 @@ public class ProfileCardJoin
 public class ProfileCard
 {
     public string Tenure { get; set; } = default!;
-    public string Performance { get; set; } = default!;
+    public string PerStr { get; set; } = default!;
     public string Training { get; set; } = default!;
-    public string Attendance { get; set; } = default!;
+    public double AttendPer { get; set; } = default!;
+    public string AttendMonth { get; set; } = default!;
     public string RepToName { get; set; } = default!;
     public string RepToPos { get; set; } = default!;
 }
