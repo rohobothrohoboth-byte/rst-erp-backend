@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Profile.Utility.Persistence;
@@ -11,9 +12,11 @@ using Profile.Utility.Persistence;
 namespace Profile.Utility.Migrations
 {
     [DbContext(typeof(HrmProfileDbContext))]
-    partial class HrmProfileDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507142814_MigHrmPro06")]
+    partial class MigHrmPro06
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,6 +41,7 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("character varying(2)");
 
                     b.Property<string>("Country")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -48,14 +52,17 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Fax")
+                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
                     b.Property<string>("HouseNo")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -65,10 +72,12 @@ namespace Profile.Utility.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<string>("Kebele")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("PoBox")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -78,6 +87,7 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Subcity")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -87,14 +97,17 @@ namespace Profile.Utility.Migrations
                         .HasColumnType("character varying(30)");
 
                     b.Property<string>("Website")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Woreda")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Zone")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 

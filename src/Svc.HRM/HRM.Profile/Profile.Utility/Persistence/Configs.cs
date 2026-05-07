@@ -26,7 +26,7 @@ public class AddressConfig : BaseEntityConfig<Address>
     {
         base.Configure(b);
         b.Property(x => x.AddressType).HasMaxLength(2).IsRequired();
-        b.Property(x => x.Country).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Country).HasMaxLength(100);
         b.Property(x => x.Region).HasMaxLength(100);
         b.Property(x => x.Subcity).HasMaxLength(100);
         b.Property(x => x.Zone).HasMaxLength(50);

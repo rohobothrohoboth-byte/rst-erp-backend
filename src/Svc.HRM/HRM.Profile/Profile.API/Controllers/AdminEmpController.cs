@@ -13,7 +13,7 @@ namespace Profile.API.Controllers;
 /// Employees Management by ADMIN end points
 /// </summary>
 
-//[Authorize(Roles = "admin")]
+//[Authorize(Roles = Roles.admin)]
 [ApiController]
 [Route("api/hrm/profile/v{version:apiVersion}/AdminEmp")]
 [ApiVersion("1.0")]

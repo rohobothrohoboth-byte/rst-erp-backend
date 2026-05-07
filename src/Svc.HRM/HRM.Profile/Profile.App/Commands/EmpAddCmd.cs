@@ -1,6 +1,7 @@
 ﻿using Common;
 using Helpers;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
@@ -16,7 +17,7 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 {
     private readonly IUnitOfWork _uow;
     private readonly ICorHrmmClient _hrmmClient;
-    public EmpAddStep1CmdHandler(IUnitOfWork uow, ICorHrmmClient hrmmClient) { _uow = uow; _hrmmClient = hrmmClient;}
+    public EmpAddStep1CmdHandler(IUnitOfWork uow, ICorHrmmClient hrmmClient) { _uow = uow; _hrmmClient = hrmmClient; }
 
     public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken ct)
     {
@@ -176,6 +177,10 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
         await _uow.Begin(ct);
         try
         {
+            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
+            var added = await _uow.Set<EmpGuarantor>().FirstOrDefaultAsync(x => x.EmployeeId == request.AddDto.EmployeeId, cancellationToken: ct);
+            if (added != null) { return res; }
+
             var address = new Address
             {
                 AddressType = request.AddDto.AddressType,
@@ -235,8 +240,6 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 await _uow.Add(emp, ct);
             }
             await _uow.Commit(ct);
-
-            var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
             return res;
         }
         catch
