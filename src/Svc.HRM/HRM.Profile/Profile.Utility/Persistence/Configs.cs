@@ -48,11 +48,15 @@ public class EmeContactConfig : BaseEntityConfig<EmergencyContact>
     public override void Configure(EntityTypeBuilder<EmergencyContact> b)
     {
         base.Configure(b);
+        b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.MiddleName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Gender).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Nationality).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Relation).HasMaxLength(20).IsRequired();
         b.HasIndex(x => x.EmployeeId);
-        b.HasIndex(x => x.PersonId);
-        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.Person).WithMany().HasForeignKey(x => x.PersonId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(x => new { x.EmployeeId, x.PersonId }).IsUnique(false);
+        b.HasIndex(x => new { x.Id, x.EmployeeId }).IsUnique(true);
+        b.HasIndex(x => new { x.Id, x.AddressId }).IsUnique(true);
     }
 }
 
@@ -77,11 +81,13 @@ public class EmpFamilyConfig : BaseEntityConfig<EmpFamily>
     public override void Configure(EntityTypeBuilder<EmpFamily> b)
     {
         base.Configure(b);
+        b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.MiddleName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Gender).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Nationality).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Relation).HasMaxLength(20).IsRequired();
         b.HasIndex(x => x.EmployeeId);
-        b.HasIndex(x => x.PersonId);
-        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.Person).WithMany().HasForeignKey(x => x.PersonId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(x => new { x.EmployeeId, x.PersonId }).IsUnique(false);
     }
 }
 
@@ -105,11 +111,15 @@ public class EmpGuarantorConfig : BaseEntityConfig<EmpGuarantor>
     public override void Configure(EntityTypeBuilder<EmpGuarantor> b)
     {
         base.Configure(b);
+        b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.MiddleName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Gender).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Nationality).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Relation).HasMaxLength(20).IsRequired();
         b.HasIndex(x => x.EmployeeId);
-        b.HasIndex(x => x.PersonId);
-        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.Person).WithMany().HasForeignKey(x => x.PersonId).OnDelete(DeleteBehavior.Restrict);
-        b.HasIndex(x => new { x.EmployeeId, x.PersonId }).IsUnique(false);
+        b.HasIndex(x => new { x.Id, x.EmployeeId }).IsUnique(true);
+        b.HasIndex(x => new { x.Id, x.AddressId }).IsUnique(true);
     }
 }
 

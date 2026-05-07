@@ -252,20 +252,17 @@ public class EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, IC
     private async Task<EmpGuaJoin?> GetGra(Guid id, CancellationToken ct)
     {
         const string e = "e";
-        const string p = "p";
         const string eg = "eg";
         const string ad = "ad";
         const string egf = "egf";
         const string fm = "fm";
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
-            .Select<EmpGuarantor>(eg, x => x.Relation)
+            .Select<EmpGuarantor>(eg, x => x.Relation, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality)
             .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
-            .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality)
             .Select<FileMetaData>(fm, x => x.FileName, x => x.ContentType, x => x.FileSize)
             .From<Employee>(e)
             .Join<Employee, EmpGuarantor>(e, eg, x => x.Id, x => x.EmployeeId)
-            .Join<EmpGuarantor, Person>(eg, p, x => x.PersonId, x => x.Id)
             .LeftJoin<EmpGuarantor, Address>(eg, ad, x => x.AddressId, x => x.Id)
             .LeftJoin<EmpGuarantor, EmpGuarantorFile>(eg, egf, x => x.Id, x => x.EmpGuarantorId)
             .LeftJoin<EmpGuarantorFile, FileMetaData>(egf, fm, x => x.FileMetaDataId, x => x.Id)

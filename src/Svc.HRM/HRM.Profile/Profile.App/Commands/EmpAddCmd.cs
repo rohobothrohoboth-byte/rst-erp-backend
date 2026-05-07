@@ -176,19 +176,6 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
         await _uow.Begin(ct);
         try
         {
-            var per = new Person
-            {
-                FirstName = request.AddDto.FirstName,
-                FirstNameAm = "",
-                MiddleName = request.AddDto.MiddleName,
-                MiddleNameAm = "",
-                LastName = request.AddDto.LastName,
-                LastNameAm = "",
-                Gender = request.AddDto.Gender,
-                Nationality = request.AddDto.Nationality
-            };
-            await _uow.Add(per, ct);
-
             var address = new Address
             {
                 AddressType = request.AddDto.AddressType,
@@ -205,15 +192,18 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 Email = request.AddDto.Email ?? "",
                 Website = request.AddDto.Website ?? ""
             };
-
             await _uow.Add(address, ct);
 
             var data = new EmpGuarantor
             {
-                AddressId = address.Id,
+                FirstName = request.AddDto.FirstName,
+                MiddleName = request.AddDto.MiddleName,
+                LastName = request.AddDto.LastName,
+                Gender = request.AddDto.Gender,
+                Nationality = request.AddDto.Nationality,
                 Relation = request.AddDto.Relation,
-                EmployeeId = request.AddDto.EmployeeId,
-                PersonId = per.Id
+                AddressId = address.Id,
+                EmployeeId = request.AddDto.EmployeeId
             };
             await _uow.Add(data, ct);
 
