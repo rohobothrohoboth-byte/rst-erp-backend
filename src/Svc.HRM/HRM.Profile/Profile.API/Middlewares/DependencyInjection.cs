@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Profile.App.Interfaces;
+using Profile.App.Services;
 using Profile.Utility.Extensions;
 using Profile.Utility.Persistence;
 using Profile.Utility.Repos;
@@ -53,6 +54,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddScoped<IDapperHelper, DapperHelper>();
         builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
+
+        builder.Services.AddScoped<IEmpCertService, EmpCertService>();
 
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();

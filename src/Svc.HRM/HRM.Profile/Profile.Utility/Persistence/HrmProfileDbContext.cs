@@ -63,6 +63,9 @@ public class HrmProfileDbContext : DbContext
     public DbSet<Address> Address { get; set; }
     public DbSet<EmergencyContact> EmergencyContact { get; set; }
     public DbSet<EmpBio> EmpBio { get; set; }
+    public DbSet<EmpCert> EmpCert { get; set; }
+    public DbSet<EmpCertBirth> EmpCertBirth { get; set; }
+    public DbSet<EmpCertMarriage> EmpCertMarriage { get; set; }
     public DbSet<EmpFamily> EmpFamily { get; set; }
     public DbSet<EmpFinance> EmpFinance { get; set; }
     public DbSet<EmpGuarantor> EmpGuarantor { get; set; }

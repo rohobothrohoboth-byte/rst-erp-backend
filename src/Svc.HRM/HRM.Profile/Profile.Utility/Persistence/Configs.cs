@@ -76,6 +76,42 @@ public class EmpBioConfig : BaseEntityConfig<EmpBio>
     }
 }
 
+public class EmpCertConfig : BaseEntityConfig<EmpCert>
+{
+    public override void Configure(EntityTypeBuilder<EmpCert> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.FileName).HasMaxLength(255).IsRequired();
+        b.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
+        b.Property(x => x.FileSize).IsRequired();
+        b.Property(x => x.CertType).IsRequired();
+        b.HasIndex(x => x.FileName);
+        b.HasIndex(x => x.ContentType);
+        b.HasIndex(x => x.CertType);
+        b.HasIndex(x => x.EmployeeId);
+    }
+}
+
+public class EmpCertBirthConfig : BaseEntityConfig<EmpCertBirth>
+{
+    public override void Configure(EntityTypeBuilder<EmpCertBirth> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Data).HasColumnType("bytea").IsRequired();
+        b.HasIndex(x => x.EmpCertId).IsUnique();
+    }
+}
+
+public class EmpCertMarriageConfig : BaseEntityConfig<EmpCertMarriage>
+{
+    public override void Configure(EntityTypeBuilder<EmpCertMarriage> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Data).HasColumnType("bytea").IsRequired();
+        b.HasIndex(x => x.EmpCertId).IsUnique();
+    }
+}
+
 public class EmpFamilyConfig : BaseEntityConfig<EmpFamily>
 {
     public override void Configure(EntityTypeBuilder<EmpFamily> b)

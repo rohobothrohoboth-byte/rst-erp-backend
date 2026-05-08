@@ -407,8 +407,20 @@ public enum Relation
     Mother,
     [Display(Name = "Child")]
     Child,
+    [Display(Name = "Friend")]
+    Frd,
     [Display(Name = "UNKNOWN")]
     Unknknown
+}
+
+public enum CertType
+{
+    [Display(Name = "Birth Certificate")]
+    Birth,
+    [Display(Name = "Marriage Certificate")]
+    Mar,
+    [Display(Name = "Training Certificate")]
+    Train
 }
 
 #endregion
