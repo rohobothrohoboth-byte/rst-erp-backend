@@ -1,0 +1,100 @@
+﻿using Asp.Versioning;
+using Helpers;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Profile.App.Queries;
+
+namespace Profile.API.Controllers;
+
+/// <summary>
+/// Employees Profile Display end points
+/// </summary>
+
+//[Authorize]
+[ApiController]
+[Route("api/hrm/profile/v{version:apiVersion}/EmpPro")]
+[ApiVersion("1.0")]
+public class EmpProController(IMediator med) : ControllerBase
+{
+    [HttpGet("GetEmpPhoto/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEmpPhoto(Guid id)
+    {
+        var response = await med.Send(new EmpPhotoQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Photo NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetPhotoThumbnail/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPhotoThumbnail(Guid id)
+    {
+        var response = await med.Send(new EmpPhotoThumbnailQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Photo Thumbnail NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProfileInfo/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProfileInfo(Guid id)
+    {
+        var response = await med.Send(new ProInfoQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Profile Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProOverview/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProOverview(Guid id)
+    {
+        var response = await med.Send(new ProOverviewQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Overview Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProBasic/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProBasic(Guid id)
+    {
+        var response = await med.Send(new ProBasicQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Basic Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProBio/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProBio(Guid id)
+    {
+        var response = await med.Send(new ProBioQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Biographical Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProEmContact/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProEmContact(Guid id)
+    {
+        var response = await med.Send(new ProEmContactQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Emergency Contact Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetProFamily/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProFamily(Guid id)
+    {
+        var response = await med.Send(new ProFamilyQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Families Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("GetEmpGuaranty/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEmpGuaranty(Guid id)
+    {
+        var response = await med.Send(new EmpGuarantyQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Guarantor Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+}

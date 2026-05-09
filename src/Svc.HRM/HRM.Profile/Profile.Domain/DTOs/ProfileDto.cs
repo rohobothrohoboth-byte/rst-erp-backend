@@ -16,30 +16,12 @@ public class EmpPhotoRes
     public string Photo { get; set; } = default!;
 }
 
-public class ProInfoJoin
-{
-    public string FirstName { get; init; } = default!;
-    public string MiddleName { get; init; } = default!;
-    public string LastName { get; init; } = default!;
-    public string FirstNameAm { get; init; } = default!;
-    public string MiddleNameAm { get; init; } = default!;
-    public string LastNameAm { get; init; } = default!;
-    public string EmpState { get; set; } = default!; //enum.EmpState
-    public Guid PositionId { get; init; }
-}
-
 public class ProInfo
 {
     public string FullName { get; set; } = default!;
     public string FullNameAm { get; set; } = default!;
     public string Position { get; set; } = default!;
     public string EmpState { get; set; } = default!;
-}
-
-public class ProOverviewJoin
-{
-    public Guid Id { get; init; }
-    public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
 }
 
 public class ProOverview
@@ -51,42 +33,6 @@ public class ProOverview
     public string AttendMonth { get; set; } = default!;
     public string RepToName { get; set; } = default!;
     public string RepToPos { get; set; } = default!;
-}
-
-public class ProBasicJoin
-{
-    public string Gender { get; set; } = default!; // enum.Gender
-    public string Nationality { get; set; } = default!;
-    public string Code { get; private set; } = default!;
-    public string EmploymentType { get; set; } = default!; //enum.EmpType
-    public string EmploymentNature { get; set; } = default!; //enum.EmpNature
-    public string WorkArrangement { get; set; } = default!; //enum.WorkArrangement
-    public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
-    public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department
-    public string MaritalStatus { get; set; } = default!; //eum.MaritalStatus (0/1)
-    public DateTime BirthDate { get; set; } = DateTime.UtcNow;
-
-    public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade
-    public Guid JgStepId { get; set; } = default!; //Cor.HRMM.JgStep
-    public DateTime EffectiveFrom { get; set; } = DateTime.UtcNow;
-    public double BaseSalary { get; set; } = default!;
-    public string Currency { get; set; } = default!;
-    public string SalaryPayFreq { get; set; } = default!;
-
-    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
-    public Guid AddressId { get; set; } = default!; //Address
-    public string Country { get; set; } = default!;
-    public string Region { get; set; } = default!;
-    public string Subcity { get; set; } = default!;
-    public string Zone { get; set; } = default!;
-    public string Woreda { get; set; } = default!;
-    public string Kebele { get; set; } = default!;
-    public string HouseNo { get; set; } = default!;
-    public string Telephone { get; set; } = default!;
-    public string PoBox { get; set; } = default!;
-    public string Fax { get; set; } = default!;
-    public string Email { get; set; } = default!;
-    public string Website { get; set; } = default!;
 }
 
 public class ProBasic
@@ -118,7 +64,7 @@ public class ProBasic
     public string JobGrade { get; set; } = default!;
 
     // Address & Contact
-    public string AddressTypeStr { get; set; } = default!;
+    public string AddressType { get; set; } = default!;
     public string Country { get; set; } = default!;
     public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
@@ -135,46 +81,42 @@ public class ProBasic
 
 public class ProBio
 {
-    [JsonIgnore]
-    public string HasBirthCert { get; set; } = default!; // enum.YesNo
-    [JsonIgnore]
-    public string HasMarriageCert { get; set; } = default!; // enum.YesNo
-
     public Guid Id { get; set; } = default!; //Employee
-    public Guid? MarriageCertId { get; set; } = default!;
-    public Guid? BirthCertId { get; set; } = default!;
     public string BirthLocation { get; set; } = default!;
     public string MotherFullName { get; set; } = default!;
-    public string HasBirthCertStr { get; set; } = default!;
-    public string HasMarriageCertStr { get; set; } = default!;
+    public string HasBirthCert { get; set; } = default!; // enum.YesNo
+    public string HasMarriageCert { get; set; } = default!; // enum.YesNo
     public string Tin { get; set; } = default!;
     public string BankAccountNo { get; set; } = default!;
     public string PensionNumber { get; set; } = default!;
+    // Files
+    public Guid? BiCertId { get; set; } = default!;
+    public string BiCertName { get; set; } = default!;
+    public string BiCertType { get; set; } = default!;
+    public string BiCertSize { get; set; } = default!;
+    public Guid? MaCertId { get; set; } = default!;
+    public string MaCertName { get; set; } = default!;
+    public string MaCertType { get; set; } = default!;
+    public string MaCertSize { get; set; } = default!;
 }
 
-public class ProEmContact
+public class ProContact
 {
     public Guid EmployeeId { get; set; } = default!; //Employee
     public bool HasContact { get; set; } = true;
-    public ProEmContactDto Contact { get; set; } = default!;
+    public ProContactList Contact { get; set; } = default!;
 }
 
-public class ProEmContactDto
+public class ProContactList
 {
-    [JsonIgnore]
-    public string Relation { get; set; } = default!; //enum.Relation
-    [JsonIgnore]
-    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
-
     public Guid Id { get; set; } = default!; //EmergencyContact
     public string FirstName { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
     public string LastName { get; set; } = default!;
-    public string RelationStr { get; set; } = default!;
+    public string Relation { get; set; } = default!; //enum.Relation
     public string Gender { get; set; } = default!;
     public string Nationality { get; set; } = default!;
-
-    public string AddressTypeStr { get; set; } = default!;
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
     public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;
@@ -197,25 +139,18 @@ public class ProFamily
 
 public class ProFamilyList
 {
-    [JsonIgnore]
-    public string Relation { get; set; } = default!; //enum.Relation
-
     public Guid Id { get; set; } = default!; //EmpFamily
     public string FirstName { get; set; } = default!;
     public string MiddleName { get; set; } = default!;
     public string LastName { get; set; } = default!;
     public string FullName { get; set; } = default!;
-    public string Gender { get; set; } = default!;
-    public string RelationStr { get; set; } = default!;
+    public string Relation { get; set; } = default!; //enum.Relation
+    public string Gender { get; set; } = default!; //enum.Gender
     public string Nationality { get; set; } = default!;
 }
 
 public class EmpGuaranty
 {
-    [JsonIgnore]
-    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
-    [JsonIgnore]
-    public string Relation { get; set; } = default!; //enum.Relation
     [JsonIgnore]
     public string FirstName { get; set; } = default!;
     [JsonIgnore]
@@ -226,13 +161,13 @@ public class EmpGuaranty
     public long FileSize { get; init; } = default!;
     // Details
     public string FullName { get; set; } = default!;
-    public string RelationStr { get; set; } = default!;
     public string Gender { get; set; } = default!;
+    public string Relation { get; set; } = default!; //enum.Relation
     public string Nationality { get; set; } = default!;
     public string Telephone { get; set; } = default!;
     public string Email { get; set; } = default!;
     // Address
-    public string AddressTypeStr { get; set; } = default!;
+    public string AddressType { get; set; } = default!; // enum.AddressType (0/1)
     public string Country { get; set; } = default!;
     public string Region { get; set; } = default!;
     public string Subcity { get; set; } = default!;

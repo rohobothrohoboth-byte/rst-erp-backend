@@ -2,6 +2,7 @@
 using Helpers;
 using MediatR;
 using Profile.App.Interfaces;
+using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 
@@ -11,7 +12,7 @@ public class ProInfoQry : IRequest<ProInfo?> { public Guid Id { get; set; } }
 public class ProOverviewQry : IRequest<ProOverview?> { public Guid Id { get; set; } }
 public class ProBasicQry : IRequest<ProBasic?> { public Guid Id { get; set; } }
 public class ProBioQry : IRequest<ProBio?> { public Guid Id { get; set; } }
-public class ProEmContactQry : IRequest<ProEmContact?> { public Guid Id { get; set; } }
+public class ProEmContactQry : IRequest<ProContact?> { public Guid Id { get; set; } }
 public class ProFamilyQry : IRequest<ProFamily?> { public Guid Id { get; set; } }
 public class EmpGuarantyQry : IRequest<EmpGuaranty?> { public Guid Id { get; set; } }
 
@@ -132,7 +133,7 @@ public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorM
             JobGrade = jgs.JobGrade ?? "",
             EffectiveFrom = row.EffectiveFrom,
 
-            AddressTypeStr = MyEnumHelper.FormatEnum<AddressType>(row.AddressType),
+            AddressType = MyEnumHelper.FormatEnum<AddressType>(row.AddressType),
             Country = row.Country,
             Region = row.Region,
             Subcity = row.Subcity,
@@ -149,7 +150,7 @@ public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorM
     }
 }
 
-public class ProBioHandler(IDapperHelper dapper) : IRequestHandler<ProBioQry, ProBio?>
+public class ProBioHandler(IDapperHelper dapper, IEmpCertService _iEmpCertSer) : IRequestHandler<ProBioQry, ProBio?>
 {
     public async Task<ProBio?> Handle(ProBioQry request, CancellationToken ct)
     {
@@ -169,15 +170,24 @@ public class ProBioHandler(IDapperHelper dapper) : IRequestHandler<ProBioQry, Pr
         var data = await dapper.QueryFirstOrDefaultAsync<ProBio>(sql, parameters, ct);
         if (data is null) { return null; }
 
-        data.HasBirthCertStr = MyEnumHelper.FormatEnum<YesNo>(data.HasBirthCert);
-        data.HasMarriageCertStr = MyEnumHelper.FormatEnum<YesNo>(data.HasMarriageCert);
+        var cert = await _iEmpCertSer.GetCerts(request.Id, ct);
+        data.BiCertId = cert.BiCertId;
+        data.BiCertName = cert.BiCertName;
+        data.BiCertType = cert.BiCertType;
+        data.BiCertSize = cert.BiCertSize > 0 ? SizeFormatter.FormatBytes(cert.BiCertSize) : "0";
+        data.MaCertId = cert.MaCertId;
+        data.MaCertName = cert.MaCertName;
+        data.MaCertType = cert.MaCertType;
+        data.MaCertSize = cert.MaCertSize > 0 ? SizeFormatter.FormatBytes(cert.MaCertSize) : "0";
+        data.HasBirthCert = MyEnumHelper.FormatEnum<YesNo>(data.HasBirthCert);
+        data.HasMarriageCert = MyEnumHelper.FormatEnum<YesNo>(data.HasMarriageCert);
         return data;
     }
 }
 
-public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmContactQry, ProEmContact?>
+public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmContactQry, ProContact?>
 {
-    public async Task<ProEmContact?> Handle(ProEmContactQry request, CancellationToken ct)
+    public async Task<ProContact?> Handle(ProEmContactQry request, CancellationToken ct)
     {
         const string ec = "ec";
         const string ad = "ad";
@@ -189,18 +199,18 @@ public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmCo
             .Where<EmergencyContact>(ec, x => x.EmployeeId == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
-        var data = await dapper.QueryFirstOrDefaultAsync<ProEmContactDto>(sql, parameters, ct);
+        var data = await dapper.QueryFirstOrDefaultAsync<ProContactList>(sql, parameters, ct);
 
-        var vm = new ProEmContact { EmployeeId = request.Id };
+        var vm = new ProContact { EmployeeId = request.Id };
         if (data is null)
         {
             vm.HasContact = false;
             return vm;
         }
 
-        data.RelationStr = MyEnumHelper.FormatEnum<Relation>(data.Relation);
-        data.AddressTypeStr = MyEnumHelper.FormatEnum<AddressType>(data.AddressType);
-
+        data.Gender = MyEnumHelper.FormatEnum<Gender>(data.Gender);
+        data.Relation = MyEnumHelper.FormatEnum<Relation>(data.Relation);
+        data.AddressType = MyEnumHelper.FormatEnum<AddressType>(data.AddressType);
         vm.HasContact = true;
         vm.Contact = data;
         return vm;
@@ -223,7 +233,8 @@ public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQ
 
         foreach (var data in list)
         {
-            data.RelationStr = MyEnumHelper.FormatEnum<BranchType>(data.Relation);
+            data.Relation = MyEnumHelper.FormatEnum<Relation>(data.Relation);
+            data.Gender = MyEnumHelper.FormatEnum<Gender>(data.Gender);
             data.FullName = $"{data.FirstName} {data.MiddleName} {data.LastName}";
         }
 
@@ -258,8 +269,9 @@ public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<EmpGuara
         var data = await dapper.QueryFirstOrDefaultAsync<EmpGuaranty>(sql, parameters, ct);
         if (data is null) { return null; }
 
-        data.RelationStr = MyEnumHelper.FormatEnum<Relation>(data.Relation);
-        data.AddressTypeStr = MyEnumHelper.FormatEnum<AddressType>(data.AddressType);
+        data.Gender = MyEnumHelper.FormatEnum<Gender>(data.Gender);
+        data.Relation = MyEnumHelper.FormatEnum<Relation>(data.Relation);
+        data.AddressType = MyEnumHelper.FormatEnum<AddressType>(data.AddressType);
         data.FileSizeStr = data.FileSize > 0 ? SizeFormatter.FormatBytes(data.FileSize) : "0";
         return data;
     }

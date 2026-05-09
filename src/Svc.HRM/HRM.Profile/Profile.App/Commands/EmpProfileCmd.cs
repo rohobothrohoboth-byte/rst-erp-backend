@@ -76,15 +76,17 @@ public class EmpFinanceModHandler(IUnitOfWork _uow) : IRequestHandler<EmpFinance
                 added.PensionNumber = request.ModDto.PensionNumber;
                 await _uow.Update(added);
             }
-
-            var data = new EmpFinance
+            else
             {
-                Tin = request.ModDto.Tin,
-                BankAccountNo = request.ModDto.BankAccountNo,
-                PensionNumber = request.ModDto.PensionNumber,
-                EmployeeId = request.ModDto.Id
-            };
-            await _uow.Add(data, ct);
+                var data = new EmpFinance
+                {
+                    Tin = request.ModDto.Tin,
+                    BankAccountNo = request.ModDto.BankAccountNo,
+                    PensionNumber = request.ModDto.PensionNumber,
+                    EmployeeId = request.ModDto.Id
+                };
+                await _uow.Add(data, ct);
+            }
 
             await _uow.Commit(ct);
             var res = new EmpModRes { Id = request.ModDto.Id };
@@ -132,37 +134,39 @@ public class EmContactModHandler(IUnitOfWork _uow) : IRequestHandler<EmContactMo
                 added.Relation = request.ModDto.Relation;
                 await _uow.Update(added);
             }
-
-            var addr = new Address
+            else
             {
-                AddressType = request.ModDto.AddressType,
-                Country = request.ModDto.Country,
-                Region = request.ModDto.Region,
-                Subcity = request.ModDto.Subcity,
-                Zone = request.ModDto.Zone,
-                Woreda = request.ModDto.Woreda,
-                Kebele = request.ModDto.Kebele,
-                HouseNo = request.ModDto.HouseNo,
-                Telephone = request.ModDto.Telephone,
-                PoBox = request.ModDto.PoBox ?? "",
-                Fax = request.ModDto.Fax ?? "",
-                Email = request.ModDto.Email ?? "",
-                Website = request.ModDto.Website ?? ""
-            };
-            await _uow.Add(addr, ct);
+                var addr = new Address
+                {
+                    AddressType = request.ModDto.AddressType,
+                    Country = request.ModDto.Country,
+                    Region = request.ModDto.Region,
+                    Subcity = request.ModDto.Subcity,
+                    Zone = request.ModDto.Zone,
+                    Woreda = request.ModDto.Woreda,
+                    Kebele = request.ModDto.Kebele,
+                    HouseNo = request.ModDto.HouseNo,
+                    Telephone = request.ModDto.Telephone,
+                    PoBox = request.ModDto.PoBox ?? "",
+                    Fax = request.ModDto.Fax ?? "",
+                    Email = request.ModDto.Email ?? "",
+                    Website = request.ModDto.Website ?? ""
+                };
+                await _uow.Add(addr, ct);
 
-            var data = new EmergencyContact
-            {
-                FirstName = request.ModDto.FirstName,
-                MiddleName = request.ModDto.MiddleName,
-                LastName = request.ModDto.LastName,
-                Gender = request.ModDto.Gender,
-                Nationality = request.ModDto.Nationality,
-                Relation = request.ModDto.Relation,
-                AddressId = addr.Id,
-                EmployeeId = request.ModDto.EmployeeId
-            };
-            await _uow.Add(data, ct);
+                var data = new EmergencyContact
+                {
+                    FirstName = request.ModDto.FirstName,
+                    MiddleName = request.ModDto.MiddleName,
+                    LastName = request.ModDto.LastName,
+                    Gender = request.ModDto.Gender,
+                    Nationality = request.ModDto.Nationality,
+                    Relation = request.ModDto.Relation,
+                    AddressId = addr.Id,
+                    EmployeeId = request.ModDto.EmployeeId
+                };
+                await _uow.Add(data, ct);
+            }
 
             await _uow.Commit(ct);
             var res = new EmpModRes { Id = request.ModDto.EmployeeId };
