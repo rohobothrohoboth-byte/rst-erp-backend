@@ -225,8 +225,7 @@ public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQ
         var qb = new QueryBuilder()
             .Select<EmpFamily>(ef, x => x.Id, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality, x => x.Relation)
             .From<EmpFamily>(ef)
-            .Where<EmpFamily>(ef, x => x.EmployeeId == request.Id)
-            .Limit(1);
+            .Where<EmpFamily>(ef, x => x.EmployeeId == request.Id);
         var (sql, parameters) = qb.Build();
         await using var reader = await dapper.ExecuteReaderAsync(sql, parameters, ct);
         var list = await reader.ToListAsync<ProFamilyList>(ct);
