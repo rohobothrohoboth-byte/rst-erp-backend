@@ -8,19 +8,19 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Queries;
 
-public class ProInfoQry : IRequest<ProInfo?> { public Guid Id { get; set; } }
-public class ProOverviewQry : IRequest<ProOverview?> { public Guid Id { get; set; } }
-public class ProBasicQry : IRequest<ProBasic?> { public Guid Id { get; set; } }
-public class ProBioQry : IRequest<ProBio?> { public Guid Id { get; set; } }
-public class ProEmContactQry : IRequest<ProContact?> { public Guid Id { get; set; } }
-public class ProFamilyQry : IRequest<ProFamily?> { public Guid Id { get; set; } }
-public class EmpGuarantyQry : IRequest<EmpGuaranty?> { public Guid Id { get; set; } }
+public class MyProInfoQry : IRequest<MyProInfo?> { public Guid Id { get; set; } }
+public class MyProOverviewQry : IRequest<MyProOverview?> { public Guid Id { get; set; } }
+public class MyProBasicQry : IRequest<MyProBasic?> { public Guid Id { get; set; } }
+public class MyProBioQry : IRequest<MyProBio?> { public Guid Id { get; set; } }
+public class MyProEmContQry : IRequest<MyProContact?> { public Guid Id { get; set; } }
+public class MyProFamilyQry : IRequest<MyProFamily?> { public Guid Id { get; set; } }
+public class MyEmpGuarQry : IRequest<MyEmpGuar?> { public Guid Id { get; set; } }
 
 
 
-public class ProInfoHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IRequestHandler<ProInfoQry, ProInfo?>
+public class ProInfoHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IRequestHandler<MyProInfoQry, MyProInfo?>
 {
-    public async Task<ProInfo?> Handle(ProInfoQry request, CancellationToken ct)
+    public async Task<MyProInfo?> Handle(MyProInfoQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
@@ -38,7 +38,7 @@ public class ProInfoHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IReq
         var positionTask = await corHrmm.GetPosition(row.PositionId.ToString(), ct);
         var position = positionTask.Res;
 
-        return new ProInfo
+        return new MyProInfo
         {
             FullName = $"{row.FirstName} {row.MiddleName} {row.LastName}".Trim(),
             FullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}".Trim(),
@@ -48,9 +48,9 @@ public class ProInfoHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IReq
     }
 }
 
-public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<ProOverviewQry, ProOverview?>
+public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<MyProOverviewQry, MyProOverview?>
 {
-    public async Task<ProOverview?> Handle(ProOverviewQry request, CancellationToken ct)
+    public async Task<MyProOverview?> Handle(MyProOverviewQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
@@ -66,7 +66,7 @@ public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<ProOverv
         if (row is null) { return null; }
 
         var serStr = row.EmploymentDate.FullServDur();
-        return new ProOverview
+        return new MyProOverview
         {
             Tenure = serStr,
             PerStr = $"{4.5} / {5}".Trim(),
@@ -79,9 +79,9 @@ public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<ProOverv
     }
 }
 
-public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorModClient corMod) : IRequestHandler<ProBasicQry, ProBasic?>
+public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorModClient corMod) : IRequestHandler<MyProBasicQry, MyProBasic?>
 {
-    public async Task<ProBasic?> Handle(ProBasicQry request, CancellationToken ct)
+    public async Task<MyProBasic?> Handle(MyProBasicQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
@@ -111,7 +111,7 @@ public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorM
         var dept = deptTask.Result.Res;
         var jgs = jgsTask.Result;
 
-        return new ProBasic
+        return new MyProBasic
         {
             Code = row.Code,
             Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
@@ -150,9 +150,9 @@ public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorM
     }
 }
 
-public class ProBioHandler(IDapperHelper dapper, IEmpCertService _iEmpCertSer) : IRequestHandler<ProBioQry, ProBio?>
+public class ProBioHandler(IDapperHelper dapper, IEmpCertService _iEmpCertSer) : IRequestHandler<MyProBioQry, MyProBio?>
 {
-    public async Task<ProBio?> Handle(ProBioQry request, CancellationToken ct)
+    public async Task<MyProBio?> Handle(MyProBioQry request, CancellationToken ct)
     {
         const string e = "e";
         const string eb = "eb";
@@ -167,7 +167,7 @@ public class ProBioHandler(IDapperHelper dapper, IEmpCertService _iEmpCertSer) :
             .Where<Employee>(e, x => x.Id == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
-        var data = await dapper.QueryFirstOrDefaultAsync<ProBio>(sql, parameters, ct);
+        var data = await dapper.QueryFirstOrDefaultAsync<MyProBio>(sql, parameters, ct);
         if (data is null) { return null; }
 
         var cert = await _iEmpCertSer.GetCerts(request.Id, ct);
@@ -185,9 +185,9 @@ public class ProBioHandler(IDapperHelper dapper, IEmpCertService _iEmpCertSer) :
     }
 }
 
-public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmContactQry, ProContact?>
+public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<MyProEmContQry, MyProContact?>
 {
-    public async Task<ProContact?> Handle(ProEmContactQry request, CancellationToken ct)
+    public async Task<MyProContact?> Handle(MyProEmContQry request, CancellationToken ct)
     {
         const string ec = "ec";
         const string ad = "ad";
@@ -199,9 +199,9 @@ public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmCo
             .Where<EmergencyContact>(ec, x => x.EmployeeId == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
-        var data = await dapper.QueryFirstOrDefaultAsync<ProContactList>(sql, parameters, ct);
+        var data = await dapper.QueryFirstOrDefaultAsync<MyProContList>(sql, parameters, ct);
 
-        var vm = new ProContact { EmployeeId = request.Id };
+        var vm = new MyProContact { EmployeeId = request.Id };
         if (data is null)
         {
             vm.HasContact = false;
@@ -217,9 +217,9 @@ public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<ProEmCo
     }
 }
 
-public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQry, ProFamily?>
+public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<MyProFamilyQry, MyProFamily?>
 {
-    public async Task<ProFamily?> Handle(ProFamilyQry request, CancellationToken ct)
+    public async Task<MyProFamily?> Handle(MyProFamilyQry request, CancellationToken ct)
     {
         const string ef = "ef";
         var qb = new QueryBuilder()
@@ -228,7 +228,7 @@ public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQ
             .Where<EmpFamily>(ef, x => x.EmployeeId == request.Id);
         var (sql, parameters) = qb.Build();
         await using var reader = await dapper.ExecuteReaderAsync(sql, parameters, ct);
-        var list = await reader.ToListAsync<ProFamilyList>(ct);
+        var list = await reader.ToListAsync<MyProFamilyList>(ct);
 
         foreach (var data in list)
         {
@@ -237,7 +237,7 @@ public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQ
             data.FullName = $"{data.FirstName} {data.MiddleName} {data.LastName}";
         }
 
-        return new ProFamily
+        return new MyProFamily
         {
             EmployeeId = request.Id,
             Family = list
@@ -245,9 +245,9 @@ public class ProFamilyHandler(IDapperHelper dapper) : IRequestHandler<ProFamilyQ
     }
 }
 
-public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<EmpGuarantyQry, EmpGuaranty?>
+public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<MyEmpGuarQry, MyEmpGuar?>
 {
-    public async Task<EmpGuaranty?> Handle(EmpGuarantyQry request, CancellationToken ct)
+    public async Task<MyEmpGuar?> Handle(MyEmpGuarQry request, CancellationToken ct)
     {
         const string eg = "eg";
         const string ad = "ad";
@@ -257,7 +257,7 @@ public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<EmpGuara
             .Select<EmpGuarantor>(eg, x => x.Relation, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality)
             .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
             .Select<FileMetaData>(fm, x => x.FileName, x => x.ContentType, x => x.FileSize)
-            .SelectAs<FileMetaData, EmpGuaranty>(fm, x => x.Id, x => x.FileId)
+            .SelectAs<FileMetaData, MyEmpGuar>(fm, x => x.Id, x => x.FileId)
             .From<EmpGuarantor>(eg)
             .Join<EmpGuarantor, Address>(eg, ad, x => x.AddressId, x => x.Id)
             .LeftJoin<EmpGuarantor, EmpGuarantorFile>(eg, egf, x => x.Id, x => x.EmpGuarantorId)
@@ -265,7 +265,7 @@ public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<EmpGuara
             .Where<EmpGuarantor>(eg, x => x.EmployeeId == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
-        var data = await dapper.QueryFirstOrDefaultAsync<EmpGuaranty>(sql, parameters, ct);
+        var data = await dapper.QueryFirstOrDefaultAsync<MyEmpGuar>(sql, parameters, ct);
         if (data is null) { return null; }
 
         data.Gender = MyEnumHelper.FormatEnum<Gender>(data.Gender);

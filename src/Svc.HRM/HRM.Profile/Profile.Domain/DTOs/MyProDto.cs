@@ -16,7 +16,7 @@ public class EmpPhotoRes
     public string Photo { get; set; } = default!;
 }
 
-public class ProInfo
+public class MyProInfo
 {
     public string FullName { get; set; } = default!;
     public string FullNameAm { get; set; } = default!;
@@ -24,7 +24,7 @@ public class ProInfo
     public string EmpState { get; set; } = default!;
 }
 
-public class ProOverview
+public class MyProOverview
 {
     public string Tenure { get; set; } = default!;
     public string PerStr { get; set; } = default!;
@@ -35,7 +35,7 @@ public class ProOverview
     public string RepToPos { get; set; } = default!;
 }
 
-public class ProBasic
+public class MyProBasic
 {
     [JsonIgnore]
     public DateTime EffectiveFrom { get; set; } = DateTime.UtcNow;
@@ -79,7 +79,7 @@ public class ProBasic
     public string Website { get; set; } = default!;
 }
 
-public class ProBio
+public class MyProBio
 {
     public Guid Id { get; set; } = default!; //Employee
     public string BirthLocation { get; set; } = default!;
@@ -100,14 +100,14 @@ public class ProBio
     public string MaCertSize { get; set; } = default!;
 }
 
-public class ProContact
+public class MyProContact
 {
     public Guid EmployeeId { get; set; } = default!; //Employee
     public bool HasContact { get; set; } = true;
-    public ProContactList Contact { get; set; } = default!;
+    public MyProContList Contact { get; set; } = default!;
 }
 
-public class ProContactList
+public class MyProContList
 {
     public Guid Id { get; set; } = default!; //EmergencyContact
     public string FirstName { get; set; } = default!;
@@ -131,13 +131,13 @@ public class ProContactList
     public string Website { get; set; } = default!;
 }
 
-public class ProFamily
+public class MyProFamily
 {
     public Guid EmployeeId { get; set; } = default!; //Employee
-    public List<ProFamilyList> Family { get; set; } = [];
+    public List<MyProFamilyList> Family { get; set; } = [];
 }
 
-public class ProFamilyList
+public class MyProFamilyList
 {
     public Guid Id { get; set; } = default!; //EmpFamily
     public string FirstName { get; set; } = default!;
@@ -149,7 +149,7 @@ public class ProFamilyList
     public string Nationality { get; set; } = default!;
 }
 
-public class EmpGuaranty
+public class MyEmpGuar
 {
     [JsonIgnore]
     public string FirstName { get; set; } = default!;

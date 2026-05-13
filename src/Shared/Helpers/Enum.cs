@@ -305,18 +305,18 @@ public enum EmpState
 {
     [Display(Name = "Pending")]
     Pen,
-    [Display(Name = "Approved")]
-    App,
+    [Display(Name = "Rejected")]
+    Rej,
     [Display(Name = "Active")]
     Active,
-    [Display(Name = "Under Probation")]
-    Prob,
     [Display(Name = "Terminated")]
     Term,
-    [Display(Name = "StandBy")]
+    [Display(Name = "Stand By")]
     StandBy,
+    [Display(Name = "Suspended/Under Probation")]
+    Sus,
     [Display(Name = "Retired")]
-    Retired,
+    Retire,
     [Display(Name = "On Leave")]
     Leave
 }

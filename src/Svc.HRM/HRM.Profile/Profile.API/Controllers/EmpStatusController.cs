@@ -1,0 +1,74 @@
+﻿using Asp.Versioning;
+using Helpers;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Profile.App.Commands;
+
+namespace Profile.API.Controllers;
+
+/// <summary>
+/// Employee Status Update Management end points
+/// </summary>
+
+//[Authorize]
+[ApiController]
+[Route("api/hrm/profile/v{version:apiVersion}/EmpStatus")]
+[ApiVersion("1.0")]
+public class EmpStatusController(IMediator med) : ControllerBase
+{
+    [HttpPut("TermEmp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> TermEmp(Guid id)
+    {
+        var response = await med.Send(new EmpTermCmd { Id = id });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+    }
+
+    [HttpPut("StByEmp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> StByEmp(Guid id)
+    {
+        var response = await med.Send(new EmpStByCmd { Id = id });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+    }
+
+    [HttpPut("SuspEmp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SuspEmp(Guid id)
+    {
+        var response = await med.Send(new EmpSuspCmd { Id = id });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+    }
+
+    [HttpPut("RetiEmp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RetiEmp(Guid id)
+    {
+        var response = await med.Send(new EmpRetiCmd { Id = id });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+    }
+
+    [HttpPut("ReviewEmp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ReviewEmp(Guid id, bool stat)
+    {
+        var response = await med.Send(new EmpAppCmd { Id = id, Stat = stat });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+    }
+}

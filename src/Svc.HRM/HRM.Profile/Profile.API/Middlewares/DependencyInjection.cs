@@ -56,6 +56,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<IDbRetryHandler, DbRetryHandler>();
 
         builder.Services.AddScoped<IEmpCertService, EmpCertService>();
+        builder.Services.AddScoped<IEmpModService, EmpModService>();
 
         builder.Services.AddScoped<IAuthClient, AuthClient>();
         builder.Services.AddScoped<ICorModClient, CorModClient>();

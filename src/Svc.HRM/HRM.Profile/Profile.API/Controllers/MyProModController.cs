@@ -19,10 +19,10 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class MyProModController(IMediator med) : ControllerBase
 {
-    [HttpPost("EmpBioMod")]
+    [HttpPost("MyBioMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmpBioMod([FromForm] EmpBioModDto modDto)
+    public async Task<IActionResult> MyBioMod([FromForm] MyBioModDto modDto)
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
 
@@ -33,14 +33,14 @@ public class MyProModController(IMediator med) : ControllerBase
         }
 
         modDto.Id = id;
-        var response = await med.Send(new EmpBioModCmd { ModDto = modDto });
+        var response = await med.Send(new MyBioModCmd { ModDto = modDto });
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Biographical Info successfully updated."));
     }
 
-    [HttpPost("EmpFinanceMod")]
+    [HttpPost("MyFinanceMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmpFinanceMod([FromBody] EmpFinanceModDto modDto)
+    public async Task<IActionResult> MyFinanceMod([FromBody] MyFinanceModDto modDto)
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
 
@@ -51,14 +51,14 @@ public class MyProModController(IMediator med) : ControllerBase
         }
 
         modDto.Id = id;
-        var response = await med.Send(new EmpFinanceModCmd { ModDto = modDto });
+        var response = await med.Send(new MyFinanceModCmd { ModDto = modDto });
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Biographical Info successfully updated."));
     }
 
-    [HttpPost("EmContactMod")]
+    [HttpPost("MyEmContMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmContactMod([FromBody] EmContactModDto modDto)
+    public async Task<IActionResult> MyEmContMod([FromBody] MyEmContModDto modDto)
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
 
@@ -69,14 +69,14 @@ public class MyProModController(IMediator med) : ControllerBase
         }
 
         modDto.EmployeeId = id;
-        var response = await med.Send(new EmContactModCmd { ModDto = modDto });
+        var response = await med.Send(new MyEmContModCmd { ModDto = modDto });
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Emergency Contact Info successfully updated."));
     }
 
-    [HttpPost("EmpFamilyAdd")]
+    [HttpPost("MyFamilyAdd")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmpFamilyAdd([FromBody] EmpFamilyAddDto addDto)
+    public async Task<IActionResult> MyFamilyAdd([FromBody] MyFamilyAddDto addDto)
     {
         if (!User.TryGetEmployeeId(out var id)) { return Ok(ApiResponse<object>.Fail("AUTHORIZATION REQUIRED to gain access. Please LOGIN!")); }
 
@@ -87,14 +87,14 @@ public class MyProModController(IMediator med) : ControllerBase
         }
 
         addDto.EmployeeId = id;
-        var response = await med.Send(new EmpFamilyAddCmd { AddDto = addDto });
+        var response = await med.Send(new MyFamilyAddCmd { AddDto = addDto });
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Family Info successfully Added."));
     }
 
-    [HttpPut("EmpFamilyMod/{id:guid}")]
+    [HttpPut("MyFamilyMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmpFamilyMod(Guid id, [FromBody] EmpFamilyModDto modDto)
+    public async Task<IActionResult> MyFamilyMod(Guid id, [FromBody] MyFamilyModDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -102,16 +102,16 @@ public class MyProModController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
 
-        var response = await med.Send(new EmpFamilyModCmd { ModDto = modDto });
+        var response = await med.Send(new MyFamilyModCmd { ModDto = modDto });
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Family Info successfully updated."));
     }
 
-    [HttpDelete("EmpFamilyDel/{id:guid}")]
+    [HttpDelete("MyFamilyDel/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmpFamilyDel(Guid id)
+    public async Task<IActionResult> MyFamilyDel(Guid id)
     {
-        await med.Send(new EmpFamilyDelCmd { Id = id });
+        await med.Send(new MyFamilyDelCmd { Id = id });
         return Ok(ApiResponse<string>.Ok(null!, "Selected EMPLOYEE'S Family Info successfully deleted."));
     }
 }

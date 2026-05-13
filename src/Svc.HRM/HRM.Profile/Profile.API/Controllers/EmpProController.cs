@@ -40,7 +40,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProfileInfo(Guid id)
     {
-        var response = await med.Send(new ProInfoQry { Id = id });
+        var response = await med.Send(new MyProInfoQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Profile Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -49,7 +49,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProOverview(Guid id)
     {
-        var response = await med.Send(new ProOverviewQry { Id = id });
+        var response = await med.Send(new MyProOverviewQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Overview Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -58,7 +58,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProBasic(Guid id)
     {
-        var response = await med.Send(new ProBasicQry { Id = id });
+        var response = await med.Send(new MyProBasicQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Basic Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -67,7 +67,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProBio(Guid id)
     {
-        var response = await med.Send(new ProBioQry { Id = id });
+        var response = await med.Send(new MyProBioQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Biographical Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -76,7 +76,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProEmContact(Guid id)
     {
-        var response = await med.Send(new ProEmContactQry { Id = id });
+        var response = await med.Send(new MyProEmContQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Emergency Contact Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -85,7 +85,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProFamily(Guid id)
     {
-        var response = await med.Send(new ProFamilyQry { Id = id });
+        var response = await med.Send(new MyProFamilyQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Families Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -94,7 +94,7 @@ public class EmpProController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmpGuaranty(Guid id)
     {
-        var response = await med.Send(new EmpGuarantyQry { Id = id });
+        var response = await med.Send(new MyEmpGuarQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Guarantor Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 }

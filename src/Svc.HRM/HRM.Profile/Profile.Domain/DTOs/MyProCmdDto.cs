@@ -14,7 +14,7 @@ public class CertSerDto
     public IFormFile? File { get; set; } = default!;
 }
 
-public class EmpBioModDto
+public class MyBioModDto
 {
     public Guid Id { get; set; }
     public string BirthLocation { get; set; } = default!;
@@ -25,7 +25,7 @@ public class EmpBioModDto
     public IFormFile? File2 { get; set; } = default!;
 }
 
-public class EmpFinanceModDto
+public class MyFinanceModDto
 {
     public Guid Id { get; set; }
     public string Tin { get; set; } = default!;
@@ -33,7 +33,7 @@ public class EmpFinanceModDto
     public string PensionNumber { get; set; } = default!;
 }
 
-public class EmContactModDto
+public class MyEmContModDto
 {
     public Guid EmployeeId { get; set; }
     public string FirstName { get; set; } = default!;
@@ -58,7 +58,7 @@ public class EmContactModDto
     public string? Website { get; set; }
 }
 
-public class EmpFamilyAddDto
+public class MyFamilyAddDto
 {
     public Guid EmployeeId { get; set; } = default!; //Employee
     public string FirstName { get; set; } = default!;
@@ -69,7 +69,7 @@ public class EmpFamilyAddDto
     public string Relation { get; set; } = default!; //enum.Relation
 }
 
-public class EmpFamilyModDto
+public class MyFamilyModDto
 {
     public Guid Id { get; set; }
     public string FirstName { get; set; } = default!;

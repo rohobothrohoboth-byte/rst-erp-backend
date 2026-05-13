@@ -8,18 +8,18 @@ using Profile.Domain.Entities;
 
 namespace Profile.App.Commands;
 
-public class EmpBioModCmd : IRequest<EmpModRes> { public EmpBioModDto ModDto { get; set; } = default!; }
-public class EmpFinanceModCmd : IRequest<EmpModRes> { public EmpFinanceModDto ModDto { get; set; } = default!; }
-public class EmContactModCmd : IRequest<EmpModRes> { public EmContactModDto ModDto { get; set; } = default!; }
-public class EmpFamilyAddCmd : IRequest<EmpModRes> { public EmpFamilyAddDto AddDto { get; set; } = default!; }
-public class EmpFamilyModCmd : IRequest<EmpModRes> { public EmpFamilyModDto ModDto { get; set; } = default!; }
-public class EmpFamilyDelCmd : IRequest { public Guid Id { get; set; } }
+public class MyBioModCmd : IRequest<EmpModRes> { public MyBioModDto ModDto { get; set; } = default!; }
+public class MyFinanceModCmd : IRequest<EmpModRes> { public MyFinanceModDto ModDto { get; set; } = default!; }
+public class MyEmContModCmd : IRequest<EmpModRes> { public MyEmContModDto ModDto { get; set; } = default!; }
+public class MyFamilyAddCmd : IRequest<EmpModRes> { public MyFamilyAddDto AddDto { get; set; } = default!; }
+public class MyFamilyModCmd : IRequest<EmpModRes> { public MyFamilyModDto ModDto { get; set; } = default!; }
+public class MyFamilyDelCmd : IRequest { public Guid Id { get; set; } }
 
 
 
-public class EmpBioModHandler(IUnitOfWork _uow, IEmpCertService _iEmpCertSer) : IRequestHandler<EmpBioModCmd, EmpModRes>
+public class MyBioModHandler(IUnitOfWork _uow, IEmpCertService _iEmpCertSer) : IRequestHandler<MyBioModCmd, EmpModRes>
 {
-    public async Task<EmpModRes> Handle(EmpBioModCmd request, CancellationToken ct)
+    public async Task<EmpModRes> Handle(MyBioModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -61,9 +61,9 @@ public class EmpBioModHandler(IUnitOfWork _uow, IEmpCertService _iEmpCertSer) : 
     }
 }
 
-public class EmpFinanceModHandler(IUnitOfWork _uow) : IRequestHandler<EmpFinanceModCmd, EmpModRes>
+public class MyFinanceModHandler(IUnitOfWork _uow) : IRequestHandler<MyFinanceModCmd, EmpModRes>
 {
-    public async Task<EmpModRes> Handle(EmpFinanceModCmd request, CancellationToken ct)
+    public async Task<EmpModRes> Handle(MyFinanceModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -100,9 +100,9 @@ public class EmpFinanceModHandler(IUnitOfWork _uow) : IRequestHandler<EmpFinance
     }
 }
 
-public class EmContactModHandler(IUnitOfWork _uow) : IRequestHandler<EmContactModCmd, EmpModRes>
+public class MyEmContModHandler(IUnitOfWork _uow) : IRequestHandler<MyEmContModCmd, EmpModRes>
 {
-    public async Task<EmpModRes> Handle(EmContactModCmd request, CancellationToken ct)
+    public async Task<EmpModRes> Handle(MyEmContModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -180,9 +180,9 @@ public class EmContactModHandler(IUnitOfWork _uow) : IRequestHandler<EmContactMo
     }
 }
 
-public class EmpFamilyAddHandler(IUnitOfWork _uow) : IRequestHandler<EmpFamilyAddCmd, EmpModRes>
+public class MyFamilyAddHandler(IUnitOfWork _uow) : IRequestHandler<MyFamilyAddCmd, EmpModRes>
 {
-    public async Task<EmpModRes> Handle(EmpFamilyAddCmd request, CancellationToken ct)
+    public async Task<EmpModRes> Handle(MyFamilyAddCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -211,9 +211,9 @@ public class EmpFamilyAddHandler(IUnitOfWork _uow) : IRequestHandler<EmpFamilyAd
     }
 }
 
-public class EmpFamilyModHandler(IUnitOfWork _uow) : IRequestHandler<EmpFamilyModCmd, EmpModRes>
+public class MyFamilyModHandler(IUnitOfWork _uow) : IRequestHandler<MyFamilyModCmd, EmpModRes>
 {
-    public async Task<EmpModRes> Handle(EmpFamilyModCmd request, CancellationToken ct)
+    public async Task<EmpModRes> Handle(MyFamilyModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
@@ -241,9 +241,9 @@ public class EmpFamilyModHandler(IUnitOfWork _uow) : IRequestHandler<EmpFamilyMo
     }
 }
 
-public class EmpFamilyDelHandler(IUnitOfWork _uow) : IRequestHandler<EmpFamilyDelCmd>
+public class MyFamilyDelHandler(IUnitOfWork _uow) : IRequestHandler<MyFamilyDelCmd>
 {
-    public async Task Handle(EmpFamilyDelCmd request, CancellationToken ct)
+    public async Task Handle(MyFamilyDelCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try

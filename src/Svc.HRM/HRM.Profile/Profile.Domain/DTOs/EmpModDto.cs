@@ -86,3 +86,16 @@ public class EmpModStaSignDto : BaseDto
     public Guid EmployeeId { get; set; } = default!; //Employee
     public IFormFile File { get; set; } = default!;
 }
+
+public class ModSalaryDto
+{
+    public Guid EmployeeId { get; set; } = default!; //Employee
+    public Guid JgStepId { get; set; } = default!;
+    public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
+}
+
+public class ModFileDto
+{
+    public Guid Id { get; set; } = default!;
+    public IFormFile File { get; set; } = default!;
+}

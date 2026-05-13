@@ -3,7 +3,9 @@ using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Profile.App.Commands;
 using Profile.App.Queries;
+using Profile.Domain.DTOs;
 
 namespace Profile.API.Controllers;
 
@@ -42,6 +44,58 @@ public class EmpModController(IMediator med) : ControllerBase
     {
         var response = await med.Send(new EmpModGuarQry { Id = id });
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Guarantor Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    // Mods
+    [HttpPut("EmpBasicMod/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> EmpBasicMod(Guid id, [FromBody] EmpModBasicDto modDto)
+    {
+        if (!ModelState.IsValid || modDto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var response = await med.Send(new EmpBasicModCmd { ModDto = modDto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Basic Info successfully updated."));
+    }
+
+    [HttpPut("EmpBioMod/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> EmpBioMod(Guid id, [FromBody] EmpModBioDto modDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var response = await med.Send(new EmpBioModCmd { ModDto = modDto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Biographical Info successfully updated."));
+    }
+
+    [HttpPut("EmpGuarMod/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> EmpGuarMod(Guid id, [FromBody] EmpModGuarDto modDto)
+    {
+        if (!ModelState.IsValid || modDto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var response = await med.Send(new EmpGuarModCmd { ModDto = modDto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Guarantor Info successfully updated."));
     }
 
 

@@ -3,6 +3,7 @@ using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;
+using Profile.App.Services;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
 
@@ -13,12 +14,8 @@ public class EmpAddStep2Cmd : IRequest<EmpAddRes> { public Step2Dto AddDto { get
 
 
 
-public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
+public class EmpAddStep1CmdHandler(IUnitOfWork _uow, IEmpModService _empModSer) : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _uow;
-    private readonly ICorHrmmClient _hrmmClient;
-    public EmpAddStep1CmdHandler(IUnitOfWork uow, ICorHrmmClient hrmmClient) { _uow = uow; _hrmmClient = hrmmClient; }
-
     public async Task<EmpAddRes> Handle(EmpAddStep1Cmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
@@ -83,76 +80,31 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
             };
             await _uow.Add(empBio, ct);
 
-            var empFin = new EmpFinance
-            {
-                Tin = "",
-                BankAccountNo = "",
-                PensionNumber = "",
-                EmployeeId = data.Id
-            };
-            await _uow.Add(empFin, ct);
+            //var empFin = new EmpFinance
+            //{
+            //    Tin = "",
+            //    BankAccountNo = "",
+            //    PensionNumber = "",
+            //    EmployeeId = data.Id
+            //};
+            //await _uow.Add(empFin, ct);
 
-            var salary = new EmpSalary
+            var sDto = new ModSalaryDto
             {
-                BaseSalary = 0,
-                Currency = "",
-                SalaryPayFreq = "",
-                EffectiveFrom = request.AddDto.EmploymentDate,
+                EmployeeId = data.Id,
                 JgStepId = request.AddDto.JgStepId,
-                EmployeeId = data.Id
+                EmploymentDate = request.AddDto.EmploymentDate
             };
-            var slyTask = await _hrmmClient.GetSalaryJgs((request.AddDto.JgStepId).ToString(), ct);
-            if (slyTask.Salary != null)
-            {
-                salary.BaseSalary = double.Parse(slyTask.Salary);
-                salary.Currency = slyTask.Currency;
-                salary.SalaryPayFreq = slyTask.SalaryPayFreq;
-            }
-            await _uow.Add(salary, ct);
+            await _empModSer.Salary(sDto, ct);
 
             if (request.AddDto.File != null)
             {
-                var mData = new FileMetaData
+                var pDto = new ModFileDto
                 {
-                    FileName = request.AddDto.File.FileName,
-                    ContentType = request.AddDto.File.ContentType,
-                    FileSize = request.AddDto.File.Length
+                    Id = data.Id,
+                    File = request.AddDto.File
                 };
-                await _uow.Add(mData, ct);
-
-                using var ms = new MemoryStream();
-                await request.AddDto.File.CopyToAsync(ms, ct);
-                ms.Position = 0;
-                var pBlob = new EmpPhotoBlob
-                {
-                    FileMetaDataId = mData.Id,
-                    Data = ms.ToArray()
-                };
-                await _uow.Add(pBlob, ct);
-
-                var thumbData = ThumbnailGenerator.GenerateThumbnail(ms);
-                var tData = new FileMetaData
-                {
-                    FileName = $"{request.AddDto.File.FileName}_thumbnail",
-                    ContentType = "image/png",
-                    FileSize = thumbData.Length
-                };
-                await _uow.Add(tData, ct);
-
-                var tBlob = new EmpPhotoThumbnail
-                {
-                    FileMetaDataId = tData.Id,
-                    Data = thumbData.ToArray()
-                };
-                await _uow.Add(tBlob, ct);
-
-                var emp = new EmpPhoto
-                {
-                    ThumbnailId = tData.Id,
-                    FileMetaDataId = mData.Id,
-                    EmployeeId = data.Id
-                };
-                await _uow.Add(emp, ct);
+                await _empModSer.Photo(pDto, ct);
             }
 
             await _uow.Commit(ct);
@@ -167,18 +119,15 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
     }
 }
 
-public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
+public class EmpAddStep2CmdHandler(IUnitOfWork _uow, IEmpModService _empModSer) : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 {
-    private readonly IUnitOfWork _uow;
-    public EmpAddStep2CmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; }
-
     public async Task<EmpAddRes> Handle(EmpAddStep2Cmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
             var res = new EmpAddRes { Id = request.AddDto.EmployeeId };
-            var added = await _uow.Set<EmpGuarantor>().FirstOrDefaultAsync(x => x.EmployeeId == request.AddDto.EmployeeId, cancellationToken: ct);
+            var added = await _uow.Set<EmpGuarantor>().FirstOrDefaultAsync(x => x.EmployeeId == request.AddDto.EmployeeId, ct);
             if (added != null) { return res; }
 
             var address = new Address
@@ -192,10 +141,10 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
                 Kebele = request.AddDto.Kebele,
                 HouseNo = request.AddDto.HouseNo,
                 Telephone = request.AddDto.Telephone,
-                PoBox = request.AddDto.PoBox ?? "",
-                Fax = request.AddDto.Fax ?? "",
-                Email = request.AddDto.Email ?? "",
-                Website = request.AddDto.Website ?? ""
+                PoBox = request.AddDto.PoBox,
+                Fax = request.AddDto.Fax,
+                Email = request.AddDto.Email,
+                Website = request.AddDto.Website
             };
             await _uow.Add(address, ct);
 
@@ -214,30 +163,12 @@ public class EmpAddStep2CmdHandler : IRequestHandler<EmpAddStep2Cmd, EmpAddRes>
 
             if (request.AddDto.File != null)
             {
-                var mData = new FileMetaData
+                var pDto = new ModFileDto
                 {
-                    FileName = request.AddDto.File.FileName,
-                    ContentType = request.AddDto.File.ContentType,
-                    FileSize = request.AddDto.File.Length
+                    Id = data.Id,
+                    File = request.AddDto.File
                 };
-                await _uow.Add(mData, ct);
-
-                using var ms = new MemoryStream();
-                await request.AddDto.File.CopyToAsync(ms, ct);
-                ms.Position = 0;
-                var pBlob = new EmpGuarantorFileBlob
-                {
-                    FileMetaDataId = mData.Id,
-                    Data = ms.ToArray()
-                };
-                await _uow.Add(pBlob, ct);
-
-                var emp = new EmpGuarantorFile
-                {
-                    FileMetaDataId = mData.Id,
-                    EmpGuarantorId = data.Id
-                };
-                await _uow.Add(emp, ct);
+                await _empModSer.GraFile(pDto, ct);
             }
             await _uow.Commit(ct);
             return res;
