@@ -264,79 +264,6 @@ public class EmpModService(IUnitOfWork _uow, ICorHrmmClient _hrmmClient) : IEmpM
         await dto.File.CopyToAsync(ms, ct);
         ms.Position = 0;
 
-        var eStamp = await _uow.Set<EmpSign>().FirstOrDefaultAsync(x => x.EmployeeId == dto.Id, ct);
-        if (eStamp != null)
-        {
-            var fId = new Guid();
-            var mData = await _uow.Set<FileMetaData>().FirstOrDefaultAsync(x => x.Id == eStamp.FileMetaDataId, ct);
-            if (mData != null)
-            {
-                mData.FileName = dto.File.FileName;
-                mData.ContentType = dto.File.ContentType;
-                mData.FileSize = dto.File.Length;
-                await _uow.Update(mData);
-                fId = mData.Id;
-            }
-            else
-            {
-                var mData2 = new FileMetaData
-                {
-                    FileName = dto.File.FileName,
-                    ContentType = dto.File.ContentType,
-                    FileSize = dto.File.Length
-                };
-                await _uow.Add(mData2, ct);
-                fId = mData2.Id;
-            }
-
-            var pBlob = await _uow.Set<EmpSignBlob>().FirstOrDefaultAsync(x => x.FileMetaDataId == eStamp.FileMetaDataId, ct);
-            if (pBlob != null)
-            {
-                pBlob.Data = ms.ToArray();
-                await _uow.Update(pBlob);
-            }
-            else
-            {
-                var pBlob2 = new EmpSignBlob
-                {
-                    FileMetaDataId = fId,
-                    Data = ms.ToArray()
-                };
-                await _uow.Add(pBlob2, ct);
-            }
-        }
-        else
-        {
-            var mData = new FileMetaData
-            {
-                FileName = dto.File.FileName,
-                ContentType = dto.File.ContentType,
-                FileSize = dto.File.Length
-            };
-            await _uow.Add(mData, ct);
-
-            var pBlob = new EmpSignBlob
-            {
-                FileMetaDataId = mData.Id,
-                Data = ms.ToArray()
-            };
-            await _uow.Add(pBlob, ct);
-
-            var emp = new EmpSign
-            {
-                FileMetaDataId = mData.Id,
-                EmployeeId = dto.Id
-            };
-            await _uow.Add(emp, ct);
-        }
-    }
-
-    public async Task SignFile(ModFileDto dto, CancellationToken ct)
-    {
-        using var ms = new MemoryStream();
-        await dto.File.CopyToAsync(ms, ct);
-        ms.Position = 0;
-
         var eStamp = await _uow.Set<EmpStamp>().FirstOrDefaultAsync(x => x.EmployeeId == dto.Id, ct);
         if (eStamp != null)
         {
@@ -396,6 +323,79 @@ public class EmpModService(IUnitOfWork _uow, ICorHrmmClient _hrmmClient) : IEmpM
             await _uow.Add(pBlob, ct);
 
             var emp = new EmpStamp
+            {
+                FileMetaDataId = mData.Id,
+                EmployeeId = dto.Id
+            };
+            await _uow.Add(emp, ct);
+        }
+    }
+
+    public async Task SignFile(ModFileDto dto, CancellationToken ct)
+    {
+        using var ms = new MemoryStream();
+        await dto.File.CopyToAsync(ms, ct);
+        ms.Position = 0;
+
+        var eStamp = await _uow.Set<EmpSign>().FirstOrDefaultAsync(x => x.EmployeeId == dto.Id, ct);
+        if (eStamp != null)
+        {
+            var fId = new Guid();
+            var mData = await _uow.Set<FileMetaData>().FirstOrDefaultAsync(x => x.Id == eStamp.FileMetaDataId, ct);
+            if (mData != null)
+            {
+                mData.FileName = dto.File.FileName;
+                mData.ContentType = dto.File.ContentType;
+                mData.FileSize = dto.File.Length;
+                await _uow.Update(mData);
+                fId = mData.Id;
+            }
+            else
+            {
+                var mData2 = new FileMetaData
+                {
+                    FileName = dto.File.FileName,
+                    ContentType = dto.File.ContentType,
+                    FileSize = dto.File.Length
+                };
+                await _uow.Add(mData2, ct);
+                fId = mData2.Id;
+            }
+
+            var pBlob = await _uow.Set<EmpSignBlob>().FirstOrDefaultAsync(x => x.FileMetaDataId == eStamp.FileMetaDataId, ct);
+            if (pBlob != null)
+            {
+                pBlob.Data = ms.ToArray();
+                await _uow.Update(pBlob);
+            }
+            else
+            {
+                var pBlob2 = new EmpSignBlob
+                {
+                    FileMetaDataId = fId,
+                    Data = ms.ToArray()
+                };
+                await _uow.Add(pBlob2, ct);
+            }
+        }
+        else
+        {
+            var mData = new FileMetaData
+            {
+                FileName = dto.File.FileName,
+                ContentType = dto.File.ContentType,
+                FileSize = dto.File.Length
+            };
+            await _uow.Add(mData, ct);
+
+            var pBlob = new EmpSignBlob
+            {
+                FileMetaDataId = mData.Id,
+                Data = ms.ToArray()
+            };
+            await _uow.Add(pBlob, ct);
+
+            var emp = new EmpSign
             {
                 FileMetaDataId = mData.Id,
                 EmployeeId = dto.Id

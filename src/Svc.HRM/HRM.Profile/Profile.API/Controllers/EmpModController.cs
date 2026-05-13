@@ -52,7 +52,7 @@ public class EmpModController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> EmpBasicMod(Guid id, [FromBody] EmpModBasicDto modDto)
+    public async Task<IActionResult> EmpBasicMod(Guid id, [FromForm] EmpModBasicDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {
@@ -71,7 +71,7 @@ public class EmpModController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> EmpBioMod(Guid id, [FromBody] EmpModBioDto modDto)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || modDto.EmployeeId != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             throw new ValException(errors);
@@ -86,9 +86,9 @@ public class EmpModController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> EmpGuarMod(Guid id, [FromBody] EmpModGuarDto modDto)
+    public async Task<IActionResult> EmpGuarMod(Guid id, [FromForm] EmpModGuarDto modDto)
     {
-        if (!ModelState.IsValid || modDto.Id != id)
+        if (!ModelState.IsValid || modDto.EmployeeId != id)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
             throw new ValException(errors);
@@ -96,6 +96,40 @@ public class EmpModController(IMediator med) : ControllerBase
 
         var response = await med.Send(new EmpGuarModCmd { ModDto = modDto });
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Guarantor Info successfully updated."));
+    }
+
+    [HttpPut("EmpStamp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> EmpStamp(Guid id, [FromForm] ModFileDto modDto)
+    {
+        if (!ModelState.IsValid || modDto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var response = await med.Send(new EmpStampModCmd { Dto = modDto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Stamp File successfully Stored."));
+    }
+
+    [HttpPut("EmpSign/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> EmpSign(Guid id, [FromForm] ModFileDto modDto)
+    {
+        if (!ModelState.IsValid || modDto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+
+        var response = await med.Send(new EmpSignModCmd { Dto = modDto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Signature File successfully Stored."));
     }
 
 
