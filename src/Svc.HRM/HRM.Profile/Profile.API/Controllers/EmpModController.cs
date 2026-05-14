@@ -46,6 +46,24 @@ public class EmpModController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Guarantor Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpGet("EmpCertAll/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EmpCertAll(Guid id)
+    {
+        var response = await med.Send(new EmpCertAllQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Certificates NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [HttpGet("EmpCertById/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EmpCertById(Guid id)
+    {
+        var response = await med.Send(new EmpCertByIdQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("Certificate NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
     // Mods
     [HttpPut("EmpBasicMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
 
 namespace Profile.Domain.DTOs;
 
@@ -92,4 +93,16 @@ public class ModFileDto
 {
     public Guid Id { get; set; } = default!;
     public IFormFile File { get; set; } = default!;
+}
+
+public class EmpFileList
+{
+    [JsonIgnore]
+    public long FileSize { get; set; } = default!;
+
+    public Guid Id { get; set; }
+    public string FileName { get; set; } = default!;
+    public string ContentType { get; set; } = default!;
+    public string Size { get; set; } = default!;
+    public string CertType { get; set; } = default!; // enum.CertType
 }
