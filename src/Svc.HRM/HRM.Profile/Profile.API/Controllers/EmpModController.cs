@@ -60,8 +60,13 @@ public class EmpModController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> EmpCertById(Guid id)
     {
-        var response = await med.Send(new EmpCertByIdQry { Id = id });
-        return response == null ? Ok(ApiResponse<object>.Fail("Certificate NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+        var res = await med.Send(new EmpCertByIdQry { Id = id });
+        if (res == null)
+        {
+            return Ok(ApiResponse<object>.Fail("Certificate NOT FOUND.", null, 404));
+        }
+
+        return File(res.Data, res.ContentType, res.FileName, enableRangeProcessing: true);
     }
 
     // Mods

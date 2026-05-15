@@ -106,3 +106,15 @@ public class EmpFileList
     public string Size { get; set; } = default!;
     public string CertType { get; set; } = default!; // enum.CertType
 }
+
+public class EmpFileRes
+{
+    public string FileName { get; set; } = default!;
+    public string ContentType { get; set; } = default!;
+    public byte[] Data { get; set; } = default!;
+}
+
+public class EmpFileDta
+{
+    public byte[] Data { get; set; } = default!;
+}

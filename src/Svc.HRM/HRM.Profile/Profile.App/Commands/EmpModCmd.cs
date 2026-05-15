@@ -103,7 +103,7 @@ public class EmpBioModHandler(IUnitOfWork _uow) : IRequestHandler<EmpBioModCmd, 
                     Email = request.ModDto.Email,
                     Website = request.ModDto.Website
                 };
-                await _uow.Add(address, ct);
+                await _uow.Add(address, ct);                              
 
                 var empBio = new EmpBio
                 {
@@ -142,6 +142,26 @@ public class EmpBioModHandler(IUnitOfWork _uow) : IRequestHandler<EmpBioModCmd, 
                 eBio.MaritalStatus = request.ModDto.MaritalStatus;
                 eBio.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
                 await _uow.Update(eBio);
+            }
+
+            var eFin = await _uow.Set<EmpFinance>().FirstOrDefaultAsync(x => x.EmployeeId == request.ModDto.EmployeeId, ct);
+            if (eFin == null)
+            {
+                var empFin = new EmpFinance
+                {
+                    Tin = request.ModDto.Tin,
+                    BankAccountNo = request.ModDto.BankAccountNo,
+                    PensionNumber = request.ModDto.PensionNumber,
+                    EmployeeId = request.ModDto.Id
+                };
+                await _uow.Add(empFin, ct);
+            }
+            else
+            {
+                eFin.Tin = request.ModDto.Tin;
+                eFin.BankAccountNo = request.ModDto.BankAccountNo;
+                eFin.PensionNumber = request.ModDto.PensionNumber;
+                await _uow.Update(eFin);
             }
 
             await _uow.Commit(ct);
@@ -242,7 +262,7 @@ public class EmpGuarModHandler(IUnitOfWork _uow, IEmpModService _empModSer) : IR
                         File = request.ModDto.File
                     };
                     await _empModSer.GraFile(fDto, ct);
-                }                
+                }
             }
 
             await _uow.Commit(ct);

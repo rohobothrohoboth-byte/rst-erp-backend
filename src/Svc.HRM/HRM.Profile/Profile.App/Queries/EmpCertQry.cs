@@ -7,7 +7,7 @@ using Profile.Domain.Entities;
 namespace Profile.App.Queries;
 
 public class EmpCertAllQry : IRequest<List<EmpFileList>> { public Guid Id { get; set; } }
-public class EmpCertByIdQry : IRequest<EmpFileList?> { public Guid Id { get; set; } }
+public class EmpCertByIdQry : IRequest<EmpFileRes?> { public Guid Id { get; set; } }
 
 
 
@@ -36,22 +36,57 @@ public class EmpCertAllHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertA
     }
 }
 
-public class EmpCertByIdHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertByIdQry, EmpFileList?>
+public class EmpCertByIdHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertByIdQry, EmpFileRes?>
 {
-    public async Task<EmpFileList?> Handle(EmpCertByIdQry request, CancellationToken ct)
+    private async Task<EmpFileDta?> GetFile(EmpFileList dto, CancellationToken ct)
+    {
+        var bcType = BoolToStr.EnumToString(CertType.Birth);
+        if (dto.CertType == bcType)
+        {
+            const string v = "v";
+            var qb = new QueryBuilder()
+                .Select<EmpCertBirth>(v, x => x.Data)
+                .From<EmpCertBirth>(v)
+                .Where<EmpCertBirth>(v, x => x.EmpCertId == dto.Id)
+                .Limit(1);
+            var (sql, parameters) = qb.Build();
+            var data = await _dapper.QueryFirstOrDefaultAsync<EmpFileDta>(sql, parameters, ct);
+            return data ?? null;
+        }
+        else
+        {
+            const string v = "v";
+            var qb = new QueryBuilder()
+                .Select<EmpCertMarriage>(v, x => x.Data)
+                .From<EmpCertMarriage>(v)
+                .Where<EmpCertMarriage>(v, x => x.EmpCertId == dto.Id)
+                .Limit(1);
+            var (sql, parameters) = qb.Build();
+            var data = await _dapper.QueryFirstOrDefaultAsync<EmpFileDta>(sql, parameters, ct);
+            return data ?? null;
+        }
+    }
+
+    public async Task<EmpFileRes?> Handle(EmpCertByIdQry request, CancellationToken ct)
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EmpCert>(v, x => x.Id, x => x.FileName, x => x.ContentType, x => x.FileSize, x => x.CertType)
+            .Select<EmpCert>(v, x => x.Id, x => x.FileName, x => x.ContentType, x => x.CertType)
             .From<EmpCert>(v)
             .Where<EmpCert>(v, x => x.Id == request.Id)
             .Limit(1);
         var (sql, parameters) = qb.Build();
-        var data = await _dapper.QueryFirstOrDefaultAsync<EmpFileList>(sql, parameters, ct);
-        if (data == null) return null;
+        var cert = await _dapper.QueryFirstOrDefaultAsync<EmpFileList>(sql, parameters, ct);
+        if (cert == null) return null;
 
-        data.CertType = MyEnumHelper.FormatEnum<CertType>(data.CertType);
-        data.Size = data.FileSize > 0 ? SizeFormatter.FormatBytes(data.FileSize) : "0";
-        return data;
+        var data = await GetFile(cert, ct);
+        if (data == null) { return null; }
+
+        return new EmpFileRes
+        {
+            FileName = cert.FileName,
+            ContentType = cert.ContentType,
+            Data = data.Data
+        };
     }
 }
