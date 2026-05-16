@@ -1,4 +1,6 @@
-﻿namespace Svc.Auth.Models.Dtos;
+﻿using System.Text.Json.Serialization;
+
+namespace Svc.Auth.Models.Dtos;
 
 public class LoginDto
 {
@@ -87,4 +89,22 @@ public class MenuTokenDto
     public int O { get; set; }
     public List<string> A { get; set; } = new();
     public List<MenuTokenDto>? C { get; set; }
+}
+
+public class PwdChgDto
+{
+    [JsonIgnore]
+    public string? Id { get; set; } = default!;
+    public string OldPwd { get; set; } = default!;
+    public string NewPwd { get; set; } = default!;
+}
+
+public class OpResult
+{
+    public bool IsSuccess { get; set; }
+    public List<string> Errors { get; set; } = [];
+
+    public static OpResult Ok() => new() { IsSuccess = true };
+    public static OpResult Fail(string error) => new() { IsSuccess = false, Errors = [error] };
+    public static OpResult Fail(IEnumerable<string> errors) => new() { IsSuccess = false, Errors = [.. errors] };
 }

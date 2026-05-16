@@ -128,7 +128,7 @@ public class TokenService : ITokenService
 
         var claims = new List<Claim>
         {
-            //new(AuthCons.UserId, user.Id),
+            new(AuthCons.UserId, user.Id),
             new(AuthCons.UserName, user.UserName ?? "")
         };
 

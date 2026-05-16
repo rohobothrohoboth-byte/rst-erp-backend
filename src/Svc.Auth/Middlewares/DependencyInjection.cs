@@ -128,6 +128,7 @@ public static class DependencyInjection
             o.Password.RequiredLength = 6;
         }).AddEntityFrameworkStores<AuthDbContext>();
         builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddScoped<IUserAcctService, UserAcctService>();
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
