@@ -10,6 +10,7 @@ public class EmpDbReport
     public int EmpStd { get; set; } = 0;
     public int EmpTer { get; set; } = 0;
     public int EmpLeave { get; set; } = 0;
+    public int EmpRej { get; set; } = 0;
 }
 
 public class EmpDbPendList
