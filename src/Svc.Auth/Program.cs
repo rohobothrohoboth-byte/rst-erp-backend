@@ -31,7 +31,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(options => { options.WithTitle("Auth Manager API"); });
     app.ApplyMigration();
     await app.ApplyAdminRole();
-    await app.ApplyPerModSeed();
+    await app.SeedPerModule();
+    await app.SeedPerMenu();
 }
 
 app.UseCors("AllowAll");

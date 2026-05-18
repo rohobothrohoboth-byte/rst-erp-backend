@@ -13,7 +13,7 @@ namespace Profile.API.Controllers;
 
 //[Authorize]
 [ApiController]
-[Route("api/hrm/leave/v{version:apiVersion}/EmpListRepo")]
+[Route("api/hrm/profile/v{version:apiVersion}/EmpListRepo")]
 [ApiVersion("1.0")]
 public class EmpDashBrdRepoController(IMediator med) : ControllerBase
 {

@@ -16,7 +16,8 @@ public class RoleSeeder
             new() { Name = "vice", NormalizedName = "VICE", Desc = "Vice" },
             new() { Name = "dir", NormalizedName = "DIR", Desc = "Director" },
             new() { Name = "mgr", NormalizedName = "MGR", Desc = "Manager" },
-            new() { Name = "emp", NormalizedName = "EMP", Desc = "Employee" }
+            new() { Name = "emp", NormalizedName = "EMP", Desc = "Employee" },
+            new() { Name = "inte", NormalizedName = "INTE", Desc = "Intern" }
         };
     }
 

@@ -13,8 +13,3 @@ public class EmpListDto
     public string EmpState { get; set; } = default!;
     public bool HasAccount { get; set; }
 }
-
-public class IdDto
-{
-    public Guid Id { get; set; }
-}

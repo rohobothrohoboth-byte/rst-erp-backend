@@ -6,19 +6,17 @@ using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Queries;
 
-public class PerMenuAllQry : IRequest<List<PerMenuListDto>> { }
-public class PerMenuByIdQry : IRequest<PerMenuListDto?> { public Guid Id { get; set; } }
-public class PerMenuByKeyQry : IRequest<NameList?> { public string Key { get; set; } = default!; }
-public class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
-public class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public string Id { get; set; } = default!; }
+public sealed class PerMenuAllQry : IRequest<List<PerMenuListDto>> { }
+public sealed class PerMenuByIdQry : IRequest<PerMenuListDto?> { public Guid Id { get; set; } }
+public sealed class PerMenuByKeyQry : IRequest<NameList?> { public string Key { get; set; } = default!; }
+public sealed class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
+public sealed class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public string Id { get; set; } = default!; }
+public sealed class MenuIdsByKeysQry : IRequest<List<KeyIdDto>> { public List<string> Keys { get; init; } = []; }
 
 
 
-public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
+public sealed class PerMenuAll(IDapperHelper _dapper) : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
-    private readonly IDapperHelper _dapper;
-    public PerMenuAllQryHandler(IDapperHelper dapper) { _dapper = dapper;}
-
     public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken ct)
     {
         const string v = "v";
@@ -34,7 +32,6 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
             .LeftJoin<PerMenu, PerMenu>(v, c, x => x.ParentId, x => x.Id)
             .Join<PerMenu, PerModule>(v, d, x => x.PerModuleId, x => x.Id)
             .OrderBy<PerMenu>(v, x => x.Order);
-
         var (sql, param) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, param, ct);
         var parser = reader.GetRowParser<PerMenuJoinRow>();
@@ -68,11 +65,8 @@ public class PerMenuAllQryHandler : IRequestHandler<PerMenuAllQry, List<PerMenuL
     }
 }
 
-public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuListDto?>
+public sealed class PerMenuById(IDapperHelper _dapper) : IRequestHandler<PerMenuByIdQry, PerMenuListDto?>
 {
-    private readonly IDapperHelper _dapper;
-    public PerMenuByIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
-
     public async Task<PerMenuListDto?> Handle(PerMenuByIdQry request, CancellationToken ct)
     {
         const string v = "v";
@@ -87,7 +81,6 @@ public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuList
             .Join<PerMenu, PerModule>(v, d, x => x.PerModuleId, x => x.Id)
             .Where<PerMenu>(v, x => x.Id == request.Id)
             .Limit(1);
-
         var (sql, parameters) = qb.Build();
         var row = await _dapper.QueryFirstOrDefaultAsync<PerMenuJoinRow>(sql, parameters, ct);
         if (row == null) return null;
@@ -114,10 +107,8 @@ public class PerMenuByIdQryHandler : IRequestHandler<PerMenuByIdQry, PerMenuList
     }
 }
 
-public class PerMenuByKeyQryHandler : IRequestHandler<PerMenuByKeyQry, NameList?>
+public sealed class PerMenuByKey(IDapperHelper _dapper) : IRequestHandler<PerMenuByKeyQry, NameList?>
 {
-    private readonly IDapperHelper _dapper;
-    public PerMenuByKeyQryHandler(IDapperHelper dapper) { _dapper = dapper; }
     public async Task<NameList?> Handle(PerMenuByKeyQry request, CancellationToken ct)
     {
         const string v = "v";
@@ -127,7 +118,6 @@ public class PerMenuByKeyQryHandler : IRequestHandler<PerMenuByKeyQry, NameList?
             .From<PerMenu>(v)
             .Where<PerMenu>(v, p => p.Key == request.Key)
             .Limit(1);
-
         var (sql, parameters) = qb.Build();
         var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
         if (data == null) return null;
@@ -135,11 +125,8 @@ public class PerMenuByKeyQryHandler : IRequestHandler<PerMenuByKeyQry, NameList?
     }
 }
 
-public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPerMenuListDto?>
+public sealed class PerMenuByModId(IDapperHelper _dapper) : IRequestHandler<PerMenuByModIdQry, ModPerMenuListDto?>
 {
-    private readonly IDapperHelper _dapper;
-    public PerMenuByModIdQryHandler(IDapperHelper dapper) { _dapper = dapper; }
-
     public async Task<ModPerMenuListDto?> Handle(PerMenuByModIdQry request, CancellationToken ct)
     {
         const string v = "v";
@@ -148,20 +135,17 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
             .Select<PerMenu>(c, x => x.PerModuleId)
             .SelectAs<PerMenu, ModuleMenuRow>(c, x => x.Label, x => x.MenuLabel)
             .SelectAs<PerMenu, ModuleMenuRow>(c, x => x.Id, x => x.MenuId)
-            //.Select<PerModule>(v, x => x.Id, x => x.Desc)
             .SelectAs<PerModule, ModuleMenuRow>(v, x => x.Desc, x => x.ModuleDesc)
             .From<PerMenu>(v)
             .LeftJoin<PerModule, PerMenu>(v, c, x => x.Id, x => x.PerModuleId)
             .Where<PerMenu>(c, x => x.PerModuleId == request.Id)
             .OrderBy<PerMenu>(c, x => x.Label);
-
         var (sql, param) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, param, ct);
         var parser = reader.GetRowParser<ModuleMenuRow>();
 
         ModPerMenuListDto? result = null;
         var menus = new List<NameList>();
-
         while (await reader.ReadAsync(ct))
         {
             var row = parser(reader);
@@ -190,11 +174,8 @@ public class PerMenuByModIdQryHandler : IRequestHandler<PerMenuByModIdQry, ModPe
     }
 }
 
-public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, List<ModPerMenuListDto>>
+public sealed class PerMenuByUserId(IDapperHelper _dapper) : IRequestHandler<PerMenuByUserIdQry, List<ModPerMenuListDto>>
 {
-    private readonly IDapperHelper _dapper;
-    public PerMenuByUserIdQryHandler(IDapperHelper dapper) { _dapper = dapper;  }
-
     public async Task<List<ModPerMenuListDto>> Handle(PerMenuByUserIdQry request, CancellationToken ct)
     {
         const string v = "v";
@@ -212,13 +193,11 @@ public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, Lis
             .LeftJoin<PerModule, PerMenu>(c, d, x => x.Id, x => x.PerModuleId)
             .Where<UserPerModule>(v, x => x.UserId == request.Id)
             .OrderBy<PerModule>(c, x => x.Desc);
-
         var (sql, param) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, param, ct);
         var parser = reader.GetRowParser<UserModuleMenuRow>();
 
         var dict = new Dictionary<Guid, ModPerMenuListDto>();
-
         while (await reader.ReadAsync(ct))
         {
             var row = parser(reader);
@@ -246,5 +225,24 @@ public class PerMenuByUserIdQryHandler : IRequestHandler<PerMenuByUserIdQry, Lis
         }
 
         return dict.Values.ToList();
+    }
+}
+
+public sealed class MenuIdsByKeys(IDapperHelper _dapper) : IRequestHandler<MenuIdsByKeysQry, List<KeyIdDto>>
+{
+    public async Task<List<KeyIdDto>> Handle(MenuIdsByKeysQry request, CancellationToken ct)
+    {
+        if (request.Keys == null || request.Keys.Count == 0) { return []; }
+        var keys = request.Keys.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (keys.Length == 0) { return []; }
+
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PerMenu>(v, x => x.Id, x => x.Key)
+            .From<PerMenu>(v)
+            .WhereIn<PerModule>(v, x => x.Key, keys);
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryAsync<KeyIdDto>(sql, parameters, ct);
+        return data?.ToList() ?? [];
     }
 }
