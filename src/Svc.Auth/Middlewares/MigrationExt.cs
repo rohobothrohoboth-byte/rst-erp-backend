@@ -90,25 +90,25 @@ public static class MigrationExt
         }
     }
 
-    //public static async Task SeedPerAccess(this IApplicationBuilder app)
-    //{
-    //    using var scope = app.ApplicationServices.CreateScope();
-    //    var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    //    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+    public static async Task SeedPerAccess(this IApplicationBuilder app)
+    {
+        using var scope = app.ApplicationServices.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-    //    try
-    //    {
-    //        if (!await dbContext.Database.CanConnectAsync()) { return; }
-    //        var existingKeys = await dbContext.PerMenu.AsNoTracking().Select(x => x.Key).ToListAsync();
-    //        var existingSet = new HashSet<string>(existingKeys, StringComparer.OrdinalIgnoreCase);
-    //        var seedItems = SeedPerList.GetPerMenu();
-    //        var newItems = seedItems.Where(x => !existingSet.Contains(x.Key)).ToList();
-    //        if (newItems.Count == 0) { return; }
-    //        await mediator.Send(new PerMenuSeedCmd { AddDto = newItems });
-    //    }
-    //    catch
-    //    {
-    //        throw;
-    //    }
-    //}
+        try
+        {
+            if (!await dbContext.Database.CanConnectAsync()) { return; }
+            var existingKeys = await dbContext.PerApi.AsNoTracking().Select(x => x.Key).ToListAsync();
+            var existingSet = new HashSet<string>(existingKeys, StringComparer.OrdinalIgnoreCase);
+            var seedItems = SeedPerList.GetPerAccess();
+            var newItems = seedItems.Where(x => !existingSet.Contains(x.Key)).ToList();
+            if (newItems.Count == 0) { return; }
+            await mediator.Send(new PerAccessSeedCmd { AddDto = newItems });
+        }
+        catch
+        {
+            throw;
+        }
+    }
 }

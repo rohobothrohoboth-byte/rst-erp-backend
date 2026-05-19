@@ -11,11 +11,7 @@ public class EmpTermCmd : IRequest<EmpModRes> { public Guid Id { get; set; } }
 public class EmpStByCmd : IRequest<EmpModRes> { public Guid Id { get; set; } }
 public class EmpSuspCmd : IRequest<EmpModRes> { public Guid Id { get; set; } }
 public class EmpRetiCmd : IRequest<EmpModRes> { public Guid Id { get; set; } }
-public class EmpAppCmd : IRequest<EmpModRes>
-{
-    public Guid Id { get; set; }
-    public bool Stat { get; set; } = false;
-}
+public class EmpAppCmd : IRequest<EmpModRes> { public EmpRevDto Dto { get; set; } = default!; }
 
 
 
@@ -126,10 +122,10 @@ public class EmpAppHandler(IUnitOfWork _uow) : IRequestHandler<EmpAppCmd, EmpMod
         await _uow.Begin(ct);
         try
         {
-            var emp = await _uow.Set<Employee>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+            var emp = await _uow.Set<Employee>().FirstOrDefaultAsync(x => x.Id == request.Dto.Id, ct);
             if (emp == null) { throw new DomainException("Employee data NOT AVAILABLE for reviewing.", 404); }
 
-            if (request.Stat == true)
+            if (request.Dto.Decision == true)
             {
                 emp.EmpState = BoolToStr.EnumToString(EmpState.Active);
                 await _uow.Update(emp);
@@ -141,7 +137,7 @@ public class EmpAppHandler(IUnitOfWork _uow) : IRequestHandler<EmpAppCmd, EmpMod
             }
 
             await _uow.Commit(ct);
-            var res = new EmpModRes { Id = request.Id };
+            var res = new EmpModRes { Id = request.Dto.Id };
             return res;
         }
         catch

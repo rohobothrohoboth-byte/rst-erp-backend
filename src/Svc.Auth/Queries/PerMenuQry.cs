@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Helpers;
 using MediatR;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -12,6 +13,7 @@ public sealed class PerMenuByKeyQry : IRequest<NameList?> { public string Key { 
 public sealed class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Guid Id { get; set; } }
 public sealed class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public string Id { get; set; } = default!; }
 public sealed class MenuIdsByKeysQry : IRequest<List<KeyIdDto>> { public List<string> Keys { get; init; } = []; }
+public sealed class GetMenuTreeQry : IRequest<List<PerMenuDto>> { };
 
 
 
@@ -240,9 +242,37 @@ public sealed class MenuIdsByKeys(IDapperHelper _dapper) : IRequestHandler<MenuI
         var qb = new QueryBuilder()
             .Select<PerMenu>(v, x => x.Id, x => x.Key)
             .From<PerMenu>(v)
-            .WhereIn<PerModule>(v, x => x.Key, keys);
+            .WhereIn<PerMenu>(v, x => x.Key, keys);
         var (sql, parameters) = qb.Build();
         var data = await _dapper.QueryAsync<KeyIdDto>(sql, parameters, ct);
         return data?.ToList() ?? [];
+    }
+}
+
+public sealed class GetMenuTree(IDapperHelper _dapper) : IRequestHandler<GetMenuTreeQry, List<PerMenuDto>>
+{
+    private static List<PerMenuDto> BuildTree(List<PerMenuDto> allMenus, Guid? parentId)
+    {
+        return [.. allMenus.Where(m => m.ParentId == parentId).Select(m =>
+            {
+                m.Children = BuildTree(allMenus, m.Id);
+                return m;
+            }).OrderBy(x=>x.Order)];
+    }
+
+    public async Task<List<PerMenuDto>> Handle(GetMenuTreeQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        const string m = "m";
+        var qb = new QueryBuilder()
+            .Select<PerMenu>(v, x => x.Id, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.Order, x => x.PerModuleId, x => x.ParentId)
+            .SelectAs<PerModule, PerMenuDto>(m, x => x.Desc, x => x.Module)
+            .From<PerMenu>(v)
+            .LeftJoin<PerMenu, PerModule>(v, m, x => x.PerModuleId, x => x.Id)
+            .OrderBy<PerMenu>(v, x => x.Order, desc: false);
+        var (sql, parameters) = qb.Build();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var allMenus = await reader.ToListAsync<PerMenuDto>(ct);
+        return BuildTree(allMenus, parentId: null);
     }
 }

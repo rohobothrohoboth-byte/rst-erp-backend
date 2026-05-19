@@ -11,7 +11,7 @@ public class EmpCertByIdQry : IRequest<EmpFileRes?> { public Guid Id { get; set;
 
 
 
-public class EmpCertAllHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertAllQry, List<EmpFileList>>
+public class EmpCertAll(IDapperHelper _dapper) : IRequestHandler<EmpCertAllQry, List<EmpFileList>>
 {
     public async Task<List<EmpFileList>> Handle(EmpCertAllQry request, CancellationToken ct)
     {
@@ -36,7 +36,7 @@ public class EmpCertAllHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertA
     }
 }
 
-public class EmpCertByIdHandler(IDapperHelper _dapper) : IRequestHandler<EmpCertByIdQry, EmpFileRes?>
+public class EmpCertById(IDapperHelper _dapper) : IRequestHandler<EmpCertByIdQry, EmpFileRes?>
 {
     private async Task<EmpFileDta?> GetFile(EmpFileList dto, CancellationToken ct)
     {

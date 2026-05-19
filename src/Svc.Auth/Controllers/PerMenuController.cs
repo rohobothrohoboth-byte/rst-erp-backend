@@ -18,6 +18,14 @@ namespace Svc.Auth.Controllers;
 [ApiVersion("1.0")]
 public class PerMenuController(IMediator med) : ControllerBase
 {
+    [HttpGet("GetMenuTree")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMenuTree()
+    {
+        var response = await med.Send(new GetMenuTreeQry());
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     [HttpGet("AllPerMenu")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPerMenu()

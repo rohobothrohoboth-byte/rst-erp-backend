@@ -89,3 +89,17 @@ public class PerMenuModDto
     public string ParentKey { get; set; } = "";
     public int Order { get; set; }
 }
+
+public class PerMenuDto
+{
+    public string Module { get; set; } = default!;
+    public Guid Id { get; set; }
+    public string Key { get; set; } = default!;
+    public string Label { get; set; } = default!;
+    public string Path { get; set; } = default!;
+    public string Icon { get; set; } = default!;
+    public int Order { get; set; }
+    public Guid PerModuleId { get; set; }
+    public Guid? ParentId { get; set; }
+    public List<PerMenuDto> Children { get; set; } = [];
+}

@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.App.Commands;
+using Profile.Domain.DTOs;
 
 namespace Profile.API.Controllers;
 
@@ -66,9 +67,14 @@ public class EmpStatusController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> ReviewEmp(Guid id, bool stat)
+    public async Task<IActionResult> ReviewEmp(Guid id, [FromBody] EmpRevDto dto)
     {
-        var response = await med.Send(new EmpAppCmd { Id = id, Stat = stat });
-        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
+        if (!ModelState.IsValid || dto.Id != id)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
+        var response = await med.Send(new EmpAppCmd { Dto = dto });
+        return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S successfully REVIEWED."));
     }
 }

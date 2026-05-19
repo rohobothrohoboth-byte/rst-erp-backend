@@ -33,6 +33,7 @@ if (app.Environment.IsDevelopment())
     await app.ApplyAdminRole();
     await app.SeedPerModule();
     await app.SeedPerMenu();
+    await app.SeedPerAccess();
 }
 
 app.UseCors("AllowAll");

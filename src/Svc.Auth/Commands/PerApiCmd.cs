@@ -53,13 +53,8 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
     }
 }
 
-public class PerApiModCmdHandler : IRequestHandler<PerApiModCmd, PerApiListDto>
+public class PerApiModCmdHandler(IUnitOfWork _uow, IMediator _med) : IRequestHandler<PerApiModCmd, PerApiListDto>
 {
-    private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
-
-    public PerApiModCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
-
     public async Task<PerApiListDto> Handle(PerApiModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);

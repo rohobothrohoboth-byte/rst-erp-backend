@@ -79,3 +79,9 @@ public class MyFamilyModDto
     public string Nationality { get; set; } = default!;
     public string Relation { get; set; } = default!; //enum.Relation
 }
+
+public class EmpRevDto
+{
+    public Guid Id { get; set; }
+    public bool Decision { get; set; } = true; // True = Accept, False = Deny
+}

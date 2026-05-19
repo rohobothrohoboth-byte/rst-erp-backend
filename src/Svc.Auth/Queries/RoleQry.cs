@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;
 
@@ -14,7 +15,7 @@ public class RoleAllQryHandler : IRequestHandler<RoleAllQry, List<RoleListDto>>
     public RoleAllQryHandler(RoleManager<AppRole> roleManager) { _roleManager = roleManager; }
     public Task<List<RoleListDto>> Handle(RoleAllQry request, CancellationToken cancellationToken)
     {
-        var dbData = _roleManager.Roles.ToList();
+        var dbData = _roleManager.Roles.Where(r => r.Name != "admin").AsNoTracking().ToList();
         var dataL = dbData.Select(data => new RoleListDto { Id = data.Id, Role = data.Desc }).ToList();
         return Task.FromResult(dataL);
     }

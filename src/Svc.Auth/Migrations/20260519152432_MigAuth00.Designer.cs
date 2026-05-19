@@ -12,7 +12,7 @@ using Svc.Auth.Persistence;
 namespace Svc.Auth.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20260315112542_MigAuth00")]
+    [Migration("20260519152432_MigAuth00")]
     partial class MigAuth00
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Svc.Auth.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
