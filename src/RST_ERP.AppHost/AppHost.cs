@@ -151,6 +151,18 @@ builder.AddProject<Projects.Svc_HRM_Attendance>("attendance")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
     .WithEnvironment("ServiceHost", localIp);
 
+// ✅ Performance
+builder.AddProject<Projects.Svc_HRM_Performance>("performance")
+    .WithHttpsEndpoint(port: 7016, name: "https")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+    .WithEnvironment("ServiceHost", localIp);
+
+// ✅ Training
+builder.AddProject<Projects.Svc_HRM_Training>("training")
+    .WithHttpsEndpoint(port: 7017, name: "https")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+    .WithEnvironment("ServiceHost", localIp);
+
 // ✅ CRM
 builder.AddProject<Projects.Cor_CRM>("crm")
     .WithReference(rabbitmq)
