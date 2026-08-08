@@ -108,6 +108,7 @@ var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002")
 var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
 var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
 var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
+var hrmLeaveUrl = GetConfig("ServiceUrls:HrmLeaveApi", GetConfig("ServiceUrls:HrmLeave", "https://localhost:7003"));
 var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
 var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
 
@@ -406,10 +407,23 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IOvertimeService, OvertimeService>();
-builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>(); // kept for migration/compat; API returns 410
 builder.Services.AddScoped<IAttendanceCalculator, AttendanceCalculator>();
 builder.Services.AddScoped<IAttendanceEventPublisher, AttendanceEventPublisher>();
 builder.Services.AddScoped<ISyncService, SyncService>();
+
+// Canonical leave source of truth
+builder.Services.AddHttpClient<IHrmLeaveClient, HrmLeaveClient>(client =>
+{
+    client.BaseAddress = new Uri(hrmLeaveUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "AttendanceService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
 
 // Hosted Services
 builder.Services.AddHostedService<InitialSyncService>();

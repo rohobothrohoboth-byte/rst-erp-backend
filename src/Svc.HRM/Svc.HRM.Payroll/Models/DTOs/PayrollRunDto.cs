@@ -18,6 +18,10 @@ public class PayrollRunDto
     public DateTime? ApprovedAt { get; set; }
     public string? ApprovedBy { get; set; }
     public string? Notes { get; set; }
+    public Guid? FinanceJournalEntryId { get; set; }
+    public string? FinancePostingStatus { get; set; }
+    public DateTime? FinancePostedAt { get; set; }
+    public string? FinancePostingError { get; set; }
     public List<PayrollEmployeeDto> Employees { get; set; } = new();
 }
 

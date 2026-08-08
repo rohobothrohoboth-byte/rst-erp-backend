@@ -20,7 +20,8 @@ public static class HrModuleSeeder
             new() { ModKey = "mod.hrm", Key = "hr.emp.contract", Label = "Contracts", Path = "/hr/employees/contracts", Icon = "FileCheck", ParKey = "hr.emp", IsChild = true, Order = 5 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.performance", Label = "Performance Reviews", Path = "/hr/employees/performance", Icon = "TrendingUp", ParKey = "hr.emp", IsChild = true, Order = 6 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.promotion", Label = "Promotions", Path = "/hr/employees/promotions", Icon = "ArrowUp", ParKey = "hr.emp", IsChild = true, Order = 7 },
-            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/terminations", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.emp.transfer", Label = "Transfers", Path = "/hr/employees/transfers", Icon = "ArrowLeftRight", ParKey = "hr.emp", IsChild = true, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/terminations", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 9 },
 
             // ===== RECRUITMENT =====
             new() { ModKey = "mod.hrm", Key = "hr.recruit", Label = "Recruitment", Path = "", Icon = "ClipboardCheck", ParKey = "", IsChild = false, Order = 3 },
@@ -106,13 +107,6 @@ public static class HrModuleSeeder
             new() { ModKey = "mod.hrm", Key = "hr.reports.leave", Label = "Leave Reports", Path = "/hr/reports/leave", Icon = "CalendarDays", ParKey = "hr.reports", IsChild = true, Order = 3 },
             new() { ModKey = "mod.hrm", Key = "hr.reports.payroll", Label = "Payroll Reports", Path = "/hr/reports/payroll", Icon = "DollarSign", ParKey = "hr.reports", IsChild = true, Order = 4 },
             new() { ModKey = "mod.hrm", Key = "hr.reports.recruitment", Label = "Recruitment Reports", Path = "/hr/reports/recruitment", Icon = "ClipboardCheck", ParKey = "hr.reports", IsChild = true, Order = 5 },
-            new() { ModKey = "mod.hrm", Key = "hr.recruit.workforce", Label = "Workforce Planning", Path = "", Icon = "Building2", ParKey = "hr.recruit", IsChild = true, Order = 3 },
-new() { ModKey = "mod.hrm", Key = "hr.leave", Label = "Leave Management", Path = "", Icon = "CalendarDays", ParKey = "", IsChild = false, Order = 4 },
-new() { ModKey = "mod.hrm", Key = "my.leave", Label = "My Leave", Path = "/hr/leave/list", Icon = "Calendar", ParKey = "hr.leave", IsChild = true, Order = 1 },
-new() { ModKey = "mod.hrm", Key = "leave.balance", Label = "Leave Balance", Path = "/hr/leave/balance", Icon = "BarChart", ParKey = "hr.leave", IsChild = true, Order = 2 },
-new() { ModKey = "mod.hrm", Key = "leave.approve", Label = "Leave Approval", Path = "/hr/leave/approval", Icon = "ClipboardCheck", ParKey = "hr.leave", IsChild = true, Order = 3 },
-new() { ModKey = "mod.hrm", Key = "leave.types", Label = "Leave Types", Path = "/hr/leave/types", Icon = "Tag", ParKey = "hr.leave", IsChild = true, Order = 4 },
-new() { ModKey = "mod.hrm", Key = "leave.policies", Label = "Leave Policies", Path = "/hr/leave/policies", Icon = "FileText", ParKey = "hr.leave", IsChild = true, Order = 5 },
         };
     }
 }

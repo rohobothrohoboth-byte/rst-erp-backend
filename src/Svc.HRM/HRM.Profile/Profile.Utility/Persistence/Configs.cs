@@ -361,3 +361,49 @@ public class PersonConfig : BaseEntityConfig<Person>
         b.HasIndex(x => x.Gender);
     }
 }
+
+public class EmpContractConfig : BaseEntityConfig<EmpContract>
+{
+    public override void Configure(EntityTypeBuilder<EmpContract> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.ContractNumber).HasMaxLength(30).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.ContractType).HasMaxLength(50).IsRequired();
+        b.Property(x => x.TerminationReason).HasMaxLength(500);
+        b.Property(x => x.DocumentRef).HasMaxLength(255);
+        b.Property(x => x.Notes).HasMaxLength(1000);
+        b.HasIndex(x => x.ContractNumber);
+        b.HasIndex(x => x.EmployeeId);
+        b.HasIndex(x => x.Status);
+        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class EmpPromotionConfig : BaseEntityConfig<EmpPromotion>
+{
+    public override void Configure(EntityTypeBuilder<EmpPromotion> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Reason).HasMaxLength(500);
+        b.Property(x => x.Comments).HasMaxLength(1000);
+        b.HasIndex(x => x.EmployeeId);
+        b.HasIndex(x => x.Status);
+        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class EmpTransferConfig : BaseEntityConfig<EmpTransfer>
+{
+    public override void Configure(EntityTypeBuilder<EmpTransfer> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Status).HasMaxLength(20).IsRequired();
+        b.Property(x => x.Reason).HasMaxLength(500);
+        b.Property(x => x.Comments).HasMaxLength(1000);
+        b.HasIndex(x => x.EmployeeId);
+        b.HasIndex(x => x.Status);
+        b.HasOne(x => x.Employee).WithMany().HasForeignKey(x => x.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

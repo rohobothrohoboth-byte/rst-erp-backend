@@ -633,7 +633,33 @@ public enum OnboardingStatus
     [Display(Name = "Cancelled")]
     Cancelled
 }
-// In your enum file (core/enum.ts for frontend, and matching C# enum file)
 
+public enum ContractStatus
+{
+    [Display(Name = "Draft")]
+    Draft,
+    [Display(Name = "Active")]
+    Active,
+    [Display(Name = "Expired")]
+    Expired,
+    [Display(Name = "Renewed")]
+    Renewed,
+    [Display(Name = "Terminated")]
+    Terminated
+}
+
+public enum HrChangeStatus
+{
+    [Display(Name = "Pending")]
+    Pending,
+    [Display(Name = "Approved")]
+    Approved,
+    [Display(Name = "Rejected")]
+    Rejected,
+    [Display(Name = "Applied")]
+    Applied,
+    [Display(Name = "Cancelled")]
+    Cancelled
+}
 
 #endregion
