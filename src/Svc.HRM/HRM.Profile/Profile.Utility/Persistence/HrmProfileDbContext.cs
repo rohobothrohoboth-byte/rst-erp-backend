@@ -184,6 +184,9 @@ public class HrmProfileDbContext : DbContext
     public DbSet<EmpPhotoBlob> EmpPhotoBlob { get; set; }
     public DbSet<EmpPhotoThumbnail> EmpPhotoThumbnail { get; set; }
     public DbSet<EmpSalary> EmpSalary { get; set; }
+    public DbSet<EmpContract> EmpContract { get; set; }
+    public DbSet<EmpPromotion> EmpPromotion { get; set; }
+    public DbSet<EmpTransfer> EmpTransfer { get; set; }
     public DbSet<EmpSign> EmpSign { get; set; }
     public DbSet<EmpSignBlob> EmpSignBlob { get; set; }
     public DbSet<EmpStamp> EmpStamp { get; set; }

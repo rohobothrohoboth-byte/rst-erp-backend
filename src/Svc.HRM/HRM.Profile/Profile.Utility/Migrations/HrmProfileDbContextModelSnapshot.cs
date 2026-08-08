@@ -393,6 +393,86 @@ namespace Profile.Utility.Migrations
                     b.ToTable("EmpCertMarriage");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContractNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DocumentRef")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("RenewedFromId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("SignedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("TerminatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TerminationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractNumber");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("EmpContract");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpEducation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -949,6 +1029,91 @@ namespace Profile.Utility.Migrations
                     b.ToTable("EmpPhotoThumbnail");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpPromotion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AppliedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromDepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FromJgStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromJobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromPositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("ToDepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ToJgStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ToJobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ToPositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("EmpPromotion");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpSalary", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1165,6 +1330,85 @@ namespace Profile.Utility.Migrations
                     b.HasIndex("IsDeleted");
 
                     b.ToTable("EmpStampBlob");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmpTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AppliedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ApprovedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromDepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FromJobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FromPositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("ToDepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ToJobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ToPositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("EmpTransfer");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>
@@ -1719,6 +1963,17 @@ namespace Profile.Utility.Migrations
                     b.Navigation("EmpCert");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpContract", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpEducation", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Employee", "Employee")
@@ -1872,6 +2127,17 @@ namespace Profile.Utility.Migrations
                     b.Navigation("FileMetaData");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.EmpPromotion", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.EmpSalary", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Employee", "Employee")
@@ -1941,6 +2207,17 @@ namespace Profile.Utility.Migrations
                         .IsRequired();
 
                     b.Navigation("FileMetaData");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmpTransfer", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>

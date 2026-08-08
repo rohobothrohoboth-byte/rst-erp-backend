@@ -251,6 +251,19 @@ builder.Services.AddScoped<IHrmProfileClient>(sp =>
 builder.Services.AddScoped<IRecruitNotificationService, RecruitNotificationService>();
 builder.Services.AddHttpClient();
 
+// Profile hire client (multipart AddEmp/Step1) — closes Recruit → Profile hire loop
+builder.Services.AddHttpClient<IHrmProfileHireClient, HrmProfileHireClient>(client =>
+{
+    client.BaseAddress = new Uri(hrmProUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "RecruitService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
+
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{CorModUrl}/health"), "Core Module API")

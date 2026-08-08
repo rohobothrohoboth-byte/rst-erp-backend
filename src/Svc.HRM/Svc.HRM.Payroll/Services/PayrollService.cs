@@ -18,6 +18,7 @@ public class PayrollService : IPayrollService
     private readonly IDistributedCache _cache;
     private readonly ILogger<PayrollService> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IPayrollFinancePoster _financePoster;
 
     public PayrollService(
         PayrollDbContext context,
@@ -26,7 +27,8 @@ public class PayrollService : IPayrollService
         IEventPublisher eventPublisher,
         IDistributedCache cache,
         ILogger<PayrollService> logger,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IPayrollFinancePoster financePoster)
     {
         _context = context;
         _taxCalculator = taxCalculator;
@@ -35,6 +37,7 @@ public class PayrollService : IPayrollService
         _cache = cache;
         _logger = logger;
         _serviceProvider = serviceProvider;
+        _financePoster = financePoster;
     }
 
     #region Salary Structure
@@ -337,6 +340,7 @@ public class PayrollService : IPayrollService
     public async Task<PayrollRunDto> ApprovePayrollRunAsync(Guid id, string approvedBy, CancellationToken ct = default)
     {
         var entity = await _context.PayrollRuns
+            .Include(x => x.PayrollEmployees)
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, ct);
         if (entity == null) throw new KeyNotFoundException($"Payroll run {id} not found");
 
@@ -347,6 +351,24 @@ public class PayrollService : IPayrollService
         entity.ApprovedAt = DateTime.UtcNow;
         entity.ApprovedBy = approvedBy;
 
+        try
+        {
+            await _financePoster.PostPayrollRunAsync(entity, approvedBy, ct);
+            entity.FinancePostingError = null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Finance posting failed for payroll run {Id}", id);
+            entity.FinancePostingStatus = "Failed";
+            entity.FinancePostingError = ex.Message;
+
+            var failHard = _serviceProvider.GetService<Microsoft.Extensions.Options.IOptions<PayrollFinanceAccountsOptions>>()
+                ?.Value.FailApprovalOnPostingError ?? false;
+            if (failHard)
+                throw;
+        }
+
+        entity.DateMod = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
 
         await _cache.RemoveAsync($"payroll_run_{id}", ct);
@@ -828,6 +850,10 @@ public class PayrollService : IPayrollService
             ApprovedAt = entity.ApprovedAt,
             ApprovedBy = entity.ApprovedBy,
             Notes = entity.Notes,
+            FinanceJournalEntryId = entity.FinanceJournalEntryId,
+            FinancePostingStatus = entity.FinancePostingStatus,
+            FinancePostedAt = entity.FinancePostedAt,
+            FinancePostingError = entity.FinancePostingError,
             Employees = entity.PayrollEmployees?.Select(e => new PayrollEmployeeDto
             {
                 Id = e.Id,
