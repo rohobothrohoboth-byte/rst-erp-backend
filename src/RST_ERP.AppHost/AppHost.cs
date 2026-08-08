@@ -163,6 +163,12 @@ builder.AddProject<Projects.Svc_HRM_Training>("training")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
     .WithEnvironment("ServiceHost", localIp);
 
+// ✅ HR Reports
+builder.AddProject<Projects.Svc_HRM_Reports>("hr-reports")
+    .WithHttpsEndpoint(port: 7018, name: "https")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+    .WithEnvironment("ServiceHost", localIp);
+
 // ✅ CRM
 builder.AddProject<Projects.Cor_CRM>("crm")
     .WithReference(rabbitmq)

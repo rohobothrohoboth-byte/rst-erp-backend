@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Profile.App.Queries;
 using Profile.App.Services;
+using Profile.App.Interfaces;
 using Common;
 using RabbitMQ.Client;
 using Shared.Helpers.Services;
@@ -164,6 +165,8 @@ var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
 var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
 var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
 var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var payrollApiUrl = GetConfig("ServiceUrls:PayrollApi", "https://localhost:7010");
+var hrmLeaveUrl = GetConfig("ServiceUrls:HrmLeaveApi", GetConfig("ServiceUrls:LeaveApi", "https://localhost:7003"));
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -333,6 +336,27 @@ builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>()
 
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>()
     .AddPolicyHandler(retryPolicy);
+
+// Termination settlement clients (Payroll final pay + Leave unpaid snapshot)
+builder.Services.AddHttpClient<IPayrollSettlementClient, PayrollSettlementClient>(client =>
+{
+    client.BaseAddress = new Uri(payrollApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "HRMProService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.SetHandlerLifetime(TimeSpan.FromMinutes(5));
+
+builder.Services.AddHttpClient<ILeaveSettlementClient, LeaveSettlementClient>(client =>
+{
+    client.BaseAddress = new Uri(hrmLeaveUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "HRMProService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.SetHandlerLifetime(TimeSpan.FromMinutes(5));
 
  // ============= RABBITMQ REGISTRATION =============
 

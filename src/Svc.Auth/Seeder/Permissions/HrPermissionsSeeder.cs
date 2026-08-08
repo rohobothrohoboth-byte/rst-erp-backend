@@ -73,6 +73,8 @@ public static class HrPermissionsSeeder
             new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.add", Desc = "Process Termination" },
             new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.mod", Desc = "Edit Termination" },
             new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.approve", Desc = "Approve Termination" },
+            new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.apply", Desc = "Apply Termination" },
+            new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.offboard", Desc = "Manage Offboarding Checklist" },
 
             // ===== LEAVE MANAGEMENT =====
             new() { MenuKey = "hr.leave", Key = "hr.leave.view", Desc = "View Leave Management" },
