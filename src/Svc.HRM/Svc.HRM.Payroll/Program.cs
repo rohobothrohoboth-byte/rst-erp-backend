@@ -400,13 +400,27 @@ var sslHandler = new HttpClientHandler
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
-// Finance Client for gRPC
+// Finance Client for gRPC (org master-data sync)
 builder.Services.AddSingleton<IFinanceClient, FinanceClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     var logger = sp.GetService<ILogger<FinanceClient>>();
     return new FinanceClient(config, logger);
 });
+
+// Finance REST API for payroll GL journal posting
+builder.Services.Configure<PayrollFinanceAccountsOptions>(
+    builder.Configuration.GetSection(PayrollFinanceAccountsOptions.SectionName));
+builder.Services.AddScoped<IPayrollFinancePoster, PayrollFinancePoster>();
+builder.Services.AddHttpClient<IFinanceApiService, FinanceApiService>(client =>
+{
+    client.BaseAddress = new Uri(financeApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "PayrollService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
 // Employee Service Client (Profile)
 builder.Services.AddHttpClient<IEmployeeService, EmployeeService>(client =>

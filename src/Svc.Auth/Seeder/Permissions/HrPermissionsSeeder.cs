@@ -58,6 +58,15 @@ public static class HrPermissionsSeeder
             new() { MenuKey = "hr.emp.promotion", Key = "hr.emp.promotion.mod", Desc = "Edit Promotion" },
             new() { MenuKey = "hr.emp.promotion", Key = "hr.emp.promotion.del", Desc = "Delete Promotion" },
             new() { MenuKey = "hr.emp.promotion", Key = "hr.emp.promotion.approve", Desc = "Approve Promotion" },
+            new() { MenuKey = "hr.emp.promotion", Key = "hr.emp.promotion.apply", Desc = "Apply Promotion" },
+
+            // Transfers
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.view", Desc = "View Transfers" },
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.add", Desc = "Create Transfer" },
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.mod", Desc = "Edit Transfer" },
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.del", Desc = "Delete Transfer" },
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.approve", Desc = "Approve Transfer" },
+            new() { MenuKey = "hr.emp.transfer", Key = "hr.emp.transfer.apply", Desc = "Apply Transfer" },
 
             // Terminations
             new() { MenuKey = "hr.emp.termination", Key = "hr.emp.termination.view", Desc = "View Terminations" },

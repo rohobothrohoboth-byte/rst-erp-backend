@@ -20,7 +20,8 @@ public static class HrModuleSeeder
             new() { ModKey = "mod.hrm", Key = "hr.emp.contract", Label = "Contracts", Path = "/hr/employees/contracts", Icon = "FileCheck", ParKey = "hr.emp", IsChild = true, Order = 5 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.performance", Label = "Performance Reviews", Path = "/hr/employees/performance", Icon = "TrendingUp", ParKey = "hr.emp", IsChild = true, Order = 6 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.promotion", Label = "Promotions", Path = "/hr/employees/promotions", Icon = "ArrowUp", ParKey = "hr.emp", IsChild = true, Order = 7 },
-            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/terminations", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.emp.transfer", Label = "Transfers", Path = "/hr/employees/transfers", Icon = "ArrowLeftRight", ParKey = "hr.emp", IsChild = true, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/terminations", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 9 },
 
             // ===== RECRUITMENT =====
             new() { ModKey = "mod.hrm", Key = "hr.recruit", Label = "Recruitment", Path = "", Icon = "ClipboardCheck", ParKey = "", IsChild = false, Order = 3 },
