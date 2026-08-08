@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Recruit.App.Interfaces;
 using Recruit.App.Services;
@@ -28,7 +28,7 @@ public class JobAppAllHandler : IRequestHandler<JobAppAllQry, List<JobAppListDto
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobApplication>(v)
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);
         var (sql, parameters) = qb.Build();
@@ -64,31 +64,46 @@ public class JobAppByIdHandler : IRequestHandler<JobAppByIdQry, JobAppListDto?>
         _dapper = dapper;
         _jobAppService = jobAppService;
     }
+// Recruit.App/Queries/JobAppQry.cs - JobAppByIdHandler
 
-    public async Task<JobAppListDto?> Handle(JobAppByIdQry request, CancellationToken ct)
-    {
-        const string v = "v";
-        var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .From<JobApplication>(v)
-            .Where<JobApplication>(v, x => x.Id == request.Id)
-            .Limit(1);
-        var (sql, parameters) = qb.Build();
-        var data = await _dapper.QueryFirstOrDefaultAsync<JobAppListDto>(sql, parameters, ct);
-        if (data == null) return null;
+public async Task<JobAppListDto?> Handle(JobAppByIdQry request, CancellationToken ct)
+{
+    const string v = "v";
+    var qb = new QueryBuilder()
+        .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+        .From<JobApplication>(v)
+        .Where<JobApplication>(v, x => x.Id == request.Id)
+        .Limit(1);
+    var (sql, parameters) = qb.Build();
+    var data = await _dapper.QueryFirstOrDefaultAsync<JobAppListDto>(sql, parameters, ct);
+    if (data == null) return null;
 
-        var jAppInfo = await _jobAppService.GetJobAppInfo(data.Id, ct);
-        data.StatusStr = MyEnumHelper.FormatEnum<ApplicationStatus>(data.Status);
-        data.Applicant = jAppInfo?.Applicant ?? "";
-        data.JobPostingNum = jAppInfo?.PostNumber ?? "";
-        data.Position = jAppInfo?.Position ?? "";
-        data.Department = jAppInfo?.Department ?? "";
-        data.Period = jAppInfo?.Period ?? "";
-        data.RowVersion = data.xmin.ToString();
-        return data;
-    }
+    var jAppInfo = await _jobAppService.GetJobAppInfo(data.Id, ct);
+    data.StatusStr = MyEnumHelper.FormatEnum<ApplicationStatus>(data.Status);
+    data.Applicant = jAppInfo?.Applicant ?? "";
+    data.JobPostingNum = jAppInfo?.PostNumber ?? "";
+    data.Position = jAppInfo?.Position ?? "";
+    data.Department = jAppInfo?.Department ?? "";
+    data.Period = jAppInfo?.Period ?? "";
+    data.RowVersion = data.xmin.ToString();
+
+    // ? Add these fields for the evaluation page
+    data.JobApplicationId = jAppInfo?.JobApplicationId ?? data.Id;
+    data.PostNumber = jAppInfo?.PostNumber ?? "";
+    data.ReqNumber = jAppInfo?.ReqNumber ?? "";
+    data.JgStep = jAppInfo?.JgStep ?? "";
+    data.Title = jAppInfo?.Title ?? "";
+    data.ContractType = jAppInfo?.ContractType ?? "";
+    data.WorkLocation = jAppInfo?.WorkLocation ?? "";
+    data.Qualification = jAppInfo?.Qualification ?? "";
+    data.KeySkills = jAppInfo?.KeySkills ?? "";
+    data.PlanCode = jAppInfo?.PlanCode ?? "";
+    data.Desc = jAppInfo?.Desc ?? "";
+    data.PreGender = jAppInfo?.PreGender ?? "";
+
+    return data;
 }
-
+}
 public class JobAppByJobPostHandler : IRequestHandler<JobAppByJobPostQry, List<JobAppListDto>>
 {
     private readonly IDapperHelper _dapper;
@@ -104,7 +119,7 @@ public class JobAppByJobPostHandler : IRequestHandler<JobAppByJobPostQry, List<J
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobApplication>(v, x => x.Id, x => x.AppliedDate, x => x.Status, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobApplication>(v)
             .Where<JobApplication>(v, x => x.JobPostingId == request.Id)
             .OrderBy<JobApplication>(v, x => x.DateAdd, desc: true);

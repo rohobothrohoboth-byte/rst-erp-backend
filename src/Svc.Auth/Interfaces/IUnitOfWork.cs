@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Models.Entities;
 using System.Data;
 
@@ -18,7 +18,8 @@ public interface IUnitOfWork : IAsyncDisposable, IDisposable
     Task AddRange<TEntity>(IEnumerable<TEntity> entities, CancellationToken ct = default) where TEntity : class;
     Task Update<TEntity>(TEntity entity) where TEntity : BaseEntity;
     Task Delete<TEntity>(TEntity entity) where TEntity : BaseEntity;
-    Task Remove<TEntity>(TEntity entity) where TEntity : BaseEntity; // Hard Delete
+    Task Remove<TEntity>(TEntity entity) where TEntity : BaseEntity;
     Task Restore<TEntity>(TEntity entity) where TEntity : BaseEntity;
     DbSet<TEntity> Set<TEntity>() where TEntity : class;
+    Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken ct = default);
 }

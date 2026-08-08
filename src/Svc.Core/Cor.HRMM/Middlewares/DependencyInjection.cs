@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Common;
 using Cor.HRMM.Extensions;
@@ -149,3 +149,4 @@ public static class DependencyInjection
         return builder;
     }
 }
+

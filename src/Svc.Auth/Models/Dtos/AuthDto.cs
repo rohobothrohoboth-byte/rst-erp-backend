@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Svc.Auth.Models.Dtos;
 
@@ -40,7 +40,10 @@ public class RefreshTokenDto
 public class NameList
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = default!;
+    public string Name { get; set; } = string.Empty;
+    public string? Key { get; set; }      // Add this
+    public string? Icon { get; set; }     // Add this - FIXES THE ERROR
+    public int? Order { get; set; }       // Add this
 }
 
 public class RoleListDto
@@ -99,12 +102,23 @@ public class PwdChgDto
     public string NewPwd { get; set; } = default!;
 }
 
-public class OpResult
-{
-    public bool IsSuccess { get; set; }
-    public List<string> Errors { get; set; } = [];
 
-    public static OpResult Ok() => new() { IsSuccess = true };
-    public static OpResult Fail(string error) => new() { IsSuccess = false, Errors = [error] };
-    public static OpResult Fail(IEnumerable<string> errors) => new() { IsSuccess = false, Errors = [.. errors] };
+public class AppUserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string EmployeeId { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+}
+public class ResetPasswordDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+}
+public class SetupStatusDto
+{
+    public bool IsFirstRun { get; set; }
+    public bool IsSetupComplete { get; set; }
+    public int UserCount { get; set; }
+    public int ModuleCount { get; set; }
+    public int RoleCount { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Svc.Auth.Interfaces;
 using System.Data.Common;
 using System.Diagnostics;

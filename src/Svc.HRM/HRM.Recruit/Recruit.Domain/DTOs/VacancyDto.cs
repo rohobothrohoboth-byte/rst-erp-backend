@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+// Recruit.Domain/DTOs/VacancyDto.cs
+
+using System.Text.Json.Serialization;
 
 namespace Recruit.Domain.DTOs;
 
@@ -9,22 +11,23 @@ public class VacancyListDto
     [JsonIgnore]
     public DateTime DeadlineDate { get; set; }
     [JsonIgnore]
-    public Guid JobReqId { get; set; } // JobRequisition
+    public Guid JobReqId { get; set; }
     [JsonIgnore]
-    public Guid PositionId { get; set; } // Cor.HRMM.Position
+    public Guid PositionId { get; set; }
     [JsonIgnore]
-    public Guid JgStepId { get; set; } // Cor.HRMM.JgStep
+    public Guid JgStepId { get; set; }
     [JsonIgnore]
-    public Guid WorkforcePlanId { get; set; } // WorkforcePlan
+    public Guid WorkforcePlanId { get; set; }
     [JsonIgnore]
-    public Guid JobDecId { get; set; } // JobDec
+    public Guid JobDecId { get; set; }
     [JsonIgnore]
-    public Guid DepartmentId { get; set; } // Cor.Module.Department
+    public Guid DepartmentId { get; set; }
     [JsonIgnore]
-    public string EmpNature { get; set; } = default!; // enum.EmpNature
+    public string EmpNature { get; set; } = default!;
     [JsonIgnore]
-    public string PreGender { get; set; } = default!; // enum.PositionGender
-
+    public string PreGender { get; set; } = default!;
+    [JsonIgnore]
+    public string PostType { get; set; } = default!;
 
     public Guid Id { get; set; }
     public int NumOpen { get; set; } = 0;
@@ -35,9 +38,12 @@ public class VacancyListDto
     public string EmpNatureStr { get; set; } = default!;
     public string PreGenderStr { get; set; } = default!;
     public string JobGrade { get; set; } = default!;
+    public bool IsInternal { get; set; }
+    public string PostTypeStr { get; set; } = default!;
     public string DatePosted => $"{PublishedDate:MMMM dd, yyyy}";
     public string Deadline => $"{DeadlineDate:MMMM dd, yyyy}";
 }
+
 
 public class VacancyDetailDto
 {
@@ -46,23 +52,33 @@ public class VacancyDetailDto
     [JsonIgnore]
     public DateTime DeadlineDate { get; set; }
     [JsonIgnore]
-    public Guid JobReqId { get; set; } // JobRequisition
+    public Guid JobReqId { get; set; }
     [JsonIgnore]
-    public Guid PositionId { get; set; } // Cor.HRMM.Position
+    public Guid PositionId { get; set; }
     [JsonIgnore]
-    public Guid JgStepId { get; set; } // Cor.HRMM.JgStep
+    public Guid JgStepId { get; set; }
     [JsonIgnore]
-    public Guid WorkforcePlanId { get; set; } // WorkforcePlan
+    public Guid WorkforcePlanId { get; set; }
     [JsonIgnore]
-    public Guid JobDecId { get; set; } // JobDec
+    public Guid JobDecId { get; set; }
     [JsonIgnore]
-    public Guid DepartmentId { get; set; } // Cor.Module.Department
+    public Guid DepartmentId { get; set; }
     [JsonIgnore]
-    public string EmpNature { get; set; } = default!; // enum.EmpNature
+    public string EmpNature { get; set; } = default!;
     [JsonIgnore]
-    public string PreGender { get; set; } = default!; // enum.PositionGender
+    public string PreGender { get; set; } = default!;
     [JsonIgnore]
-    public string WorkArr { get; set; } = default!; // enum.WorkArrangement
+    public string WorkArr { get; set; } = default!;
+    [JsonIgnore]
+    public string PostType { get; set; } = default!;
+
+    // ? Raw data from database - these will be parsed into lists
+    [JsonIgnore]
+    public string? KeyRespo { get; set; }  // Changed from KeyRespoRaw to KeyRespo
+    [JsonIgnore]
+    public string? ReqQual { get; set; }   // Changed from ReqQualRaw to ReqQual
+    [JsonIgnore]
+    public string? KeySkills { get; set; } // Changed from KeySkillsRaw to KeySkills
 
     public Guid Id { get; set; }
     public int NumOpen { get; set; } = 0;
@@ -75,16 +91,14 @@ public class VacancyDetailDto
     public string EmpNatureStr { get; set; } = default!;
     public string PreGenderStr { get; set; } = default!;
     public string WorkArrStr { get; set; } = default!;
+    public bool IsInternal { get; set; }
+    public string PostTypeStr { get; set; } = default!;
     public string DatePosted => $"{PublishedDate:MMMM dd, yyyy}";
     public string Deadline => $"{DeadlineDate:MMMM dd, yyyy}";
     public string JobDesc { get; set; } = default!;
 
-    public List<string> KeyRespo { get; set; } = [];
-    public List<string> ReqQual { get; set; } = [];
-    public List<string> KeySkills { get; set; } = [];
+    // ? These will be populated after parsing the raw strings
+    public List<string> KeyRespoList { get; set; } = [];
+    public List<string> ReqQualList { get; set; } = [];
+    public List<string> KeySkillsList { get; set; } = [];
 }
-
-
-
-
-

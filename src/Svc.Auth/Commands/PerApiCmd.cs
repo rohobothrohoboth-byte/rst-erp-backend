@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Svc.Auth.Interfaces;
@@ -8,18 +8,33 @@ using Svc.Auth.Queries;
 
 namespace Svc.Auth.Commands;
 
-public class PerApiAddCmd : IRequest<PerApiListDto> { public PerApiAddDto AddDto { get; set; } = default!; }
-public class PerApiModCmd : IRequest<PerApiListDto> { public PerApiModDto ModDto { get; set; } = default!; }
-public class PerApiDelCmd : IRequest { public Guid Id { get; set; } }
+// Command definitions
+public class PerApiAddCmd : IRequest<PerApiListDto>
+{
+    public PerApiAddDto AddDto { get; set; } = default!;
+}
 
+public class PerApiModCmd : IRequest<PerApiListDto>
+{
+    public PerApiModDto ModDto { get; set; } = default!;
+}
 
+public class PerApiDelCmd : IRequest<Unit>  // Change to IRequest<Unit>
+{
+    public Guid Id { get; set; }
+}
 
+// Command Handlers
 public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public PerApiAddCmdHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
+    public PerApiAddCmdHandler(IUnitOfWork uow, IMediator med)
+    {
+        _uow = uow;
+        _med = med;
+    }
 
     public async Task<PerApiListDto> Handle(PerApiAddCmd request, CancellationToken ct)
     {
@@ -32,9 +47,12 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
             {
                 var data = new PerApi
                 {
+                    Id = Guid.NewGuid(),
                     PerMenuId = pMenu.Id,
                     Key = request.AddDto.Key,
-                    Desc = request.AddDto.Desc
+                    Desc = request.AddDto.Desc,
+                    DateAdd = DateTime.UtcNow,
+                    IsDeleted = false
                 };
                 await _uow.Add(data, ct);
                 await _uow.Commit(ct);
@@ -53,21 +71,39 @@ public class PerApiAddCmdHandler : IRequestHandler<PerApiAddCmd, PerApiListDto>
     }
 }
 
-public class PerApiModCmdHandler(IUnitOfWork _uow, IMediator _med) : IRequestHandler<PerApiModCmd, PerApiListDto>
+public class PerApiModCmdHandler : IRequestHandler<PerApiModCmd, PerApiListDto>
 {
+    private readonly IUnitOfWork _uow;
+    private readonly IMediator _med;
+
+    public PerApiModCmdHandler(IUnitOfWork uow, IMediator med)
+    {
+        _uow = uow;
+        _med = med;
+    }
+
     public async Task<PerApiListDto> Handle(PerApiModCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
             var oldData = await _uow.Set<PerApi>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
-            if (oldData == null) { throw new DomainException($"ACCESS PERMISSION with Id {request.ModDto.Id} NOT FOUND."); }
+            if (oldData == null)
+            {
+                throw new DomainException($"ACCESS PERMISSION with Id {request.ModDto.Id} NOT FOUND.");
+            }
+
             var pMenu = await _med.Send(new PerMenuByKeyQry { Key = request.ModDto.PerMenuKey }, ct);
-            if (pMenu == null) { throw new DomainException($"MENU PERMISSION with Key {request.ModDto.PerMenuKey} NOT FOUND."); }
+            if (pMenu == null)
+            {
+                throw new DomainException($"MENU PERMISSION with Key {request.ModDto.PerMenuKey} NOT FOUND.");
+            }
 
             oldData.PerMenuId = pMenu.Id;
             oldData.Key = request.ModDto.Key;
             oldData.Desc = request.ModDto.Desc;
+            oldData.DateMod = DateTime.UtcNow;
+
             await _uow.Update(oldData);
             await _uow.Commit(ct);
 
@@ -85,20 +121,34 @@ public class PerApiModCmdHandler(IUnitOfWork _uow, IMediator _med) : IRequestHan
     }
 }
 
-public class PerApiDelCmdHandler : IRequestHandler<PerApiDelCmd>
+public class PerApiDelCmdHandler : IRequestHandler<PerApiDelCmd, Unit>
 {
     private readonly IUnitOfWork _uow;
-    public PerApiDelCmdHandler(IUnitOfWork uow) { _uow = uow; }
 
-    public async Task Handle(PerApiDelCmd request, CancellationToken ct)
+    public PerApiDelCmdHandler(IUnitOfWork uow)
+    {
+        _uow = uow;
+    }
+
+    public async Task<Unit> Handle(PerApiDelCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var data = await _uow.Set<PerApi>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (data == null) { throw new DomainException($"ACCESS PERMISSION with id [{request.Id}] NOT FOUND."); }
-            await _uow.Delete(data);
+            var data = await _uow.Set<PerApi>().FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, ct);
+            if (data == null)
+            {
+                throw new DomainException($"ACCESS PERMISSION with id [{request.Id}] NOT FOUND.");
+            }
+
+            // Soft delete
+            data.IsDeleted = true;
+            data.DateMod = DateTime.UtcNow;
+
+            await _uow.Update(data);
             await _uow.Commit(ct);
+
+            return Unit.Value;
         }
         catch
         {

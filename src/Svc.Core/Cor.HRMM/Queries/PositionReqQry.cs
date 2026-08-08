@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
@@ -10,7 +10,7 @@ namespace Cor.HRMM.Queries;
 public class PositionReqAllQry : IRequest<List<PositionReqListDto>> { public Guid Id { get; set; } }
 public class PositionReqByIdQry : IRequest<PositionReqListDto?> { public Guid Id { get; set; } }
 public class PosReqByPosIdQry : IRequest<PositionReqListDto?> { public Guid Id { get; set; } }
-
+public class PositionReqGetAllQry : IRequest<List<PositionReqListDto>> { }
 
 
 public class PositionReqAllHandler : IRequestHandler<PositionReqAllQry, List<PositionReqListDto>>
@@ -22,7 +22,7 @@ public class PositionReqAllHandler : IRequestHandler<PositionReqAllQry, List<Pos
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<PositionReq>(v)
             .OrderBy<PositionReq>(v, x => x.DateAdd, desc: true);
 
@@ -57,6 +57,50 @@ public class PositionReqAllHandler : IRequestHandler<PositionReqAllQry, List<Pos
     }
 }
 
+public class PositionReqGetAllHandler(IDapperHelper _dapper)
+    : IRequestHandler<PositionReqGetAllQry, List<PositionReqListDto>>
+{
+    public async Task<List<PositionReqListDto>> Handle(PositionReqGetAllQry request, CancellationToken ct)
+    {
+        const string v = "v";
+        var qb = new QueryBuilder()
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType,
+                x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours,
+                x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .From<PositionReq>(v)
+            .Where<PositionReq>(v, x => x.IsDeleted == false)  // ✅ Only get active ones
+            .OrderBy<PositionReq>(v, x => x.DateAdd, desc: true);
+
+        var (sql, parameters) = qb.Build();
+        var dataL = new List<PositionReqListDto>();
+        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
+        var parser = reader.GetRowParser<PositionReqListDto>();
+
+        while (await reader.ReadAsync(ct))
+        {
+            var data = parser(reader);
+            dataL.Add(new PositionReqListDto
+            {
+                Id = data.Id,
+                PositionId = data.PositionId,
+                ProfessionType = data.ProfessionType,
+                Gender = data.Gender,
+                SaturdayWorkOption = data.SaturdayWorkOption,
+                SundayWorkOption = data.SundayWorkOption,
+                GenderStr = MyEnumHelper.FormatEnum<PositionGender>(data.Gender),
+                SaturdayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SaturdayWorkOption),
+                SundayWorkOptionStr = MyEnumHelper.FormatEnum<WorkOption>(data.SundayWorkOption),
+                ProfessionTypeStr = MyEnumHelper.FormatEnum<ProfessionType>(data.ProfessionType),
+                WorkingHours = data.WorkingHours,
+                IsDeleted = data.IsDeleted,
+                DateAdd = data.DateAdd,
+                DateMod = data.DateMod,
+                RowVersion = data.xmin.ToString()
+            });
+        }
+        return dataL;
+    }
+}
 public class PositionReqByIdHandler : IRequestHandler<PositionReqByIdQry, PositionReqListDto?>
 {
     private readonly IDapperHelper _dapper;
@@ -66,7 +110,7 @@ public class PositionReqByIdHandler : IRequestHandler<PositionReqByIdQry, Positi
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<PositionReq>(v, x => x.Id, x => x.Gender, x => x.ProfessionType, x => x.SaturdayWorkOption, x => x.SundayWorkOption, x => x.WorkingHours, x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<PositionReq>(v)
             .Where<PositionReq>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -126,3 +170,4 @@ public class PosReqByPosIdHandler : IRequestHandler<PosReqByPosIdQry, PositionRe
         };
     }
 }
+

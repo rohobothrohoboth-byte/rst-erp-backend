@@ -1,5 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 	<ItemGroup>
+		<!-- ? Add this line to force the secure version -->
+		 <PackageReference Include="Microsoft.OpenApi" />
+
+		<!-- Existing references -->
 		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
@@ -21,6 +25,9 @@
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Sinks.Console" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+		<PackageReference Include="RabbitMQ.Client" />
+		<PackageReference Include="Microsoft.Extensions.Http.Polly" />
+        		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -34,4 +41,4 @@
 			<Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
 		</Content>
 	</ItemGroup>
-</Project>
+ </Project>

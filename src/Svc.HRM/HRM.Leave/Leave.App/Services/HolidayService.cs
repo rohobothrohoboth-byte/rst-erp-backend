@@ -1,6 +1,11 @@
 ﻿using Common;
 using Helpers;
+using Leave.App.Interfaces;
 using Leave.Domain.DTOs;
+using Leave.Domain.Entities;
+using Leave.Domain.Entities.Local;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Leave.App.Services;
 
@@ -8,38 +13,95 @@ public interface IHolidayService
 {
     Task<double> CalEmpWorkingDays(Guid empId, DateTime startDate, DateTime endDate, bool exHolidays = true);
     Task<double> CalEmpLeaveWorkingDays(Guid empId, DateTime startDate, DateTime endDate, bool isHalfDay = false);
-    //Task<List<NonWorkingDay>> GetNonWorkingDays(DateTime startDate, DateTime endDate);
 }
 
 public class HolidayService : IHolidayService
 {
-    private readonly IHrmProfileClient _hrmProfileClient;
+    private readonly IUnitOfWork _uow;
     private readonly ICorModClient _corModClient;
-    public HolidayService(IHrmProfileClient hrmProfileClient, ICorModClient corModClient)
+    private readonly ILogger<HolidayService> _logger;
+
+    public HolidayService(IUnitOfWork uow, ICorModClient corModClient, ILogger<HolidayService> logger)
     {
-        _hrmProfileClient = hrmProfileClient;
+        _uow = uow;
         _corModClient = corModClient;
+        _logger = logger;
     }
 
     public async Task<double> CalEmpWorkingDays(Guid empId, DateTime startDate, DateTime endDate, bool exHolidays = true)
     {
-        if (startDate > endDate) { throw new DomainException("Start date cannot be after end date"); }
+        if (startDate > endDate)
+            throw new DomainException("Start date cannot be after end date");
 
-        var positionReq = await _hrmProfileClient.GetPosEmp(empId.ToString()) ?? throw new DomainException("Position requirements not configured");
+        double saturdayWork = 0;
+        double sundayWork = 0;
+
+        try
+        {
+            // ✅ FIX: Use projection instead of Include to avoid split query
+            var employeeData = await _uow.Set<LocalEmployee>()
+                .AsNoTracking()
+                .Where(e => e.Id == empId && !e.IsDeleted)
+                .Select(e => new
+                {
+                    e.Id,
+                    PositionId = e.Position != null ? e.Position.Id : (Guid?)null
+                })
+                .FirstOrDefaultAsync();
+
+            if (employeeData?.PositionId != null)
+            {
+                var positionReq = await _uow.Set<LocalPositionReq>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(pr => pr.PositionId == employeeData.PositionId && !pr.IsDeleted);
+
+                if (positionReq != null)
+                {
+                    saturdayWork = ResolveWorkOption(positionReq.SaturdayWorkOption);
+                    sundayWork = ResolveWorkOption(positionReq.SundayWorkOption);
+                    _logger.LogDebug("Employee {EmpId} Saturday work: {Saturday}, Sunday work: {Sunday}",
+                        empId, saturdayWork, sundayWork);
+                }
+                else
+                {
+                    _logger.LogWarning("Position requirements not found for PositionId: {PositionId}, using defaults",
+                        employeeData.PositionId);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Position not found for employee {EmpId}, using defaults (no weekend work)", empId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not get position requirements for employee {EmpId}, using defaults", empId);
+        }
 
         HashSet<DateTime> holidayDates = [];
-        if (exHolidays)
-        {
-            var holidays = await GetHolidaysInRange(startDate, endDate, publicOnly: true);
-            holidayDates = holidays.Select(h => h.Date.Date).ToHashSet();
-        }
+
+
+
+// In CalEmpWorkingDays - you can make holiday fetching more robust
+if (exHolidays)
+{
+    try
+    {
+        var holidays = await GetHolidaysInRange(startDate, endDate, publicOnly: true);
+        holidayDates = holidays.Select(h => h.Date.Date).ToHashSet();
+    }
+    catch (Exception ex)
+    {
+        _logger.LogWarning(ex, "Could not fetch holidays, proceeding without excluding holidays");
+        // Do NOT rethrow unless you want to fail the whole request
+    }
+}
 
         double workingDays = 0;
         var currentDate = startDate.Date;
 
         while (currentDate <= endDate.Date)
         {
-            // Holiday always wins
             if (exHolidays && holidayDates.Contains(currentDate))
             {
                 currentDate = currentDate.AddDays(1);
@@ -49,13 +111,11 @@ public class HolidayService : IHolidayService
             switch (currentDate.DayOfWeek)
             {
                 case DayOfWeek.Saturday:
-                    workingDays += ResolveWorkOption(positionReq.SaturdayWorkOption);
+                    workingDays += saturdayWork;
                     break;
-
                 case DayOfWeek.Sunday:
-                    workingDays += ResolveWorkOption(positionReq.SundayWorkOption);
+                    workingDays += sundayWork;
                     break;
-
                 default:
                     workingDays += 1;
                     break;
@@ -70,81 +130,77 @@ public class HolidayService : IHolidayService
     public async Task<double> CalEmpLeaveWorkingDays(Guid empId, DateTime startDate, DateTime endDate, bool isHalfDay = false)
     {
         var workingDays = await CalEmpWorkingDays(empId, startDate, endDate, exHolidays: true);
-        if (isHalfDay) { return 0.5; }
+        if (isHalfDay)
+            return 0.5;
+
+        if (workingDays > 0 && workingDays < 0.5)
+            return 0.5;
+
         return workingDays;
     }
 
-    //public async Task<List<NonWorkingDay>> GetNonWorkingDays(DateTime startDate, DateTime endDate)
-    //{
-    //    var nonWorkingDays = new List<NonWorkingDay>();
-    //    var holidays = await GetHolidaysInRange(startDate, endDate, publicOnly: false);
-
-    //    var currentDate = startDate.Date;
-    //    while (currentDate <= endDate.Date)
-    //    {
-    //        bool isWeekend = currentDate.DayOfWeek == DayOfWeek.Saturday || currentDate.DayOfWeek == DayOfWeek.Sunday;
-    //        var holiday = holidays.FirstOrDefault(h => h.Date.Date == currentDate);
-
-    //        if (isWeekend || holiday != null)
-    //        {
-    //            nonWorkingDays.Add(new NonWorkingDay
-    //            {
-    //                Date = currentDate,
-    //                Type = holiday != null ? "Holiday" : "Weekend",
-    //                Description = holiday?.Name ?? currentDate.DayOfWeek.ToString()
-    //            });
-    //        }
-
-    //        currentDate = currentDate.AddDays(1);
-    //    }
-
-    //    return nonWorkingDays;
-    //}
-
-
-
     private static double ResolveWorkOption(string workOption)
     {
-        var wOption = ((WorkOption)Enum.Parse(typeof(WorkOption), workOption));
+        if (string.IsNullOrEmpty(workOption))
+            return 0;
 
-        return wOption switch
+        try
         {
-            WorkOption.Morning => 0.5,
-            WorkOption.Afternoon => 0.5,
-            WorkOption.Both => 1.0,
-            _ => 0.0
-        };
+            var wOption = (WorkOption)Enum.Parse(typeof(WorkOption), workOption, true);
+            return wOption switch
+            {
+                WorkOption.Morning => 0.5,
+                WorkOption.Afternoon => 0.5,
+                WorkOption.Both => 1.0,
+                WorkOption.None => 0.0,
+                _ => 0.0
+            };
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private async Task<List<HolidaySerListDto>> GetHolidaysInRange(DateTime startDate, DateTime endDate, bool publicOnly)
     {
         var hDayL = new List<HolidaySerListDto>();
-        var allHd = await _corModClient.GetListHoDay();
-        if (allHd.Res.Count <= 0)
-        {
-            return hDayL;
-        }
 
-        var data = allHd.Res.ToList();
-        if (publicOnly)
+        try
         {
-            data = [.. data.Where(h => h.IsPublic)];
-        }
-        if (data.Count <= 0) { return hDayL; }
-
-        foreach (var hd in data)
-        {
-            var c = new HolidaySerListDto
+            var allHd = await _corModClient.GetListHoDay();
+            if (allHd.Res == null || allHd.Res.Count <= 0)
             {
-                Id = Guid.Parse(hd.Id),
-                Name = hd.Name,
-                Date = DateTime.Parse(hd.Date),
-                IsPublic = hd.IsPublic,
-                FiscalYearId = Guid.Parse(hd.FiscalYearId)
-            };
-            hDayL.Add(c);
-        }
+                return hDayL;
+            }
 
-        return [.. hDayL.Where(h => h.Date >= startDate && h.Date <= endDate).OrderBy(h => h.Date)];
+            var data = allHd.Res.ToList();
+            if (publicOnly)
+            {
+                data = data.Where(h => h.IsPublic).ToList();
+            }
+            if (data.Count <= 0)
+                return hDayL;
+
+            foreach (var hd in data)
+            {
+                var c = new HolidaySerListDto
+                {
+                    Id = Guid.Parse(hd.Id),
+                    Name = hd.Name,
+                    Date = DateTime.Parse(hd.Date),
+                    IsPublic = hd.IsPublic,
+                    FiscalYearId = Guid.Parse(hd.FiscalYearId)
+                };
+                hDayL.Add(c);
+            }
+
+            return hDayL.Where(h => h.Date >= startDate && h.Date <= endDate).OrderBy(h => h.Date).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not fetch holidays");
+            return [];
+        }
     }
 }

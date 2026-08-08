@@ -1,4 +1,4 @@
-﻿namespace Leave.Domain.DTOs;
+namespace Leave.Domain.DTOs;
 
 public class PolicyAssignmentRuleListDto : BaseDto
 {
@@ -23,6 +23,7 @@ public class PolicyAssignmentRuleAddDto
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public Guid LeavePolicyId { get; set; } // LeavePolicy
+
 }
 
 public class PolicyAssignmentRuleModDto

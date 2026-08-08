@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Common;
 using FluentValidation;
@@ -133,32 +133,33 @@ public static class DependencyInjection
         return builder;
     }
 
-    public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
-    {
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(options =>
-        {
-            options.Authority = builder.Configuration["AuthUrl"];
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = JwtCons.Issuer,
-                ValidateAudience = true,
-                ValidAudience = JwtCons.Audience,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)),
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromSeconds(30)
-            };
-        });
+   public static WebApplicationBuilder AddAuthService(this WebApplicationBuilder builder)
+   {
+       builder.Services.AddAuthentication(options =>
+       {
+           options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+           options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+       }).AddJwtBearer(options =>
+       {
+           // REMOVE THIS LINE - it overrides local validation
+           // options.Authority = builder.Configuration["AuthUrl"];
 
-        builder.Services.AddAuthorization();
+           options.RequireHttpsMetadata = false;
+           options.SaveToken = true;
+           options.TokenValidationParameters = new TokenValidationParameters
+           {
+               ValidateIssuer = true,
+               ValidIssuer = JwtCons.Issuer,
+               ValidateAudience = true,
+               ValidAudience = JwtCons.Audience,
+               ValidateIssuerSigningKey = true,
+               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtCons.SecretKey)),
+               ValidateLifetime = true,
+               ClockSkew = TimeSpan.FromSeconds(30)
+           };
+       });
 
-        return builder;
-    }
-}
+       builder.Services.AddAuthorization();
+
+       return builder;
+   }}

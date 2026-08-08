@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using System.Data.Common;
 
 namespace Recruit.App.Interfaces;

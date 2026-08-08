@@ -1,0 +1,56 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Publish Auth Service
+        run: dotnet publish src/Svc.Auth/Svc.Auth.csproj --configuration Release --output ./publish/auth
+
+      - name: Build Docker images
+        run: |
+          docker build -t auth-service -f src/Svc.Auth/Dockerfile .
+          docker build -t core-service -f src/Svc.Core/Cor.Module/Dockerfile .
+          docker build -t hrmm-service -f src/Svc.Core/Cor.HRMM/Dockerfile .
+          docker build -t hrm-service -f src/Svc.HRM/Profile.API/Dockerfile .
+
+      - name: Push to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker push auth-service
+          docker push core-service
+          docker push hrmm-service
+          docker push hrm-service
+
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'auth-service'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: './publish/auth'

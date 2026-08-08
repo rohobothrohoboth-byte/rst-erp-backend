@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;

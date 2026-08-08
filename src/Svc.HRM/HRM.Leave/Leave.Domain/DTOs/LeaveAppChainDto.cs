@@ -1,4 +1,4 @@
-﻿namespace Leave.Domain.DTOs;
+namespace Leave.Domain.DTOs;
 
 public class LeaveAppChainListDto : BaseDto
 {
@@ -14,10 +14,13 @@ public class LeaveAppChainListDto : BaseDto
 
 public class LeaveAppChainAddDto
 {
-    public Guid LeavePolicyId { get; set; } // LeavePolicy
+    public Guid? LeavePolicyId { get; set; }
+    public Guid? LeaveTypeId { get; set; }  // Add this property
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public bool IsActive { get; set; } = true;
+    public List<LeaveAppStepAddDto>? Steps { get; set; }
+
 }
 
 public class LeaveAppChainModDto

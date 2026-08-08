@@ -1,4 +1,4 @@
-﻿using EthiopianCalendar;
+using EthiopianCalendar;
 using System.Text.Json.Serialization;
 
 namespace Svc.Auth.Models.Dtos;

@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
@@ -349,3 +349,4 @@ public class ValUserQryHandler : IRequestHandler<ValUserQry, string?>
         return c.Username;
     }
 }
+

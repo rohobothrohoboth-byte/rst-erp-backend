@@ -1,16 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-	<ItemGroup>
-		<Folder Include="Extensions\" />
-	</ItemGroup>
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Dapper" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-		<PackageReference Include="Serilog" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\Leave.App\Leave.App.csproj" />
-	</ItemGroup>
-
+  <ItemGroup>
+    <ProjectReference Include="..\Leave.App\Leave.App.csproj" />
+  </ItemGroup>
 </Project>

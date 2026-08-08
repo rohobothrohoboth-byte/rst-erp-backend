@@ -1,4 +1,4 @@
-﻿namespace Svc.Auth.Interfaces;
+namespace Svc.Auth.Interfaces;
 
 public interface ILogService
 {

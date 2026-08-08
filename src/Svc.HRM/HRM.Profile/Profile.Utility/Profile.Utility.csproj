@@ -1,12 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<PackageReference Include="Dapper" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
 		<PackageReference Include="Serilog" />
+		<PackageReference Include="RabbitMQ.Client" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Profile.App\Profile.App.csproj" />
 	</ItemGroup>
 
-</Project>
+  </Project>

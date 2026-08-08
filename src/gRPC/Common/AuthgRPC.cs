@@ -1,4 +1,4 @@
-﻿using Contracts;
+using Contracts;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 

@@ -17,6 +17,11 @@ service CorModuleService {
   rpc GetListPeriod (CorModuleListRqst) returns (PeriodListRes);
   rpc GetDbc (CorModuleRqst) returns (DbcRes);
   rpc GetListDbc (CorModuleListRqst) returns (DbcListRes);
+
+  rpc GetBranch (CorModuleRqst) returns (CorModuleResAm);
+  rpc GetListBranch (CorModuleListRqst) returns (CorModuleListResAm);
+  rpc GetCompany (CorModuleRqst) returns (CorModuleResAm);
+  rpc GetListCompany (CorModuleListRqst) returns (CorModuleListResAm);
 }
 
 message DbcRes {

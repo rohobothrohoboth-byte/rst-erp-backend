@@ -3,9 +3,9 @@ using Leave.Domain.Entities;
 using Leave.Utility.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using System.Data;
-
+using System.Data.Common;
+using Helpers;
 namespace Leave.Utility.Repos;
 
 public sealed class UnitOfWork : IUnitOfWork
@@ -13,31 +13,71 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly HrmLeaveDbContext _context;
     private readonly ILogger<UnitOfWork> _logger;
     private readonly IDbRetryHandler _retry;
-
-    private readonly NpgsqlConnection _connection;
-    private NpgsqlTransaction? _transaction;
+    private readonly IDbExceptionTranslator _translator;
 
     private bool _disposed;
     private bool _hasChanges;
+    private DbTransaction? _transaction; // Changed to DbTransaction
 
-    public UnitOfWork(HrmLeaveDbContext context, IDbRetryHandler retry, ILogger<UnitOfWork> logger)
+    public UnitOfWork(
+        HrmLeaveDbContext context,
+        IDbRetryHandler retry,
+        ILogger<UnitOfWork> logger,
+        IDbExceptionTranslator translator)
     {
         _context = context;
         _retry = retry;
         _logger = logger;
-        _connection = (NpgsqlConnection)_context.Database.GetDbConnection();
+        _translator = translator;
     }
 
-    public IDbConnection Connection => _connection;
+    public IDbConnection? Connection => _context.Database.GetDbConnection();
     public IDbTransaction? Transaction => _transaction;
+
+    private async Task BeginTran(IsolationLevel isolation, CancellationToken ct)
+    {
+        var connection = _context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(ct);
+        }
+        _transaction = await connection.BeginTransactionAsync(isolation, ct) as DbTransaction;
+        await _context.Database.UseTransactionAsync(_transaction, ct);
+    }
+
+    private async Task Save(CancellationToken ct)
+    {
+        await _context.SaveChangesAsync(ct);
+    }
+
+    private async Task CommitTran(CancellationToken ct)
+    {
+        if (_transaction != null)
+        {
+            await _transaction.CommitAsync(ct);
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+    }
+
+    private async Task RollbackTran(CancellationToken ct)
+    {
+        if (_transaction != null)
+        {
+            await _transaction.RollbackAsync(ct);
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+    }
 
     public async Task Begin(CancellationToken ct = default)
     {
-        if (_connection.State != ConnectionState.Open)
-        {
-            await _connection.OpenAsync(ct);
-            _logger.LogInformation("Connection OPENED. ConnectionId={ConnectionId}", _connection.ProcessID);
-        }
+        await BeginTran(IsolationLevel.ReadCommitted, ct);
+    }
+
+    public async Task<int> ExecuteSqlRawAsync(string sql, CancellationToken ct)
+    {
+        return await _context.Database.ExecuteSqlRawAsync(sql, ct);
     }
 
     public async Task Commit(CancellationToken ct = default)
@@ -48,93 +88,145 @@ public sealed class UnitOfWork : IUnitOfWork
             return;
         }
 
-        var strategy = _context.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
-        {
-            await using var transaction = await _connection.BeginTransactionAsync(ct);
-            try
-            {
-                await _context.Database.UseTransactionAsync(transaction, ct);
-                _transaction = transaction;
-                await FlushInternalAsync(ct);
-                await transaction.CommitAsync(ct);
-                _context.ChangeTracker.Clear();
-                _logger.LogInformation("Transaction COMMITTED successfully. ConnectionId={ConnectionId}", _connection.ProcessID);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Transaction FAILED. Rolling back. ConnectionId={ConnectionId}", _connection.ProcessID);
-                await transaction.RollbackAsync(ct);
-                throw;
-            }
-            finally
-            {
-                _transaction = null;
-            }
-        });
+        _logger.LogInformation("Commit called - saving changes to database");
+        await SaveChangesAsync(ct);
+        await CommitTran(ct);
+        _logger.LogInformation("Commit completed successfully");
     }
 
     public async Task Rollback(CancellationToken ct = default)
     {
-        if (_transaction == null)
-        {
-            _logger.LogInformation("No Transactions available to Rollback.");
-            return;
-        }
-
-        await _transaction.RollbackAsync(ct);
-        _transaction = null;
-        _logger.LogWarning("Transaction rolled back manually.");
+        await RollbackTran(ct);
+        _logger.LogInformation("Rollback completed");
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        return await _retry.ExecuteAsync(async () => { return await FlushInternalAsync(ct); }, ct);
+        try
+        {
+            var result = await _context.SaveChangesAsync(ct);
+            _logger.LogInformation($"SaveChangesAsync completed. {result} entities saved.");
+            _hasChanges = false;
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "SaveChangesAsync failed");
+            throw;
+        }
+    }
+
+    public async Task ExecuteAsync(Func<CancellationToken, Task> action, IsolationLevel isolation = IsolationLevel.ReadCommitted, CancellationToken ct = default)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async token =>
+        {
+            await BeginTran(isolation, token);
+            try
+            {
+                await action(token);
+                await Save(token);
+                await CommitTran(token);
+            }
+            catch (Exception ex)
+            {
+                await RollbackTran(token);
+                if (_translator != null)
+                {
+                    throw _translator.Translate(ex);
+                }
+                throw;
+            }
+        }, ct);
+    }
+
+    public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> action, IsolationLevel isolation = IsolationLevel.ReadCommitted, CancellationToken ct = default)
+    {
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async token =>
+        {
+            await BeginTran(isolation, token);
+
+            try
+            {
+                var result = await action(token);
+                await Save(token);
+                await CommitTran(token);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await RollbackTran(token);
+                if (_translator != null)
+                {
+                    throw _translator.Translate(ex);
+                }
+                throw;
+            }
+        }, ct);
+    }
+
+    public void DetachAllEntities()
+    {
+        foreach (var entry in _context.ChangeTracker.Entries())
+        {
+            entry.State = EntityState.Detached;
+        }
     }
 
     private async Task<int> FlushInternalAsync(CancellationToken ct)
     {
-        if (!_hasChanges)
-        {
-            _logger.LogWarning("No changes available to Save.");
-            return 0;
-        }
-
         _context.ChangeTracker.DetectChanges();
         var result = await _context.SaveChangesAsync(ct);
         _hasChanges = false;
-        _logger.LogInformation("SaveChanges SUCCESS. Rows={Rows}, ConnectionId={ConnectionId}", result, _connection.ProcessID);
+        _logger.LogInformation("SaveChanges SUCCESS. Rows={Rows}", result);
         return result;
     }
 
     public async Task Add<TEntity>(TEntity entity, CancellationToken ct = default) where TEntity : class
     {
         ArgumentNullException.ThrowIfNull(entity);
-        await _retry.ExecuteAsync(async () =>
-        {
-            await _context.Set<TEntity>().AddAsync(entity, ct);
-            _hasChanges = true;
-            _logger.LogDebug("Entity added: {Entity}", typeof(TEntity).Name);
-        }, ct);
+        await _context.Set<TEntity>().AddAsync(entity, ct);
+        _hasChanges = true;
+        _logger.LogDebug("Entity added: {Entity}", typeof(TEntity).Name);
     }
 
     public async Task AddRange<TEntity>(IEnumerable<TEntity> entities, CancellationToken ct = default) where TEntity : class
     {
         ArgumentNullException.ThrowIfNull(entities);
-        await _retry.ExecuteAsync(async () =>
-        {
-            await _context.Set<TEntity>().AddRangeAsync(entities, ct);
-            _logger.LogDebug("Entities added: {Entity}", typeof(TEntity).Name);
-            _hasChanges = true;
-        }, ct);
+        await _context.Set<TEntity>().AddRangeAsync(entities, ct);
+        _logger.LogDebug("Entities added: {Entity}", typeof(TEntity).Name);
+        _hasChanges = true;
     }
 
     public Task Update<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity);
-        _context.Attach(entity);
-        _context.Entry(entity).Property(x => x.xmin).OriginalValue = entity.xmin;
-        _context.Entry(entity).State = EntityState.Modified;
+
+        var entry = _context.Entry(entity);
+
+        if (entry.State == EntityState.Detached)
+        {
+            var trackedEntity = _context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == entity.Id);
+            if (trackedEntity != null)
+            {
+                _context.Entry(trackedEntity).CurrentValues.SetValues(entity);
+                _context.Entry(trackedEntity).Property(x => x.xmin).OriginalValue = entity.xmin;
+                _context.Entry(trackedEntity).State = EntityState.Modified;
+            }
+            else
+            {
+                _context.Set<TEntity>().Attach(entity);
+                _context.Entry(entity).Property(x => x.xmin).OriginalValue = entity.xmin;
+                _context.Entry(entity).State = EntityState.Modified;
+            }
+        }
+        else
+        {
+            entry.Property(x => x.xmin).OriginalValue = entity.xmin;
+            entry.State = EntityState.Modified;
+        }
+
         _logger.LogDebug("Entity updated: {Entity}", typeof(TEntity).Name);
         _hasChanges = true;
         return Task.CompletedTask;
@@ -146,21 +238,32 @@ public sealed class UnitOfWork : IUnitOfWork
         entity.IsDeleted = true;
         entity.DateMod = DateTime.UtcNow;
 
-        var entry = _context.Attach(entity);
-        entry.Property(e => e.xmin).OriginalValue = entity.xmin;
-        entry.State = EntityState.Modified;
-
+        await Update(entity);
         _logger.LogDebug("Entity soft deleted: {Entity}", typeof(TEntity).Name);
-        _hasChanges = true;
-        await Task.CompletedTask;
     }
 
     public async Task Remove<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity);
-        var entry = _context.Attach(entity);
-        entry.Property(e => e.xmin).OriginalValue = entity.xmin;
-        entry.State = EntityState.Deleted;
+
+        var entry = _context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            var trackedEntity = _context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == entity.Id);
+            if (trackedEntity != null)
+            {
+                _context.Entry(trackedEntity).State = EntityState.Deleted;
+            }
+            else
+            {
+                _context.Set<TEntity>().Attach(entity);
+                _context.Entry(entity).State = EntityState.Deleted;
+            }
+        }
+        else
+        {
+            entry.State = EntityState.Deleted;
+        }
 
         _logger.LogDebug("Entity hard deleted: {Entity}", typeof(TEntity).Name);
         _hasChanges = true;
@@ -173,29 +276,15 @@ public sealed class UnitOfWork : IUnitOfWork
         entity.IsDeleted = false;
         entity.DateMod = DateTime.UtcNow;
 
-        var entry = _context.Attach(entity);
-        entry.Property(e => e.xmin).OriginalValue = entity.xmin;
-        entry.State = EntityState.Modified;
-
+        await Update(entity);
         _logger.LogDebug("Entity restored: {Entity}", typeof(TEntity).Name);
-        _hasChanges = true;
-        await Task.CompletedTask;
     }
 
     public DbSet<TEntity> Set<TEntity>() where TEntity : class => _context.Set<TEntity>();
 
-    private async Task DisposeTransactionAsync()
-    {
-        if (_transaction == null) { return; }
-        await _transaction.DisposeAsync();
-        _transaction = null;
-    }
-
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) { return; }
-        await DisposeTransactionAsync();
-        if (_connection.State == ConnectionState.Open) { await _connection.CloseAsync(); }
+        if (_disposed) return;
         await _context.DisposeAsync();
         _disposed = true;
         _logger.LogDebug("UnitOfWork disposed.");
@@ -203,9 +292,7 @@ public sealed class UnitOfWork : IUnitOfWork
 
     public void Dispose()
     {
-        if (_disposed) { return; }
-        _transaction?.Dispose();
-        if (_connection.State == ConnectionState.Open) { _connection.Close(); }
+        if (_disposed) return;
         _context.Dispose();
         _disposed = true;
         _logger.LogDebug("UnitOfWork disposed synchronously.");

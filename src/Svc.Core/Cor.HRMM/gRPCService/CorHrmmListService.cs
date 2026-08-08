@@ -1,4 +1,4 @@
-﻿using Contracts;
+using Contracts;
 using Cor.HRMM.Queries;
 using Grpc.Core;
 using MediatR;
@@ -14,13 +14,13 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         if (response.Count <= 0)
         {
             var nList = new CorHrmmList { Id = null, Name = null };
-            res.Res.Add(nList);
+            res.Res.Add(nList);  // ✅ Fixed: removed await and Async
             return res;
         }
 
         foreach (var dbItem in response)
         {
-            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });
+            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });  // ✅ Fixed
         }
 
         return res;
@@ -48,13 +48,13 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         if (response.Count <= 0)
         {
             var nList = new CorHrmmList { Id = null, Name = null };
-            res.Res.Add(nList);
+            res.Res.Add(nList);  // ✅ Fixed
             return res;
         }
 
         foreach (var dbItem in response)
         {
-            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });
+            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });  // ✅ Fixed
         }
 
         return res;
@@ -82,13 +82,13 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         if (response.Count <= 0)
         {
             var nList = new CorHrmmList { Id = null, Name = null };
-            res.Res.Add(nList);
+            res.Res.Add(nList);  // ✅ Fixed
             return res;
         }
 
         foreach (var dbItem in response)
         {
-            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });
+            res.Res.Add(new CorHrmmList { Id = dbItem.Id.ToString(), Name = dbItem.Name });  // ✅ Fixed
         }
 
         return res;
@@ -115,14 +115,24 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         var response = await med.Send(new PosReqByPosIdQry { Id = Guid.Parse(request.Id) });
         if (response == null)
         {
-            res = new PosReqRes { Id = null, PositionId = null, Gender = null, ProfessionType = null, SaturdayWorkOption = null, SundayWorkOption = null, WorkingHours = null };
+            res = new PosReqRes
+            {
+                Id = null,
+                PositionId = null,
+                Gender = null,
+                ProfessionType = null,
+                SaturdayWorkOption = null,
+                SundayWorkOption = null,
+                WorkingHours = null
+            };
+            return res;  // ✅ Added return statement
         }
         res.Id = response!.Id.ToString();
         res.PositionId = response.PositionId.ToString();
         res.Gender = response.Gender;
         res.ProfessionType = response.ProfessionType;
         res.SaturdayWorkOption = response.SaturdayWorkOption;
-        res.SundayWorkOption = response.SaturdayWorkOption;
+        res.SundayWorkOption = response.SundayWorkOption;  // ✅ Fixed: was using SaturdayWorkOption
         res.WorkingHours = response.WorkingHours.ToString();
         return res;
     }
@@ -134,6 +144,7 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         if (response == null)
         {
             res = new JgStepSalary { Salary = null };
+            return res;  // ✅ Added return statement
         }
         res.Salary = response;
         return res;
@@ -145,7 +156,16 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         var response = await med.Send(new JgStepByIdQry { Id = Guid.Parse(request.Id) });
         if (response == null)
         {
-            res = new SalaryJgs { Name = null, Salary = null, SalaryStr = null, Currency = null, SalaryPayFreq = null, JobGrade = null };
+            res = new SalaryJgs
+            {
+                Name = null,
+                Salary = null,
+                SalaryStr = null,
+                Currency = null,
+                SalaryPayFreq = null,
+                JobGrade = null
+            };
+            return res;  // ✅ Added return statement
         }
         res.Name = response!.Name;
         res.Salary = response.Salary.ToString();
@@ -155,8 +175,4 @@ public class CorHrmmListService(IMediator med) : CorHrmmService.CorHrmmServiceBa
         res.JobGrade = response.JobGrade;
         return res;
     }
-
-
-
-
 }

@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Helpers;
 using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;

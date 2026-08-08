@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
@@ -57,7 +57,7 @@ public class DepartmentController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] EdtDeptDto modDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] EditDeptDto modDto)
     {
         if (!ModelState.IsValid || modDto.Id != id)
         {

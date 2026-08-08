@@ -1,4 +1,4 @@
-ï»¿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Helpers;
 
@@ -80,11 +80,11 @@ public enum Currency
     Etb,
     [Display(Name = "$")]
     Dollar,
-    [Display(Name = "â‚¬")]
+    [Display(Name = "€")]
     Euro,
-    [Display(Name = "Â£")]
+    [Display(Name = "£")]
     Pound ,
-    [Display(Name = "CNÂ¥")]
+    [Display(Name = "CN¥")]
     Yuan
 }
 
@@ -479,29 +479,34 @@ public enum ReqStatus
     Closed
 }
 
+
 public enum PostingStatus
 {
-    [Display(Name = "Pending Approval")]
-    Pending,
-    [Display(Name = "Published")]
-    Published,
-    [Display(Name = "Closed")]
-    Closed,
-    [Display(Name = "On Hold")]
-    OnHold,
-    [Display(Name = "Cancelled")]
-    Cancelled
-}
+    [Display(Name = "Draft")]
+    Draft = 0,      // Initial state
 
-public enum PostStatus
-{
     [Display(Name = "Pending Approval")]
-    Pending,
-    [Display(Name = "On Hold")]
-    OnHold,
+    Pending = 1,    // Submitted for approval
+
+    [Display(Name = "Approved")]
+    Approved = 2,   // Approved for publishing
+
+    [Display(Name = "Published")]
+    Published = 3,  // Live/Active
+
+    [Display(Name = "Closed")]
+    Closed = 4,     // No longer accepting applications
+
     [Display(Name = "Cancelled")]
-    Cancelled
+    Cancelled = 5,  // Cancelled before publishing
+
+    [Display(Name = "Expired")]
+    Expired = 6,    // Passed deadline
+
+    [Display(Name = "On Hold")]
+    OnHold = 7      // Temporarily paused
 }
+// Helpers/Enum.cs
 
 public enum ApplicationStatus
 {
@@ -511,6 +516,8 @@ public enum ApplicationStatus
     UnderReview,
     [Display(Name = "Shortlisted")]
     Shortlisted,
+    [Display(Name = "Interviewed")]
+    Interviewed,
     [Display(Name = "Rejected")]
     Rejected,
     [Display(Name = "Withdrawn")]
@@ -626,5 +633,7 @@ public enum OnboardingStatus
     [Display(Name = "Cancelled")]
     Cancelled
 }
+// In your enum file (core/enum.ts for frontend, and matching C# enum file)
+
 
 #endregion

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
 		<PackageReference Include="Dapper" />
@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Recruit.App\Recruit.App.csproj" />
+
 	</ItemGroup>
 
-</Project>
+  </Project>

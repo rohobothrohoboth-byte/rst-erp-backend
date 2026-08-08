@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Interfaces;
+namespace Cor.HRMM.Interfaces;
 
 public interface ILogService
 {
@@ -6,3 +6,4 @@ public interface ILogService
     void LogWarning(string message, params object[] args);
     void LogError(Exception ex, string message, params object[] args);
 }
+

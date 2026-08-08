@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Dapper;
 using Helpers;
 using Recruit.App.Interfaces;
@@ -53,11 +53,11 @@ public class JobAppService : IJobAppService
         const string jd = "jd";
         const string wf = "wf";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.PostType, x => x.JobPostingId)
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId!, x => x.EmployeeId!, x => x.PostType, x => x.JobPostingId!)
             .Select<JobPosting>(jp, x => x.PostNumber, x => x.JobReqId)
             .Select<JobRequisition>(jr, x => x.ReqNumber, x => x.PositionId, x => x.JgStepId, x => x.JobDecId, x => x.WorkforcePlanId)
             .Select<JobDec>(jd, x => x.KeyRespo, x => x.Desc, x => x.ReqQual, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.EmpNature, x => x.WorkArr)
-            .Select<WorkforcePlan>(wf, x => x.PlanCode, x => x.DepartmentId, x => x.PeriodId)
+            .Select<WorkforcePlan>(wf, x => x.PlanCode, x => x.DepartmentId, x => x.PeriodId!)
             .From<JobApplication>(ja)
             .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
             .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)
@@ -141,10 +141,10 @@ public class JobAppService : IJobAppService
         const string jr = "jr";
         const string wf = "wf";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.JobPostingId)
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId!, x => x.EmployeeId!, x => x.JobPostingId!)
             .Select<JobPosting>(jp, x => x.Id, x => x.JobReqId)
             .Select<JobRequisition>(jr, x => x.Id, x => x.PositionId, x => x.JgStepId, x => x.WorkforcePlanId, x => x.JobDecId)
-            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId)
+            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId!)
             .From<JobApplication>(ja)
             .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
             .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)
@@ -166,11 +166,11 @@ public class JobAppService : IJobAppService
         const string jd = "jd";
         const string wf = "wf";
         var qb = new QueryBuilder()
-            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId, x => x.EmployeeId, x => x.PostType, x => x.JobPostingId)
+            .Select<JobApplication>(ja, x => x.Id, x => x.ApplicantId!, x => x.EmployeeId!, x => x.PostType, x => x.JobPostingId!)
             .Select<JobPosting>(jp, x => x.Id, x => x.PostNumber, x => x.JobReqId)
             .Select<JobRequisition>(jr, x => x.Id, x => x.PositionId, x => x.JgStepId, x => x.WorkforcePlanId, x => x.JobDecId, x => x.ReqNumber)
             .Select<JobDec>(jd, x => x.Id, x => x.KeyRespo, x => x.Desc, x => x.ReqQual, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.EmpNature, x => x.WorkArr)
-            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId, x => x.PlanCode)
+            .Select<WorkforcePlan>(wf, x => x.Id, x => x.DepartmentId, x => x.PeriodId!, x => x.PlanCode)
             .From<JobApplication>(ja)
             .Join<JobApplication, JobPosting>(ja, jp, x => x.JobPostingId, x => x.Id)
             .Join<JobPosting, JobRequisition>(jp, jr, x => x.JobReqId, x => x.Id)

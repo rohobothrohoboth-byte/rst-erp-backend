@@ -1,44 +1,76 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Services;
+using Shared.Helpers.Events;
+using MediatR;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
 using Helpers;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace Cor.Module.Commands;
 
-public class AddDeptCmd : IRequest<DeptListDto> { public AddDeptDto AddDto { get; set; } = default!; }
-public class ModDeptCmd : IRequest<DeptListDto> { public EdtDeptDto ModDto { get; set; } = default!; }
-public class DelDeptCmd : IRequest { public Guid Id { get; set; } }
+// ==================== ADD DEPARTMENT ====================
+public class AddDeptCmd : IRequest<DeptDto>
+{
+    public AddDeptDto AddDto { get; set; } = default!;
+}
 
-public class AddDeptCmdHandler : IRequestHandler<AddDeptCmd, DeptListDto>
+public class AddDeptHandler : IRequestHandler<AddDeptCmd, DeptDto>
 {
     private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<AddDeptHandler> _logger;
 
-    public AddDeptCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
+    public AddDeptHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<AddDeptHandler> logger)
+    {
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
 
-    public async Task<DeptListDto> Handle(AddDeptCmd request, CancellationToken ct)
+    public async Task<DeptDto> Handle(AddDeptCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var dep = new Department
+            var department = new Department
             {
+                Id = Guid.CreateVersion7(),
                 Name = request.AddDto.Name,
                 NameAm = request.AddDto.NameAm,
-                DeptStat = "0",
-                BranchId = request.AddDto.BranchId
+                DeptStat = "Active", // Default status
+                BranchId = request.AddDto.BranchId,
+                DateAdd = DateTime.UtcNow,
+                DateMod = null
             };
-            await _uow.Add(dep, ct);
+
+            await _uow.Add(department, ct);
             await _uow.Commit(ct);
 
-            var res = new DeptListDto();
-            var response = await _med.Send(new DeptByIdQry { Id = dep.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            // Publish event for real-time sync
+            await _eventPublisher.PublishAsync("Department", "CREATED", new DepartmentEventData
+            {
+                Id = department.Id,
+                Name = department.Name,
+                NameAm = department.NameAm,
+                BranchId = department.BranchId,
+                DeptStat = department.DeptStat
+            }, ct);
+
+            _logger.LogInformation("Department created and event published: {DepartmentId}", department.Id);
+
+            return new DeptDto
+            {
+                Id = department.Id,
+                Name = department.Name,
+                NameAm = department.NameAm,
+                BranchId = department.BranchId,
+                DeptStat = department.DeptStat,
+                DateAdd = department.DateAdd,
+                DateMod = department.DateMod
+            };
         }
         catch
         {
@@ -48,57 +80,130 @@ public class AddDeptCmdHandler : IRequestHandler<AddDeptCmd, DeptListDto>
     }
 }
 
-public class ModDeptCmdHandler : IRequestHandler<ModDeptCmd, DeptListDto>
+// ==================== MODIFY DEPARTMENT ====================
+public class ModDeptCmd : IRequest<DeptDto>
+{
+    public EditDeptDto ModDto { get; set; } = default!;
+}
+
+public class ModDeptHandler : IRequestHandler<ModDeptCmd, DeptDto>
 {
     private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<ModDeptHandler> _logger;
 
-    public ModDeptCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
+    public ModDeptHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<ModDeptHandler> logger)
+    {
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
 
-    public async Task<DeptListDto> Handle(ModDeptCmd request, CancellationToken ct)
+    public async Task<DeptDto> Handle(ModDeptCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var oldData = await _uow.Set<Department>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id);
-            if (oldData == null) { throw new DomainException($"DEPARTMENT with id [{request.ModDto.Id}] NOT FOUND."); }
+            var department = await _uow.Set<Department>()
+                .FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
 
-            oldData.Name = request.ModDto.Name;
-            oldData.NameAm = request.ModDto.NameAm;
-            oldData.DeptStat = request.ModDto.DeptStat;
-            oldData.BranchId = request.ModDto.BranchId;
-            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
-            await _uow.Update(oldData);
+            if (department == null)
+                throw new DomainException($"Department with ID '{request.ModDto.Id}' not found");
+
+            // Update properties
+            department.Name = request.ModDto.Name;
+            department.NameAm = request.ModDto.NameAm;
+            department.BranchId = request.ModDto.BranchId;
+            department.DeptStat = request.ModDto.DeptStat ?? department.DeptStat;
+            department.DateMod = DateTime.UtcNow;
+
+            await _uow.Update(department);
             await _uow.Commit(ct);
 
-            var res = new DeptListDto();
-            var response = await _med.Send(new DeptByIdQry { Id = request.ModDto.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            // Publish update event
+            await _eventPublisher.PublishAsync("Department", "UPDATED", new DepartmentEventData
+            {
+                Id = department.Id,
+                Name = department.Name,
+                NameAm = department.NameAm,
+                BranchId = department.BranchId,
+                DeptStat = department.DeptStat
+            }, ct);
+
+            _logger.LogInformation("Department updated and event published: {DepartmentId}", department.Id);
+
+            return new DeptDto
+            {
+                Id = department.Id,
+                Name = department.Name,
+                NameAm = department.NameAm,
+                BranchId = department.BranchId,
+                DeptStat = department.DeptStat,
+                DateAdd = department.DateAdd,
+                DateMod = department.DateMod
+            };
         }
         catch
         {
-            await _uow.Rollback();
+            await _uow.Rollback(ct);
             throw;
         }
     }
 }
 
-public class DelDeptCmdHandler : IRequestHandler<DelDeptCmd>
+// ==================== DELETE DEPARTMENT ====================
+public class DelDeptCmd : IRequest<bool>
+{
+    public Guid Id { get; set; }
+}
+
+public class DelDeptHandler : IRequestHandler<DelDeptCmd, bool>
 {
     private readonly IUnitOfWork _uow;
-    public DelDeptCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<DelDeptHandler> _logger;
 
-    public async Task Handle(DelDeptCmd request, CancellationToken ct)
+    public DelDeptHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<DelDeptHandler> logger)
+    {
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
+
+    public async Task<bool> Handle(DelDeptCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var data = await _uow.Set<Department>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (data == null) { throw new DomainException($"DEPARTMENT with id [{request.Id}] NOT FOUND."); }
-            await _uow.Delete(data);
+            var department = await _uow.Set<Department>()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+            if (department == null)
+                throw new DomainException($"Department with ID '{request.Id}' not found");
+
+            // ? Check if department has positions (since Department has no Position collection)
+
+
+            // Soft delete - update status instead of hard delete
+            department.DeptStat = "Deleted";
+            department.DateMod = DateTime.UtcNow;
+
+            await _uow.Update(department);
             await _uow.Commit(ct);
+
+            // Publish delete event
+            await _eventPublisher.PublishAsync("Department", "DELETED", new DepartmentEventData
+            {
+                Id = department.Id,
+                Name = department.Name,
+                NameAm = department.NameAm,
+                BranchId = department.BranchId,
+                DeptStat = department.DeptStat
+            }, ct);
+
+            _logger.LogInformation("Department deleted and event published: {DepartmentId}", department.Id);
+
+            return true;
         }
         catch
         {

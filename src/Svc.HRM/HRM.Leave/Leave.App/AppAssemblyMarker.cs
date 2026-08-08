@@ -1,3 +1,3 @@
-﻿namespace Leave.App;
+namespace Leave.App;
 
 public class AppAssemblyMarker { }

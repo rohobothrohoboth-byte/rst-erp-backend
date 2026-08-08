@@ -1,4 +1,4 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Interfaces;
 using Dapper;
 using System.Data.Common;
 using System.Diagnostics;

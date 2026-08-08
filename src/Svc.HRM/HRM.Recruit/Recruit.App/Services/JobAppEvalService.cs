@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
 using Recruit.Domain.DTOs;
@@ -74,8 +74,13 @@ public class JobAppEvalService : IJobAppEvalService
 
         if (currentStep.IsFinal || nextStep == null)
         {
-            app.Status = BoolToStr.EnumToString(ApplicationStatus.UnderReview);
-            await _uow.Update(app);
+             if (app != null)
+                    {
+                       app.Status = BoolToStr.EnumToString(ApplicationStatus.UnderReview);
+                       await _uow.Update(app);
+                    }
+
+
             progress.IsCompleted = true;
             await _uow.Update(progress);
             return;
@@ -88,8 +93,13 @@ public class JobAppEvalService : IJobAppEvalService
     private async Task RejectApp(Guid jobAppId, JobAppEvalProgress progress, CancellationToken ct)
     {
         var app = await _uow.Set<JobApplication>().FirstOrDefaultAsync(x => x.Id == jobAppId, cancellationToken: ct);
-        app.Status = BoolToStr.EnumToString(ApplicationStatus.Rejected);
-        await _uow.Update(app);
+
+        if (app != null)
+        {
+            app.Status = BoolToStr.EnumToString(ApplicationStatus.Rejected);
+            await _uow.Update(app);
+        }
+
         progress.IsCompleted = true;
         await _uow.Update(progress);
     }

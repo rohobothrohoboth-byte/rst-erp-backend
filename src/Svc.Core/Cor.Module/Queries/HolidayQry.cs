@@ -1,4 +1,4 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Dapper;
@@ -22,7 +22,7 @@ public class AllHolidayHandler : IRequestHandler<AllHolidayQry, List<HolidayList
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<Holiday>(v, x => x.Id, x => x.Name, x => x.Date, x => x.IsPublic, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Holiday>(v, x => x.Id, x => x.Name, x => x.Date, x => x.IsPublic, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<FiscalYear, HolidayListDto>(c, x => x.Name, d => d.FiscYear)
             .From<Holiday>(v)
             .Join<Holiday, FiscalYear>(v, c, x => x.FiscalYearId, x => x.Id)
@@ -65,7 +65,7 @@ public class HolidayByIdHandler : IRequestHandler<HolidayByIdQry, HolidayListDto
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<Holiday>(v, x => x.Id, x => x.Name, x => x.Date, x => x.IsPublic, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Holiday>(v, x => x.Id, x => x.Name, x => x.Date, x => x.IsPublic, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<FiscalYear, HolidayListDto>(c, x => x.Name, d => d.FiscYear)
             .From<Holiday>(v)
             .Join<Holiday, FiscalYear>(v, c, x => x.FiscalYearId, x => x.Id)

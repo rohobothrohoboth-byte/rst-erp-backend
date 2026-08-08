@@ -6,14 +6,37 @@ package hrmProfile;
 
 service HrmProfileService {
   rpc GetEmpCode (HrmProRqst) returns (HrmProResCode);
+  rpc GetEmpCodeList (HrmProListRqst) returns (HrmProResCodeList);
   rpc GetEmp (HrmProRqst) returns (HrmProRes);
   rpc GetListEmp (HrmProListRqst) returns (HrmProListRes);
   rpc GetPosEmp (HrmProRqst) returns (EmpPosRes);
-  rpc GetListEmpPolicy (HrmProListRqst) returns (HrmProListPlcy);
-  rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
   rpc GetEmpId (HrmProRqst) returns (HrmEmpId);
   rpc GetListEmpId (HrmProListRqst) returns (HrmListEmpId);
   rpc GetAdminEmpList (HrmProListRqst) returns (AdminEmpList);
+  rpc GetEmpNameList (HrmProListRqst) returns (HrmProListResAm);
+
+  rpc GetListEmpPolicy (HrmProListRqst) returns (HrmProListPlcy);
+  rpc GetDeptEmpPolicy (HrmProRqst) returns (HrmProListPlcy);
+  rpc GetBraEmpPolicy (HrmProRqst) returns (HrmProListPlcy);
+  rpc GetEmpPolicy (HrmProRqst) returns (HrmEmpPlcy);
+  rpc GetGendEmpPolicy (HrmProRqst) returns (HrmProListPlcy);
+  rpc GetEmpBasicInfo (HrmProRqst) returns (EmpBasicInfoRes);
+}
+
+message EmpBasicInfoRes {
+  string Id = 1;
+  string EmpFullName = 2;
+  string EmpFullNameAm = 3;
+  string Code = 4;
+  string Gender = 5;
+  string EmpState = 6;
+  string Branch = 7;
+  string Department = 8;
+  string Position = 9;
+  string JobGrade = 10;
+  string EmpType = 11;
+  string EmpNature = 12;
+  string WorkArr = 13;
 }
 
 message AdminEmp {
@@ -57,14 +80,11 @@ message EmpPosRes {
 
 message HrmProList {
   string Id = 1;
-  string Name = 2;  
-}
-
-message HrmProListAm {
-  string Id = 1;
   string Name = 2;
   string NameAm = 3;
 }
+
+
 
 message HrmProListRqst {}
 
@@ -72,34 +92,45 @@ message HrmProRqst {
   string Id = 1;
 }
 
-message HrmListEmpId { 
-  repeated HrmEmpId Res = 1; 
+message HrmListEmpId {
+  repeated HrmEmpId Res = 1;
 }
 
-message AdminEmpList { 
-  repeated AdminEmp Res = 1; 
+message AdminEmpList {
+  repeated AdminEmp Res = 1;
 }
 
-message HrmProListPlcy { 
-  repeated HrmEmpPlcy Res = 1; 
+message HrmProListPlcy {
+  repeated HrmEmpPlcy Res = 1;
 }
 
-message HrmProListRes { 
-  repeated HrmProList Res = 1; 
+message HrmProListRes {
+  repeated HrmProList Res = 1;
 }
 
-message HrmProListResAm { 
-  repeated HrmProListAm Res = 1; 
+message HrmProListResAm {
+  repeated HrmProListAm Res = 1;
 }
 
-message HrmProRes { 
+message HrmProRes {
   HrmProList Res = 1;
 }
 
-message HrmProResAm { 
+message HrmProResAm {
   HrmProListAm Res = 1;
 }
 
-message HrmProResCode { 
-  string Code = 1;
+message HrmProResCode {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+  string Code = 4;
+}
+message HrmProListAm {
+  string Id = 1;
+  string Name = 2;
+  string NameAm = 3;
+}
+message HrmProResCodeList {
+  repeated HrmProResCode Res = 1;
 }

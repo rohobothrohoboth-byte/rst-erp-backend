@@ -1,4 +1,4 @@
-﻿
+
 namespace Cor.HRMM.Models.DTOs;
 
 public class JobGradeListDto : BaseDto

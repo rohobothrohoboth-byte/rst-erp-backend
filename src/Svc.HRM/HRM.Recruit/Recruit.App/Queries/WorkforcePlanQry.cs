@@ -1,4 +1,6 @@
-﻿using Common;
+// Recruit.App/Queries/WorkforcePlanQueries.cs
+
+using Common;
 using Helpers;
 using MediatR;
 using Recruit.App.Interfaces;
@@ -37,7 +39,24 @@ public class WorkforcePlanAllHandler : IRequestHandler<WorkforcePlanAllQry, List
 
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<WorkforcePlan>(v, x => x.Id, x => x.PlanCode, x => x.Title, x => x.Desc, x => x.StartDate, x => x.EndDate, x => x.TotalPositions, x => x.AppPositions, x => x.Status, x => x.DepartmentId, x => x.PeriodId, x => x.RequistionById, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<WorkforcePlan>(v,
+                x => x.Id,
+                x => x.PlanCode,
+                x => x.Title,
+                x => x.Desc,
+                x => x.StartDate,
+                x => x.EndDate,
+                x => x.TotalPositions,
+                x => x.AppPositions,
+                x => x.Status,
+                x => x.DepartmentId,
+                x => x.PeriodId!,
+                x => x.RequistionById,
+                x => x.Budget!,
+                x => x.BudgetCurrency!,
+                x => x.DateAdd,
+                x => x.DateMod!,
+                x => x.xmin)
             .From<WorkforcePlan>(v)
             .OrderBy<WorkforcePlan>(v, x => x.DateAdd, desc: true);
 
@@ -61,6 +80,9 @@ public class WorkforcePlanAllHandler : IRequestHandler<WorkforcePlanAllQry, List
             data.Period = per;
             data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
             data.RowVersion = data.xmin.ToString();
+
+            // ? Set default currency if null
+            data.BudgetCurrency ??= CurrencyConstants.ETB;
         }
 
         return list;
@@ -84,7 +106,24 @@ public class WorkforcePlanByIdHandler : IRequestHandler<WorkforcePlanByIdQry, Wo
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<WorkforcePlan>(v, x => x.Id, x => x.PlanCode, x => x.Title, x => x.Desc, x => x.StartDate, x => x.EndDate, x => x.TotalPositions, x => x.AppPositions, x => x.Status, x => x.DepartmentId, x => x.PeriodId, x => x.RequistionById, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<WorkforcePlan>(v,
+                x => x.Id,
+                x => x.PlanCode,
+                x => x.Title,
+                x => x.Desc,
+                x => x.StartDate,
+                x => x.EndDate,
+                x => x.TotalPositions,
+                x => x.AppPositions,
+                x => x.Status,
+                x => x.DepartmentId,
+                x => x.PeriodId!,
+                x => x.RequistionById,
+                x => x.Budget!,           // ? ADDED
+                x => x.BudgetCurrency!,   // ? ADDED
+                x => x.DateAdd,
+                x => x.DateMod!,
+                x => x.xmin)
             .From<WorkforcePlan>(v)
             .OrderBy<WorkforcePlan>(v, x => x.DateAdd, desc: true)
             .Where<WorkforcePlan>(v, x => x.Id == request.Id)
@@ -110,6 +149,10 @@ public class WorkforcePlanByIdHandler : IRequestHandler<WorkforcePlanByIdQry, Wo
         data.Period = per;
         data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
         data.RowVersion = data.xmin.ToString();
+
+        // ? Set default currency if null
+        data.BudgetCurrency ??= CurrencyConstants.ETB;
+
         return data;
     }
 }

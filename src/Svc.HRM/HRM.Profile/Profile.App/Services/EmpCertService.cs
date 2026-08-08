@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;

@@ -1,10 +1,11 @@
-﻿using Cor.Module.Models.Entities;
+using Cor.Module.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Cor.Module.Persistence;
 
+// Base Entity Configuration
 public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T : BaseEntity
 {
     public virtual void Configure(EntityTypeBuilder<T> b)
@@ -20,97 +21,132 @@ public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T 
     }
 }
 
-public class BranchConfiguration : BaseEntityConfig<Branch>
-{
-    public override void Configure(EntityTypeBuilder<Branch> b)
-    {
-        base.Configure(b);
-        b.Property(b => b.Name).IsRequired().HasMaxLength(200);
-        b.Property(b => b.NameAm).HasMaxLength(200);
-        b.Property(x => x.Code).HasMaxLength(10).IsRequired().HasDefaultValueSql("'BR-' || LPAD(nextval('bra_code_seq')::text, 7, '0')").ValueGeneratedOnAdd().Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
-        b.Property(b => b.Location).HasMaxLength(200);
-        b.Property(b => b.OpenDate).IsRequired();
-        b.Property(b => b.BranchType).HasMaxLength(50).IsRequired();
-        b.Property(b => b.BranchStat).HasMaxLength(20).IsRequired();
-        b.Property(b => b.CompId).IsRequired();
-        b.HasOne(b => b.Comp).WithMany().HasForeignKey(b => b.CompId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(b => b.Code).IsUnique();
-        b.HasIndex(b => b.Name).IsUnique();
-        b.HasIndex(b => b.CompId);
-        b.HasIndex(b => new { b.CompId, b.Name }).IsUnique();
-    }
-}
-
-public class CompanyConfiguration : BaseEntityConfig<Company>
+// Company Configuration
+public class CompanyConfig : BaseEntityConfig<Company>
 {
     public override void Configure(EntityTypeBuilder<Company> b)
     {
         base.Configure(b);
-        b.Property(c => c.Name).IsRequired().HasMaxLength(200);
-        b.Property(c => c.NameAm).IsRequired().HasMaxLength(200);
-        b.HasIndex(c => c.Name).IsUnique();
+        b.Property(x => x.Name).IsRequired().HasMaxLength(200);
+        b.Property(x => x.NameAm).IsRequired().HasMaxLength(200);
+        b.Property(x => x.TaxId).HasMaxLength(50);
+        b.Property(x => x.Phone).HasMaxLength(50);
+        b.Property(x => x.Email).HasMaxLength(100);
+        b.Property(x => x.Address).HasMaxLength(500);
+        b.Property(x => x.LogoUrl).HasMaxLength(500);
+        b.HasIndex(x => x.Name).IsUnique();
+        b.HasIndex(x => x.TaxId).IsUnique().HasFilter("\"TaxId\" IS NOT NULL");
     }
 }
 
-public class DepartmentConfiguration : BaseEntityConfig<Department>
+public class BranchConfig : BaseEntityConfig<Branch>
+{
+    public override void Configure(EntityTypeBuilder<Branch> b)
+    {
+        base.Configure(b);
+
+        // ?? REMOVE all sequence and default value logic
+        b.Property(x => x.Name).IsRequired().HasMaxLength(200);
+        b.Property(x => x.NameAm).HasMaxLength(200);
+        b.Property(x => x.Code).IsRequired().HasMaxLength(10);  // ? No default value
+        b.Property(x => x.Location).HasMaxLength(200);
+        b.Property(x => x.OpenDate).IsRequired();
+        b.Property(x => x.BranchType).HasMaxLength(50).IsRequired();
+        b.Property(x => x.BranchStat).HasMaxLength(20).IsRequired();
+        b.Property(x => x.CompId).IsRequired();
+
+        b.HasOne(x => x.Comp)
+            .WithMany(x => x.Branches)
+            .HasForeignKey(x => x.CompId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.Code).IsUnique();
+        b.HasIndex(x => x.Name).IsUnique();
+        b.HasIndex(x => x.CompId);
+        b.HasIndex(x => new { x.CompId, x.Name }).IsUnique();
+    }
+}
+// Department Configuration
+public class DepartmentConfig : BaseEntityConfig<Department>
 {
     public override void Configure(EntityTypeBuilder<Department> b)
     {
         base.Configure(b);
-        b.Property(d => d.Name).IsRequired().HasMaxLength(200);
-        b.Property(d => d.NameAm).HasMaxLength(200);
-        b.Property(d => d.DeptStat).HasMaxLength(20).IsRequired();
-        b.Property(d => d.BranchId).IsRequired();
-        b.HasOne(d => d.Branch).WithMany().HasForeignKey(d => d.BranchId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(d => d.BranchId);
-        b.HasIndex(d => new { d.BranchId, d.Name }).IsUnique();
+        b.Property(x => x.Name).IsRequired().HasMaxLength(200);
+        b.Property(x => x.NameAm).HasMaxLength(200);
+        b.Property(x => x.DeptStat).HasMaxLength(20).IsRequired();
+        b.Property(x => x.BranchId).IsRequired();
+
+        b.HasOne(x => x.Branch)
+            .WithMany(x => x.Departments)
+            .HasForeignKey(x => x.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.BranchId);
+        b.HasIndex(x => new { x.BranchId, x.Name }).IsUnique();
     }
 }
 
-public class FiscalYearConfiguration : BaseEntityConfig<FiscalYear>
+// FiscalYear Configuration
+public class FiscalYearConfig : BaseEntityConfig<FiscalYear>
 {
     public override void Configure(EntityTypeBuilder<FiscalYear> b)
     {
         base.Configure(b);
-        b.Property(fy => fy.Name).IsRequired().HasMaxLength(50);
-        b.Property(fy => fy.DateStart).IsRequired();
-        b.Property(fy => fy.DateEnd).IsRequired();
-        b.Property(fy => fy.IsActive).HasMaxLength(3).IsRequired();
-        b.HasIndex(fy => fy.Name).IsUnique();
-        b.HasIndex(fy => fy.IsActive);
+        b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+        b.Property(x => x.DateStart).IsRequired();
+        b.Property(x => x.DateEnd).IsRequired();
+        b.Property(x => x.IsActive).HasMaxLength(3).IsRequired();
+        b.HasIndex(x => x.Name).IsUnique();
+        b.HasIndex(x => x.IsActive);
+        b.HasIndex(x => new { x.DateStart, x.DateEnd });
     }
 }
 
-public class HolidayConfiguration : BaseEntityConfig<Holiday>
-{
-    public override void Configure(EntityTypeBuilder<Holiday> b)
-    {
-        base.Configure(b);
-        b.Property(h => h.Name).IsRequired().HasMaxLength(100);
-        b.Property(h => h.Date).IsRequired();
-        b.Property(h => h.IsPublic).IsRequired();
-        b.Property(h => h.FiscalYearId).IsRequired();
-        b.HasOne(h => h.FiscalYear).WithMany().HasForeignKey(h => h.FiscalYearId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(h => h.FiscalYearId);
-        b.HasIndex(h => h.Date);
-        b.HasIndex(h => new { h.FiscalYearId, h.Date }).IsUnique();
-    }
-}
-
-public class PeriodConfiguration : BaseEntityConfig<Period>
+// Period Configuration
+public class PeriodConfig : BaseEntityConfig<Period>
 {
     public override void Configure(EntityTypeBuilder<Period> b)
     {
         base.Configure(b);
-        b.Property(p => p.Name).IsRequired().HasMaxLength(50);
-        b.Property(p => p.DateStart).IsRequired();
-        b.Property(p => p.DateEnd).IsRequired();
-        b.Property(p => p.IsActive).HasMaxLength(3).IsRequired();
-        b.Property(p => p.Quarter).HasMaxLength(10).IsRequired();
-        b.Property(p => p.FiscalYearId).IsRequired();
-        b.HasOne(p => p.FiscalYear).WithMany().HasForeignKey(p => p.FiscalYearId).OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(p => p.FiscalYearId);
-        b.HasIndex(p => p.IsActive);
-        b.HasIndex(p => new { p.FiscalYearId, p.Name }).IsUnique();
+        b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+        b.Property(x => x.DateStart).IsRequired();
+        b.Property(x => x.DateEnd).IsRequired();
+        b.Property(x => x.IsActive).HasMaxLength(3).IsRequired();
+        b.Property(x => x.Quarter).HasMaxLength(10).IsRequired();
+        b.Property(x => x.FiscalYearId).IsRequired();
+
+        // Now FiscalYear has Periods navigation property
+        b.HasOne(x => x.FiscalYear)
+            .WithMany(x => x.Periods) // This now exists
+            .HasForeignKey(x => x.FiscalYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.FiscalYearId);
+        b.HasIndex(x => x.IsActive);
+        b.HasIndex(x => new { x.FiscalYearId, x.Name }).IsUnique();
+    }
+}
+
+// Holiday Configuration
+public class HolidayConfig : BaseEntityConfig<Holiday>
+{
+    public override void Configure(EntityTypeBuilder<Holiday> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Name).IsRequired().HasMaxLength(100);
+        b.Property(x => x.Date).IsRequired();
+        b.Property(x => x.IsPublic).IsRequired();
+        b.Property(x => x.FiscalYearId).IsRequired();
+
+        // Now FiscalYear has Holidays navigation property
+        b.HasOne(x => x.FiscalYear)
+            .WithMany(x => x.Holidays) // This now exists
+            .HasForeignKey(x => x.FiscalYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.FiscalYearId);
+        b.HasIndex(x => x.Date);
+        b.HasIndex(x => new { x.FiscalYearId, x.Date }).IsUnique();
     }
 }

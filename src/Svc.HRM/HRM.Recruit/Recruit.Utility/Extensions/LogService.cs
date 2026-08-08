@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Recruit.App.Interfaces;
 
 namespace Recruit.Utility.Extensions

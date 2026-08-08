@@ -1,4 +1,4 @@
-﻿namespace Leave.App.Interfaces;
+namespace Leave.App.Interfaces;
 
 public interface ILogService
 {

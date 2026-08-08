@@ -1,18 +1,18 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// Education Qualification end points
 /// </summary>
 
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/EducationQual")]
 [ApiVersion("1.0")]
@@ -81,3 +81,5 @@ public class EducationQualController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"EDUCATION QUALIFICATION with Id {id} successfully deleted."));
     }
 }
+
+

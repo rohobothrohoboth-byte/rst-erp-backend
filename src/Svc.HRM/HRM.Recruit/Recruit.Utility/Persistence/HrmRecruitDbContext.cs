@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Recruit.Domain.Entities;
 using System.Data;
 
@@ -85,4 +85,6 @@ public class HrmRecruitDbContext : DbContext
     public DbSet<ResumeBlob> ResumeBlob { get; set; }
     public DbSet<WorkforcePlan> WorkforcePlan { get; set; }
     public DbSet<WorkforcePlanReview> WorkforcePlanReview { get; set; }
+     public DbSet<Interview> Interview { get; set; }
+
 }

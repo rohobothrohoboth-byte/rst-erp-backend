@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System.Text.Json.Serialization;
 
 namespace Recruit.Domain.DTOs;
@@ -15,6 +15,19 @@ public class JobAppListDto : BaseDto
     public string Department { get; set; } = default!;  // Cor.Module.Department
     public string Period { get; set; } = default!; // Cor.Module.Period (or FiscalYear)
     public string AppliedDateStr => $"{AppliedDate:MMMM dd, yyyy}";
+
+        public Guid JobApplicationId { get; set; }
+        public string PostNumber { get; set; } = default!;
+        public string ReqNumber { get; set; } = default!;
+        public string JgStep { get; set; } = default!;
+        public string Title { get; set; } = default!;
+        public string ContractType { get; set; } = default!;
+        public string WorkLocation { get; set; } = default!;
+        public string Qualification { get; set; } = default!;
+        public string KeySkills { get; set; } = default!;
+        public string PlanCode { get; set; } = default!;
+        public string Desc { get; set; } = default!;
+        public string PreGender { get; set; } = default!;
 }
 
 public class JobAppIntAddDto
@@ -87,4 +100,9 @@ public class JobAppInfoDto
     public string JgStep { get; set; } = default!; // Cor.HRMM.JgStep
     public string Department { get; set; } = default!; // Cor.Module.Department
     public string Period { get; set; } = default!; // Cor.Module.Period (or FiscalYear)
+}
+public class UpdateApplicantStatusDto
+{
+    public string Status { get; set; } = default!;
+    public string? Reason { get; set; }
 }

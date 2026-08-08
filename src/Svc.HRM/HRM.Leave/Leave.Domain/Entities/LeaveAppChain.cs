@@ -1,13 +1,19 @@
-﻿namespace Leave.Domain.Entities;
+// Leave.Domain/Entities/LeaveAppChain.cs
+using System;
+using System.Collections.Generic;
 
-public class LeaveAppChain : BaseEntity
+namespace Leave.Domain.Entities;
+
+public class LeaveAppChain : BaseEntity  // <-- ADD THIS INHERITANCE
 {
-    public Guid LeavePolicyId { get; set; }
+    public Guid? LeavePolicyId { get; set; }  // Make nullable
+    public Guid? LeaveTypeId { get; set; }    // Add for direct link
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
     public bool IsActive { get; set; } = true;
 
-    //******************************************//
-    public LeavePolicy LeavePolicy { get; set; } = null!;
-    public ICollection<LeaveAppStep> Steps { get; set; } = [];
+    // Navigation properties
+    public virtual LeavePolicy? LeavePolicy { get; set; }
+    public virtual LeaveType? LeaveType { get; set; }
+    public virtual ICollection<LeaveAppStep> Steps { get; set; } = new List<LeaveAppStep>();
 }

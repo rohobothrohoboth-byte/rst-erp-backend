@@ -1,117 +1,224 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Services;
+using Shared.Helpers.Events;
+using MediatR;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Cor.Module.Queries;
 using Helpers;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Module.Commands;
 
-public class AddBranchCmd : IRequest<BranchListDto> { public AddBranchDto AddDto { get; set; } = default!; }
-public class ModBranchCmd : IRequest<BranchListDto> { public EditBranchDto ModDto { get; set; } = default!; }
-public class DelBranchCmd : IRequest { public Guid Id { get; set; } }
+// ==================== ADD BRANCH ====================
+public class AddBranchCmd : IRequest<BranchDto>
+{
+    public AddBranchDto AddDto { get; set; } = default!;
+}
 
-
-
-public class AddBranchCmdHandler : IRequestHandler<AddBranchCmd, BranchListDto>
+public class AddBranchHandler : IRequestHandler<AddBranchCmd, BranchDto>
 {
     private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<AddBranchHandler> _logger;
 
-    public AddBranchCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
-
-    public async Task<BranchListDto> Handle(AddBranchCmd request, CancellationToken ct)
+    public AddBranchHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<AddBranchHandler> logger)
     {
-        await _uow.Begin(ct);
-        try
-        {
-            var bra = new Branch
-            {
-                Name = request.AddDto.Name,
-                NameAm = request.AddDto.NameAm,
-                Location = request.AddDto.Location,
-                BranchType = request.AddDto.BranchType,
-                BranchStat = BoolToStr.EnumToString(BranchStat.Active),
-                OpenDate = request.AddDto.OpenDate,
-                CompId = request.AddDto.CompId
-            };
-            await _uow.Add(bra, ct);
-            await _uow.Commit(ct);
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
 
-            var res = new BranchListDto();
-            var response = await _med.Send(new BranchByIdQry { Id = bra.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
+    public async Task<BranchDto> Handle(AddBranchCmd request, CancellationToken ct)
+    {
+        var branch = new Branch
         {
-            await _uow.Rollback(ct);
-            throw;
+            Id = Guid.CreateVersion7(),
+            Name = request.AddDto.Name,
+            NameAm = request.AddDto.NameAm,
+            Location = request.AddDto.Location,
+            OpenDate = request.AddDto.OpenDate,
+            BranchType = request.AddDto.BranchType,
+            BranchStat = request.AddDto.BranchStat,
+            CompId = request.AddDto.CompId,
+            DateAdd = DateTime.UtcNow
+        };
+
+        // If Code is provided, set it; otherwise let DB auto-generate
+        if (!string.IsNullOrEmpty(request.AddDto.Code))
+        {
+            branch.Code = request.AddDto.Code;
         }
+
+        await _uow.Add(branch, ct);
+        await _uow.Commit(ct);
+
+        // Publish event for real-time sync
+        await _eventPublisher.PublishAsync("Branch", "CREATED", new BranchEventData
+        {
+            Id = branch.Id,
+            Name = branch.Name,
+            NameAm = branch.NameAm,
+            Code = branch.Code,
+            Location = branch.Location,
+            OpenDate = branch.OpenDate,
+            BranchType = branch.BranchType,
+            BranchStat = branch.BranchStat,
+            CompId = branch.CompId,
+            IsActive = true,
+            IsDeleted = false
+        }, ct);
+
+        _logger.LogInformation("Branch created and event published: {BranchId}", branch.Id);
+
+        return new BranchDto
+        {
+            Id = branch.Id,
+            Name = branch.Name,
+            NameAm = branch.NameAm,
+            Code = branch.Code,
+            Location = branch.Location,
+            OpenDate = branch.OpenDate,
+            BranchType = branch.BranchType,
+            BranchStat = branch.BranchStat,
+            CompId = branch.CompId,
+            IsActive = true,
+            IsDeleted = false,
+            DateAdd = branch.DateAdd,
+            DateMod = branch.DateMod
+        };
     }
 }
 
-public class ModBranchCmdHandler : IRequestHandler<ModBranchCmd, BranchListDto>
+// ==================== MODIFY BRANCH ====================
+public class ModBranchCmd : IRequest<BranchDto>
+{
+    public EditBranchDto ModDto { get; set; } = default!;
+}
+
+public class ModBranchHandler : IRequestHandler<ModBranchCmd, BranchDto>
 {
     private readonly IUnitOfWork _uow;
-    private readonly IMediator _med;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<ModBranchHandler> _logger;
 
-    public ModBranchCmdHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
-
-    public async Task<BranchListDto> Handle(ModBranchCmd request, CancellationToken ct)
+    public ModBranchHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<ModBranchHandler> logger)
     {
-        await _uow.Begin(ct);
-        try
-        {
-            var oldData = await _uow.Set<Branch>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
-            if (oldData == null) { throw new DomainException($"BRANCH with id [{request.ModDto.Id}] NOT FOUND."); }
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
 
-            oldData.Name = request.ModDto.Name;
-            oldData.NameAm = request.ModDto.NameAm;
-            oldData.Location = request.ModDto.Location;
-            oldData.BranchType = request.ModDto.BranchType;
-            oldData.BranchStat = request.ModDto.BranchStat;
-            oldData.OpenDate = request.ModDto.OpenDate;
-            oldData.CompId = request.ModDto.CompId;
-            oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
-            await _uow.Update(oldData);
-            await _uow.Commit(ct);
+    public async Task<BranchDto> Handle(ModBranchCmd request, CancellationToken ct)
+    {
+        var branch = await _uow.Set<Branch>().FindAsync(new object[] { request.ModDto.Id }, ct);
+        if (branch == null)
+            throw new DomainException($"Branch with ID '{request.ModDto.Id}' not found");
 
-            var res = new BranchListDto();
-            var response = await _med.Send(new BranchByIdQry { Id = request.ModDto.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
+        // Update properties
+        branch.Name = request.ModDto.Name;
+        branch.NameAm = request.ModDto.NameAm;
+        branch.Location = request.ModDto.Location;
+        branch.BranchType = request.ModDto.BranchType;
+        branch.BranchStat = request.ModDto.BranchStat;
+        branch.DateMod = DateTime.UtcNow;
+
+        // Update Code if provided
+        if (!string.IsNullOrEmpty(request.ModDto.Code))
         {
-            await _uow.Rollback(ct);
-            throw;
+            branch.Code = request.ModDto.Code;
         }
+
+        await _uow.Update(branch);
+        await _uow.Commit(ct);
+
+        // Publish update event
+        await _eventPublisher.PublishAsync("Branch", "UPDATED", new BranchEventData
+        {
+            Id = branch.Id,
+            Name = branch.Name,
+            NameAm = branch.NameAm,
+            Code = branch.Code,
+            Location = branch.Location,
+            OpenDate = branch.OpenDate,
+            BranchType = branch.BranchType,
+            BranchStat = branch.BranchStat,
+            CompId = branch.CompId,
+            IsActive = true,
+            IsDeleted = false
+        }, ct);
+
+        _logger.LogInformation("Branch updated and event published: {BranchId}", branch.Id);
+
+        return new BranchDto
+        {
+            Id = branch.Id,
+            Name = branch.Name,
+            NameAm = branch.NameAm,
+            Code = branch.Code,
+            Location = branch.Location,
+            OpenDate = branch.OpenDate,
+            BranchType = branch.BranchType,
+            BranchStat = branch.BranchStat,
+            CompId = branch.CompId,
+            IsActive = true,
+            IsDeleted = false,
+            DateAdd = branch.DateAdd,
+            DateMod = branch.DateMod
+        };
     }
 }
 
-public class DelBranchCmdHandler : IRequestHandler<DelBranchCmd>
+// ==================== DELETE BRANCH ====================
+public class DelBranchCmd : IRequest<bool>
+{
+    public Guid Id { get; set; }
+}
+
+public class DelBranchHandler : IRequestHandler<DelBranchCmd, bool>
 {
     private readonly IUnitOfWork _uow;
-    public DelBranchCmdHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
+    private readonly IEventPublisher _eventPublisher;
+    private readonly ILogger<DelBranchHandler> _logger;
 
-    public async Task Handle(DelBranchCmd request, CancellationToken ct)
+    public DelBranchHandler(IUnitOfWork uow, IEventPublisher eventPublisher, ILogger<DelBranchHandler> logger)
     {
-        await _uow.Begin(ct);
-        try
+        _uow = uow;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
+    }
+
+    public async Task<bool> Handle(DelBranchCmd request, CancellationToken ct)
+    {
+        var branch = await _uow.Set<Branch>().FindAsync(new object[] { request.Id }, ct);
+        if (branch == null)
+            throw new DomainException($"Branch with ID '{request.Id}' not found");
+
+        // Soft delete
+        branch.IsDeleted = true;
+        branch.DateMod = DateTime.UtcNow;
+
+        await _uow.Update(branch);
+        await _uow.Commit(ct);
+
+        // Publish delete event
+        await _eventPublisher.PublishAsync("Branch", "DELETED", new BranchEventData
         {
-            var data = await _uow.Set<Branch>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (data == null) { throw new DomainException($"BRANCH with id [{request.Id}] NOT FOUND."); }
-            await _uow.Delete(data);
-            await _uow.Commit(ct);
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
+            Id = branch.Id,
+            Name = branch.Name,
+            NameAm = branch.NameAm,
+            Code = branch.Code,
+            Location = branch.Location,
+            OpenDate = branch.OpenDate,
+            BranchType = branch.BranchType,
+            BranchStat = branch.BranchStat,
+            CompId = branch.CompId,
+            IsActive = false,
+            IsDeleted = true
+        }, ct);
+
+        _logger.LogInformation("Branch deleted and event published: {BranchId}", branch.Id);
+
+        return true;
     }
 }

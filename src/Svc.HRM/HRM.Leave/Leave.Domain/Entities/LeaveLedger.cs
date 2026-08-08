@@ -1,4 +1,4 @@
-﻿namespace Leave.Domain.Entities;
+namespace Leave.Domain.Entities;
 
 public class LeaveLedger: BaseEntity
 {
@@ -16,3 +16,4 @@ public class LeaveLedger: BaseEntity
     public LeaveType LeaveType { get; set; } = null!;
     public LeavePolicy LeavePolicy { get; set; } = null!;
 }
+

@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
+using System.ComponentModel.DataAnnotations.Schema;
 namespace Profile.Domain.Entities;
 
 public abstract class BaseEntity
@@ -10,6 +11,8 @@ public abstract class BaseEntity
     [JsonIgnore]
     public DateTime? DateMod { get; set; }
     public bool IsDeleted { get; set; } = false;
+     [NotMapped]
+
     public uint xmin { get; private set; }
 
     public void SetRowVersion(uint version)

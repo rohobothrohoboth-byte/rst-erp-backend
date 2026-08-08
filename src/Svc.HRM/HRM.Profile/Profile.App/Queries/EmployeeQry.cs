@@ -6,7 +6,7 @@ using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-
+using Profile.Domain.Entities.Local;
 namespace Profile.App.Queries;
 
 public class EmpAllAdminQry : IRequest<List<EmployeeListDto>> { }
@@ -30,8 +30,7 @@ public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmployeeL
         _corHRMM = corHRMM;
         _corMod = corMod;
     }
-
-    public async Task<List<EmployeeListDto>> Handle(EmpAllAdminQry request, CancellationToken ct)
+ public async Task<List<EmployeeListDto>> Handle(EmpAllAdminQry request, CancellationToken ct)
     {
         var deptTask = _corMod.GetListDept(ct);
         var posTask = _corHRMM.GetListPosition(ct);
@@ -43,7 +42,7 @@ public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmployeeL
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.DepartmentId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.DepartmentId, x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
@@ -77,84 +76,103 @@ public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmployeeL
                 IsDeleted = false,
                 DateAdd = row.DateAdd,
                 DateMod = row.DateMod,
-                RowVersion = row.xmin.ToString()
+                RowVersion = row.xmin.ToString(),
+
+                // ? ADD THESE - Map the IDs
+                DepartmentId = row.DepartmentId,
+                PositionId = row.PositionId
             });
         }
 
         return result;
     }
 }
-
 public class EmployeeAllHandler : IRequestHandler<EmployeeAllQry, List<EmployeeListDto>>
 {
     private readonly IDapperHelper _dapper;
-    private readonly ICorHrmmClient _corHRMM;
-    private readonly ICorModClient _corMod;
 
-    public EmployeeAllHandler(IDapperHelper dapper, ICorHrmmClient corHRMM, ICorModClient corMod)
+    public EmployeeAllHandler(IDapperHelper dapper)
     {
         _dapper = dapper;
-        _corHRMM = corHRMM;
-        _corMod = corMod;
     }
 
-    public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken ct)
-    {
-        var deptTask = _corMod.GetListDept(ct);
-        var jgTask = _corHRMM.GetListJobGrade(ct);
-        var posTask = _corHRMM.GetListPosition(ct);
+  public async Task<List<EmployeeListDto>> Handle(EmployeeAllQry request, CancellationToken ct)
+  {
+      var sql = @"
+          SELECT
+              e.""Id"",
+              e.""Code"",
+              e.""EmpState"",
+              e.""EmploymentType"",
+              e.""EmploymentNature"",
+              e.""WorkArrangement"",
+              e.""DepartmentId"",
+              e.""JobGradeId"",
+              e.""PositionId"",
+              e.""PersonId"",
+              e.""DateAdd"",
+              e.""DateMod"",
+              e.""xmin"",
+              p.""FirstName"",
+              p.""MiddleName"",
+              p.""LastName"",
+              p.""FirstNameAm"",
+              p.""MiddleNameAm"",
+              p.""LastNameAm"",
+              p.""Gender"",
+              d.""Name"" AS ""DepartmentName"",
+              d.""NameAm"" AS ""DepartmentNameAm"",
+              b.""Name"" AS ""BranchName"",
+              b.""NameAm"" AS ""BranchNameAm"",
+              jg.""Name"" AS ""JobGradeName"",
+              pos.""Name"" AS ""PositionName""
+          FROM ""Employee"" e
+          INNER JOIN ""Person"" p ON e.""PersonId"" = p.""Id""
+          LEFT JOIN ""Departments"" d ON e.""DepartmentId"" = d.""Id"" AND d.""IsDeleted"" = false
+          LEFT JOIN ""Branches"" b ON d.""BranchId"" = b.""Id"" AND b.""IsDeleted"" = false
+          LEFT JOIN ""JobGrades"" jg ON e.""JobGradeId"" = jg.""Id"" AND jg.""IsDeleted"" = false
+          LEFT JOIN ""Positions"" pos ON e.""PositionId"" = pos.""Id"" AND pos.""IsDeleted"" = false
+          WHERE e.""IsDeleted"" = false
+          ORDER BY e.""DateAdd"" DESC
+      ";
 
-        await Task.WhenAll(deptTask, jgTask, posTask);
-        var deptDict = deptTask.Result.Res.ToDictionary(d => Guid.Parse(d.Id));
-        var jobGradeDict = jgTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
-        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+      var result = await _dapper.QueryAsync<EmployeeJoinRow>(sql, null, ct);
 
-        const string e = "e";
-        const string p = "p";
-        var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
-            .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
-            .From<Employee>(e)
-            .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
-            .OrderBy<Employee>(e, x => x.DateAdd, desc: true);
+      return result.Select(row => new EmployeeListDto
+      {
+          Id = row.Id,
+          Code = row.Code,
+          EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}".Trim(),
+          EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}".Trim(),
+          // ✅ Fix: Normalize the EmpState before parsing
+         EmpState = EnumNormalizer.GetDisplayName<EmpState>(row.EmpState),
+          Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
+          Branch = row.BranchNameAm ?? "",
+          Department = row.DepartmentName ?? "",
+          Position = row.PositionName ?? "",
+          JobGrade = row.JobGradeName ?? "",
+          EmpType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
+          EmpNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
+          WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
+          IsDeleted = false,
+          DateAdd = row.DateAdd,
+          DateMod = row.DateMod,
+          RowVersion = row.xmin.ToString(),
+          DepartmentId = row.DepartmentId,
+          JobGradeId = row.JobGradeId,
+          PositionId = row.PositionId,
+          PersonId = row.PersonId,
+          FirstName = row.FirstName,
+          FirstNameAm = row.FirstNameAm,
+          MiddleName = row.MiddleName,
+          MiddleNameAm = row.MiddleNameAm,
+          LastName = row.LastName,
+          LastNameAm = row.LastNameAm
+      }).ToList();
+  }
 
-        var (sql, parameters) = qb.Build();
-        var result = new List<EmployeeListDto>();
-        await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
-        var parser = reader.GetRowParser<EmpJoinRow>();
-
-        while (await reader.ReadAsync(ct))
-        {
-            var row = parser(reader);
-            deptDict.TryGetValue(row.DepartmentId, out var dept);
-            jobGradeDict.TryGetValue(row.JobGradeId, out var jg);
-            posDict.TryGetValue(row.PositionId, out var pos);
-
-            result.Add(new EmployeeListDto
-            {
-                Id = row.Id,
-                Code = row.Code,
-                EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
-                EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
-                EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
-                Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
-                Branch = dept?.NameAm ?? "",
-                Department = dept?.Name ?? "",
-                Position = pos?.Name ?? "",
-                JobGrade = jg?.Name ?? "",
-                EmpType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
-                EmpNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
-                WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
-                IsDeleted = false,
-                DateAdd = row.DateAdd,
-                DateMod = row.DateMod,
-                RowVersion = row.xmin.ToString()
-            });
-        }
-
-        return result;
-    }
 }
+
 
 public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeListDto?>
 {
@@ -176,9 +194,9 @@ public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeList
         const string ph = "ph";
         const string th = "th";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmpState, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender)
-            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
+            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data!, x => x.PhotoThumbnail!)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)
@@ -195,27 +213,32 @@ public class EmployeeByIdHandler : IRequestHandler<EmployeeByIdQry, EmployeeList
         var positionTask = _corHRMM.GetPosition(row.PositionId.ToString(), ct);
         await Task.WhenAll(deptTask, jobGradeTask, positionTask);
 
-        var dto = new EmployeeListDto
-        {
-            Id = row.Id,
-            EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
-            EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
-            Code = row.Code,
-            EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
-            Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
-            Branch = deptTask.Result?.Res?.NameAm ?? "",
-            Department = deptTask.Result?.Res?.Name ?? "",
-            Position = positionTask.Result?.Res?.Name ?? "",
-            JobGrade = jobGradeTask.Result?.Res?.Name ?? "",
-            EmpType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
-            EmpNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
-            WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
-            Photo = row.PhotoThumbnail != null ? Convert.ToBase64String(row.PhotoThumbnail) : "",
-            IsDeleted = false,
-            DateAdd = row.DateAdd,
-            DateMod = row.DateMod,
-            RowVersion = row.xmin.ToString()
-        };
+      var dto = new EmployeeListDto
+              {
+                  Id = row.Id,
+                  EmpFullName = $"{row.FirstName} {row.MiddleName} {row.LastName}",
+                  EmpFullNameAm = $"{row.FirstNameAm} {row.MiddleNameAm} {row.LastNameAm}",
+                  Code = row.Code,
+                  EmpState = MyEnumHelper.FormatEnum<EmpState>(row.EmpState),
+                  Gender = MyEnumHelper.FormatEnum<Gender>(row.Gender),
+                  Branch = deptTask.Result?.Res?.NameAm ?? "",
+                  Department = deptTask.Result?.Res?.Name ?? "",
+                  Position = positionTask.Result?.Res?.Name ?? "",
+                  JobGrade = jobGradeTask.Result?.Res?.Name ?? "",
+                  EmpType = MyEnumHelper.FormatEnum<EmpType>(row.EmploymentType),
+                  EmpNature = MyEnumHelper.FormatEnum<EmpNature>(row.EmploymentNature),
+                  WorkArr = MyEnumHelper.FormatEnum<WorkArrangement>(row.WorkArrangement),
+                  Photo = row.PhotoThumbnail != null ? Convert.ToBase64String(row.PhotoThumbnail) : "",
+                  IsDeleted = false,
+                  DateAdd = row.DateAdd,
+                  DateMod = row.DateMod,
+                  RowVersion = row.xmin.ToString(),
+
+                  // ? ADD THESE - Map the IDs
+                  DepartmentId = row.DepartmentId,
+                  JobGradeId = row.JobGradeId,
+                  PositionId = row.PositionId
+              };
 
         return dto;
     }
@@ -237,7 +260,7 @@ public class EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, IC
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
             .Select<EmpBio>(eb, x => x.BirthDate, x => x.MaritalStatus)
-            .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Zone!, x => x.Region!, x => x.Subcity!, x => x.Woreda!, x => x.Kebele!, x => x.Telephone!)
             .From<Employee>(e)
             .LeftJoin<Employee, EmpBio>(e, eb, x => x.Id, x => x.EmployeeId)
             .LeftJoin<EmpBio, Address>(eb, ad, x => x.AddressId, x => x.Id)
@@ -259,7 +282,7 @@ public class EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, IC
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id)
             .Select<EmpGuarantor>(eg, x => x.Relation, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality)
-            .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Zone!, x => x.Region!, x => x.Subcity!, x => x.Woreda!, x => x.Kebele!, x => x.Telephone!)
             .Select<FileMetaData>(fm, x => x.FileName, x => x.ContentType, x => x.FileSize)
             .From<Employee>(e)
             .Join<Employee, EmpGuarantor>(e, eg, x => x.Id, x => x.EmployeeId)
@@ -284,7 +307,7 @@ public class EmpAddPrintHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, IC
         var qb = new QueryBuilder()
             .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
+            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data!, x => x.PhotoThumbnail!)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)
@@ -366,9 +389,9 @@ public class Step2Handler : IRequestHandler<Step2Qry, BasicInfoDto?>
         const string ph = "ph";
         const string th = "th";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Employee>(e, x => x.Id, x => x.Code, x => x.EmploymentType, x => x.EmploymentNature, x => x.WorkArrangement, x => x.EmploymentDate, x => x.DepartmentId, x => x.JobGradeId, x => x.PositionId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm, x => x.Gender, x => x.Nationality)
-            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data, x => x.PhotoThumbnail)
+            .SelectAs<EmpPhotoThumbnail, EmpJoinRow>(th, x => x.Data!, x => x.PhotoThumbnail!)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpPhoto>(e, ph, x => x.Id, x => x.EmployeeId)

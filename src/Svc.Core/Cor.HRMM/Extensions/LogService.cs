@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 
 namespace Cor.HRMM.Extensions;
 

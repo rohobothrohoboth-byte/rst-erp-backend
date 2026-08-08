@@ -1,4 +1,4 @@
-﻿using Cor.Module.Persistence;
+using Cor.Module.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Module.Middlewares;

@@ -1,0 +1,339 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package crm;
+
+service CrmService {
+  // Lead
+  rpc GetLead (LeadRequest) returns (LeadResponse);
+  rpc GetAllLeads (LeadListRequest) returns (LeadListResponse);
+  rpc GetLeadsByStatus (LeadsByStatusRequest) returns (LeadListResponse);
+  rpc GetLeadsByAssignedUser (LeadsByAssignedUserRequest) returns (LeadListResponse);
+
+  // Customer
+  rpc GetCustomer (CustomerRequest) returns (CustomerResponse);
+  rpc GetAllCustomers (CustomerListRequest) returns (CustomerListResponse);
+
+  // Opportunity
+  rpc GetOpportunity (OpportunityRequest) returns (OpportunityResponse);
+  rpc GetAllOpportunities (OpportunityListRequest) returns (OpportunityListResponse);
+
+  // Activity
+  rpc GetActivity (ActivityRequest) returns (ActivityResponse);
+  rpc GetAllActivities (ActivityListRequest) returns (ActivityListResponse);
+
+  // Task
+  rpc GetTask (TaskRequest) returns (TaskResponse);
+  rpc GetAllTasks (TaskListRequest) returns (TaskListResponse);
+
+  // Campaign
+  rpc GetCampaign (CampaignRequest) returns (CampaignResponse);
+  rpc GetAllCampaigns (CampaignListRequest) returns (CampaignListResponse);
+}
+
+// ==================== LEAD ====================
+message LeadRequest {
+  string id = 1;
+}
+
+message LeadResponse {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string full_name = 4;
+  string company_name = 5;
+  string email = 6;
+  string phone = 7;
+  string mobile = 8;
+  string address = 9;
+  string city = 10;
+  string state = 11;
+  string country = 12;
+  string status = 13;
+  string source = 14;
+  string priority = 15;
+  string industry = 16;
+  string title = 17;
+  string description = 18;
+  double budget = 19;
+  double estimated_value = 20;
+  string expected_close_date = 21;
+  string assigned_to_user_id = 22;
+  string assigned_to_user_name = 23;
+  int32 score = 24;
+  int32 engagement_score = 25;
+  string tags = 26;
+  bool is_converted = 27;
+  string converted_date = 28;
+  string created_at = 29;
+  string last_contact_date = 30;
+  int32 contact_count = 31;
+  // Industry specific
+  string property_type = 32;
+  double property_price = 33;
+  string property_location = 34;
+  int32 property_size = 35;
+  string product_category = 36;
+  int32 order_quantity = 37;
+  string required_delivery_date = 38;
+  string tender_number = 39;
+  string tender_deadline = 40;
+  string department = 41;
+  bool is_deleted = 42;
+  string synced_at = 43;
+}
+
+message LeadListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string source = 4;
+  string priority = 5;
+  string assigned_user_id = 6;
+  string search_term = 7;
+}
+
+message LeadListResponse {
+  repeated LeadResponse leads = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message LeadsByStatusRequest {
+  string status = 1;
+}
+
+message LeadsByAssignedUserRequest {
+  string user_id = 1;
+}
+
+// ==================== CUSTOMER ====================
+message CustomerRequest {
+  string id = 1;
+}
+
+message CustomerResponse {
+  string id = 1;
+  string name = 2;
+  string company_name = 3;
+  string email = 4;
+  string phone = 5;
+  string mobile = 6;
+  string address = 7;
+  string city = 8;
+  string state = 9;
+  string country = 10;
+  string status = 11;
+  string type = 12;
+  string industry = 13;
+  string description = 14;
+  double annual_revenue = 15;
+  int32 employee_count = 16;
+  string website = 17;
+  string tags = 18;
+  bool is_active = 19;
+  string created_at = 20;
+  bool is_deleted = 21;
+  string synced_at = 22;
+}
+
+message CustomerListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string type = 4;
+  string search_term = 5;
+}
+
+message CustomerListResponse {
+  repeated CustomerResponse customers = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// ==================== OPPORTUNITY ====================
+message OpportunityRequest {
+  string id = 1;
+}
+
+message OpportunityResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string customer_id = 4;
+  string customer_name = 5;
+  string lead_id = 6;
+  string lead_name = 7;
+  double amount = 8;
+  string stage = 9;
+  int32 win_probability = 10;
+  string expected_close_date = 11;
+  string actual_close_date = 12;
+  string assigned_to_user_id = 13;
+  string assigned_to_user_name = 14;
+  bool is_active = 15;
+  int32 activity_count = 16;
+  string created_at = 17;
+  bool is_deleted = 18;
+  string synced_at = 19;
+}
+
+message OpportunityListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string stage = 3;
+  string customer_id = 4;
+  string lead_id = 5;
+  string assigned_user_id = 6;
+}
+
+message OpportunityListResponse {
+  repeated OpportunityResponse opportunities = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// ==================== ACTIVITY ====================
+message ActivityRequest {
+  string id = 1;
+}
+
+message ActivityResponse {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  string start_date_time = 6;
+  string end_date_time = 7;
+  string lead_id = 8;
+  string lead_name = 9;
+  string customer_id = 10;
+  string customer_name = 11;
+  string opportunity_id = 12;
+  string opportunity_name = 13;
+  string assigned_to_user_id = 14;
+  string assigned_to_user_name = 15;
+  string location = 16;
+  bool is_all_day = 17;
+  string outcome = 18;
+  string created_at = 19;
+  bool is_deleted = 20;
+}
+
+message ActivityListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string type = 3;
+  string status = 4;
+  string lead_id = 5;
+  string customer_id = 6;
+  string assigned_user_id = 7;
+  string from_date = 8;
+  string to_date = 9;
+}
+
+message ActivityListResponse {
+  repeated ActivityResponse activities = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// ==================== TASK ====================
+message TaskRequest {
+  string id = 1;
+}
+
+message TaskResponse {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string status = 4;
+  string priority = 5;
+  string due_date = 6;
+  string completed_date = 7;
+  string lead_id = 8;
+  string lead_name = 9;
+  string customer_id = 10;
+  string customer_name = 11;
+  string opportunity_id = 12;
+  string opportunity_name = 13;
+  string assigned_to_user_id = 14;
+  string assigned_to_user_name = 15;
+  bool is_recurring = 16;
+  double completion_percentage = 17;
+  int32 estimated_hours = 18;
+  int32 actual_hours = 19;
+  string created_at = 20;
+  bool is_deleted = 21;
+}
+
+message TaskListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string priority = 4;
+  string lead_id = 5;
+  string customer_id = 6;
+  string assigned_user_id = 7;
+  string due_date = 8;
+}
+
+message TaskListResponse {
+  repeated TaskResponse tasks = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+// ==================== CAMPAIGN ====================
+message CampaignRequest {
+  string id = 1;
+}
+
+message CampaignResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string status = 5;
+  string start_date = 6;
+  string end_date = 7;
+  double budget = 8;
+  double actual_cost = 9;
+  double expected_revenue = 10;
+  double actual_revenue = 11;
+  string target_audience = 12;
+  int32 target_count = 13;
+  int32 reach_count = 14;
+  int32 engagement_count = 15;
+  int32 conversion_count = 16;
+  double conversion_rate = 17;
+  double engagement_rate = 18;
+  string channel = 19;
+  bool is_active = 20;
+  string created_at = 21;
+  bool is_deleted = 22;
+  string synced_at = 23;
+}
+
+message CampaignListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string type = 4;
+  string from_date = 5;
+  string to_date = 6;
+}
+
+message CampaignListResponse {
+  repeated CampaignResponse campaigns = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}

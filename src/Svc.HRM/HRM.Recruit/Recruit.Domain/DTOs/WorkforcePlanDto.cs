@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Serialization;
+// Recruit.Domain/DTOs/WorkforcePlanDtos.cs
+
+using System.Text.Json.Serialization;
+using EthiopianCalendar;
 
 namespace Recruit.Domain.DTOs;
 
@@ -24,18 +27,35 @@ public class WorkforcePlanListDto : BaseDto
     public string Department { get; set; } = default!;
     public string Period { get; set; } = default!;
     public string RequistionBy { get; set; } = default!;
+
+    // ? ADD BUDGET FIELDS
+    public decimal? Budget { get; set; }
+    public string? BudgetCurrency { get; set; }
+
+    // ? Computed properties for formatted display
+    public string BudgetFormatted => Budget.HasValue
+        ? $"{BudgetCurrency ?? "ETB"} {Budget.Value:N0}"
+        : "N/A";
+    public string BudgetFormattedWithCurrency => Budget.HasValue
+        ? $"{BudgetCurrency ?? "ETB"} {Budget.Value:N2}"
+        : "No budget set";
 }
 
 public class WorkforcePlanAddDto
 {
     [JsonIgnore]
     public Guid RequistionById { get; set; } // HRM.Profile.Employee
+
     public string Title { get; set; } = default!;
     public string Desc { get; set; } = default!;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int TotalPositions { get; set; }
     public Guid? PeriodId { get; set; } // Cor.Module.Period (or FiscalYear)
+
+    // ? ADD BUDGET FIELDS
+    public decimal? Budget { get; set; }
+    public string? BudgetCurrency { get; set; }
 }
 
 public class WorkforcePlanModDto
@@ -47,4 +67,8 @@ public class WorkforcePlanModDto
     public DateTime EndDate { get; set; }
     public int TotalPositions { get; set; }
     public string RowVersion { get; set; } = default!;
+
+    // ? ADD BUDGET FIELDS
+    public decimal? Budget { get; set; }
+    public string? BudgetCurrency { get; set; }
 }

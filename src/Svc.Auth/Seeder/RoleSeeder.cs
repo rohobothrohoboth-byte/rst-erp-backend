@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using Microsoft.AspNetCore.Identity;
 using Svc.Auth.Models.Entities;
 

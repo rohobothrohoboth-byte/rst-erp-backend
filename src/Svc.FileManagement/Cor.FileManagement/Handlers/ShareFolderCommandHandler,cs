@@ -1,0 +1,76 @@
+// E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Handlers\ShareFolderCommandHandler.cs
+
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Cor.FileManagement.Models.Entities;
+using Cor.FileManagement.Models.DTOs;
+using Cor.FileManagement.Persistence;
+using Cor.FileManagement.Commands;
+using FileShareEntity = Cor.FileManagement.Models.Entities.FileShare;
+
+namespace Cor.FileManagement.Handlers;
+
+public class ShareFolderCommandHandler : IRequestHandler<ShareFolderCommand, FolderShareDto>
+{
+    private readonly FileDbContext _context;
+
+    public ShareFolderCommandHandler(FileDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<FolderShareDto> Handle(ShareFolderCommand request, CancellationToken cancellationToken)
+    {
+        // Check if folder exists
+        var folder = await _context.FileFolders
+            .FirstOrDefaultAsync(f => f.Id == request.FolderId && !f.IsDeleted, cancellationToken);
+
+        if (folder == null)
+            throw new Exception("Folder not found");
+
+        // Check if share already exists
+        var existingShare = await _context.FileShares
+            .FirstOrDefaultAsync(s => s.FolderId == request.FolderId &&
+                                      s.SharedWithId == request.SharedWithId &&
+                                      s.IsActive,
+                              cancellationToken);
+
+        if (existingShare != null)
+            throw new Exception("This folder is already shared with this user");
+
+        var share = new FileShareEntity
+        {
+            Id = Guid.NewGuid(),
+            FolderId = request.FolderId,
+            SharedWithId = request.SharedWithId,
+            SharedWithType = request.SharedWithType ?? "User",
+            Permission = request.Permission ?? "Read",
+            CanDownload = request.CanDownload,
+            CanDelete = request.CanDelete,
+            IsActive = true,
+            ExpiresAt = request.ExpiresAt,
+            SharedBy = request.SharedBy,
+            SharedAt = DateTime.UtcNow,
+            DateAdd = DateTime.UtcNow,
+            DateMod = DateTime.UtcNow
+        };
+
+        await _context.FileShares.AddAsync(share, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new FolderShareDto
+        {
+            Id = share.Id,
+            FolderId = share.FolderId ?? Guid.Empty,
+            SharedWithId = share.SharedWithId,
+            SharedWithType = share.SharedWithType,
+            Permission = share.Permission,
+            CanDownload = share.CanDownload,
+            CanDelete = share.CanDelete,
+            IsActive = share.IsActive,
+            ExpiresAt = share.ExpiresAt,
+            SharedAt = share.SharedAt,
+            SharedBy = share.SharedBy.ToString()
+        };
+    }
+}

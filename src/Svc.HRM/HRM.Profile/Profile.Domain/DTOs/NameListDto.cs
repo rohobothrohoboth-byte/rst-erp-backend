@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.DTOs;
+namespace Profile.Domain.DTOs;
 
 public class NameList
 {

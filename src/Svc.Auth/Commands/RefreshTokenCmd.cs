@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

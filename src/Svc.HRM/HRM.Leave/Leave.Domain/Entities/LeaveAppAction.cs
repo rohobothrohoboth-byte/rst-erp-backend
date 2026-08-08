@@ -9,7 +9,8 @@ public class LeaveAppAction : BaseEntity
     public DateTime ActionAt { get; set; }
     public Guid LeaveRequestId { get; set; } // LeaveRequest
     public Guid ApprovedById { get; set; } // HRM.Profile.Employee
-
+    public Guid LeaveAppStepId { get; set; } // LeaveAppStep
+    public DateTime DateApp { get; set; } = DateTime.UtcNow;
     //******************************************//
 
     public LeaveRequest LeaveRequest { get; set; } = null!;

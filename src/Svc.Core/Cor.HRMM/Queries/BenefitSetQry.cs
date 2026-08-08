@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
@@ -20,7 +20,7 @@ public class BenefitSetAllHandler : IRequestHandler<BenefitSetAllQry, List<Benef
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<BenefitSetting>(v, x => x.Id, x => x.Name, x => x.BenefitValue, x => x.Per, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<BenefitSetting>(v, x => x.Id, x => x.Name, x => x.BenefitValue, x => x.Per, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<BenefitSetting>(v)
             .OrderBy<BenefitSetting>(v, x => x.DateAdd, desc: true);
 
@@ -58,7 +58,7 @@ public class BenefitSetByIdHandler : IRequestHandler<BenefitSetByIdQry, BenefitS
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<BenefitSetting>(v, x => x.Id, x => x.Name, x => x.BenefitValue, x => x.Per, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<BenefitSetting>(v, x => x.Id, x => x.Name, x => x.BenefitValue, x => x.Per, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<BenefitSetting>(v)
             .Where<BenefitSetting>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -81,3 +81,4 @@ public class BenefitSetByIdHandler : IRequestHandler<BenefitSetByIdQry, BenefitS
         };
     }
 }
+

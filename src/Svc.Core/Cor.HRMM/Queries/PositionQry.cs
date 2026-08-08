@@ -1,16 +1,17 @@
-﻿using Common;
+using Common;
 using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
 using Helpers;
 using MediatR;
-
+using Npgsql;
 namespace Cor.HRMM.Queries;
 
 public class PositionAllQry : IRequest<List<PositionListDto>> { }
 public class PositionByIdQry : IRequest<PositionListDto?> { public Guid Id { get; set; } }
 
+public class PositionWithDepartmentQry : IRequest<List<PositionWithDeptDto>> { }
 
 
 public class PositionAllHandler : IRequestHandler<PositionAllQry, List<PositionListDto>>
@@ -31,7 +32,7 @@ public class PositionAllHandler : IRequestHandler<PositionAllQry, List<PositionL
 
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<Position>(v)
             .OrderBy<Position>(v, x => x.DateAdd, desc: true);
 
@@ -66,6 +67,54 @@ public class PositionAllHandler : IRequestHandler<PositionAllQry, List<PositionL
     }
 }
 
+
+
+
+
+
+public class PositionWithDepartmentHandler : IRequestHandler<PositionWithDepartmentQry, List<PositionWithDeptDto>>
+{
+    private readonly IConfiguration _configuration;
+
+    public PositionWithDepartmentHandler(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public async Task<List<PositionWithDeptDto>> Handle(PositionWithDepartmentQry request, CancellationToken ct)
+    {
+        var connectionString = _configuration.GetConnectionString("coreHRMMDbCon");
+        using var connection = new NpgsqlConnection(connectionString);
+
+        // ? Query from LOCAL COPIES in Cor.HRMM database
+        const string sql = @"
+            SELECT
+                p.""Id"",
+                p.""Name"",
+                p.""NameAm"",
+                p.""NoOfPosition"",
+                p.""IsVacant"",
+                p.""DepartmentId"",
+                d.""Name"" as DepartmentName,
+                b.""Name"" as BranchName,
+                c.""Name"" as CompanyName
+            FROM ""Positions"" p
+            LEFT JOIN ""Departments"" d ON p.""DepartmentId"" = d.""Id""
+            LEFT JOIN ""Branches"" b ON d.""BranchId"" = b.""Id""
+            LEFT JOIN ""Companies"" c ON b.""CompId"" = c.""Id""
+            WHERE p.""IsDeleted"" = false
+            ORDER BY p.""Name""";
+
+        return (await connection.QueryAsync<PositionWithDeptDto>(sql)).ToList();
+    }
+}
+
+
+
+
+
+
+
 public class PositionByIdHandler : IRequestHandler<PositionByIdQry, PositionListDto?>
 {
     private readonly IDapperHelper _dapper;
@@ -81,7 +130,7 @@ public class PositionByIdHandler : IRequestHandler<PositionByIdQry, PositionList
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Position>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.NoOfPosition, x => x.IsVacant, x => x.DepartmentId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<Position>(v)
             .Where<Position>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -109,3 +158,4 @@ public class PositionByIdHandler : IRequestHandler<PositionByIdQry, PositionList
         };
     }
 }
+

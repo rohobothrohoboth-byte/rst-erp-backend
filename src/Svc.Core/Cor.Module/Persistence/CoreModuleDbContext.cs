@@ -1,4 +1,4 @@
-﻿using Cor.Module.Models.Entities;
+using Cor.Module.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
@@ -16,22 +16,15 @@ public class CoreModuleDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Apply all configurations from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreModuleDbContext).Assembly);
+
+        // Configure relationships
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
 
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        {
-            var indexes = entityType.GetIndexes().Where(i => i.IsUnique);
-            foreach (var index in indexes)
-            {
-                index.SetFilter("\"IsDeleted\" = false");
-            }
-        }
-
-        modelBuilder.HasSequence<long>("bra_code_seq").StartsAt(1).IncrementsBy(1).HasMax(9999999).IsCyclic(false).HasAnnotation("Npgsql:Sequence:Cache", 100);
         modelBuilder.HasPostgresExtension("pgcrypto");
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreModuleDbContext).Assembly);
-
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

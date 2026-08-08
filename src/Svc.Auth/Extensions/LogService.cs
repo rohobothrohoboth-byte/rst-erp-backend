@@ -1,4 +1,4 @@
-﻿using Svc.Auth.Interfaces;
+using Svc.Auth.Interfaces;
 
 namespace Svc.Auth.Extensions;
 

@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
@@ -6,14 +6,14 @@ using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// Position Experience end points
 /// </summary>
 
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/PositionExp")]
 [ApiVersion("1.0")]
@@ -85,3 +85,5 @@ public class PositionExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION EXPERIENCE with Id {id} successfully deleted."));
     }
 }
+
+

@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Helpers;
 using MediatR;
 using Svc.Auth.Interfaces;
@@ -14,55 +14,69 @@ public sealed class PerMenuByModIdQry : IRequest<ModPerMenuListDto?> { public Gu
 public sealed class PerMenuByUserIdQry : IRequest<List<ModPerMenuListDto>> { public string Id { get; set; } = default!; }
 public sealed class MenuIdsByKeysQry : IRequest<List<KeyIdDto>> { public List<string> Keys { get; init; } = []; }
 public sealed class GetMenuTreeQry : IRequest<List<PerMenuDto>> { };
-
-
-
 public sealed class PerMenuAll(IDapperHelper _dapper) : IRequestHandler<PerMenuAllQry, List<PerMenuListDto>>
 {
     public async Task<List<PerMenuListDto>> Handle(PerMenuAllQry request, CancellationToken ct)
     {
-        const string v = "v";
-        const string c = "c";
-        const string d = "d";
-        var qb = new QueryBuilder()
-            .Select<PerMenu>(v, x => x.Id, x => x.PerModuleId, x => x.ParentId, x => x.Order, x => x.IsChild, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.IsDeleted, x => x.DateAdd, x => x.DateMod)
-            .SelectAs<PerMenu, PerMenuJoinRow>(c, x => x.Label, x => x.ParentLabel)
-            .SelectAs<PerMenu, PerMenuJoinRow>(c, x => x.Key, x => x.ParentKey)
-            .Select<PerModule>(d, x => x.Id)
-            .SelectAs<PerModule, PerMenuJoinRow>(d, x => x.Desc, x => x.ModuleDesc)
-            .From<PerMenu>(v)
-            .LeftJoin<PerMenu, PerMenu>(v, c, x => x.ParentId, x => x.Id)
-            .Join<PerMenu, PerModule>(v, d, x => x.PerModuleId, x => x.Id)
-            .OrderBy<PerMenu>(v, x => x.Order);
-        var (sql, param) = qb.Build();
-        await using var reader = await _dapper.ExecuteReaderAsync(sql, param, ct);
-        var parser = reader.GetRowParser<PerMenuJoinRow>();
+        const string sql = @"
+            SELECT
+                v.""Id"",
+                v.""PerModuleId"",
+                v.""ParentId"",
+                v.""Order"",
+                v.""IsChild"",
+                v.""Key"",
+                v.""Label"",
+                v.""Path"",
+                v.""Icon"",
+                v.""IsDeleted"",
+                v.""DateAdd"",
+                v.""DateMod"",
+                c.""Label"" AS ""ParentLabel"",
+                c.""Key"" AS ""ParentKey"",
+                d.""Desc"" AS ""ModuleDesc""
+            FROM ""PerMenu"" v
+            LEFT JOIN ""PerMenu"" c ON v.""ParentId"" = c.""Id"" AND c.""IsDeleted"" = false
+            INNER JOIN ""PerModule"" d ON v.""PerModuleId"" = d.""Id"" AND d.""IsDeleted"" = false
+            WHERE v.""IsDeleted"" = false
+            ORDER BY v.""Order"" ASC";
 
-        var result = new List<PerMenuListDto>();
-        while (await reader.ReadAsync(ct))
+        var rows = await _dapper.QueryAsync<PerMenuJoinRow>(sql, null, ct);
+
+        return rows.Select(row => new PerMenuListDto
         {
-            var row = parser(reader);
+            Id = row.Id,
+            PerModuleId = row.PerModuleId,
+            Order = row.Order,
+            IsChild = row.IsChild,
+            Key = row.Key,
+            Label = row.Label,
+            IsChildStr = row.IsChild.ToString(),
+            Parent = row.ParentLabel ?? "",
+            ParentKey = row.ParentKey ?? "",
+            Module = row.ModuleDesc,
+            Path = row.Path,
+            Icon = row.Icon,
+            IsDeleted = row.IsDeleted,
+            DateAdd = row.DateAdd,
+            DateMod = row.DateMod
+        }).ToList();
+    }
+}
 
-            result.Add(new PerMenuListDto
-            {
-                Id = row.Id,
-                PerModuleId = row.PerModuleId,
-                Order = row.Order,
-                IsChild = row.IsChild,
-                Key = row.Key,
-                Label = row.Label,
-                IsChildStr = row.IsChild.ToString(),
-                Parent = row.ParentLabel ?? "",
-                ParentKey = row.ParentKey ?? "",
-                Module = row.ModuleDesc,
-                Path = row.Path,
-                Icon = row.Icon,
-                IsDeleted = row.IsDeleted,
-                DateAdd = row.DateAdd,
-                DateMod = row.DateMod
-            });
-        }
 
+public sealed class PerMenuByKey(IDapperHelper _dapper) : IRequestHandler<PerMenuByKeyQry, NameList?>
+{
+    public async Task<NameList?> Handle(PerMenuByKeyQry request, CancellationToken ct)
+    {
+        const string sql = @"
+            SELECT
+                ""Id"",
+                ""Label"" AS ""Name""
+            FROM ""PerMenu""
+            WHERE ""Key"" = @Key AND ""IsDeleted"" = false";
+
+        var result = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, new { Key = request.Key }, ct);
         return result;
     }
 }
@@ -71,23 +85,41 @@ public sealed class PerMenuById(IDapperHelper _dapper) : IRequestHandler<PerMenu
 {
     public async Task<PerMenuListDto?> Handle(PerMenuByIdQry request, CancellationToken ct)
     {
-        const string v = "v";
-        const string c = "c";
-        const string d = "d";
-        var qb = new QueryBuilder()
-            .Select<PerMenu>(v, x => x.Id, x => x.PerModuleId, x => x.ParentId, x => x.Order, x => x.IsChild, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.IsDeleted, x => x.DateAdd, x => x.DateMod)
-            .Select<PerMenu>(c, x => x.Label, x => x.Key)
-            .Select<PerModule>(d, x => x.Id, x => x.Desc)
-            .From<PerMenu>(v)
-            .LeftJoin<PerMenu, PerMenu>(v, c, x => x.ParentId, x => x.Id)
-            .Join<PerMenu, PerModule>(v, d, x => x.PerModuleId, x => x.Id)
-            .Where<PerMenu>(v, x => x.Id == request.Id)
-            .Limit(1);
-        var (sql, parameters) = qb.Build();
-        var row = await _dapper.QueryFirstOrDefaultAsync<PerMenuJoinRow>(sql, parameters, ct);
-        if (row == null) return null;
 
-        var m = new PerMenuListDto
+
+        const string sql = @"
+            SELECT
+                v.""Id"",
+                v.""PerModuleId"",
+                v.""ParentId"",
+                v.""Order"",
+                v.""IsChild"",
+                v.""Key"",
+                v.""Label"",
+                v.""Path"",
+                v.""Icon"",
+                v.""IsDeleted"",
+                v.""DateAdd"",
+                v.""DateMod"",
+                p.""Label"" AS ""ParentLabel"",
+                p.""Key"" AS ""ParentKey"",
+                m.""Desc"" AS ""ModuleDesc""
+            FROM ""PerMenu"" v
+            LEFT JOIN ""PerMenu"" p ON v.""ParentId"" = p.""Id"" AND p.""IsDeleted"" = false
+            INNER JOIN ""PerModule"" m ON v.""PerModuleId"" = m.""Id"" AND m.""IsDeleted"" = false
+            WHERE v.""Id"" = @Id AND v.""IsDeleted"" = false";
+
+        var row = await _dapper.QueryFirstOrDefaultAsync<PerMenuJoinRow>(sql, new { Id = request.Id }, ct);
+
+        if (row == null)
+        {
+
+            return null;
+        }
+
+
+
+        return new PerMenuListDto
         {
             Id = row.Id,
             PerModuleId = row.PerModuleId,
@@ -105,74 +137,6 @@ public sealed class PerMenuById(IDapperHelper _dapper) : IRequestHandler<PerMenu
             DateAdd = row.DateAdd,
             DateMod = row.DateMod
         };
-        return m;
-    }
-}
-
-public sealed class PerMenuByKey(IDapperHelper _dapper) : IRequestHandler<PerMenuByKeyQry, NameList?>
-{
-    public async Task<NameList?> Handle(PerMenuByKeyQry request, CancellationToken ct)
-    {
-        const string v = "v";
-        var qb = new QueryBuilder()
-            .Select<PerMenu>(v, x => x.Id)
-            .SelectAs<PerMenu, NameList>(v, x => x.Label, d => d.Name)
-            .From<PerMenu>(v)
-            .Where<PerMenu>(v, p => p.Key == request.Key)
-            .Limit(1);
-        var (sql, parameters) = qb.Build();
-        var data = await _dapper.QueryFirstOrDefaultAsync<NameList>(sql, parameters, ct);
-        if (data == null) return null;
-        return data;
-    }
-}
-
-public sealed class PerMenuByModId(IDapperHelper _dapper) : IRequestHandler<PerMenuByModIdQry, ModPerMenuListDto?>
-{
-    public async Task<ModPerMenuListDto?> Handle(PerMenuByModIdQry request, CancellationToken ct)
-    {
-        const string v = "v";
-        const string c = "c";
-        var qb = new QueryBuilder()
-            .Select<PerMenu>(c, x => x.PerModuleId)
-            .SelectAs<PerMenu, ModuleMenuRow>(c, x => x.Label, x => x.MenuLabel)
-            .SelectAs<PerMenu, ModuleMenuRow>(c, x => x.Id, x => x.MenuId)
-            .SelectAs<PerModule, ModuleMenuRow>(v, x => x.Desc, x => x.ModuleDesc)
-            .From<PerMenu>(v)
-            .LeftJoin<PerModule, PerMenu>(v, c, x => x.Id, x => x.PerModuleId)
-            .Where<PerMenu>(c, x => x.PerModuleId == request.Id)
-            .OrderBy<PerMenu>(c, x => x.Label);
-        var (sql, param) = qb.Build();
-        await using var reader = await _dapper.ExecuteReaderAsync(sql, param, ct);
-        var parser = reader.GetRowParser<ModuleMenuRow>();
-
-        ModPerMenuListDto? result = null;
-        var menus = new List<NameList>();
-        while (await reader.ReadAsync(ct))
-        {
-            var row = parser(reader);
-
-            if (result == null)
-            {
-                result = new ModPerMenuListDto
-                {
-                    PerModuleId = row.PerModuleId,
-                    PerModule = row.ModuleDesc,
-                    PerMenuList = menus
-                };
-            }
-
-            if (row.MenuId != Guid.Empty)
-            {
-                menus.Add(new NameList
-                {
-                    Id = row.MenuId,
-                    Name = row.MenuLabel
-                });
-            }
-        }
-
-        return result;
     }
 }
 
@@ -257,7 +221,7 @@ public sealed class GetMenuTree(IDapperHelper _dapper) : IRequestHandler<GetMenu
             {
                 m.Children = BuildTree(allMenus, m.Id);
                 return m;
-            }).OrderBy(x=>x.Order)];
+            }).OrderBy(x => x.Order)];
     }
 
     public async Task<List<PerMenuDto>> Handle(GetMenuTreeQry request, CancellationToken ct)
@@ -265,7 +229,7 @@ public sealed class GetMenuTree(IDapperHelper _dapper) : IRequestHandler<GetMenu
         const string v = "v";
         const string m = "m";
         var qb = new QueryBuilder()
-            .Select<PerMenu>(v, x => x.Id, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.Order, x => x.PerModuleId, x => x.ParentId)
+            .Select<PerMenu>(v, x => x.Id, x => x.Key, x => x.Label, x => x.Path, x => x.Icon, x => x.Order, x => x.PerModuleId, x => x.ParentId!)
             .SelectAs<PerModule, PerMenuDto>(m, x => x.Desc, x => x.Module)
             .From<PerMenu>(v)
             .LeftJoin<PerMenu, PerModule>(v, m, x => x.PerModuleId, x => x.Id)

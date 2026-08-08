@@ -133,7 +133,7 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         ArgumentNullException.ThrowIfNull(entity);
         _context.Attach(entity);
-        _context.Entry(entity).Property(x => x.xmin).OriginalValue = entity.xmin;
+       // _context.Entry(entity).Property(x => x.xmin).OriginalValue = entity.xmin;
         _context.Entry(entity).State = EntityState.Modified;
         _logger.LogDebug("Entity updated: {Entity}", typeof(TEntity).Name);
         _hasChanges = true;

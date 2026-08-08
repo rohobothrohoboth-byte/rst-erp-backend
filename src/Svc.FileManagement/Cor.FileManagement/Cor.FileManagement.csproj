@@ -1,0 +1,94 @@
+<!-- E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Cor.FileManagement.csproj -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- gRPC -->
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <!-- API Versioning -->
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+
+    <!-- Dapper & MediatR -->
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="MediatR" />
+
+    <!-- Authentication -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+
+    <!-- OpenAPI -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+
+    <!-- Entity Framework -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+
+    <!-- Hosting -->
+    <!-- ? Consider removing if not directly used -->
+    <!-- <PackageReference Include="Microsoft.Extensions.Hosting" /> -->
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+    <!-- <PackageReference Include="Microsoft.Extensions.Caching.Memory" /> -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <!-- <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" /> -->
+
+    <!-- Health Checks -->
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" />
+    <PackageReference Include="Microsoft.OpenApi" />
+
+    <!-- PostgreSQL -->
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+
+    <!-- RabbitMQ -->
+    <PackageReference Include="RabbitMQ.Client" />
+
+    <!-- Scalar -->
+    <PackageReference Include="Scalar.AspNetCore" />
+
+    <!-- Serilog -->
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+
+    <!-- Swashbuckle -->
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+
+    <!-- Image Processing -->
+    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\gRPC\Common\Common.csproj" />
+    <ProjectReference Include="..\..\RST_ERP.ServiceDefaults\RST_ERP.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Shared\Helpers\Helpers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="@(Content)">
+      <Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
+    </Content>
+  </ItemGroup>
+  </Project>

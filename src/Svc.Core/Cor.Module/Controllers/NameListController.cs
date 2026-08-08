@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Common;
 using Cor.Module.Queries;
 using Helpers;

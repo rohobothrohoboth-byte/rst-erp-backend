@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.DTOs;
+namespace Cor.HRMM.Models.DTOs;
 
 public class PositionListDto : BaseDto
 {
@@ -29,4 +29,17 @@ public class PositionModDto
     public string IsVacant { get; set; } = default!; //enum.YesNo (0/1)
     public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department
     public string RowVersion { get; set; } = default!;
+}
+
+public class PositionWithDeptDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string NameAm { get; set; } = string.Empty;
+    public int NoOfPosition { get; set; }
+    public string IsVacant { get; set; } = string.Empty;
+    public Guid DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
 }

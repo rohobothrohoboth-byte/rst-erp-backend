@@ -1,4 +1,4 @@
-﻿using Contracts;
+using Contracts;
 using Cor.Module.Queries;
 using Grpc.Core;
 using MediatR;
@@ -93,21 +93,31 @@ public class CorModListService : CorModuleService.CorModuleServiceBase
         res.EndDate = response.DateEnd.ToString();
         return res;
     }
+public override async Task<ActFiscalYear> GetActiveFiscal(CorModuleListRqst request, ServerCallContext context)
+{
+    var response = await _med.Send(new ActiveFiscalYearQry());
 
-    public override async Task<ActFiscalYear> GetActiveFiscal(CorModuleListRqst request, ServerCallContext context)
+    // If no active fiscal year exists, return an empty/default response
+    if (response == null)
     {
-        var res = new ActFiscalYear();
-        var response = await _med.Send(new ActiveFiscalYearQry());
-        if (response == null)
+        return new ActFiscalYear
         {
-            res = new ActFiscalYear { Id = null, Name = null, StartDate = null, EndDate = null };
-        }
-        res.Id = response!.Id.ToString();
-        res.Name = response!.Name;
-        res.StartDate = response.DateStart.ToString();
-        res.EndDate = response.DateEnd.ToString();
-        return res;
+            Id = "",
+            Name = "",
+            StartDate = "",
+            EndDate = ""
+        };
     }
+
+    // Return the actual fiscal year data
+    return new ActFiscalYear
+    {
+        Id = response.Id.ToString(),
+        Name = response.Name,
+        StartDate = response.DateStart.ToString("yyyy-MM-dd HH:mm:ss"),
+        EndDate = response.DateEnd.ToString("yyyy-MM-dd HH:mm:ss")
+    };
+}
 
     public override async Task<HoDayListRes> GetListHoDay(CorModuleListRqst request, ServerCallContext context)
     {

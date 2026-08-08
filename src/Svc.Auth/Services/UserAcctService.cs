@@ -1,8 +1,9 @@
-﻿using Helpers;
+using Helpers;
+using Common;
 using Microsoft.AspNetCore.Identity;
 using Svc.Auth.Models.Dtos;
 using Svc.Auth.Models.Entities;
-
+using Microsoft.EntityFrameworkCore;
 namespace Svc.Auth.Services;
 
 public interface IUserAcctService
@@ -17,6 +18,9 @@ public interface IUserAcctService
     Task<OpResult> SoftDeleteAccount(string email, CancellationToken ct);
     Task<OpResult> ChnagePassword(PwdChgDto Dto, CancellationToken ct);
     Task<OpResult> ResetPassword(string userId, string newPassword, CancellationToken ct);
+
+
+
 }
 
 public class UserAcctService(UserManager<AppUser> _uManager, RoleManager<AppRole> _rManager) : IUserAcctService
@@ -73,51 +77,49 @@ public class UserAcctService(UserManager<AppUser> _uManager, RoleManager<AppRole
         var result = await _uManager.UpdateAsync(user);
         return result.Succeeded ? OpResult.Ok() : OpResult.Fail(result.Errors.Select(e => e.Description));
     }
-
     public async Task<OpResult> DeleteAccount(string id, CancellationToken ct)
     {
-        var errors = new List<string>();
-        var user = await _uManager.FindByIdAsync(id);
-        if (user == null) { return OpResult.Fail("User not found"); }
+        Console.WriteLine($"=== Deleting account for user: {id} ===");
 
-        var roles = await _uManager.GetRolesAsync(user);
-        if (roles.Any())
+        // Try to find by EmployeeId first (since that's what you're passing)
+        var user = await _uManager.Users
+            .FirstOrDefaultAsync(u => u.EmployeeId == Guid.Parse(id), ct);
+
+        if (user == null)
         {
-            var res = await _uManager.RemoveFromRolesAsync(user, roles);
-            if (!res.Succeeded) { errors.AddRange(res.Errors.Select(e => $"Role: {e.Description}")); }
+            // If not found by EmployeeId, try by Id
+            user = await _uManager.FindByIdAsync(id);
         }
 
-        var claims = await _uManager.GetClaimsAsync(user);
-        if (claims.Any())
+        if (user == null)
         {
-            var res = await _uManager.RemoveClaimsAsync(user, claims);
-            if (!res.Succeeded) { errors.AddRange(res.Errors.Select(e => $"Claim: {e.Description}")); }
+            Console.WriteLine($"User not found with ID: {id}");
+            return OpResult.Fail($"User not found with ID: {id}");
         }
 
-        var logins = await _uManager.GetLoginsAsync(user);
-        foreach (var login in logins)
-        {
-            var res = await _uManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
-            if (!res.Succeeded) { errors.AddRange(res.Errors.Select(e => $"Login: {e.Description}")); }
-        }
+        Console.WriteLine($"User found: {user.Email}, IsActive: {user.IsActive}");
 
-        var providers = new[] { "Default", "Email", "Phone" };
-        var tokens = new[] { "RefreshToken", "AccessToken" };
-
-        foreach (var provider in providers)
+        try
         {
-            foreach (var token in tokens)
+            // Just deactivate the user
+            user.IsActive = false;
+            var result = await _uManager.UpdateAsync(user);
+
+            if (result.Succeeded)
             {
-                await _uManager.RemoveAuthenticationTokenAsync(user, provider, token);
+                Console.WriteLine("User deactivated successfully");
+                return OpResult.Ok();
             }
+
+            Console.WriteLine($"Update failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            return OpResult.Fail(result.Errors.Select(e => e.Description));
         }
-
-        var deleteResult = await _uManager.DeleteAsync(user);
-        if (!deleteResult.Succeeded) { errors.AddRange(deleteResult.Errors.Select(e => $"Delete: {e.Description}")); }
-
-        return errors.Any() ? OpResult.Fail(errors) : OpResult.Ok();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            return OpResult.Fail($"Error: {ex.Message}");
+        }
     }
-
     public async Task<OpResult> AssignRole(string userId, string roleId, CancellationToken ct)
     {
         var user = await _uManager.FindByIdAsync(userId);

@@ -1,4 +1,4 @@
-﻿namespace Recruit.Domain.DTOs;
+namespace Recruit.Domain.DTOs;
 
 public class EvalFlowListDto : BaseDto
 {

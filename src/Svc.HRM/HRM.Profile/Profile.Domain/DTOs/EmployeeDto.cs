@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.DTOs;
+namespace Profile.Domain.DTOs;
 
 public sealed class EmpJoinRow
 {
@@ -12,12 +12,12 @@ public sealed class EmpJoinRow
     public Guid DepartmentId { get; init; }
     public Guid JobGradeId { get; init; }
     public Guid PositionId { get; init; }
-
+     public Guid? BranchId { get; init; }
     public bool IsDeleted { get; init; }
     public DateTime DateAdd { get; init; }
     public DateTime? DateMod { get; init; }
     public string xmin { get; init; } = default!;
-
+    public Guid PersonId { get; init; }
     public string FirstName { get; init; } = default!;
     public string MiddleName { get; init; } = default!;
     public string LastName { get; init; } = default!;
@@ -27,8 +27,49 @@ public sealed class EmpJoinRow
     public string Gender { get; init; } = default!;
     public string Nationality { get; init; } = default!;
     public byte[]? PhotoThumbnail { get; init; }
+    public string? Email { get; init; }  // ? ADD THIS
+    public string? Phone { get; init; }  // ? ADD THIS
 }
+public class EmployeeJoinRow
+{
+    // Employee fields
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string EmpState { get; set; } = string.Empty;
+    public string EmploymentType { get; set; } = string.Empty;
+    public string EmploymentNature { get; set; } = string.Empty;
+    public string WorkArrangement { get; set; } = string.Empty;
+    public Guid DepartmentId { get; set; }
+    public Guid JobGradeId { get; set; }
+    public Guid PositionId { get; set; }
+    public Guid PersonId { get; set; }
+    public DateTime DateAdd { get; set; }
+    public DateTime? DateMod { get; set; }
+    public uint xmin { get; set; }
 
+    // Person fields
+    public string FirstName { get; set; } = string.Empty;
+    public string MiddleName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string FirstNameAm { get; set; } = string.Empty;
+    public string MiddleNameAm { get; set; } = string.Empty;
+    public string LastNameAm { get; set; } = string.Empty;
+    public string Gender { get; set; } = string.Empty;
+
+    // Department fields
+    public string DepartmentName { get; set; } = string.Empty;
+    public string DepartmentNameAm { get; set; } = string.Empty;
+
+    // Branch fields
+    public string BranchName { get; set; } = string.Empty;
+    public string BranchNameAm { get; set; } = string.Empty;
+
+    // JobGrade fields
+    public string JobGradeName { get; set; } = string.Empty;
+
+    // Position fields
+    public string PositionName { get; set; } = string.Empty;
+}
 public sealed class EmpBioJoin
 {
     public DateTime? BirthDate { get; init; }
@@ -61,7 +102,7 @@ public sealed class EmpGuaJoin
     public long FileSize { get; init; } = default!;
     public string ContentType { get; init; } = default!;
 }
-
+// Profile.Domain.DTOs/EmployeeListDto.cs
 public class EmployeeListDto : BaseDto
 {
     public string EmpFullName { get; set; } = default!;
@@ -77,6 +118,23 @@ public class EmployeeListDto : BaseDto
     public string EmpNature { get; set; } = default!;
     public string WorkArr { get; set; } = default!;
     public string Photo { get; set; } = default!;
+
+    // IDs
+    public Guid DepartmentId { get; set; }
+    public Guid JobGradeId { get; set; }
+    public Guid PositionId { get; set; }
+    public Guid? BranchId { get; set; }
+    public Guid PersonId { get; set; }  // ? ADD THIS
+
+    // ? ADD ALL PERSON FIELDS
+    public string FirstName { get; set; } = string.Empty;
+    public string FirstNameAm { get; set; } = string.Empty;
+    public string MiddleName { get; set; } = string.Empty;
+    public string MiddleNameAm { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string LastNameAm { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
 }
 
 public class EmployeeModDto

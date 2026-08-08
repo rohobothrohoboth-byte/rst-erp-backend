@@ -5,6 +5,7 @@ namespace Leave.App.Interfaces;
 
 public interface IDapperHelper
 {
+ Task<T?> QryFoD<T>(string sql, object? param = null, CancellationToken ct = default);
     Task<T?> QueryFirstOrDefaultAsync<T>(string sql, object? param = null, CancellationToken ct = default);
     Task<T?> QuerySingleOrDefaultAsync<T>(string sql, object? param = null, CancellationToken ct = default);
     Task<T> QuerySingleAsync<T>(string sql, object? param = null, CancellationToken ct = default);
@@ -15,4 +16,5 @@ public interface IDapperHelper
     Task<IEnumerable<TResult>> QueryAsync<TFirst, TSecond, TResult>(string sql, Func<TFirst, TSecond, TResult> map, object? param = null, string splitOn = "Id", CancellationToken ct = default, bool buffered = true);
     Task<IEnumerable<T>> QueryAsync<T>(CommandDefinition command);
     Task<int> ExecuteAsync(CommandDefinition command);
+     Task<DbDataReader> ExecuteReader(string sql, object? param = null, CancellationToken ct = default);
 }

@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Persistence;
+using Cor.HRMM.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.HRMM.Middlewares;

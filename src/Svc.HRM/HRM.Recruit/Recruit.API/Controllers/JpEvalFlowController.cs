@@ -1,4 +1,6 @@
-﻿using Asp.Versioning;
+// Recruit.API/Controllers/JpEvalFlowController.cs
+
+using Asp.Versioning;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,15 +21,23 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JpEvalFlowController(IMediator med) : ControllerBase
 {
-    [HttpPost("AllJpEvalFlow/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AllJpEvalFlow(Guid id)
-    {
-        var response = await med.Send(new JpEvalFlowByJpIdQry { Id = id });
-        if (response == null) { throw new DomainException($"JOB POST'S EVALUATION FLOW with JOB POST id [{id}] NOT FOUND."); }
-        return Ok(ApiResponse<object>.Ok(response));
-    }
+   // Recruit.API/Controllers/JpEvalFlowController.cs
+
+   [HttpPost("AllJpEvalFlow/{id:guid}")]
+   [ProducesResponseType(StatusCodes.Status200OK)]
+   [ProducesResponseType(StatusCodes.Status404NotFound)]
+   public async Task<IActionResult> AllJpEvalFlow(Guid id)
+   {
+       var response = await med.Send(new JpEvalFlowByJpIdQry { Id = id });
+
+       // ? response is now List<JpEvalFlowListDto>
+       if (response == null || response.Count == 0)
+       {
+           return Ok(ApiResponse<object>.Ok(new List<JpEvalFlowListDto>()));
+       }
+
+       return Ok(ApiResponse<object>.Ok(response));
+   }
 
     [HttpGet("GetJpEvalFlow/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -35,7 +45,11 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
     public async Task<IActionResult> GetJpEvalFlow(Guid id)
     {
         var response = await med.Send(new JpEvalFlowByIdQry { Id = id });
-        if (response == null) { throw new DomainException($"JOB POST'S EVALUATION FLOW with id [{id}] NOT FOUND."); }
+        if (response == null)
+        {
+            // ? Fix: Return null with 200 OK instead of throwing
+            return Ok(ApiResponse<object>.Ok(null));
+        }
         return Ok(ApiResponse<object>.Ok(response));
     }
 

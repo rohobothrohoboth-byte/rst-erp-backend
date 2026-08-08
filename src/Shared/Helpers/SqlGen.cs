@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -77,7 +77,7 @@ public sealed class QueryBuilder
     private int _paramIndex;
     private int? _limit;
     private int? _offset;
-    private bool _distinct;
+    private bool _distinct = false;
 
     public QueryBuilder Select<T>(string alias, params Expression<Func<T, object>>[] cols)
     {
@@ -203,6 +203,12 @@ public sealed class QueryBuilder
         return this;
     }
 
+    public QueryBuilder OrderByRaw(string orderByClause)
+    {
+        _order.Add(orderByClause);
+        return this;
+    }
+
     public QueryBuilder GroupBy(params string[] cols)
     {
         _group.AddRange(cols);
@@ -212,6 +218,12 @@ public sealed class QueryBuilder
     public QueryBuilder Limit(int limit)
     {
         _limit = limit;
+        return this;
+    }
+
+    public QueryBuilder Offset(int offset)
+    {
+        _offset = offset;
         return this;
     }
 
@@ -245,6 +257,13 @@ public sealed class QueryBuilder
             sb.AppendLine($"OFFSET {_offset}");
 
         return (sb.ToString(), _params);
+    }
+
+    public (string Sql, DynamicParameters Params) BuildCount()
+    {
+        var (baseSql, baseParams) = Build();
+        var sql = $"SELECT COUNT(*) FROM ({baseSql}) AS CountResult";
+        return (sql, baseParams);
     }
 
     private void AppendWhere(string condition)
@@ -369,5 +388,23 @@ public sealed class QueryBuilder
         }
 
         throw new NotSupportedException($"Method {expr.Method.Name} not supported");
+    }
+
+    // Add this method to your QueryBuilder class
+    public QueryBuilder WhereOr(string conditions)
+    {
+        if (!string.IsNullOrWhiteSpace(conditions))
+        {
+            _where.Add($"({conditions})");
+        }
+        return this;
+    }
+
+    // In QueryBuilder.cs, add this public method
+    public string AddPublicParam(object? value)
+    {
+        var name = $"@p{_paramIndex++}";
+        _params.Add(name, value);
+        return name;
     }
 }

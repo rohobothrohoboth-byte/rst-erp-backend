@@ -2,12 +2,7 @@
 
 namespace Leave.Domain.DTOs;
 
-public class StatChangeDto
-{
-    public Guid Id { get; set; }
-    public bool Stat { get; set; } = true;
-    public string RowVersion { get; set; } = default!;
-}
+
 
 public class NameList
 {
@@ -15,17 +10,20 @@ public class NameList
     public string Name { get; set; } = default!;
 }
 
+// Leave.Domain/DTOs/LedgerEntryDto.cs
 public class LedgerEntryDto
 {
-    public double Amount { get; set; } = default!; // +/-
-    public string EntryType { get; set; } = default!; // enum.LedgerEntryType (0/1)
-    public string SourceType { get; set; } = default!; // enum.LedgerSource (0/1)
-    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
-    public Guid LeaveTypeId { get; set; } // LeaveType
-    public Guid? LeavePolicyId { get; set; } // LeavePolicy
-    public Guid? ReferenceId { get; set; } // LeaveRequestId, AccrualBatchId, etc.
+    public double Amount { get; set; } = default!;
+    public string EntryType { get; set; } = default!;
+    public string SourceType { get; set; } = default!;
+    public Guid EmployeeId { get; set; }
+    public Guid LeaveTypeId { get; set; }
+    public Guid? LeavePolicyId { get; set; }
+    public Guid? ReferenceId { get; set; }
+    public DateTime Date { get; set; } = DateTime.UtcNow;      // ADD THIS - matches database
+    public DateTime DateAdd { get; set; } = DateTime.UtcNow;   // ADD THIS - from BaseEntity
+    public DateTime? DateMod { get; set; }                     // ADD THIS - optional
 }
-
 public class EmpPolicyCtx
 {
     public Guid EmployeeId { get; set; }
@@ -47,6 +45,7 @@ public class PolicyCondCtx
     public string Field { get; set; } = default!; // enum.ConditionField
     public string Operator { get; set; } = default!; // enum.ConditionOperator
     public string Value { get; set; } = default!;
+     public Guid LeaveTypeId { get; set; }  // ADD THIS
 }
 
 public class ResolvePolicy
@@ -75,7 +74,7 @@ public class LeaveReqValResult
 
 public class LeaveBalanceInfo
 {
-    public double AssignedEntitlement { get; set; }
+    public decimal  AssignedEntitlement { get; set; }
     public double UsedDays { get; set; }
     public double RemainingBalance { get; set; }
     public double RequestedDays { get; set; }
@@ -87,6 +86,9 @@ public class EligibilityInfo
     public int ServiceMonths { get; set; }
     public int MinRequiredMonths { get; set; }
     public bool IsEligible { get; set; }
+     public string EmployeeName { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
 }
 
 public class PolicyConstraintsInfo
@@ -129,7 +131,8 @@ public class LeaveAppRes
     public bool IsFinalApproval { get; set; }
     public ApproverInfo? NextApprover { get; set; }
     public List<string> Errors { get; set; } = new();
-
+  public bool AutoApp { get; set; }
+   public double PerApp { get; set; } = 0;
     public bool IsSuccessful => !Errors.Any();
     public void AddError(string error) => Errors.Add(error);
 }
@@ -155,7 +158,7 @@ public class EmpLeaveBal
     public Guid LeaveTypeId { get; set; } // LeaveType
     [JsonIgnore]
     public Guid LeavePolicyId { get; set; } // LeavePolicy
-
+public string CarryForward { get; set; } = "0 days";  // Add this
     public string LeaveType { get; set; } = default!;
     public double Percent { get; set; } = 100;
     public string TotalDays { get; set; } = default!;
@@ -200,3 +203,4 @@ public class HolidayStatistics
     public Dictionary<int, int> HolidaysByMonth { get; set; } = new();
     public Dictionary<string, int> HolidaysByDayOfWeek { get; set; } = new();
 }
+

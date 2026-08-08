@@ -1,4 +1,4 @@
-﻿namespace Cor.Module.Models.Entities;
+namespace Cor.Module.Models.Entities;
 
 public class Department : BaseEntity
 {

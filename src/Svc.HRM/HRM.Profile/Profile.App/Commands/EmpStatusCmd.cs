@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;

@@ -1,4 +1,4 @@
-﻿namespace Leave.Domain.Entities;
+namespace Leave.Domain.Entities;
 
 public class Attachment : BaseEntity
 {

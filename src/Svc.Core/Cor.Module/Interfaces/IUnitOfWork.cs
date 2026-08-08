@@ -1,4 +1,4 @@
-﻿using Cor.Module.Models.Entities;
+using Cor.Module.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 

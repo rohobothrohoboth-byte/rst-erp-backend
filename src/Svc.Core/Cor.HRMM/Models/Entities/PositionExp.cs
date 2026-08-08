@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.Entities;
+namespace Cor.HRMM.Models.Entities;
 
 public class PositionExp: BaseEntity
 {
@@ -12,3 +12,4 @@ public class PositionExp: BaseEntity
 
     public Position Position { get; set; } = null!;
 }
+

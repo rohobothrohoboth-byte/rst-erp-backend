@@ -1,4 +1,12 @@
-﻿[*.cs]
+﻿
+# E:\untitled46\RST_ERP\.editorconfig
+[*.cs]
 
-# IDE0320: Make anonymous function static
-dotnet_diagnostic.IDE0320.severity = none
+# CS8618 - Non-nullable property must contain a non-null value
+dotnet_diagnostic.CS8618.severity = suggestion
+
+# CS8604 - Possible null reference argument
+dotnet_diagnostic.CS8604.severity = suggestion
+
+# CS0649 - Field never assigned to
+dotnet_diagnostic.CS0649.severity = suggestion

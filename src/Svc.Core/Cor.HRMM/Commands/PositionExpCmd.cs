@@ -1,10 +1,11 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Cor.HRMM.Commands;
 
@@ -12,20 +13,24 @@ public class PositionExpAddCmd : IRequest<PositionExpListDto> { public PositionE
 public class PositionExpModCmd : IRequest<PositionExpListDto> { public PositionExpModDto ModDto { get; set; } = default!; }
 public class PositionExpDelCmd : IRequest { public Guid Id { get; set; } }
 
-
-
 public class PosExpAddHandler : IRequestHandler<PositionExpAddCmd, PositionExpListDto>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
-    public PosExpAddHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
+
+    public PosExpAddHandler(IUnitOfWork unitOfWork, IMediator med)
+    {
+        _uow = unitOfWork;
+        _med = med;
+    }
 
     public async Task<PositionExpListDto> Handle(PositionExpAddCmd request, CancellationToken ct)
     {
-        await _uow.Begin(ct);
-        try
+        PositionExp data = null!;
+
+        await _uow.ExecuteAsync(async token =>
         {
-            var data = new PositionExp
+            data = new PositionExp
             {
                 SamePosExp = request.AddDto.SamePosExp,
                 OtherPosExp = request.AddDto.OtherPosExp,
@@ -33,20 +38,11 @@ public class PosExpAddHandler : IRequestHandler<PositionExpAddCmd, PositionExpLi
                 MaxAge = request.AddDto.MaxAge,
                 PositionId = request.AddDto.PositionId
             };
-            await _uow.Add(data, ct);
-            await _uow.Commit(ct);
+            await _uow.AddAsync(data, token);
+        }, ct: ct);
 
-            var res = new PositionExpListDto();
-            var response = await _med.Send(new PositionExpByIdQry { Id = data.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
+        var response = await _med.Send(new PositionExpByIdQry { Id = data.Id }, ct);
+        return response ?? new PositionExpListDto();
     }
 }
 
@@ -54,15 +50,26 @@ public class PosExpModHandler : IRequestHandler<PositionExpModCmd, PositionExpLi
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
-    public PosExpModHandler(IUnitOfWork unitOfWork, IMediator med) { _uow = unitOfWork; _med = med; }
+
+    public PosExpModHandler(IUnitOfWork unitOfWork, IMediator med)
+    {
+        _uow = unitOfWork;
+        _med = med;
+    }
 
     public async Task<PositionExpListDto> Handle(PositionExpModCmd request, CancellationToken ct)
     {
-        await _uow.Begin(ct);
-        try
+        PositionExp? oldData = null!;
+
+        await _uow.ExecuteAsync(async token =>
         {
-            var oldData = await _uow.Set<PositionExp>().FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, ct);
-            if (oldData == null) { throw new DomainException($"POSITION EXPERIENCE with Id {request.ModDto.Id} NOT FOUND."); }
+            oldData = await _uow.Set<PositionExp>()
+                .FirstOrDefaultAsync(x => x.Id == request.ModDto.Id, token);
+
+            if (oldData == null)
+            {
+                throw new DomainException($"POSITION EXPERIENCE with Id {request.ModDto.Id} NOT FOUND.");
+            }
 
             oldData.SamePosExp = request.ModDto.SamePosExp;
             oldData.OtherPosExp = request.ModDto.OtherPosExp;
@@ -70,42 +77,36 @@ public class PosExpModHandler : IRequestHandler<PositionExpModCmd, PositionExpLi
             oldData.MaxAge = request.ModDto.MaxAge;
             oldData.PositionId = request.ModDto.PositionId;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
-            await _uow.Update(oldData);
-            await _uow.Commit(ct);
+            _uow.Update(oldData);
+        }, ct: ct);
 
-            var res = new PositionExpListDto();
-            var response = await _med.Send(new PositionExpByIdQry { Id = request.ModDto.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
+        var response = await _med.Send(new PositionExpByIdQry { Id = request.ModDto.Id }, ct);
+        return response ?? new PositionExpListDto();
     }
 }
 
 public class PosExpDelHandler : IRequestHandler<PositionExpDelCmd>
 {
     private readonly IUnitOfWork _uow;
-    public PosExpDelHandler(IUnitOfWork unitOfWork) { _uow = unitOfWork; }
+
+    public PosExpDelHandler(IUnitOfWork unitOfWork)
+    {
+        _uow = unitOfWork;
+    }
 
     public async Task Handle(PositionExpDelCmd request, CancellationToken ct)
     {
-        await _uow.Begin(ct);
-        try
+        await _uow.ExecuteAsync(async token =>
         {
-            var data = await _uow.Set<PositionExp>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (data == null) { throw new DomainException($"POSITION EXPERIENCE with id [{request.Id}] NOT FOUND."); }
-            await _uow.Delete(data);
-            await _uow.Commit(ct);
-        }
-        catch
-        {
-            await _uow.Rollback(ct);
-            throw;
-        }
+            var data = await _uow.Set<PositionExp>()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, token);
+
+            if (data == null)
+            {
+                throw new DomainException($"POSITION EXPERIENCE with id [{request.Id}] NOT FOUND.");
+            }
+
+            _uow.Delete(data);
+        }, ct: ct);
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Leave.Domain.DTOs;
+namespace Leave.Domain.DTOs;
 
 public class PolicyRuleCondListDto : BaseDto
 {
@@ -16,7 +16,7 @@ public class PolicyRuleCondAddDto
     public string Field { get; set; } = default!; // enum.ConditionField
     public string Operator { get; set; } = default!; // enum.ConditionOperator
     public string Value { get; set; } = default!;
-    public Guid PolicyAssRuleId { get; set; } // PolicyAssignmentRule
+    public Guid PolicyAssignmentRuleId  { get; set; } // PolicyAssignmentRule
 }
 
 public class PolicyRuleCondModDto

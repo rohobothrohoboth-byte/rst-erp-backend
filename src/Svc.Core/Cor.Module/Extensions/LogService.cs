@@ -1,4 +1,4 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Interfaces;
 
 namespace Cor.Module.Extensions;
 

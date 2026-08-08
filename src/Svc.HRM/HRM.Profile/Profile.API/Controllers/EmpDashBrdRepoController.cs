@@ -33,6 +33,19 @@ public class EmpDashBrdRepoController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [HttpGet("PendEmpEduExp")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> PendEmpEduExp()
+    {
+        var response = await med.Send(new EmpDbPendEduExpQry());
+        return Ok(ApiResponse<object>.Ok(response));
+    }
 
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetHrDashboard()
+    {
+        var dashboard = await med.Send(new HrDashboardQry());
+        return Ok(dashboard);
+    }
 
 }

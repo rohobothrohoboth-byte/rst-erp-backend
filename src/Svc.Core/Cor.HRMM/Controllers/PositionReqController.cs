@@ -1,24 +1,36 @@
-﻿using Asp.Versioning;
+// Cor.HRMM/Controllers/PositionReqController.cs
+
+using Asp.Versioning;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// Position Requirement end points
 /// </summary>
-
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/PositionReq")]
 [ApiVersion("1.0")]
-
 public class PositionReqController(IMediator med) : ControllerBase
 {
+    /// <summary>
+    /// ✅ GET ALL Position Requirements (No ID required)
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllPositionRequirements()
+    {
+        var response = await med.Send(new PositionReqGetAllQry());  // ✅ Use the new query
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     /// <summary>
     /// End point to get list of Position Requirement by PositionId
     /// </summary>

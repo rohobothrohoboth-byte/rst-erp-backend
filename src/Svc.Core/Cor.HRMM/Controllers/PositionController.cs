@@ -1,29 +1,55 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
+using Cor.HRMM.Services;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;  // ✅ Add this
 using Microsoft.AspNetCore.Mvc;
-
+using Shared.Helpers.Services;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// Employees Position end points
 /// </summary>
 
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]  // ✅ UNCOMMENT and add schemes
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/Position")]
 [ApiVersion("1.0")]
-
-public class PositionController(IMediator med) : ControllerBase
+public class PositionController : ControllerBase
 {
+    private readonly IMediator _mediator;
+    private readonly ICacheService _cache;
+    private readonly ILogger<PositionController> _logger;
+
+    public PositionController(
+        IMediator mediator,
+        ICacheService cache,
+        ILogger<PositionController> logger)
+    {
+        _mediator = mediator;
+        _cache = cache;
+        _logger = logger;
+    }
+
     [HttpGet("AllPosition")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPosition()
     {
-        var response = await med.Send(new PositionAllQry());
+        const string cacheKey = "AllPositions";
+
+        var response = await _cache.GetOrCreateWithLockAsync(
+            cacheKey,
+            async (ct) =>
+            {
+                _logger.LogInformation("🔍 Cache MISS - Loading AllPosition from database");
+                return await _mediator.Send(new PositionAllQry(), ct);
+            },
+            TimeSpan.FromMinutes(5)
+        );
+
         return Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -32,8 +58,23 @@ public class PositionController(IMediator med) : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPosition(Guid id)
     {
-        var response = await med.Send(new PositionByIdQry { Id = id });
-        if (response == null) { throw new DomainException($"POSITION with id [{id}] NOT FOUND."); }
+        var cacheKey = $"Position:{id}";
+
+        var response = await _cache.GetOrCreateAsync(
+            cacheKey,
+            async (ct) =>
+            {
+                _logger.LogInformation("🔍 Cache MISS - Loading Position {Id} from database", id);
+                var result = await _mediator.Send(new PositionByIdQry { Id = id }, ct);
+                if (result == null)
+                {
+                    throw new DomainException($"POSITION with id [{id}] NOT FOUND.");
+                }
+                return result;
+            },
+            TimeSpan.FromMinutes(10)
+        );
+
         return Ok(ApiResponse<object>.Ok(response));
     }
 
@@ -49,7 +90,11 @@ public class PositionController(IMediator med) : ControllerBase
         }
 
         var command = new PositionAddCmd { AddDto = addDto };
-        var response = await med.Send(command);
+        var response = await _mediator.Send(command);
+
+        await _cache.RemoveAsync("AllPositions");
+        _logger.LogInformation("🗑️ Cache invalidated: AllPositions");
+
         return Ok(ApiResponse<object>.Ok(response, "New POSITION successfully created."));
     }
 
@@ -67,7 +112,12 @@ public class PositionController(IMediator med) : ControllerBase
         }
 
         var command = new PositionModCmd { ModDto = modDto };
-        var response = await med.Send(command);
+        var response = await _mediator.Send(command);
+
+        await _cache.RemoveAsync("AllPositions");
+        await _cache.RemoveAsync($"Position:{id}");
+        _logger.LogInformation("🗑️ Cache invalidated: AllPositions and Position:{Id}", id);
+
         return Ok(ApiResponse<object>.Ok(response, "Selected POSITION successfully updated."));
     }
 
@@ -77,7 +127,12 @@ public class PositionController(IMediator med) : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var command = new PositionDelCmd { Id = id };
-        await med.Send(command);
+        await _mediator.Send(command);
+
+        await _cache.RemoveAsync("AllPositions");
+        await _cache.RemoveAsync($"Position:{id}");
+        _logger.LogInformation("🗑️ Cache invalidated: AllPositions and Position:{Id}", id);
+
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION with Id {id} successfully deleted."));
     }
 }

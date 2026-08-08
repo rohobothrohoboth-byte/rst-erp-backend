@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using EthiopianCalendar;
 
 namespace Cor.Module.Models.DTOs;

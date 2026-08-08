@@ -1,4 +1,4 @@
-﻿namespace Profile.App.Interfaces;
+namespace Profile.App.Interfaces;
 
 public interface ILogService
 {

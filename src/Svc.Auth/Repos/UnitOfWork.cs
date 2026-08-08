@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Entities;
 using Svc.Auth.Persistence;
 using System.Data;
-
+using Microsoft.EntityFrameworkCore.Storage;
 namespace Svc.Auth.Repos;
 
 public sealed class UnitOfWork : IUnitOfWork
@@ -14,7 +14,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IDbRetryHandler _retry;
 
     private readonly NpgsqlConnection _connection;
-    private NpgsqlTransaction? _transaction;
+    private IDbContextTransaction? _transaction;
 
     private bool _disposed;
     private bool _hasChanges;
@@ -28,7 +28,7 @@ public sealed class UnitOfWork : IUnitOfWork
     }
 
     public IDbConnection Connection => _connection;
-    public IDbTransaction? Transaction => _transaction;
+    public IDbTransaction? Transaction => _transaction?.GetDbTransaction();
 
     public async Task Begin(CancellationToken ct = default)
     {
@@ -37,58 +37,79 @@ public sealed class UnitOfWork : IUnitOfWork
             await _connection.OpenAsync(ct);
             _logger.LogInformation("Connection OPENED. ConnectionId={ConnectionId}", _connection.ProcessID);
         }
+
+        if (_transaction == null)
+        {
+            // ? Use EF Core's transaction API instead of raw connection
+            _transaction = await _context.Database.BeginTransactionAsync(ct);
+            _logger.LogInformation("Transaction STARTED. ConnectionId={ConnectionId}", _connection.ProcessID);
+        }
     }
 
     public async Task Commit(CancellationToken ct = default)
     {
-        if (!_hasChanges)
+        if (_transaction == null)
         {
-            _logger.LogInformation("No changes to commit.");
+            _logger.LogWarning("No transaction to commit.");
             return;
         }
 
-        var strategy = _context.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
+        try
         {
-            await using var transaction = await _connection.BeginTransactionAsync(ct);
-            try
-            {
-                await _context.Database.UseTransactionAsync(transaction, ct);
-                _transaction = transaction;
-                await FlushInternalAsync(ct);
-                await transaction.CommitAsync(ct);
-                _context.ChangeTracker.Clear();
-                _logger.LogInformation("Transaction COMMITTED successfully. ConnectionId={ConnectionId}", _connection.ProcessID);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Transaction FAILED. Rolling back. ConnectionId={ConnectionId}", _connection.ProcessID);
-                await transaction.RollbackAsync(ct);
-                throw;
-            }
-            finally
-            {
-                _transaction = null;
-            }
-        });
+            // ? We should NOT call SaveChangesAsync here - it's handled by ExecuteInTransactionAsync
+            // The changes are already saved by the strategy
+
+            // ? Commit the transaction
+            await _transaction.CommitAsync(ct);
+            _logger.LogInformation("Transaction COMMITTED. ConnectionId={ConnectionId}", _connection.ProcessID);
+
+            // ? Dispose the transaction
+            await _transaction.DisposeAsync();
+            _transaction = null;
+
+            // ? Clear EF change tracker
+            _context.ChangeTracker.Clear();
+            _hasChanges = false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to commit transaction. ConnectionId={ConnectionId}", _connection.ProcessID);
+            throw;
+        }
     }
 
     public async Task Rollback(CancellationToken ct = default)
     {
         if (_transaction == null)
         {
-            _logger.LogInformation("No Transactions available to Rollback.");
+            _logger.LogInformation("No transaction to rollback.");
             return;
         }
 
-        await _transaction.RollbackAsync(ct);
-        _transaction = null;
-        _logger.LogWarning("Transaction rolled back manually.");
+        try
+        {
+            await _transaction.RollbackAsync(ct);
+            _logger.LogWarning("Transaction ROLLED BACK. ConnectionId={ConnectionId}", _connection.ProcessID);
+
+            await _transaction.DisposeAsync();
+            _transaction = null;
+
+            _context.ChangeTracker.Clear();
+            _hasChanges = false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rollback transaction. ConnectionId={ConnectionId}", _connection.ProcessID);
+            throw;
+        }
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        return await _retry.ExecuteAsync(async () => { return await FlushInternalAsync(ct); }, ct);
+        return await _retry.ExecuteAsync(async () =>
+        {
+            return await FlushInternalAsync(ct);
+        }, ct);
     }
 
     private async Task<int> FlushInternalAsync(CancellationToken ct)
@@ -163,6 +184,64 @@ public sealed class UnitOfWork : IUnitOfWork
         await Task.CompletedTask;
     }
 
+public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken ct = default)
+{
+    var strategy = _context.Database.CreateExecutionStrategy();
+    await strategy.ExecuteAsync(async () =>
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+        var connectionId = _connection.ProcessID; // Store connection ID before it might close
+        _logger.LogInformation("Transaction STARTED. ConnectionId={ConnectionId}", connectionId);
+
+        bool committed = false;
+        try
+        {
+            _transaction = transaction;
+            _hasChanges = false;
+
+            await action();
+
+            if (_hasChanges)
+            {
+                _context.ChangeTracker.DetectChanges();
+                var rowsAffected = await _context.SaveChangesAsync(ct);
+                _logger.LogInformation("SaveChanges SUCCESS. Rows={Rows}", rowsAffected);
+                _hasChanges = false;
+            }
+
+            await transaction.CommitAsync(ct);
+            committed = true;
+            _logger.LogInformation("Transaction COMMITTED. ConnectionId={ConnectionId}", connectionId);
+
+            _context.ChangeTracker.Clear();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during transaction");
+            if (!committed)
+            {
+                try
+                {
+                    await transaction.RollbackAsync(ct);
+                    _logger.LogWarning("Transaction ROLLED BACK. ConnectionId={ConnectionId}", connectionId);
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(rollbackEx, "Error during rollback (transaction may already be completed)");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Transaction already committed, no rollback attempted.");
+            }
+            throw;
+        }
+        finally
+        {
+            _transaction = null;
+        }
+    });
+}
     public async Task Restore<TEntity>(TEntity entity) where TEntity : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(entity);

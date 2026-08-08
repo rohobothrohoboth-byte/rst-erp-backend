@@ -1,0 +1,183 @@
+services:
+  # ============ DATABASES ============
+  auth_db:
+    image: postgres:15
+    container_name: auth_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: Auth.Mgr
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  core_db:
+    image: postgres:15
+    container_name: core_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: core.Module
+    ports:
+      - "5433:5432"
+    volumes:
+      - core_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hrm_db:
+    image: postgres:15
+    container_name: hrm_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: HRM.Pro
+    ports:
+      - "5434:5432"
+    volumes:
+      - hrm_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============ MESSAGE BROKER ============
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============ CACHE ============
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============ SERVICES ============
+  core_api:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.Module/Dockerfile
+    container_name: core_api
+    restart: unless-stopped
+    ports:
+      - "${CORE_PORT:-1102}:80"
+    depends_on:
+      core_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__CorModuleDbCon=Host=core_db;Port=5432;Database=core.Module;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+
+  core_hrmm_api:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.HRMM/Dockerfile
+    container_name: core_hrmm_api
+    restart: unless-stopped
+    ports:
+      - "${HRMM_PORT:-1101}:80"
+    depends_on:
+      hrm_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__coreHRMMDbCon=Host=hrm_db;Port=5432;Database=core.HRMM;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+
+  hrm_pro_api:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/Profile.API/Dockerfile
+    container_name: hrm_pro_api
+    restart: unless-stopped
+    ports:
+      - "${HRM_PORT:-1215}:80"
+    depends_on:
+      hrm_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__HRMProDbCon=Host=hrm_db;Port=5432;Database=HRM.Pro;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+
+  auth_api:
+    build:
+      context: .
+      dockerfile: src/Svc.Auth/Dockerfile
+    container_name: auth_api
+    restart: unless-stopped
+    ports:
+      - "${AUTH_PORT:-1213}:80"
+    depends_on:
+      auth_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      core_api:
+        condition: service_started
+      core_hrmm_api:
+        condition: service_started
+      hrm_pro_api:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__authMgrCon=Host=auth_db;Port=5432;Database=Auth.Mgr;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
+      - ConnectionStrings__Redis=redis:6379
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - ServiceUrls__CoreModuleApi=http://core_api
+      - ServiceUrls__CoreHRMMApi=http://core_hrmm_api
+      - ServiceUrls__HRMProApi=http://hrm_pro_api
+
+volumes:
+  auth_db_data:
+  core_db_data:
+  hrm_db_data:

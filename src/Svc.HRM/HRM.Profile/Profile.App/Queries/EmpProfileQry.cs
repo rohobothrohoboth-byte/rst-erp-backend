@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Helpers;
 using MediatR;
 using Profile.App.Interfaces;
@@ -93,7 +93,7 @@ public class ProBasicHandler(IDapperHelper dapper, ICorHrmmClient corHrmm, ICorM
             .Select<Person>(p, x => x.Gender, x => x.Nationality)
             .Select<EmpBio>(eb, x => x.BirthDate, x => x.MaritalStatus, x => x.AddressId)
             .Select<EmpSalary>(es, x => x.BaseSalary, x => x.Currency, x => x.SalaryPayFreq, x => x.EffectiveFrom, x => x.JgStepId)
-            .Select<Address>(ad, x => x.AddressType, x => x.Country, x => x.Region, x => x.Subcity, x => x.Zone, x => x.Woreda, x => x.Kebele, x => x.HouseNo, x => x.Telephone, x => x.PoBox, x => x.Fax, x => x.Email, x => x.Website)
+            .Select<Address>(ad,  x => x.AddressType! , x => x.Country!, x => x.Region!, x => x.Subcity!, x => x.Zone!, x => x.Woreda!, x => x.Kebele!, x => x.HouseNo!, x => x.Telephone!, x => x.PoBox!, x => x.Fax!, x => x.Email!, x => x.Website!)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
             .LeftJoin<Employee, EmpBio>(e, eb, x => x.Id, x => x.EmployeeId)
@@ -193,7 +193,7 @@ public class ProEmContactHandler(IDapperHelper dapper) : IRequestHandler<MyProEm
         const string ad = "ad";
         var qb = new QueryBuilder()
             .Select<EmergencyContact>(ec, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality, x => x.Id, x => x.Relation)
-            .Select<Address>(ad, x => x.AddressType, x => x.Country, x => x.Region, x => x.Subcity, x => x.Zone, x => x.Woreda, x => x.Kebele, x => x.HouseNo, x => x.Telephone, x => x.PoBox, x => x.Fax, x => x.Email, x => x.Website)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Country!, x => x.Region!, x => x.Subcity!, x => x.Zone!, x => x.Woreda!, x => x.Kebele!, x => x.HouseNo!, x => x.Telephone!, x => x.PoBox!, x => x.Fax!, x => x.Email!, x => x.Website!)
             .From<EmergencyContact>(ec)
             .Join<EmergencyContact, Address>(ec, ad, x => x.AddressId, x => x.Id)
             .Where<EmergencyContact>(ec, x => x.EmployeeId == request.Id)
@@ -255,7 +255,7 @@ public class EmpGuarantyHandler(IDapperHelper dapper) : IRequestHandler<MyEmpGua
         const string fm = "fm";
         var qb = new QueryBuilder()
             .Select<EmpGuarantor>(eg, x => x.Relation, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality)
-            .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Zone!, x => x.Region!, x => x.Subcity!, x => x.Woreda!, x => x.Kebele!, x => x.Telephone!)
             .Select<FileMetaData>(fm, x => x.FileName, x => x.ContentType, x => x.FileSize)
             .SelectAs<FileMetaData, MyEmpGuar>(fm, x => x.Id, x => x.FileId)
             .From<EmpGuarantor>(eg)

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Recruit.Domain.Entities;
@@ -210,26 +210,36 @@ public class JobDecConfig : BaseEntityConfig<JobDec>
         b.Property(x => x.WorkLocation).IsRequired();
     }
 }
+// Recruit.Utility/Persistence/JobOfferConfig.cs
 
 public class JobOfferConfig : BaseEntityConfig<JobOffer>
 {
     public override void Configure(EntityTypeBuilder<JobOffer> b)
     {
         base.Configure(b);
-        var p = b.Property(x => x.OfferNumber)
-                    .HasMaxLength(15)
-                    .IsRequired()
-                    .HasDefaultValueSql("generate_code('JO'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
-                    .ValueGeneratedOnAdd();
-        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+        // ? REMOVE the default value SQL - OfferNumber will be generated in application code
+        b.Property(x => x.OfferNumber)
+            .HasMaxLength(15)
+            .IsRequired();
+        // REMOVE: .HasDefaultValueSql("generate_code('JO'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+        // REMOVE: .ValueGeneratedOnAdd();
+
         b.Property(x => x.ExpirationDate).IsRequired();
         b.Property(x => x.JobApplicationId).IsRequired();
         b.Property(x => x.JobPostingId).IsRequired();
         b.Property(x => x.OfferDate).IsRequired();
         b.Property(x => x.OfferDocument).IsRequired();
         b.Property(x => x.Status).HasMaxLength(20).IsRequired();
-        b.HasOne(x => x.JobApplication).WithMany().HasForeignKey(x => x.JobApplicationId);
-        b.HasOne(x => x.JobPosting).WithMany().HasForeignKey(x => x.JobPostingId);
+
+        b.HasOne(x => x.JobApplication)
+            .WithMany()
+            .HasForeignKey(x => x.JobApplicationId);
+
+        b.HasOne(x => x.JobPosting)
+            .WithMany()
+            .HasForeignKey(x => x.JobPostingId);
+
         b.HasIndex(x => x.Status);
         b.HasIndex(x => x.OfferNumber);
     }
@@ -276,26 +286,36 @@ public class JobPostEvalFlowConfig : BaseEntityConfig<JobPostEvalFlow>
         b.HasIndex(x => new { x.JobPostingId, x.EvaluationFlowId }).IsUnique();
     }
 }
+// Recruit.Utility/Persistence/JobPostingConfig.cs
 
 public class JobPostingConfig : BaseEntityConfig<JobPosting>
 {
     public override void Configure(EntityTypeBuilder<JobPosting> b)
     {
         base.Configure(b);
-        var p = b.Property(x => x.PostNumber)
+
+        // ? REMOVE the default value SQL - PostNumber will be generated in application code
+        b.Property(x => x.PostNumber)
             .HasMaxLength(15)
-            .IsRequired()
-            .HasDefaultValueSql("generate_code('JOB'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
-            .ValueGeneratedOnAdd();
-        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+            .IsRequired();
+        // REMOVE: .HasDefaultValueSql("generate_code('JOB'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+        // REMOVE: .ValueGeneratedOnAdd();
+
         b.Property(x => x.ClosedDate);
         b.Property(x => x.DeadlineDate).IsRequired();
         b.Property(x => x.JobReqId).IsRequired();
         b.Property(x => x.PostType).HasMaxLength(20).IsRequired();
         b.Property(x => x.PublishedDate).IsRequired();
         b.Property(x => x.Status).HasMaxLength(20).IsRequired();
-        b.HasOne(x => x.JobReq).WithMany().HasForeignKey(x => x.JobReqId);
-        b.HasMany(x => x.Applications).WithOne(x => x.JobPosting).HasForeignKey(x => x.JobPostingId);
+
+        b.HasOne(x => x.JobReq)
+            .WithMany()
+            .HasForeignKey(x => x.JobReqId);
+
+        b.HasMany(x => x.Applications)
+            .WithOne(x => x.JobPosting)
+            .HasForeignKey(x => x.JobPostingId);
+
         b.HasIndex(x => x.PostNumber).IsUnique();
         b.HasIndex(x => x.Status);
     }
@@ -328,18 +348,23 @@ public class JobReqReviewConfig : BaseEntityConfig<JobReqReview>
         b.HasOne(x => x.JobReq).WithMany(x => x.Reviews).HasForeignKey(x => x.JobReqId);
     }
 }
+// Recruit.Utility/Persistence/JobRequisitionConfig.cs
+// Recruit.Utility/Persistence/JobRequisitionConfig.cs
 
 public class JobRequisitionConfig : BaseEntityConfig<JobRequisition>
 {
     public override void Configure(EntityTypeBuilder<JobRequisition> b)
     {
         base.Configure(b);
-        var p = b.Property(x => x.ReqNumber)
-                    .HasMaxLength(15)
-                    .IsRequired()
-                    .HasDefaultValueSql("generate_code('JR'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
-                    .ValueGeneratedOnAdd();
-        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+        // ? REMOVE ValueGeneratedOnAdd and HasDefaultValueSql
+        b.Property(x => x.ReqNumber)
+            .HasMaxLength(15)
+            .IsRequired();
+        // REMOVE: .HasDefaultValueSql("generate_code('JR'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
+        // REMOVE: .ValueGeneratedOnAdd();
+        // REMOVE: p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
         b.Property(x => x.BudgetCode).HasMaxLength(50).IsRequired();
         b.Property(x => x.JgStepId).IsRequired();
         b.Property(x => x.JobDecId).IsRequired();
@@ -349,8 +374,16 @@ public class JobRequisitionConfig : BaseEntityConfig<JobRequisition>
         b.Property(x => x.StartDate).IsRequired();
         b.Property(x => x.Status).HasMaxLength(20).IsRequired();
         b.Property(x => x.WorkforcePlanId).IsRequired();
-        b.HasOne(x => x.WorkforcePlan).WithMany(x => x.JobRequisitions).HasForeignKey(x => x.WorkforcePlanId);
-        b.HasOne(x => x.JobDec).WithMany().HasForeignKey(x => x.JobDecId);
+
+        b.HasOne(x => x.WorkforcePlan)
+            .WithMany(x => x.JobRequisitions)
+            .HasForeignKey(x => x.WorkforcePlanId);
+
+        b.HasOne(x => x.JobDec)
+            .WithMany()
+            .HasForeignKey(x => x.JobDecId);
+
+        b.HasIndex(x => x.ReqNumber).IsUnique();
     }
 }
 
@@ -411,12 +444,12 @@ public class WorkforcePlanConfig : BaseEntityConfig<WorkforcePlan>
     public override void Configure(EntityTypeBuilder<WorkforcePlan> b)
     {
         base.Configure(b);
-        var p = b.Property(x => x.PlanCode)
-                    .HasMaxLength(15)
-                    .IsRequired()
-                    .HasDefaultValueSql("generate_code('WFP'::text, EXTRACT(YEAR FROM CURRENT_DATE)::int)")
-                    .ValueGeneratedOnAdd();
-        p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+        // PlanCode - Generated in application code, NOT in database
+        b.Property(x => x.PlanCode)
+            .HasMaxLength(15)
+            .IsRequired();
+
         b.Property(x => x.AppPositions).IsRequired();
         b.Property(x => x.DepartmentId).IsRequired();
         b.Property(x => x.Desc).IsRequired();
@@ -427,9 +460,28 @@ public class WorkforcePlanConfig : BaseEntityConfig<WorkforcePlan>
         b.Property(x => x.Title).IsRequired();
         b.Property(x => x.TotalPositions).IsRequired();
         b.Property(x => x.PeriodId);
-        b.HasMany(x => x.JobRequisitions).WithOne(x => x.WorkforcePlan).HasForeignKey(x => x.WorkforcePlanId);
-        b.HasMany(x => x.Reviews).WithOne(x => x.WorkforcePlan).HasForeignKey(x => x.WorkforcePlanId);
+
+        // Budget fields
+        b.Property(x => x.Budget)
+            .HasColumnType("decimal(18,2)")
+            .IsRequired(false);
+
+        b.Property(x => x.BudgetCurrency)
+            .HasMaxLength(10)
+            .IsRequired(false)
+            .HasDefaultValue("ETB");
+
+        // Relationships
+        b.HasMany(x => x.JobRequisitions)
+            .WithOne(x => x.WorkforcePlan)
+            .HasForeignKey(x => x.WorkforcePlanId);
+
+        b.HasMany(x => x.Reviews)
+            .WithOne(x => x.WorkforcePlan)
+            .HasForeignKey(x => x.WorkforcePlanId);
+
         b.HasIndex(x => x.PlanCode).IsUnique();
+        b.HasIndex(x => x.Status);
     }
 }
 
@@ -448,3 +500,79 @@ public class WorkforcePlanReviewConfig : BaseEntityConfig<WorkforcePlanReview>
         b.HasIndex(x => new { x.WorkforcePlanId, x.Status });
     }
 }
+
+// Recruit.Utility/Persistence/InterviewConfiguration.cs
+
+
+ public class InterviewConfig : BaseEntityConfig<Interview>
+ {
+     public override void Configure(EntityTypeBuilder<Interview> b)
+     {
+         // ? Call base configuration first
+         base.Configure(b);
+
+         // ? Ignore xmin (PostgreSQL system column)
+         b.Ignore(x => x.xmin);
+
+         // ? Table name
+         b.ToTable("Interview");
+
+         // ? Primary Key
+         b.HasKey(x => x.Id);
+
+         // ? Properties
+         b.Property(x => x.ApplicantId)
+             .IsRequired();
+
+         b.Property(x => x.JobPostingId)
+             .IsRequired();
+
+         b.Property(x => x.InterviewType)
+             .HasMaxLength(50)
+             .IsRequired();
+
+         b.Property(x => x.ScheduledDate)
+             .IsRequired();
+
+         b.Property(x => x.Location)
+             .HasMaxLength(200);
+
+         b.Property(x => x.MeetingLink)
+             .HasMaxLength(500);
+
+         b.Property(x => x.Notes)
+             .HasMaxLength(1000);
+
+
+
+         b.Property(x => x.Status)
+             .HasMaxLength(50)
+             .IsRequired();
+
+         // ? Relationships
+         b.HasOne(x => x.Applicant)
+             .WithMany()
+             .HasForeignKey(x => x.ApplicantId)
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
+
+         b.HasOne(x => x.JobPosting)
+             .WithMany()
+             .HasForeignKey(x => x.JobPostingId)
+             .OnDelete(DeleteBehavior.Restrict)
+             .IsRequired(false);
+
+         // ? Indexes for performance
+         b.HasIndex(x => x.ApplicantId)
+             .HasDatabaseName("IX_Interview_ApplicantId");
+
+         b.HasIndex(x => x.JobPostingId)
+             .HasDatabaseName("IX_Interview_JobPostingId");
+
+         b.HasIndex(x => x.ScheduledDate)
+             .HasDatabaseName("IX_Interview_ScheduledDate");
+
+         b.HasIndex(x => x.Status)
+             .HasDatabaseName("IX_Interview_Status");
+     }
+ }

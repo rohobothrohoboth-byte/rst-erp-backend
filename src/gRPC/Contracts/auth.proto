@@ -31,4 +31,11 @@ message GetUserResponse {
   repeated string PerMenu = 6;
   repeated string PerApi = 7;
   string error_message = 8;
+
+  string branchId = 9;
+  string branchName = 10;
+  string departmentId = 11;
+  string departmentName = 12;
+  string positionId = 13;
+  string positionName = 14;
 }

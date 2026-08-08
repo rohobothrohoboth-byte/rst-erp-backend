@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
@@ -45,7 +45,7 @@ public class EmpModBioHandler(IDapperHelper _dapper) : IRequestHandler<EmpModBio
         const string ef = "ef";
         var qb = new QueryBuilder()
             .Select<EmpBio>(eb, x => x.Id, x => x.BirthDate, x => x.BirthLocation, x => x.MotherFullName, x => x.MaritalStatus, x => x.xmin)
-            .Select<Address>(ad, x => x.AddressType, x => x.Country, x => x.Region, x => x.Subcity, x => x.Zone, x => x.Woreda, x => x.Kebele, x => x.HouseNo, x => x.Telephone, x => x.PoBox, x => x.Fax, x => x.Email, x => x.Website)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Country!, x => x.Region!, x => x.Subcity!, x => x.Zone!, x => x.Woreda!, x => x.Kebele!, x => x.HouseNo!, x => x.Telephone!, x => x.PoBox!, x => x.Fax!, x => x.Email!, x => x.Website!)
             .Select<EmpFinance>(ef, x => x.Tin, x => x.BankAccountNo, x => x.PensionNumber)
             .From<EmpBio>(eb)
             .LeftJoin<EmpBio, Address>(eb, ad, x => x.AddressId, x => x.Id)
@@ -71,7 +71,7 @@ public class EmpModGuarHandler(IDapperHelper _dapper) : IRequestHandler<EmpModGu
         const string ad = "ad";
         var qb = new QueryBuilder()
             .Select<EmpGuarantor>(eg, x => x.Relation, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.Gender, x => x.Nationality, x => x.xmin)
-            .Select<Address>(ad, x => x.AddressType, x => x.Zone, x => x.Region, x => x.Subcity, x => x.Woreda, x => x.Kebele, x => x.Telephone)
+            .Select<Address>(ad, x => x.AddressType!, x => x.Zone!, x => x.Region!, x => x.Subcity!, x => x.Woreda!, x => x.Kebele!, x => x.Telephone!)
             .From<EmpGuarantor>(eg)
             .Join<EmpGuarantor, Address>(eg, ad, x => x.AddressId, x => x.Id)
             .Where<EmpGuarantor>(eg, x => x.EmployeeId == request.Id)

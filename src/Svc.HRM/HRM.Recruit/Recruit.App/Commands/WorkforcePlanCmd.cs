@@ -1,4 +1,6 @@
-﻿using Common;
+// Recruit.App/Commands/WorkforcePlanCommands.cs
+
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -35,8 +37,13 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
         {
             var stat = BoolToStr.EnumToString(ReqStatus.Pending);
             var dept = await _hrmProfile.GetEmpId(request.AddDto.RequistionById.ToString(), ct);
+
+            // ? Generate Plan Code
+            var planCode = await GeneratePlanCode(ct);
+
             var data = new WorkforcePlan
             {
+                PlanCode = planCode,
                 Title = request.AddDto.Title,
                 Desc = request.AddDto.Desc,
                 StartDate = request.AddDto.StartDate,
@@ -46,7 +53,11 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
                 Status = stat,
                 DepartmentId = dept != null ? Guid.Parse(dept!.DeptId) : Guid.Empty,
                 PeriodId = request.AddDto.PeriodId,
-                RequistionById = request.AddDto.RequistionById
+                RequistionById = request.AddDto.RequistionById,
+                Budget = request.AddDto.Budget,                                    // ? ADDED
+                BudgetCurrency = string.IsNullOrEmpty(request.AddDto.BudgetCurrency)
+                    ? CurrencyConstants.ETB
+                    : request.AddDto.BudgetCurrency                               // ? ADDED
             };
             await _uow.Add(data, ct);
             await _uow.Commit(ct);
@@ -62,6 +73,16 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
             await _uow.Rollback(ct);
             throw;
         }
+    }
+
+    private async Task<string> GeneratePlanCode(CancellationToken ct)
+    {
+        var year = DateTime.UtcNow.Year;
+        var count = await _uow.Set<WorkforcePlan>()
+            .Where(x => x.PlanCode.StartsWith($"WP-{year}-"))
+            .CountAsync(ct);
+        var number = (count + 1).ToString("D3");
+        return $"WP-{year}-{number}";
     }
 }
 
@@ -85,6 +106,10 @@ public class WorkforcePlanModHandler : IRequestHandler<WorkforcePlanModCmd, Work
             oldData.StartDate = request.ModDto.StartDate;
             oldData.EndDate = request.ModDto.EndDate;
             oldData.TotalPositions = request.ModDto.TotalPositions;
+            oldData.Budget = request.ModDto.Budget;                                    // ? ADDED
+            oldData.BudgetCurrency = string.IsNullOrEmpty(request.ModDto.BudgetCurrency)
+                ? CurrencyConstants.ETB
+                : request.ModDto.BudgetCurrency;                                      // ? ADDED
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
             await _uow.Update(oldData);
             await _uow.Commit(ct);

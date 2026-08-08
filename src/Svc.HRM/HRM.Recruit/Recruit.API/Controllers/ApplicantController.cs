@@ -1,10 +1,13 @@
-﻿using Asp.Versioning;
+// Recruit.API/Controllers/ApplicantController.cs
+
+using Asp.Versioning;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Recruit.App.Commands;  // ? Add this for the command
 using Recruit.App.Queries;
-
+using Recruit.Domain.DTOs;
 namespace Recruit.API.Controllers;
 
 /// <summary>
@@ -47,7 +50,27 @@ public class ApplicantController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    // ? Add the UpdateStatus endpoint
+    [HttpPut("UpdateStatus/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateApplicantStatusDto statusDto)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            throw new ValException(errors);
+        }
 
+        var command = new UpdateApplicantStatusCmd
+        {
+            Id = id,
+            Status = statusDto.Status,
+            Reason = statusDto.Reason
+        };
 
-
+        var response = await med.Send(command);
+        return Ok(ApiResponse<object>.Ok(response, $"Applicant status updated to {statusDto.Status}."));
+    }
 }

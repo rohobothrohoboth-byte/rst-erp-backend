@@ -1,4 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
+ <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Asp.Versioning.Mvc" />
 		<PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
@@ -20,9 +25,25 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+
+		<!-- ? REMOVE these 3 packages (NU1510 warnings) -->
+		<!-- <PackageReference Include="Microsoft.Extensions.Hosting" /> -->
+		<!-- <PackageReference Include="Microsoft.Extensions.Caching.Memory" /> -->
+		<!-- <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" /> -->
+
+		<!-- ? KEEP if actually used -->
 		<PackageReference Include="Microsoft.Extensions.Http.Polly" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+
+		<!-- Health Checks -->
+		<PackageReference Include="AspNetCore.HealthChecks.Redis" />
+		<PackageReference Include="AspNetCore.HealthChecks.Uris" />
+
+		<!-- Other packages -->
+		<PackageReference Include="Microsoft.OpenApi" />
 		<PackageReference Include="Npgsql" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="RabbitMQ.Client" />
 		<PackageReference Include="Scalar.AspNetCore" />
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Sinks.Console" />
@@ -36,11 +57,11 @@
 		<ProjectReference Include="..\..\RST_ERP.ServiceDefaults\RST_ERP.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\..\Shared\Helpers\Helpers.csproj" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<Content Update="@(Content)">
 			<Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
 		</Content>
 	</ItemGroup>
 
-</Project>
+   </Project>

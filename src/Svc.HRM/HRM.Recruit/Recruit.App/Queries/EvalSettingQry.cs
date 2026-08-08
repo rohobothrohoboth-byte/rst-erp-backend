@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Recruit.App.Interfaces;
 using Recruit.Domain.DTOs;
@@ -29,7 +29,7 @@ public class EvalTypeAllHandler : IRequestHandler<EvalTypeAllQry, List<EvalTypeL
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationType>(v)
             .OrderBy<EvaluationType>(v, x => x.DateAdd, desc: true);
 
@@ -56,7 +56,7 @@ public class EvalTypeActiveHandler : IRequestHandler<EvalTypeActiveQry, List<Eva
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationType>(v)
             .Where<EvaluationType>(v, x => x.IsActive == true);
 
@@ -83,7 +83,7 @@ public class EvalTypeByIdHandler : IRequestHandler<EvalTypeByIdQry, EvalTypeList
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationType>(v, x => x.Id, x => x.Name, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationType>(v)
             .Where<EvaluationType>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -107,7 +107,7 @@ public class EvalFlowAllHandler : IRequestHandler<EvalFlowAllQry, List<EvalFlowL
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationFlow>(v)
             .OrderBy<EvaluationFlow>(v, x => x.DateAdd, desc: true);
 
@@ -135,7 +135,7 @@ public class EvalFlowActiveHandler : IRequestHandler<EvalFlowActiveQry, List<Eva
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationFlow>(v)
             .Where<EvaluationFlow>(v, x => x.IsActive == true);
 
@@ -163,7 +163,7 @@ public class EvalFlowByIdHandler : IRequestHandler<EvalFlowByIdQry, EvalFlowList
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationFlow>(v, x => x.Id, x => x.Name, x => x.IsGlobal, x => x.IsActive, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EvaluationFlow>(v)
             .Where<EvaluationFlow>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -190,7 +190,7 @@ public class EvalStepAllHandler : IRequestHandler<EvalStepAllQry, List<EvalStepL
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)
@@ -223,7 +223,7 @@ public class EvalStepByIdHandler : IRequestHandler<EvalStepByIdQry, EvalStepList
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)
@@ -253,7 +253,7 @@ public class EvalStepByFlowIdHandler : IRequestHandler<EvalStepByFlowIdQry, List
         const string f = "f";
         const string t = "t";
         var qb = new QueryBuilder()
-            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EvaluationStep>(v, x => x.Id, x => x.StepName, x => x.StepOrder, x => x.MaxScore, x => x.MinScore, x => x.IsFinal, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EvaluationType, EvalStepListDto>(t, x => x.Name, d => d.EvalType)
             .SelectAs<EvaluationFlow, EvalStepListDto>(f, x => x.Name, d => d.EvaluationFlow)
             .From<EvaluationStep>(v)
@@ -287,7 +287,7 @@ public class JobEvalFlowAllHandler : IRequestHandler<JobEvalFlowAllQry, List<Job
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<JobPostEvalFlow>(v, x => x.Id, x => x.EvaluationFlowId, x => x.JobPostingId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobPostEvalFlow>(v, x => x.Id, x => x.EvaluationFlowId, x => x.JobPostingId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EvaluationFlow, JobEvalFlowListDto>(e, x => x.Name, d => d.FlowName)
             .SelectAs<JobPosting, JobEvalFlowListDto>(p, x => x.PostNumber, d => d.JobPostNum)
             .From<JobPostEvalFlow>(v)
@@ -319,7 +319,7 @@ public class JobEvalFlowByIdHandler : IRequestHandler<JobEvalFlowByIdQry, JobEva
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<JobPostEvalFlow>(v, x => x.Id, x => x.EvaluationFlowId, x => x.JobPostingId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobPostEvalFlow>(v, x => x.Id, x => x.EvaluationFlowId, x => x.JobPostingId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EvaluationFlow, JobEvalFlowListDto>(e, x => x.Name, d => d.FlowName)
             .SelectAs<JobPosting, JobEvalFlowListDto>(p, x => x.PostNumber, d => d.JobPostNum)
             .From<JobPostEvalFlow>(v)

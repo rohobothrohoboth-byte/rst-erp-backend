@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Dapper;
 using MediatR;
 using Profile.App.Interfaces;

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<PackageReference Include="Google.Protobuf" />
 		<PackageReference Include="Grpc.AspNetCore" />
@@ -16,6 +16,8 @@
 		<Protobuf Include="..\Contracts\corModule.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\corHrmm.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\hrmProfile.proto" GrpcServices="Both" />
+		<Protobuf Include="..\Contracts\finance.proto" GrpcServices="Both" />  <!-- ? ADD THIS -->
+		<Protobuf Include="..\Contracts\crm.proto" GrpcServices="Both" />  <!-- ? ADD THIS -->
 	</ItemGroup>
 
-</Project>
+   </Project>

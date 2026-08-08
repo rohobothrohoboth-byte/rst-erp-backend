@@ -1,14 +1,18 @@
-﻿{
+// E:\untitled46\RST_ERP\src\Svc.Auth\Properties\launchSettings.json
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:1213",
+      "applicationUrl": "https://localhost:7000",  // ? Change to 7000
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }
 }
+
+
+

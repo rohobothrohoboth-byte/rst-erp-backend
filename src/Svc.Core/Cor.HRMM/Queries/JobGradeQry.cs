@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
@@ -20,7 +20,7 @@ public class JobGradeAllHandler : IRequestHandler<JobGradeAllQry, List<JobGradeL
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobGrade>(v)
             .OrderBy<JobGrade>(v, x => x.DateAdd, desc: true);
 
@@ -57,7 +57,7 @@ public class JobGradeByIdHandler : IRequestHandler<JobGradeByIdQry, JobGradeList
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobGrade>(v, x => x.Id, x => x.Name, x => x.StartSalary, x => x.MaxSalary, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobGrade>(v)
             .Where<JobGrade>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -79,3 +79,4 @@ public class JobGradeByIdHandler : IRequestHandler<JobGradeByIdQry, JobGradeList
         };
     }
 }
+

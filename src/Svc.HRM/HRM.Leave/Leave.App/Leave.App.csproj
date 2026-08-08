@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<PackageReference Include="Dapper" />
 		<PackageReference Include="FluentValidation" />
@@ -6,12 +6,14 @@
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Npgsql" />
+		<PackageReference Include="RabbitMQ.Client" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\gRPC\Common\Common.csproj" />
 		<ProjectReference Include="..\..\..\Shared\Helpers\Helpers.csproj" />
 		<ProjectReference Include="..\Leave.Domain\Leave.Domain.csproj" />
+
 	</ItemGroup>
 
-</Project>
+ </Project>

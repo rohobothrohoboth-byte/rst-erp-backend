@@ -1,4 +1,4 @@
-﻿namespace Svc.Auth.Models.Entities;
+namespace Svc.Auth.Models.Entities;
 
 public class UserPerModule : BaseEntity
 {

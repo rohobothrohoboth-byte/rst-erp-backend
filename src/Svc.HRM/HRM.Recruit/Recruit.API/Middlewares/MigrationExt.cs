@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Recruit.Utility.Persistence;
 
 namespace Recruit.API.Middlewares;

@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Persistence;
 
+// Base Entity Configuration
 public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T : BaseEntity
 {
     public virtual void Configure(EntityTypeBuilder<T> b)
@@ -18,99 +19,171 @@ public abstract class BaseEntityConfig<T> : IEntityTypeConfiguration<T> where T 
     }
 }
 
-public class PerApiConfig : BaseEntityConfig<PerApi>
-{
-    public override void Configure(EntityTypeBuilder<PerApi> b)
-    {
-        base.Configure(b);
-        b.Property(b => b.Key).IsRequired().HasMaxLength(200);
-        b.Property(b => b.Desc).IsRequired().HasMaxLength(200);
-        b.HasIndex(b => b.Key).IsUnique();
-        b.HasIndex(b => b.Desc);
-        b.HasIndex(b => b.PerMenuId);
-        b.HasIndex(b => new { b.PerMenuId, b.Key }).IsUnique();
-    }
-}
-
-public class PerMenuConfig : BaseEntityConfig<PerMenu>
-{
-    public override void Configure(EntityTypeBuilder<PerMenu> b)
-    {
-        base.Configure(b);
-        b.Property(b => b.Key).IsRequired().HasMaxLength(200);
-        b.Property(b => b.Label).IsRequired().HasMaxLength(200);
-        b.Property(b => b.Path).IsRequired().HasMaxLength(200);
-        b.Property(b => b.Icon).IsRequired().HasMaxLength(200);
-        b.Property(b => b.IsChild).IsRequired();
-        b.Property(b => b.Order).IsRequired();
-        b.Property(b => b.PerModuleId).IsRequired();
-        b.HasIndex(b => b.Key).IsUnique();
-        b.HasIndex(b => b.PerModuleId);
-        b.HasIndex(b => b.ParentId);
-        b.HasIndex(b => new { b.PerModuleId, b.Key }).IsUnique();
-    }
-}
-
+// PerModule Configuration
 public class PerModuleConfig : BaseEntityConfig<PerModule>
 {
     public override void Configure(EntityTypeBuilder<PerModule> b)
     {
         base.Configure(b);
-        b.Property(b => b.Key).IsRequired().HasMaxLength(200);
-        b.Property(b => b.Desc).HasMaxLength(200);
-        b.HasIndex(b => b.Key).IsUnique();
-        b.HasIndex(b => b.Desc);
+        b.Property(x => x.Key).IsRequired().HasMaxLength(200);
+        b.Property(x => x.Desc).HasMaxLength(200);
+        b.Property(x => x.Icon).HasMaxLength(50);
+        b.Property(x => x.Order).IsRequired();
+        b.HasIndex(x => x.Key).IsUnique();
+        b.HasIndex(x => x.Desc);
+        b.HasIndex(x => x.Order);
     }
 }
 
+// PerMenu Configuration
+public class PerMenuConfig : BaseEntityConfig<PerMenu>
+{
+    public override void Configure(EntityTypeBuilder<PerMenu> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Key).IsRequired().HasMaxLength(200);
+        b.Property(x => x.Label).IsRequired().HasMaxLength(200);
+        b.Property(x => x.Path).IsRequired().HasMaxLength(200);
+        b.Property(x => x.Icon).IsRequired().HasMaxLength(200);
+        b.Property(x => x.IsChild).IsRequired();
+        b.Property(x => x.Order).IsRequired();
+        b.Property(x => x.PerModuleId).IsRequired();
+        b.Property(x => x.ParentId).IsRequired(false);
+
+        b.HasOne(x => x.PerModule)
+            .WithMany(x => x.PerMenus)
+            .HasForeignKey(x => x.PerModuleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne(x => x.Parent)
+            .WithMany(x => x.Children)
+            .HasForeignKey(x => x.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.Key).IsUnique();
+        b.HasIndex(x => x.PerModuleId);
+        b.HasIndex(x => x.ParentId);
+        b.HasIndex(x => new { x.PerModuleId, x.Key }).IsUnique();
+    }
+}
+
+// PerApi Configuration
+public class PerApiConfig : BaseEntityConfig<PerApi>
+{
+    public override void Configure(EntityTypeBuilder<PerApi> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.Key).IsRequired().HasMaxLength(200);
+        b.Property(x => x.Desc).IsRequired().HasMaxLength(200);
+        b.Property(x => x.PerMenuId).IsRequired();
+
+        b.HasOne(x => x.PerMenu)
+            .WithMany(x => x.PerApis)
+            .HasForeignKey(x => x.PerMenuId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasIndex(x => x.Key).IsUnique();
+        b.HasIndex(x => x.Desc);
+        b.HasIndex(x => x.PerMenuId);
+        b.HasIndex(x => new { x.PerMenuId, x.Key }).IsUnique();
+    }
+}
+
+// RefreshToken Configuration
 public class RefreshTokenConfig : BaseEntityConfig<RefreshToken>
 {
     public override void Configure(EntityTypeBuilder<RefreshToken> b)
     {
         base.Configure(b);
-        b.HasIndex(b => b.Token).IsUnique();
-        b.HasIndex(b => b.IsRevoked);
-        b.HasIndex(b => b.UserId);
-        b.HasIndex(b => b.ExpiryDate);
-        b.HasIndex(b => b.RevokedDate);
+        b.Property(x => x.UserId).IsRequired().HasMaxLength(450);
+        b.Property(x => x.Token).IsRequired();
+        b.Property(x => x.ExpiryDate).IsRequired();
+        b.Property(x => x.IsRevoked).IsRequired();
+
+        b.HasOne(x => x.User)
+            .WithMany(x => x.RefreshTokens)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(x => x.Token).IsUnique();
+        b.HasIndex(x => x.IsRevoked);
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.ExpiryDate);
+        b.HasIndex(x => x.RevokedDate);
     }
 }
 
-public class UserPerApiConfig : BaseEntityConfig<UserPerApi>
-{
-    public override void Configure(EntityTypeBuilder<UserPerApi> b)
-    {
-        base.Configure(b);
-        b.Property(b => b.UserId).IsRequired().HasMaxLength(100);
-        b.Property(b => b.PerApiId).IsRequired().HasMaxLength(100);
-        b.HasIndex(b => b.UserId);
-        b.HasIndex(b => b.PerApiId);
-        b.HasIndex(b => new { b.UserId, b.PerApiId }).IsUnique();
-    }
-}
-
-public class UserPerMenuConfig : BaseEntityConfig<UserPerMenu>
-{
-    public override void Configure(EntityTypeBuilder<UserPerMenu> b)
-    {
-        base.Configure(b);
-        b.Property(b => b.UserId).IsRequired().HasMaxLength(100);
-        b.Property(b => b.PerMenuId).IsRequired().HasMaxLength(100);
-        b.HasIndex(b => b.UserId);
-        b.HasIndex(b => b.PerMenuId);
-        b.HasIndex(b => new { b.UserId, b.PerMenuId }).IsUnique();
-    }
-}
-
+// UserPerModule Configuration
 public class UserPerModuleConfig : BaseEntityConfig<UserPerModule>
 {
     public override void Configure(EntityTypeBuilder<UserPerModule> b)
     {
         base.Configure(b);
-        b.Property(b => b.UserId).IsRequired().HasMaxLength(100);
-        b.Property(b => b.PerModuleId).IsRequired().HasMaxLength(100);
-        b.HasIndex(b => b.UserId);
-        b.HasIndex(b => b.PerModuleId);
-        b.HasIndex(b => new { b.UserId, b.PerModuleId }).IsUnique();
+        b.Property(x => x.UserId).IsRequired().HasMaxLength(450);
+        b.Property(x => x.PerModuleId).IsRequired();
+
+        b.HasOne(x => x.User)
+            .WithMany(x => x.PerModule)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasOne(x => x.PerModule)
+            .WithMany(x => x.UserPerModules)
+            .HasForeignKey(x => x.PerModuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.PerModuleId);
+        b.HasIndex(x => new { x.UserId, x.PerModuleId }).IsUnique();
+    }
+}
+
+// UserPerMenu Configuration
+public class UserPerMenuConfig : BaseEntityConfig<UserPerMenu>
+{
+    public override void Configure(EntityTypeBuilder<UserPerMenu> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.UserId).IsRequired().HasMaxLength(450);
+        b.Property(x => x.PerMenuId).IsRequired();
+
+        b.HasOne(x => x.User)
+            .WithMany(x => x.PerMenu)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasOne(x => x.PerMenu)
+            .WithMany(x => x.UserPerMenus)
+            .HasForeignKey(x => x.PerMenuId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.PerMenuId);
+        b.HasIndex(x => new { x.UserId, x.PerMenuId }).IsUnique();
+    }
+}
+
+// UserPerApi Configuration
+public class UserPerApiConfig : BaseEntityConfig<UserPerApi>
+{
+    public override void Configure(EntityTypeBuilder<UserPerApi> b)
+    {
+        base.Configure(b);
+        b.Property(x => x.UserId).IsRequired().HasMaxLength(450);
+        b.Property(x => x.PerApiId).IsRequired();
+
+        b.HasOne(x => x.User)
+            .WithMany(x => x.PerApi)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasOne(x => x.PerApi)
+            .WithMany(x => x.UserPerApis)
+            .HasForeignKey(x => x.PerApiId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        b.HasIndex(x => x.UserId);
+        b.HasIndex(x => x.PerApiId);
+        b.HasIndex(x => new { x.UserId, x.PerApiId }).IsUnique();
     }
 }

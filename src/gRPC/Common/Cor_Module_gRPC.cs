@@ -1,6 +1,8 @@
 ﻿using Contracts;
+using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Common;
 
@@ -19,115 +21,303 @@ public interface ICorModClient
     Task<DbcListRes> GetListDbc(CancellationToken ct = default);
     Task<DbcRes> GetDbc(string id, CancellationToken ct = default);
 
-}
 
+    Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = default);
+    Task<CorModuleListResAm> GetListBranch(CancellationToken ct = default);
+    Task<CorModuleResAm> GetCompany(string id, CancellationToken ct = default);
+    Task<CorModuleListResAm> GetListCompany(CancellationToken ct = default);
+
+}
 
 public class CorModClient : ICorModClient
 {
     private readonly string _servUrl;
+    private readonly ILogger<CorModClient>? _logger;
+    private readonly GrpcChannel _channel;
 
-    public CorModClient(IConfiguration config)
+    public CorModClient(IConfiguration config, ILogger<CorModClient>? logger = null)
     {
         _servUrl = config["CorModUrl"] ?? throw new InvalidOperationException("Core Module Service Address not configured");
+        _logger = logger;
+
+        // ? Create a single channel that will be reused
+        _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
+        {
+            HttpHandler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            }
+        });
+    }
+
+    public CorModClient(string url, ILogger<CorModClient>? logger = null)
+    {
+        _servUrl = url ?? throw new ArgumentNullException(nameof(url));
+        _logger = logger;
+        _logger?.LogInformation($"?? Connecting to Core Module at: {url}");
+
+        _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
+        {
+            HttpHandler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            }
+        });
     }
 
     public async Task<CorModuleListResAm> GetListDept(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetListDeptAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListDeptAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListDept: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<CorModuleResAm> GetDept(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetDeptAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetDeptAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetDept for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<CorModuleListRes> GetListFiscalYear(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetListFiscalYearAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListFiscalYearAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListFiscalYear: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<CorModuleRes> GetFiscalYear(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetFiscalYearAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetFiscalYearAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetFiscalYear for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<ActFiscalYear> GetFiscYearDesc(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetFiscYearDescAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetFiscYearDescAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetFiscYearDesc for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<ActFiscalYear> GetActiveFiscal(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetActiveFiscalAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetActiveFiscalAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetActiveFiscal: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<HoDayListRes> GetListHoDay(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetListHoDayAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListHoDayAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListHoDay: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<HoDayRes> GetHoDay(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetHoDayAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetHoDayAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetHoDay for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
     public async Task<PeriodListRes> GetListPeriod(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetListPeriodAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListPeriodAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListPeriod: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
-    public async Task<PeriodRes> GetPeriod(string id, CancellationToken ct = default)
-    {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetPeriodAsync(req);
-    }
+  // Common/Cor_Module_gRPC.cs
+
+  public async Task<PeriodRes> GetPeriod(string id, CancellationToken ct = default)
+  {
+      // ? Check if ID is null or empty
+      if (string.IsNullOrEmpty(id) || id == "00000000-0000-0000-0000-000000000000")
+      {
+          _logger?.LogWarning("GetPeriod called with empty or invalid ID");
+          return new PeriodRes { Name = "N/A" };
+      }
+
+      try
+      {
+          var client = new CorModuleService.CorModuleServiceClient(_channel);
+          var req = new CorModuleRqst { Id = id };
+          return await client.GetPeriodAsync(req, cancellationToken: ct);
+      }
+      catch (RpcException ex)
+      {
+          _logger?.LogError(ex, "gRPC error in GetPeriod for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+          throw;
+      }
+  }
 
     public async Task<DbcListRes> GetListDbc(CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleListRqst();
-        return await client.GetListDbcAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListDbcAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListDbc: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
 
+
+public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetBranchAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetBranch for ID: {Id}, Status: {Status}, Detail: {Detail}",
+                id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
+    }
+
+    public async Task<CorModuleListResAm> GetListBranch(CancellationToken ct = default)
+    {
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListBranchAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListBranch: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
+    }
+
+    // ==================== NEW COMPANY METHODS ====================
+
+    public async Task<CorModuleResAm> GetCompany(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetCompanyAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetCompany for ID: {Id}, Status: {Status}, Detail: {Detail}",
+                id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
+    }
+
+    public async Task<CorModuleListResAm> GetListCompany(CancellationToken ct = default)
+    {
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleListRqst();
+            return await client.GetListCompanyAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetListCompany: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
+    }
+
+
+// Same for GetCompany and GetListCompany
     public async Task<DbcRes> GetDbc(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new CorModuleService.CorModuleServiceClient(channel);
-        var req = new CorModuleRqst { Id = id };
-        return await client.GetDbcAsync(req);
+        try
+        {
+            var client = new CorModuleService.CorModuleServiceClient(_channel);
+            var req = new CorModuleRqst { Id = id };
+            return await client.GetDbcAsync(req, cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetDbc for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            throw;
+        }
     }
-
-
-
-
 }

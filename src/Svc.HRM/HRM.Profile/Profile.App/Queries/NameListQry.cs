@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Helpers;
 using MediatR;
 using Profile.App.Interfaces;

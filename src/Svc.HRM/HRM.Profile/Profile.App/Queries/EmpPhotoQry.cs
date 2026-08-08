@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
@@ -24,7 +24,7 @@ public class EmpPhotoHandler : IRequestHandler<EmpPhotoQry, EmpPhotoRes?>
         var qb = new QueryBuilder()
             .Select<EmpPhoto>(ph, x => x.Id)
             .Select<FileMetaData>(th, x => x.FileName, x => x.ContentType, x => x.FileSize)
-            .SelectAs<EmpPhotoBlob, EmpPhotoRes>(pb, x => x.Data, x => x.PhotoBinary)
+            .SelectAs<EmpPhotoBlob, EmpPhotoRes>(pb, x => x.Data, x => x.PhotoBinary!)
             .From<EmpPhoto>(ph)
             .Join<EmpPhoto, EmpPhotoBlob>(ph, pb, x => x.FileMetaDataId, x => x.FileMetaDataId)
             .LeftJoin<EmpPhoto, FileMetaData>(ph, th, x => x.FileMetaDataId, x => x.Id)
@@ -54,7 +54,7 @@ public class EmpPhotoThumbnailHandler : IRequestHandler<EmpPhotoThumbnailQry, Em
         var qb = new QueryBuilder()
             .Select<EmpPhoto>(ph, x => x.Id)
             .Select<FileMetaData>(th, x => x.FileName, x => x.ContentType, x => x.FileSize)
-            .SelectAs<EmpPhotoThumbnail, EmpPhotoRes>(pt, x => x.Data, x => x.PhotoBinary)
+            .SelectAs<EmpPhotoThumbnail, EmpPhotoRes>(pt, x => x.Data, x => x.PhotoBinary!)
             .From<EmpPhoto>(ph)
             .Join<EmpPhoto, EmpPhotoThumbnail>(ph, pt, x => x.ThumbnailId, x => x.FileMetaDataId)
             .LeftJoin<EmpPhoto, FileMetaData>(ph, th, x => x.FileMetaDataId, x => x.Id)

@@ -1,4 +1,4 @@
-﻿namespace Recruit.App.Interfaces;
+namespace Recruit.App.Interfaces;
 
 public interface ILogService
 {

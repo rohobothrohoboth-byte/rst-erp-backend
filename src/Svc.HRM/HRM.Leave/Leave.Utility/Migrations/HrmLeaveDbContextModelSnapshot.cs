@@ -188,8 +188,15 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<double>("AssignedEntitlement")
-                        .HasColumnType("double precision");
+                    b.Property<decimal>("AssignedEntitlement")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("AssignmentReason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("CarryForward")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -206,6 +213,9 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -221,6 +231,9 @@ namespace Leave.Utility.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("UsedEntitlement")
+                        .HasColumnType("numeric");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
@@ -242,6 +255,75 @@ namespace Leave.Utility.Migrations
                         .IsUnique();
 
                     b.ToTable("EmpLeavePolicy");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.EmpLeavePolicyHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ArchiveReason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ArchivedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("AssignedEntitlement")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("AssignmentReason")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("CarryForward")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OriginalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProcessedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ProcessedYear")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("UsedEntitlement")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmpLeavePolicyHistories");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.EncashmentAppAction", b =>
@@ -329,6 +411,9 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("DateApp")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
@@ -336,6 +421,9 @@ namespace Leave.Utility.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<Guid>("LeaveAppStepId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("LeaveRequestId")
                         .HasColumnType("uuid");
@@ -396,6 +484,9 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("LeavePolicyId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("LeaveTypeId")
+                        .HasColumnType("uuid");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -407,6 +498,8 @@ namespace Leave.Utility.Migrations
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("LeavePolicyId");
+
+                    b.HasIndex("LeaveTypeId");
 
                     b.HasIndex("LeavePolicyId", "EffectiveFrom")
                         .IsUnique();
@@ -439,6 +532,12 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("LeaveAppChainId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("LeaveAppStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeavePolicyId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -450,6 +549,9 @@ namespace Leave.Utility.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimeoutHours")
                         .HasColumnType("integer");
 
                     b.Property<uint>("xmin")
@@ -546,6 +648,9 @@ namespace Leave.Utility.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<Guid?>("LeaveAppChainId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("LeavePolicyId")
                         .HasColumnType("uuid");
 
@@ -554,6 +659,9 @@ namespace Leave.Utility.Migrations
 
                     b.Property<double>("RatePerDay")
                         .HasColumnType("double precision");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -667,6 +775,9 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("EncashmentRate")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -674,6 +785,9 @@ namespace Leave.Utility.Migrations
 
                     b.Property<Guid>("LeaveTypeId")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal>("MaxEncashableDays")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -778,7 +892,13 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ApprovalChainId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ApprovedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Comments")
@@ -789,7 +909,13 @@ namespace Leave.Utility.Migrations
                     b.Property<int>("CurrentAppStep")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("CurrentStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateApp")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DateApproved")
@@ -800,6 +926,9 @@ namespace Leave.Utility.Migrations
 
                     b.Property<double>("DaysRequested")
                         .HasColumnType("double precision");
+
+                    b.Property<Guid>("DeptId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid");
@@ -818,6 +947,9 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("LeaveTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<double>("PerApp")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -833,6 +965,8 @@ namespace Leave.Utility.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApprovalChainId");
 
                     b.HasIndex("EmployeeId");
 
@@ -851,8 +985,32 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccrualFrequency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("AccrualRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("AllowCarryover")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("AllowHalfDay")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("AllowNegativeBalance")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("CarryoverExpiryMonths")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("DateAdd")
                         .HasColumnType("timestamp with time zone");
@@ -860,8 +1018,19 @@ namespace Leave.Utility.Migrations
                     b.Property<DateTime?>("DateMod")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<string[]>("EligibleEmploymentTypes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<bool>("HolidaysAsLeave")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -876,13 +1045,53 @@ namespace Leave.Utility.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal>("MaxAccrual")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("MaxCarryoverDays")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("MaxDaysPerRequest")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxDaysPerYear")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("MinDaysPerRequest")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("MinServiceMonths")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("NameAm")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("NotifyManagerOnRequest")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ProbationPeriodOnly")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("RequiresApproval")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresAttachment")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresDoctorNote")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<int[]>("SendReminderDays")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
@@ -902,6 +1111,398 @@ namespace Leave.Utility.Migrations
                         .IsUnique();
 
                     b.ToTable("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalBranch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BranchStat")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BranchType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CompId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("OpenDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalBranches");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalCompany", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TaxId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalCompanies");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalDepartment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeptStat")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalDepartments");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalEmployee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AppUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmpState")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EmploymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmploymentNature")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmploymentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstNameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("JobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastNameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MiddleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MiddleNameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nationality")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PersonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WorkArrangement")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("JobGradeId");
+
+                    b.HasIndex("PositionId");
+
+                    b.ToTable("LocalEmployees");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalJgStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("JobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Salary")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("SalaryPayFreq")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalJgStep");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalJobGrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("MaxSalary")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("StartSalary")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalJobGrades");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalPosition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsVacant")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("JobGradeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameAm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("NoOfPosition")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("JobGradeId");
+
+                    b.ToTable("LocalPositions");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalPositionReq", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProfessionType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SaturdayWorkOption")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SundayWorkOption")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("WorkingHours")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PositionId");
+
+                    b.ToTable("LocalPositionReq");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.PolicyAssignmentRule", b =>
@@ -937,9 +1538,6 @@ namespace Leave.Utility.Migrations
                     b.Property<Guid>("LeavePolicyId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("LeaveTypeId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -962,9 +1560,7 @@ namespace Leave.Utility.Migrations
 
                     b.HasIndex("LeavePolicyId");
 
-                    b.HasIndex("LeaveTypeId");
-
-                    b.HasIndex("LeaveTypeId", "LeavePolicyId", "Code")
+                    b.HasIndex("LeavePolicyId", "Code")
                         .IsUnique();
 
                     b.ToTable("PolicyAssignmentRule");
@@ -1117,7 +1713,14 @@ namespace Leave.Utility.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("LeavePolicy");
+
+                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveAppStep", b =>
@@ -1210,13 +1813,83 @@ namespace Leave.Utility.Migrations
 
             modelBuilder.Entity("Leave.Domain.Entities.LeaveRequest", b =>
                 {
+                    b.HasOne("Leave.Domain.Entities.LeaveAppChain", "ApprovalChain")
+                        .WithMany()
+                        .HasForeignKey("ApprovalChainId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
                         .WithMany()
                         .HasForeignKey("LeaveTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("ApprovalChain");
+
                     b.Navigation("LeaveType");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalEmployee", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.Local.LocalBranch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Leave.Domain.Entities.Local.LocalDepartment", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Leave.Domain.Entities.Local.LocalJobGrade", "JobGrade")
+                        .WithMany()
+                        .HasForeignKey("JobGradeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Leave.Domain.Entities.Local.LocalPosition", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("JobGrade");
+
+                    b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalPosition", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.Local.LocalDepartment", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Leave.Domain.Entities.Local.LocalJobGrade", "JobGrade")
+                        .WithMany()
+                        .HasForeignKey("JobGradeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("JobGrade");
+                });
+
+            modelBuilder.Entity("Leave.Domain.Entities.Local.LocalPositionReq", b =>
+                {
+                    b.HasOne("Leave.Domain.Entities.Local.LocalPosition", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Position");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.PolicyAssignmentRule", b =>
@@ -1227,15 +1900,7 @@ namespace Leave.Utility.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Leave.Domain.Entities.LeaveType", "LeaveType")
-                        .WithMany()
-                        .HasForeignKey("LeaveTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("LeavePolicy");
-
-                    b.Navigation("LeaveType");
                 });
 
             modelBuilder.Entity("Leave.Domain.Entities.PolicyRuleCondition", b =>

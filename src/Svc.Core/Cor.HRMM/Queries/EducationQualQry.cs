@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
@@ -20,7 +20,7 @@ public class EducationQualAllHandler : IRequestHandler<EducationQualAllQry, List
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EducationQual>(v)
             .OrderBy<EducationQual>(v, x => x.DateAdd, desc: true);
 
@@ -55,7 +55,7 @@ public class EducationQualByIdHandler : IRequestHandler<EducationQualByIdQry, Ed
     {
         const string v = "v";
         var qb = new QueryBuilder()
-            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<EducationQual>(v, x => x.Id, x => x.Name, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<EducationQual>(v)
             .Where<EducationQual>(v, x => x.Id == request.Id)
             .Limit(1);
@@ -76,3 +76,4 @@ public class EducationQualByIdHandler : IRequestHandler<EducationQualByIdQry, Ed
         return c;
     }
 }
+

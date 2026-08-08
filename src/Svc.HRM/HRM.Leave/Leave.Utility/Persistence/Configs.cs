@@ -1,4 +1,4 @@
-﻿using Leave.Domain.Entities;
+using Leave.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -309,12 +309,9 @@ public class PolicyAssRuleConfig : BaseEntityConfig<PolicyAssignmentRule>
         b.Property(p => p.EffectiveFrom).IsRequired();
         b.Property(p => p.EffectiveTo);
         b.Property(p => p.LeavePolicyId).IsRequired();
-        b.Property(p => p.LeaveTypeId).IsRequired();
-        b.HasOne(p => p.LeaveType).WithMany().HasForeignKey(p => p.LeaveTypeId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(p => p.LeavePolicy).WithMany().HasForeignKey(p => p.LeavePolicyId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(p => p.LeavePolicyId);
-        b.HasIndex(p => p.LeaveTypeId);
-        b.HasIndex(p => new { p.LeaveTypeId, p.LeavePolicyId, p.Code }).IsUnique();
+        b.HasIndex(p => new { p.LeavePolicyId, p.Code }).IsUnique();
     }
 }
 

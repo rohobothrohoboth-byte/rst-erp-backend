@@ -1,4 +1,4 @@
-﻿using EthiopianCalendar;
+using EthiopianCalendar;
 
 namespace Cor.Module.Models.DTOs;
 

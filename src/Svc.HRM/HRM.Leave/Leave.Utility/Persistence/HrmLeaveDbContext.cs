@@ -1,4 +1,5 @@
-﻿using Leave.Domain.Entities;
+using Leave.Domain.Entities;
+using Leave.Domain.Entities.Local;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
@@ -76,4 +77,14 @@ public class HrmLeaveDbContext : DbContext
     public DbSet<LeaveType> LeaveType { get; set; }
     public DbSet<PolicyAssignmentRule> PolicyAssignmentRule { get; set; }
     public DbSet<PolicyRuleCondition> PolicyRuleCondition { get; set; }
+    public DbSet<EmpLeavePolicyHistory> EmpLeavePolicyHistories { get; set; }
+     public DbSet<LocalCompany> LocalCompanies { get; set; }
+        public DbSet<LocalBranch> LocalBranches { get; set; }
+        public DbSet<LocalDepartment> LocalDepartments { get; set; }
+        public DbSet<LocalEmployee> LocalEmployees { get; set; }
+        public DbSet<LocalPosition> LocalPositions { get; set; }
+        public DbSet<LocalJobGrade> LocalJobGrades { get; set; }
+        public DbSet<LocalJgStep> LocalJgStep { get; set; }  // Singular
+        public DbSet<LocalPositionReq> LocalPositionReq { get; set; }  // Singular
+
 }

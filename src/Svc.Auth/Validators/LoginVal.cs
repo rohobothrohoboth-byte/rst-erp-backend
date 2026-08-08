@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Svc.Auth.Models.Dtos;
 
 namespace Svc.Auth.Validators;

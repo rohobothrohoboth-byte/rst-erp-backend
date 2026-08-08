@@ -1,4 +1,4 @@
-﻿namespace Svc.Auth.Models.Dtos;
+namespace Svc.Auth.Models.Dtos;
 
 public class EmpListDto
 {

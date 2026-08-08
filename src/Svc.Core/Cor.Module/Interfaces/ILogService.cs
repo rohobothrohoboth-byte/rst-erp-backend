@@ -1,4 +1,4 @@
-﻿namespace Cor.Module.Interfaces;
+namespace Cor.Module.Interfaces;
 
 public interface ILogService
 {

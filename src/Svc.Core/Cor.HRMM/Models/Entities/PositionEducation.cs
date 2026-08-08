@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.Entities;
+namespace Cor.HRMM.Models.Entities;
 
 public class PositionEducation : BaseEntity
 {
@@ -11,3 +11,4 @@ public class PositionEducation : BaseEntity
     public Position Position { get; set; } = null!;
     public EducationQual EducationQual { get; set; } = null!;
 }
+

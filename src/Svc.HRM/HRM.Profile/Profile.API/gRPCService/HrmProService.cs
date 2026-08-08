@@ -1,4 +1,4 @@
-﻿using Contracts;
+using Contracts;
 using Grpc.Core;
 using MediatR;
 using Profile.App.Queries;

@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Svc.Auth.Models.Entities;
 
 namespace Svc.Auth.Interfaces;

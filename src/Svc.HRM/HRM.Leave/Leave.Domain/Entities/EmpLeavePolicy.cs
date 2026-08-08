@@ -1,19 +1,26 @@
-﻿namespace Leave.Domain.Entities;
+// Leave.Domain/Entities/EmpLeavePolicy.cs
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Leave.Domain.Entities;
 
 public class EmpLeavePolicy : BaseEntity
 {
+    public Guid EmployeeId { get; set; }
+    public Guid LeaveTypeId { get; set; }
+    public Guid? LeavePolicyId { get; set; }  // CHANGE: Make this nullable (Guid? instead of Guid)
+    public decimal AssignedEntitlement { get; set; }
+    public decimal UsedEntitlement { get; set; }
+    public decimal RemainingEntitlement => AssignedEntitlement - UsedEntitlement;
     public DateTime EffectiveFrom { get; set; }
     public DateTime? EffectiveTo { get; set; }
-    public double AssignedEntitlement { get; set; } 
-    public string Reason { get; set; } = default!; // enum.EmpLeavePolReason(0/1)
-    public Guid EmployeeId { get; set; } // HRM.Profile.Employee
-    public Guid LeaveTypeId { get; set; } // LeaveType
-    public Guid LeavePolicyId { get; set; } // LeavePolicy
+    public string AssignmentReason { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+ public decimal CarryForward { get; set; } = 0;  // Add this
+    // Navigation properties
+    [ForeignKey("LeaveTypeId")]
+    public virtual LeaveType? LeaveType { get; set; }  // Make nullable
 
-    //******************************************//
-
-    public bool IsActive(DateTime date) => date >= EffectiveFrom && (EffectiveTo == null || date <= EffectiveTo);
-
-    public LeaveType LeaveType { get; set; } = null!;
-    public LeavePolicy LeavePolicy { get; set; } = null!;
+    [ForeignKey("LeavePolicyId")]
+    public virtual LeavePolicy? LeavePolicy { get; set; }  // Make nullable
 }

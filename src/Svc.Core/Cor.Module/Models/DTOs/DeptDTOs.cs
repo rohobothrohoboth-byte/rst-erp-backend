@@ -1,9 +1,10 @@
-﻿namespace Cor.Module.Models.DTOs;
+namespace Cor.Module.Models.DTOs;
 
 public class DeptListDto : BaseDTO
 {
     public string Name { get; set; } = default!;
     public string NameAm { get; set; } = default!;
+     public Guid BranchId { get; set; }
     public string DeptStat { get; set; } = default!;  // enum.DeptStat (0/1)
     public string Branch { get; set; } = default!;
     public string BranchAm { get; set; } = default!;
@@ -17,7 +18,7 @@ public class AddDeptDto
     public Guid BranchId { get; set; }
 }
 
-public class EdtDeptDto
+public class EditDeptDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
@@ -26,3 +27,22 @@ public class EdtDeptDto
     public Guid BranchId { get; set; }
     public string RowVersion { get; set; } = default!;
 }
+public class DeptDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? NameAm { get; set; }
+
+    public Guid? BranchId { get; set; }
+    public string? DeptStat { get; set; }
+
+    public bool IsDeleted { get; set; }
+    public DateTime DateAdd { get; set; }
+    public DateTime? DateMod { get; set; }
+}
+
+
+
+
+
+

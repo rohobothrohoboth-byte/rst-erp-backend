@@ -1,0 +1,216 @@
+syntax = "proto3";
+
+option csharp_namespace = "Contracts";
+
+package finance;
+
+service FinanceService {
+  // Company
+  rpc GetCompany (CompanyRequest) returns (CompanyResponse);
+  rpc GetAllCompanies (CompanyListRequest) returns (CompanyListResponse);
+
+  // Branch
+  rpc GetBranch (BranchRequest) returns (BranchResponse);
+  rpc GetAllBranches (BranchListRequest) returns (BranchListResponse);
+
+  // Department
+  rpc GetDepartment (DepartmentRequest) returns (DepartmentResponse);
+  rpc GetAllDepartments (DepartmentListRequest) returns (DepartmentListResponse);
+
+  // Position
+  rpc GetPosition (PositionRequest) returns (PositionResponse);
+  rpc GetAllPositions (PositionListRequest) returns (PositionListResponse);
+
+  // Job Grade
+  rpc GetJobGrade (JobGradeRequest) returns (JobGradeResponse);
+  rpc GetAllJobGrades (JobGradeListRequest) returns (JobGradeListResponse);
+
+  // Employee
+  rpc GetEmployee (EmployeeRequest) returns (EmployeeResponse);
+  rpc GetAllEmployees (EmployeeListRequest) returns (EmployeeListResponse);
+}
+
+// ==================== COMPANY ====================
+message CompanyRequest {
+  string id = 1;
+}
+
+message CompanyResponse {
+  string id = 1;
+  string name = 2;
+  string name_am = 3;
+  string tax_id = 4;
+  string phone = 5;
+  string email = 6;
+  string address = 7;
+  string logo_url = 8;
+  bool is_deleted = 9;
+  string synced_at = 10;
+}
+
+message CompanyListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message CompanyListResponse {
+  repeated CompanyResponse companies = 1;
+  int32 total_count = 2;
+}
+
+// ==================== BRANCH ====================
+message BranchRequest {
+  string id = 1;
+}
+
+message BranchResponse {
+  string id = 1;
+  string name = 2;
+  string name_am = 3;
+  string code = 4;
+  string location = 5;
+  string comp_id = 6;
+  bool is_deleted = 7;
+  string synced_at = 8;
+}
+
+message BranchListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string company_id = 3;
+}
+
+message BranchListResponse {
+  repeated BranchResponse branches = 1;
+  int32 total_count = 2;
+}
+
+// ==================== DEPARTMENT ====================
+message DepartmentRequest {
+  string id = 1;
+}
+
+message DepartmentResponse {
+  string id = 1;
+  string name = 2;
+  string name_am = 3;
+  string branch_id = 4;
+  string branch_name = 5;
+  bool is_deleted = 6;
+  string synced_at = 7;
+}
+
+message DepartmentListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string branch_id = 3;
+}
+
+message DepartmentListResponse {
+  repeated DepartmentResponse departments = 1;
+  int32 total_count = 2;
+}
+
+// ==================== POSITION ====================
+message PositionRequest {
+  string id = 1;
+}
+
+message PositionResponse {
+  string id = 1;
+  string name = 2;
+  string name_am = 3;
+  int32 no_of_position = 4;
+  string is_vacant = 5;
+  string department_id = 6;
+  string department_name = 7;
+  string job_grade_id = 8;
+  string job_grade_name = 9;
+  bool is_deleted = 10;
+  string synced_at = 11;
+}
+
+message PositionListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string department_id = 3;
+}
+
+message PositionListResponse {
+  repeated PositionResponse positions = 1;
+  int32 total_count = 2;
+}
+
+// ==================== JOB GRADE ====================
+message JobGradeRequest {
+  string id = 1;
+}
+
+message JobGradeResponse {
+  string id = 1;
+  string name = 2;
+  double start_salary = 3;
+  double max_salary = 4;
+  bool is_deleted = 5;
+  string synced_at = 6;
+}
+
+message JobGradeListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message JobGradeListResponse {
+  repeated JobGradeResponse job_grades = 1;
+  int32 total_count = 2;
+}
+
+// ==================== EMPLOYEE ====================
+message EmployeeRequest {
+  string id = 1;
+}
+
+message EmployeeResponse {
+  string id = 1;
+  string code = 2;
+  string first_name = 3;
+  string first_name_am = 4;
+  string middle_name = 5;
+  string middle_name_am = 6;
+  string last_name = 7;
+  string last_name_am = 8;
+  string gender = 9;
+  string nationality = 10;
+  string email = 11;
+  string phone = 12;
+  string position_id = 13;
+  string position_name = 14;
+  string department_id = 15;
+  string department_name = 16;
+  string job_grade_id = 17;
+  string job_grade_name = 18;
+  string branch_name = 19;
+  string person_id = 20;
+  string app_user_id = 21;
+  string emp_state = 22;
+  string employment_type = 23;
+  string employment_nature = 24;
+  string work_arrangement = 25;
+  string employment_date = 26;
+  bool has_account = 27;
+  bool is_account_active = 28;
+  bool is_deleted = 29;
+  string date_add = 30;
+  string date_mod = 31;
+  string synced_at = 32;
+}
+
+message EmployeeListRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message EmployeeListResponse {
+  repeated EmployeeResponse employees = 1;
+  int32 total_count = 2;
+}

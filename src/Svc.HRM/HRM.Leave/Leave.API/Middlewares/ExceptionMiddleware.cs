@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using System.Text.Json;
 
 namespace Leave.API.Middlewares;

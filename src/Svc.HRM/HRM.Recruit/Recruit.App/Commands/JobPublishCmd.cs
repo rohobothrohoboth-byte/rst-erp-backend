@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Recruit.App.Interfaces;
@@ -8,48 +8,83 @@ using Recruit.Domain.Entities;
 
 namespace Recruit.App.Commands;
 
-public class JobPostPublishCmd : IRequest<JobPostingListDto> { public PostPublish Rvw { get; set; } = default!; }
-public class JobPostPublishAllCmd : IRequest<List<JobPostingListDto>> { public PostPublish Rvw { get; set; } = default!; }
-public class JobPostingCloseCmd : IRequest<JobPostingListDto> { public Guid Id { get; set; } }
+public class JobPostPublishCmd : IRequest<JobPostingListDto>
+{
+    public PostPublish Rvw { get; set; } = default!;
+}
 
+public class JobPostPublishAllCmd : IRequest<List<JobPostingListDto>>
+{
+    public PostPublish Rvw { get; set; } = default!;
+}
 
+public class JobPostingCloseCmd : IRequest<JobPostingListDto>
+{
+    public Guid Id { get; set; }
+}
 
 public class JobPostPublishHandler : IRequestHandler<JobPostPublishCmd, JobPostingListDto>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostPublishHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
+    public JobPostPublishHandler(IUnitOfWork uow, IMediator med)
+    {
+        _uow = uow;
+        _med = med;
+    }
 
     public async Task<JobPostingListDto> Handle(JobPostPublishCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var jPost = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.Rvw.Id, ct);
-            if (jPost == null) { throw new DomainException($"JOB POSTING with Id {request.Rvw.Id} NOT FOUND."); }
-            var pStat = BoolToStr.EnumToString(PostingStatus.Pending);
-            if (jPost.Status != pStat) { throw new DomainException($"Only PENDING Job Posting can be published!"); }
+            var jPost = await _uow.Set<JobPosting>()
+                .FirstOrDefaultAsync(x => x.Id == request.Rvw.Id && !x.IsDeleted, ct);
 
-            jPost.Status = BoolToStr.EnumToString(PostingStatus.Published);
+            if (jPost == null)
+                throw new DomainException($"JOB POSTING with Id {request.Rvw.Id} NOT FOUND.");
+
+            // ? Validate if can be published using Helpers service
+            JobPostingStatusService.ValidatePublish(jPost.Status);
+
+            // ? Parse current status
+            var currentStatus = JobPostingStatusService.ParseStatus(jPost.Status);
+
+            // ? If already published, return success (idempotent)
+            if (currentStatus == PostingStatus.Published)
+            {
+                var existing = await _med.Send(new JobPostingViewQry { Id = request.Rvw.Id }, ct);
+                return existing != null ? JobPostingMapping.MapViewToListDto(existing) : new JobPostingListDto();
+            }
+
+            // ? Update to Published
+            jPost.Status = JobPostingStatusService.Published;
             jPost.PublishedDate = DateTime.UtcNow;
+            jPost.DateMod = DateTime.UtcNow;
             await _uow.Update(jPost);
 
+            // ? Create review record
             var data = new JobPostReview
             {
+                Id = Guid.CreateVersion7(),
                 JobPostingId = request.Rvw.Id,
-                Comment = request.Rvw.Comment,
+                Comment = request.Rvw.Comment ?? "",
                 ReviewById = request.Rvw.ReviewById,
-                Status = BoolToStr.EnumToString(PostingStatus.Published)
+                Status = JobPostingStatusService.Published,
+                DateAdd = DateTime.UtcNow,
+                DateMod = null,
+                IsDeleted = false
             };
             await _uow.Add(data, ct);
             await _uow.Commit(ct);
 
-            var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = request.Rvw.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            // ? Use JobPostingViewQry instead of JobPostingByIdQry
+            var response = await _med.Send(new JobPostingViewQry { Id = request.Rvw.Id }, ct);
+            if (response == null) { return new JobPostingListDto(); }
+
+            // ? Map ViewDto to ListDto
+            return JobPostingMapping.MapViewToListDto(response);
         }
         catch
         {
@@ -64,31 +99,47 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostPublishAllHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
-
-    private async Task UpdatePosting(Guid id, PostPublish request, CancellationToken ct)
+    public JobPostPublishAllHandler(IUnitOfWork uow, IMediator med)
     {
-        var dataL = new List<JobPosting>();
-        var pStat = BoolToStr.EnumToString(PostingStatus.Pending);
-        var dbData = _uow.Set<JobPosting>().Where(p => p.JobReqId == id && p.Status == pStat).ToList();
-        if (dbData.Count > 0)
-        {
-            var stat = BoolToStr.EnumToString(PostingStatus.Published);
-            foreach (var data in dbData)
-            {
-                data.Status = stat;
-                data.PublishedDate = DateTime.UtcNow;
-                await _uow.Update(data);
+        _uow = uow;
+        _med = med;
+    }
 
-                var dataR = new JobPostReview
-                {
-                    Comment = request.Comment,
-                    ReviewById = request.ReviewById,
-                    JobPostingId = data.Id,
-                    Status = stat
-                };
-                await _uow.Add(dataR, ct);
-            }
+    private async Task UpdatePosting(Guid jobReqId, PostPublish request, CancellationToken ct)
+    {
+        var dbData = await _uow.Set<JobPosting>()
+            .Where(p => p.JobReqId == jobReqId && !p.IsDeleted)
+            .ToListAsync(ct);
+
+        foreach (var data in dbData)
+        {
+            var currentStatus = JobPostingStatusService.ParseStatus(data.Status);
+
+            // ? Skip if already published
+            if (currentStatus == PostingStatus.Published)
+                continue;
+
+            // ? Validate if can be published using Helpers service
+            JobPostingStatusService.ValidatePublish(data.Status);
+
+            // ? Update to Published
+            data.Status = JobPostingStatusService.Published;
+            data.PublishedDate = DateTime.UtcNow;
+            data.DateMod = DateTime.UtcNow;
+            await _uow.Update(data);
+
+            var dataR = new JobPostReview
+            {
+                Id = Guid.CreateVersion7(),
+                Comment = request.Comment ?? "",
+                ReviewById = request.ReviewById,
+                JobPostingId = data.Id,
+                Status = JobPostingStatusService.Published,
+                DateAdd = DateTime.UtcNow,
+                DateMod = null,
+                IsDeleted = false
+            };
+            await _uow.Add(dataR, ct);
         }
     }
 
@@ -98,8 +149,12 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
         try
         {
             var stat = BoolToStr.EnumToString(ReqStatus.Approved);
-            var jReqL = _uow.Set<JobRequisition>().Where(r => r.WorkforcePlanId == request.Rvw.Id && r.Status == stat).ToList();
-            if (jReqL.Count <= 0) { throw new DomainException($"JOB POST for Workforce Plan with Id {request.Rvw.Id} NOT FOUND."); }
+            var jReqL = await _uow.Set<JobRequisition>()
+                .Where(r => r.WorkforcePlanId == request.Rvw.Id && r.Status == stat && !r.IsDeleted)
+                .ToListAsync(ct);
+
+            if (jReqL.Count <= 0)
+                throw new DomainException($"JOB POST for Workforce Plan with Id {request.Rvw.Id} NOT FOUND.");
 
             foreach (var jReq in jReqL)
             {
@@ -107,11 +162,10 @@ public class JobPostPublishAllHandler : IRequestHandler<JobPostPublishAllCmd, Li
             }
 
             await _uow.Commit(ct);
-            var res = new List<JobPostingListDto>();
+
+            // ? Use JobPostingByWfpIdQry (returns List<JobPostingListDto>)
             var response = await _med.Send(new JobPostingByWfpIdQry { Id = request.Rvw.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            return response ?? new List<JobPostingListDto>();
         }
         catch
         {
@@ -126,29 +180,49 @@ public class JobPostingCloseHandler : IRequestHandler<JobPostingCloseCmd, JobPos
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
 
-    public JobPostingCloseHandler(IUnitOfWork uow, IMediator med) { _uow = uow; _med = med; }
+    public JobPostingCloseHandler(IUnitOfWork uow, IMediator med)
+    {
+        _uow = uow;
+        _med = med;
+    }
 
     public async Task<JobPostingListDto> Handle(JobPostingCloseCmd request, CancellationToken ct)
     {
         await _uow.Begin(ct);
         try
         {
-            var oldData = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == request.Id, ct);
-            if (oldData == null) { throw new DomainException($"JOB POSTING with Id {request.Id} NOT FOUND."); }
-            var pStat1 = BoolToStr.EnumToString(PostingStatus.Published);
-            var pStat2 = BoolToStr.EnumToString(PostingStatus.OnHold);
-            if (oldData.Status != pStat1 && oldData.Status != pStat2) { throw new DomainException($"Only PUBLISHED or ON HOLD Job Postings can be closed!"); }
+            var oldData = await _uow.Set<JobPosting>()
+                .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, ct);
 
-            oldData.Status = BoolToStr.EnumToString(PostingStatus.Closed);
+            if (oldData == null)
+                throw new DomainException($"JOB POSTING with Id {request.Id} NOT FOUND.");
+
+            // ? Validate if can be closed using Helpers service
+            JobPostingStatusService.ValidateClose(oldData.Status);
+
+            // ? Parse current status
+            var currentStatus = JobPostingStatusService.ParseStatus(oldData.Status);
+
+            // ? If already closed, return success (idempotent)
+            if (currentStatus == PostingStatus.Closed)
+            {
+                var existing = await _med.Send(new JobPostingViewQry { Id = request.Id }, ct);
+                return existing != null ? JobPostingMapping.MapViewToListDto(existing) : new JobPostingListDto();
+            }
+
+            // ? Update to Closed
+            oldData.Status = JobPostingStatusService.Closed;
             oldData.ClosedDate = DateTime.UtcNow;
+            oldData.DateMod = DateTime.UtcNow;
             await _uow.Update(oldData);
             await _uow.Commit(ct);
 
-            var res = new JobPostingListDto();
-            var response = await _med.Send(new JobPostingByIdQry { Id = request.Id }, ct);
-            if (response == null) { return res; }
-            res = response;
-            return res;
+            // ? Use JobPostingViewQry instead of JobPostingByIdQry
+            var response = await _med.Send(new JobPostingViewQry { Id = request.Id }, ct);
+            if (response == null) { return new JobPostingListDto(); }
+
+            // ? Map ViewDto to ListDto
+            return JobPostingMapping.MapViewToListDto(response);
         }
         catch
         {

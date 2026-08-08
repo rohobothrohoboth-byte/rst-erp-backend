@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Leave.App.Interfaces;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Data;
 
 namespace Leave.Utility.Repos;
 
@@ -40,7 +41,6 @@ public sealed class DapperHelper : IDapperHelper
             catch (Exception ex)
             {
                 sw.Stop();
-                _logger.LogError(sql, "QueryFirstOrDefault FAILED ({ElapsedMs} ms)", sw.ElapsedMilliseconds);
                 _logger.LogError(ex, "QueryFirstOrDefault FAILED ({ElapsedMs} ms)", sw.ElapsedMilliseconds);
                 throw;
             }
@@ -178,7 +178,6 @@ public sealed class DapperHelper : IDapperHelper
                 sw.Stop();
                 _logger.LogInformation("ExecuteReader SUCCESS ({ElapsedMs} ms)", sw.ElapsedMilliseconds);
                 return (DbDataReader)reader;
-
             }
             catch (Exception ex)
             {
@@ -197,5 +196,16 @@ public sealed class DapperHelper : IDapperHelper
     public async Task<int> ExecuteAsync(CommandDefinition command)
     {
         return await _retry.ExecuteAsync(async () => { return await _uow.Connection.ExecuteAsync(command); });
+    }
+
+    // Add the missing methods that were causing errors
+    public async Task<DbDataReader> ExecuteReader(string sql, object? param = null, CancellationToken ct = default)
+    {
+        return await ExecuteReaderAsync(sql, param, ct);
+    }
+
+    public async Task<T?> QryFoD<T>(string sql, object? param = null, CancellationToken ct = default)
+    {
+        return await QueryFirstOrDefaultAsync<T>(sql, param, ct);
     }
 }

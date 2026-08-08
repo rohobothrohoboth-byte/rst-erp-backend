@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using MediatR;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -33,9 +33,9 @@ public class EmpAllAdminHandler : IRequestHandler<EmpAllAdminQry, List<EmpListDt
 
         const string v = "v";
         var qb = new QueryBuilder()
-            .SelectAs<AppUser, IdDto>(v, x => x.EmployeeId, x => x.Id)
+            .SelectAs<AppUser, IdDto>(v, x => x.EmployeeId!, x => x.Id)
             .From<AppUser>(v)
-            .WhereIn<AppUser>(v, x => x.EmployeeId, empIds);
+            .WhereIn<AppUser>(v, x => x.EmployeeId!, empIds);
         var (sql, parameters) = qb.Build();
         var users = await _dapper.QueryAsync<IdDto>(sql, parameters, ct);
         var userSet = users.Select(x => x.Id).ToHashSet();

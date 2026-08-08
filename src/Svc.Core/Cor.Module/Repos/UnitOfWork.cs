@@ -1,4 +1,4 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.Entities;
 using Cor.Module.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +45,13 @@ public sealed class UnitOfWork : IUnitOfWork
         {
             _logger.LogInformation("No changes to commit.");
             return;
+        }
+
+        // ? Ensure connection is open before starting transaction
+        if (_connection.State != ConnectionState.Open)
+        {
+            await _connection.OpenAsync(ct);
+            _logger.LogInformation("Connection OPENED. ConnectionId={ConnectionId}", _connection.ProcessID);
         }
 
         var strategy = _context.Database.CreateExecutionStrategy();

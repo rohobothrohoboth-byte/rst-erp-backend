@@ -1,4 +1,4 @@
-﻿namespace Svc.Gateway;
+namespace Svc.Gateway;
 
 public static class AuthCons
 {

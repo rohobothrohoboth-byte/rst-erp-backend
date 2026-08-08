@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Profile.Utility.Persistence;
 
 namespace Profile.API.Middlewares;

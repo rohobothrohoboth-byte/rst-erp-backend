@@ -1,4 +1,4 @@
-﻿using Cor.HRMM.Interfaces;
+using Cor.HRMM.Interfaces;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Models.Entities;
 using Dapper;
@@ -22,7 +22,7 @@ public class PositionEduAllHandler : IRequestHandler<PositionEduAllQry, List<Pos
         const string v = "v";
         const string q = "q";
         var qb = new QueryBuilder()
-            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EducationQual, PositionEduListDto>(q, x => x.Name, x => x.EducationQual)
             .From<PositionEducation>(v)
             .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
@@ -65,7 +65,7 @@ public class PositionEduByIdHandler : IRequestHandler<PositionEduByIdQry, Positi
         const string v = "v";
         const string q = "q";
         var qb = new QueryBuilder()
-            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<PositionEducation>(v, x => x.Id, x => x.EducationLevel, x => x.PositionId, x => x.EducationQualId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<EducationQual, PositionEduListDto>(q, x => x.Name, x => x.EducationQual)
             .From<PositionEducation>(v)
             .Join<PositionEducation, EducationQual>(v, q, x => x.EducationQualId, x => x.Id)
@@ -91,3 +91,4 @@ public class PositionEduByIdHandler : IRequestHandler<PositionEduByIdQry, Positi
         };
     }
 }
+

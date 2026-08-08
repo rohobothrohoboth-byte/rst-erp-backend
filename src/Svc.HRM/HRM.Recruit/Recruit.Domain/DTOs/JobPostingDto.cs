@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Recruit.Domain.DTOs;
 
@@ -89,6 +89,9 @@ public class JobPostingViewDto : BaseDto
     public string Department { get; set; } = default!;  // Cor.Module.Department
     public string Period { get; set; } = default!;  // Cor.Module.Period (or FiscalYear)
     public string RequistionBy { get; set; } = default!; // HRM.Profile.Employee
+
+  public string KeyRespo { get; set; } = default!;  // Key Responsibilities
+    public string WorkArr { get; set; } = default!;   // Work Arrangement (Onsite, Remote, Hybrid)
 
     public string Title { get; set; } = default!;
     public string Desc { get; set; } = default!;

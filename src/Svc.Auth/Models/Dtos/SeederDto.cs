@@ -1,5 +1,11 @@
-﻿namespace Svc.Auth.Models.Dtos;
-
+namespace Svc.Auth.Models.Dtos;
+public class PerModuleSeedDto
+{
+    public string Key { get; set; } = default!;
+    public string Desc { get; set; } = default!;
+    public string Icon { get; set; } = default!;
+    public int Order { get; set; }
+}
 public class PerMenuSeedDto
 {
     public string ModKey { get; set; } = ""; // PerModule

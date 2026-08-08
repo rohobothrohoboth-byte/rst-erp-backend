@@ -1,4 +1,4 @@
-﻿using Helpers;
+using Helpers;
 using MediatR;
 using Svc.Auth.Interfaces;
 using Svc.Auth.Models.Dtos;
@@ -14,7 +14,6 @@ public class PerApiNameAllQry : IRequest<List<NameList>> { }
 public class PerApiNameByIdQry : IRequest<NameList?> { public Guid Id { get; set; } }
 
 
-
 public class ModuleNameAllQryHandler : IRequestHandler<ModuleNameAllQry, List<NameList>>
 {
     private readonly IDapperHelper _dapper;
@@ -25,8 +24,12 @@ public class ModuleNameAllQryHandler : IRequestHandler<ModuleNameAllQry, List<Na
         var qb = new QueryBuilder()
             .Select<PerModule>(v, x => x.Id)
             .SelectAs<PerModule, NameList>(v, x => x.Desc, d => d.Name)
+            .Select<PerModule>(v, x => x.Key)       // Add Key
+            .Select<PerModule>(v, x => x.Icon!)      // Add Icon
+            .Select<PerModule>(v, x => x.Order)     // Add Order
             .From<PerModule>(v)
-            .OrderBy<PerModule>(v, x => x.Key, desc: false);
+            .Where<PerModule>(v, x => x.IsDeleted == false)
+            .OrderBy<PerModule>(v, x => x.Order, desc: false);
 
         var (sql, parameters) = qb.Build();
         await using var reader = await _dapper.ExecuteReaderAsync(sql, parameters, ct);
@@ -45,8 +48,12 @@ public class ModuleNameByIdQryHandler : IRequestHandler<ModuleNameByIdQry, NameL
         var qb = new QueryBuilder()
             .Select<PerModule>(v, x => x.Id)
             .SelectAs<PerModule, NameList>(v, x => x.Desc, d => d.Name)
+            .Select<PerModule>(v, x => x.Key)       // Add Key
+            .Select<PerModule>(v, x => x.Icon!)      // Add Icon
+            .Select<PerModule>(v, x => x.Order)     // Add Order
             .From<PerModule>(v)
             .Where<PerModule>(v, p => p.Id == request.Id)
+            .Where<PerModule>(v, x => x.IsDeleted == false)
             .Limit(1);
 
         var (sql, parameters) = qb.Build();

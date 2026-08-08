@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.Entities;
+namespace Cor.HRMM.Models.Entities;
 
 public class PositionBenefit : BaseEntity
 {

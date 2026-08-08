@@ -1,4 +1,4 @@
-﻿using Cor.Module.Interfaces;
+using Cor.Module.Interfaces;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Models.Entities;
 using Dapper;
@@ -22,7 +22,7 @@ public class GetCompsHandler : IRequestHandler<AllCompsQry, List<CompListDto>>
         const string c = "c";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectRaw("COUNT(b.\"Id\") AS \"CountBra\"")
             .From<Company>(c)
             .LeftJoin<Company, Branch>(c, b, x => x.Id, x => x.CompId)
@@ -51,7 +51,7 @@ public class GetCompByIdHandler : IRequestHandler<CompByIdQry, CompListDto?>
         const string c = "c";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectRaw("COUNT(b.\"Id\") AS \"CountBra\"")
             .From<Company>(c)
             .LeftJoin<Company, Branch>(c, b, x => x.Id, x => x.CompId)

@@ -1,16 +1,16 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// End point to get the list of names and Ids of Core.HRMM entities
 /// </summary>
 
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/Names")]
 [ApiVersion("1.0")]
@@ -133,3 +133,6 @@ public class NameListController(IMediator med) : ControllerBase
     }
 
 }
+
+
+

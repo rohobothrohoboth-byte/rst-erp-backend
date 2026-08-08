@@ -1,4 +1,4 @@
-﻿namespace Recruit.Domain.Entities;
+namespace Recruit.Domain.Entities;
 
 public class OnboardingAssign : BaseEntity
 {

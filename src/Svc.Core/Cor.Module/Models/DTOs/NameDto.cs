@@ -1,4 +1,4 @@
-﻿namespace Cor.Module.Models.DTOs;
+namespace Cor.Module.Models.DTOs;
 
 public class NameList
 {

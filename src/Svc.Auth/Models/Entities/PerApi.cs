@@ -1,4 +1,4 @@
-﻿namespace Svc.Auth.Models.Entities;
+namespace Svc.Auth.Models.Entities;
 
 public class PerApi : BaseEntity
 {
@@ -8,5 +8,9 @@ public class PerApi : BaseEntity
 
     //******************************************//
 
-    public PerMenu PerMenu { get; set; } = null!;
+
+
+        public PerMenu PerMenu { get; set; } = null!;
+        public ICollection<UserPerApi> UserPerApis { get; set; } = new List<UserPerApi>();
+        public ICollection<PositionPerApi> PositionPerApis { get; set; } = new List<PositionPerApi>();
 }

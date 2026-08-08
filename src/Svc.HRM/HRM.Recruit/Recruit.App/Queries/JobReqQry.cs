@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Dapper;
 using Helpers;
 using MediatR;
@@ -34,7 +34,7 @@ public class JobReqAllQryHandler : IRequestHandler<JobReqAllQry, List<JobReqList
         const string e = "e";
         const string w = "w";
         var qb = new QueryBuilder()
-            .Select<JobRequisition>(e, x => x.Id, x => x.WorkforcePlanId, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobRequisition>(e, x => x.Id, x => x.WorkforcePlanId, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<WorkforcePlan, JobReqListDto>(w, x => x.PlanCode, x => x.WfpCode)
             .From<JobRequisition>(e)
             .Join<JobRequisition, WorkforcePlan>(e, w, x => x.WorkforcePlanId, x => x.Id)
@@ -78,7 +78,7 @@ public class JobReqAllByWfpIdHandler : IRequestHandler<JobReqAllByWfpIdQry, List
 
         const string e = "e";
         var qb = new QueryBuilder()
-            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobRequisition>(e)
             .Where<JobRequisition>(e, x => x.WorkforcePlanId == request.Id)
             .OrderBy<JobRequisition>(e, x => x.DateAdd, desc: true);
@@ -115,7 +115,7 @@ public class JobReqByIdHandler : IRequestHandler<JobReqByIdQry, JobReqListDto?>
     {
         const string e = "e";
         var qb = new QueryBuilder()
-            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod, x => x.xmin)
+            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .From<JobRequisition>(e)
             .Where<JobRequisition>(e, x => x.Id == request.Id)
             .Limit(1);

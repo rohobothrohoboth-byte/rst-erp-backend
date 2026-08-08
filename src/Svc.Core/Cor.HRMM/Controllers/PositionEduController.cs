@@ -1,18 +1,18 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Cor.HRMM.Controllers;
 
 /// <summary>
 /// Position Education end points
 /// </summary>
 
-//[Authorize]
+[Authorize(AuthenticationSchemes = "ApiKey,Bearer")]
 [ApiController]
 [Route("api/core/hrmm/v{version:apiVersion}/PositionEdu")]
 [ApiVersion("1.0")]
@@ -84,3 +84,5 @@ public class PositionEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"POSITION EDUCATION with Id {id} successfully deleted."));
     }
 }
+
+

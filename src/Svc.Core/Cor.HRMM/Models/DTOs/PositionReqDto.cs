@@ -1,4 +1,4 @@
-﻿namespace Cor.HRMM.Models.DTOs;
+namespace Cor.HRMM.Models.DTOs;
 
 public class PositionReqListDto : BaseDto
 {

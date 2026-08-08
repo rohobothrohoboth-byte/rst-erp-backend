@@ -1,26 +1,44 @@
-﻿namespace Cor.HRMM.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
+
+namespace Cor.HRMM.Models.DTOs;
 
 public class PositionEduListDto : BaseDto
 {
-    public Guid PositionId { get; set; } = default!; // Position
-    public Guid EducationQualId { get; set; } = default!; // EducationQualification
-    public string EducationLevel { get; set; } = default!; // enum.EducationLevel
-    public string EducationQual { get; set; } = default!;
-    public string EducationLevelStr { get; set; } = default!;
+    public Guid PositionId { get; set; }
+    public Guid EducationQualId { get; set; }
+    public string EducationLevel { get; set; } = string.Empty;
+    public string EducationQual { get; set; } = string.Empty;
+    public string EducationLevelStr { get; set; } = string.Empty;
 }
 
 public class PositionEduAddDto
 {
-    public Guid PositionId { get; set; } = default!; // Position
-    public Guid EducationQualId { get; set; } = default!; // EducationQualification
-    public string EducationLevel { get; set; } = default!; // enum.EducationLevel
+    [Required(ErrorMessage = "PositionId is required")]
+    public Guid PositionId { get; set; }
+    
+    [Required(ErrorMessage = "EducationQualId is required")]
+    public Guid EducationQualId { get; set; }
+    
+    [Required(ErrorMessage = "EducationLevel is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "EducationLevel must be between 1 and 100 characters")]
+    public string EducationLevel { get; set; } = string.Empty;
 }
 
 public class PositionEduModDto
 {
+    [Required(ErrorMessage = "Id is required")]
     public Guid Id { get; set; }
-    public Guid PositionId { get; set; } = default!; // Position
-    public Guid EducationQualId { get; set; } = default!; // EducationQualification
-    public string EducationLevel { get; set; } = default!; // enum.EducationLevel
-    public string RowVersion { get; set; } = default!;
+    
+    [Required(ErrorMessage = "PositionId is required")]
+    public Guid PositionId { get; set; }
+    
+    [Required(ErrorMessage = "EducationQualId is required")]
+    public Guid EducationQualId { get; set; }
+    
+    [Required(ErrorMessage = "EducationLevel is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "EducationLevel must be between 1 and 100 characters")]
+    public string EducationLevel { get; set; } = string.Empty;
+    
+    [Required(ErrorMessage = "RowVersion is required")]
+    public string RowVersion { get; set; } = string.Empty;
 }

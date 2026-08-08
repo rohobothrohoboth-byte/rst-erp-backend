@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

@@ -1,6 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<!-- E:\untitled46\RST_ERP\src\RST_ERP.AppHost\RST_ERP.AppHost.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="13.1.0" />
+  <!-- ? Updated SDK to match Package version -->
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.4.6" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,16 +11,38 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Existing Services -->
     <ProjectReference Include="..\Svc.Auth\Svc.Auth.csproj" />
     <ProjectReference Include="..\Svc.Core\Cor.HRMM\Cor.HRMM.csproj" />
     <ProjectReference Include="..\Svc.Core\Cor.Module\Cor.Module.csproj" />
+    <ProjectReference Include="..\Svc.Core\Cor.CRM\Cor.CRM.csproj" />
+
+    <ProjectReference Include="..\Svc.Finance\Cor.Finance\Cor.Finance.csproj" />
     <ProjectReference Include="..\Svc.Gateway\Svc.Gateway.csproj" />
     <ProjectReference Include="..\Svc.HRM\HRM.Leave\Leave.API\Leave.API.csproj" />
     <ProjectReference Include="..\Svc.HRM\HRM.Profile\Profile.API\Profile.API.csproj" />
     <ProjectReference Include="..\Svc.HRM\HRM.Recruit\Recruit.API\Recruit.API.csproj" />
+    <ProjectReference Include="..\Svc.Task.Host\Svc.Task.Host.csproj" />
+    <ProjectReference Include="..\Svc.Notification.Host\Svc.Notification.Host.csproj" />
+    <ProjectReference Include="..\Svc.HRM\Svc.HRM.Payroll\Svc.HRM.Payroll.csproj" />
+    <ProjectReference Include="..\Svc.HRM\Svc.HRM.Attendance\Svc.HRM.Attendance.csproj" />
+
+    <!-- ? Add File Management Service -->
+    <ProjectReference Include="..\Svc.FileManagement\Cor.FileManagement\Cor.FileManagement.csproj" />
+    <ProjectReference Include="..\Svc.Procurement\Cor.Procurement\Cor.Procurement.csproj" />
+    <ProjectReference Include="..\Svc.Inventory\Cor.Inventory\Cor.Inventory.csproj" />
+     <ProjectReference Include="..\Svc.Core\Cor.PlanDev\Cor.PlanDev.csproj" />
+
+
+
+
   </ItemGroup>
 
-</Project>
+   </Project>

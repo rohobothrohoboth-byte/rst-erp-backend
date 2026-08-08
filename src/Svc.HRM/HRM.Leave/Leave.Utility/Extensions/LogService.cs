@@ -1,4 +1,4 @@
-﻿using Leave.App.Interfaces;
+using Leave.App.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Leave.Utility.Extensions

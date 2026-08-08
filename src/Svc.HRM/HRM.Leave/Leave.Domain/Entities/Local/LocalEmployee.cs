@@ -1,0 +1,43 @@
+// Svc.HRM.Attendance/Models/Entities/Local/LocalEmployee.cs
+using Leave.Domain.Entities.Local;
+
+namespace Leave.Domain.Entities.Local;
+
+public class LocalEmployee : LocalBaseEntity
+{
+    public string Code { get; set; } = default!;
+    public string EmploymentType { get; set; } = default!;
+    public string EmploymentNature { get; set; } = default!;
+    public string WorkArrangement { get; set; } = default!;
+    public string EmpState { get; set; } = default!;
+    public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
+    public Guid PersonId { get; set; }
+    public Guid JobGradeId { get; set; }
+    public Guid PositionId { get; set; }
+    public Guid DepartmentId { get; set; }
+    public Guid? AppUserId { get; set; }
+
+    // ? ADD THIS - Branch reference
+    public Guid? BranchId { get; set; }  // ADD THIS
+
+    // ? ADD THIS - Active status
+   // public bool IsActive { get; set; }   // ADD THIS
+
+    // Person details (denormalized for quick access)
+    public string FirstName { get; set; } = default!;
+    public string FirstNameAm { get; set; } = "";
+    public string MiddleName { get; set; } = default!;
+    public string MiddleNameAm { get; set; } = "";
+    public string LastName { get; set; } = default!;
+    public string LastNameAm { get; set; } = "";
+    public string Gender { get; set; } = default!;
+    public string Nationality { get; set; } = default!;
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+
+    // Navigation Properties
+    public LocalPosition Position { get; set; } = null!;
+    public LocalDepartment Department { get; set; } = null!;
+    public LocalJobGrade JobGrade { get; set; } = null!;
+    public LocalBranch? Branch { get; set; }  // ? ADD THIS - Navigation property
+}
