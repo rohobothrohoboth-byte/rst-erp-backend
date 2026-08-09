@@ -174,17 +174,17 @@ public static class MigrationExt
              var changed = false;
              if (!string.Equals(row.Path ?? "", seed.Path ?? "", StringComparison.Ordinal))
              {
-                 row.Path = seed.Path;
+                 row.Path = seed.Path ?? "";
                  changed = true;
              }
              if (!string.Equals(row.Label ?? "", seed.Label ?? "", StringComparison.Ordinal))
              {
-                 row.Label = seed.Label;
+                 row.Label = seed.Label ?? "";
                  changed = true;
              }
              if (!string.Equals(row.Icon ?? "", seed.Icon ?? "", StringComparison.Ordinal))
              {
-                 row.Icon = seed.Icon;
+                 row.Icon = seed.Icon ?? "";
                  changed = true;
              }
              if (row.Order != seed.Order)
