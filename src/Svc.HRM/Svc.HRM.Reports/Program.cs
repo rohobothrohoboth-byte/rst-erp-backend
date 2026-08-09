@@ -140,8 +140,10 @@ app.MapHealthChecks("/health");
 
 Console.WriteLine("====================================================");
 Console.WriteLine($" HR REPORTS BUILD: {Svc.HRM.Reports.Models.DTOs.ReportsBuild.Id}");
+Console.WriteLine($" ServiceHost: {serviceHost}");
 Console.WriteLine($" Upstream gateway: {gatewayHttp}");
+Console.WriteLine($" Profile: {GetConfig("ServiceUrls:HrmProApi")}");
 Console.WriteLine($" Listening: https://0.0.0.0:{port}");
-Console.WriteLine(" If logs still mention Employee/stats, you are on an OLD binary.");
+Console.WriteLine(" Upstream URLs must use the LAN IP (ServiceHost), not localhost.");
 Console.WriteLine("====================================================");
 await app.RunAsync();
