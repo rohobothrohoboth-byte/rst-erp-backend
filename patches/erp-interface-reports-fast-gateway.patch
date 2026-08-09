@@ -1,0 +1,58 @@
+From e5f1d0b58b8075416cacc0697b7d58579ecbfbe7 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sun, 9 Aug 2026 02:11:14 +0000
+Subject: [PATCH] Show report content while refreshing; shorten reports UI
+ timeout
+
+---
+ src/components/hr/reports/HrReportsSection.tsx | 9 +++++++--
+ src/services/hr/reports/reports.api.ts         | 4 ++--
+ 2 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/src/components/hr/reports/HrReportsSection.tsx b/src/components/hr/reports/HrReportsSection.tsx
+index 7284b27..fd36c48 100644
+--- a/src/components/hr/reports/HrReportsSection.tsx
++++ b/src/components/hr/reports/HrReportsSection.tsx
+@@ -50,17 +50,22 @@ export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' |
+     <HrPageShell
+       title={title}
+       subtitle={`Gateway /hrm/reports/${domain} → Reports :7018 → upstream ${data?.domain || domain}`}
+-      loading={isLoading}
++      loading={isLoading && !data}
+       error={error?.message}
+       actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
+       onAction={() => { void refetch(); }}
+     >
++      {isFetching && data && (
++        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
++          Refreshing report…
++        </p>
++      )}
+       <div className="bg-white border rounded-lg p-4">
+         <div className="mb-3 flex gap-2 items-center flex-wrap">
+           <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
+             {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
+           </Badge>
+-          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Loading…')}</span>
++          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Waiting for Reports service…')}</span>
+         </div>
+         <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
+           {JSON.stringify(data ?? null, null, 2)}
+diff --git a/src/services/hr/reports/reports.api.ts b/src/services/hr/reports/reports.api.ts
+index cf3887e..e8bb0ad 100644
+--- a/src/services/hr/reports/reports.api.ts
++++ b/src/services/hr/reports/reports.api.ts
+@@ -3,8 +3,8 @@ import { extractApiError, unwrapData } from '../apiError';
+ import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
+ 
+ const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
+-/** Reports aggregates several upstreams — allow more time than the default 30s. */
+-const REPORTS_TIMEOUT_MS = 45_000;
++/** Backend domain budget is ~7s; keep UI timeout slightly above that. */
++const REPORTS_TIMEOUT_MS = 20_000;
+ 
+ const getReport = async <T>(path: string) => {
+   try {
+-- 
+2.43.0
+

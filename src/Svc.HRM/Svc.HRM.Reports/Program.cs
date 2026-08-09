@@ -101,28 +101,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-void AddUpstream(string name, string url)
-{
-    builder.Services.AddHttpClient(name, client =>
-    {
-        client.BaseAddress = new Uri(url);
-        // Keep below UI axios timeout (30s) so the Reports API can return partial failures.
-        client.Timeout = TimeSpan.FromSeconds(15);
-        client.DefaultRequestHeaders.Add("Accept", "application/json");
-        client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    })
-    .AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
-}
+// Call upstream HR APIs through the HTTP Gateway (same routes as UI/Postman).
+// Direct service-to-service HTTPS was hanging/timing out on some hosts.
+var gatewayHttp = GetConfig("ServiceUrls:GatewayHttp", $"http://{serviceHost}:5000");
+if (!gatewayHttp.EndsWith('/')) gatewayHttp += "/";
 
-AddUpstream("profile", GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004"));
-AddUpstream("attendance", GetConfig("ServiceUrls:AttendanceApi", "https://localhost:7011"));
-AddUpstream("leave", GetConfig("ServiceUrls:HrmLeaveApi", GetConfig("ServiceUrls:LeaveApi", "https://localhost:7003")));
-AddUpstream("payroll", GetConfig("ServiceUrls:PayrollApi", "https://localhost:7010"));
-AddUpstream("recruit", GetConfig("ServiceUrls:HrmRecruitApi", GetConfig("ServiceUrls:HrmRecruit", "https://localhost:7005")));
+builder.Services.AddHttpClient("gateway", client =>
+{
+    client.BaseAddress = new Uri(gatewayHttp);
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+    AllowAutoRedirect = false
+})
+.AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
+
+Console.WriteLine($"HR Reports upstream gateway: {gatewayHttp}");
 
 builder.Services.AddScoped<IHrReportService, HrReportService>();
 builder.Services.AddHealthChecks();
