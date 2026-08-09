@@ -9,17 +9,23 @@ public class PayrollProcessor : IPayrollProcessor
 {
     private readonly PayrollDbContext _context;
     private readonly IEmployeeService _employeeService;
+    private readonly IAttendanceClient _attendanceClient;
+    private readonly ILeavePayrollClient _leaveClient;
     private readonly ITaxCalculator _taxCalculator;
     private readonly ILogger<PayrollProcessor> _logger;
 
     public PayrollProcessor(
         PayrollDbContext context,
         IEmployeeService employeeService,
+        IAttendanceClient attendanceClient,
+        ILeavePayrollClient leaveClient,
         ITaxCalculator taxCalculator,
         ILogger<PayrollProcessor> logger)
     {
         _context = context;
         _employeeService = employeeService;
+        _attendanceClient = attendanceClient;
+        _leaveClient = leaveClient;
         _taxCalculator = taxCalculator;
         _logger = logger;
     }
@@ -154,8 +160,8 @@ public class PayrollProcessor : IPayrollProcessor
             // Calculate base salary (prorated if needed)
             calculation.BaseSalary = CalculateProratedSalary(employeeSalary.TotalSalary, period);
 
-            // Get attendance data
-            var attendance = await _employeeService.GetEmployeeAttendanceAsync(employeeId, period.StartDate, period.EndDate, ct);
+            // Get attendance data (canonical Attendance service)
+            var attendance = await _attendanceClient.GetEmployeeAttendanceAsync(employeeId, period.StartDate, period.EndDate, ct);
 
             calculation.PresentDays = attendance.PresentDays;
             calculation.AbsentDays = attendance.AbsentDays;
@@ -168,9 +174,8 @@ public class PayrollProcessor : IPayrollProcessor
             // Calculate deductions for absences
             calculation.AbsentDeduction = calculation.AbsentDays * dailyRate;
 
-            // Calculate leave deduction (if leave is unpaid)
-            // In real system, this depends on leave policy
-            calculation.LeaveDeduction = 0;
+            // Unpaid leave deduction from HRM.Leave
+            calculation.LeaveDeduction = await CalculateLeaveDeductionAsync(employeeId, period.StartDate, period.EndDate, ct);
 
             // Calculate overtime pay (1.5x for weekdays, 2x for holidays)
             calculation.OvertimePay = await CalculateOvertimePayAsync(employeeId, period.StartDate, period.EndDate, ct);
@@ -211,7 +216,7 @@ public class PayrollProcessor : IPayrollProcessor
 
     public async Task<decimal> CalculateOvertimePayAsync(Guid employeeId, DateTime startDate, DateTime endDate, CancellationToken ct = default)
     {
-        var attendance = await _employeeService.GetEmployeeAttendanceAsync(employeeId, startDate, endDate, ct);
+        var attendance = await _attendanceClient.GetEmployeeAttendanceAsync(employeeId, startDate, endDate, ct);
 
         // Get employee salary
         var employeeSalary = await _context.EmployeeSalaries
@@ -239,11 +244,7 @@ public class PayrollProcessor : IPayrollProcessor
             return 0;
 
         var dailyRate = employeeSalary.TotalSalary / 22;
-
-        // Get unpaid leave days (exceeded annual leave balance)
-        // This would come from leave management system
-        var unpaidLeaveDays = 0; // Get from leave service
-
+        var unpaidLeaveDays = await _leaveClient.GetUnpaidLeaveDaysAsync(employeeId, startDate, endDate, ct);
         return unpaidLeaveDays * dailyRate;
     }
 

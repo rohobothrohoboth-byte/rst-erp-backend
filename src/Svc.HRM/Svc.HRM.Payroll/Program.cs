@@ -107,6 +107,8 @@ var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002")
 var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
 var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
 var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
+var attendanceApiUrl = GetConfig("ServiceUrls:AttendanceApi", "https://localhost:7011");
+var hrmLeaveUrl = GetConfig("ServiceUrls:HrmLeaveApi", GetConfig("ServiceUrls:HrmLeave", "https://localhost:7003"));
 var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
 var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
 
@@ -406,13 +408,35 @@ builder.Services.AddSingleton<IFinanceClient, FinanceClient>(sp =>
     return new FinanceClient(config, logger);
 });
 
-// Employee Service Client
+// Employee Service Client (Profile)
 builder.Services.AddHttpClient<IEmployeeService, EmployeeService>(client =>
 {
     client.BaseAddress = new Uri(hrmProUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", profileApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "PayrollService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.SetHandlerLifetime(TimeSpan.FromMinutes(2));
+
+// Attendance client (correct service + routes)
+builder.Services.AddHttpClient<IAttendanceClient, AttendanceClient>(client =>
+{
+    client.BaseAddress = new Uri(attendanceApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "PayrollService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.SetHandlerLifetime(TimeSpan.FromMinutes(2));
+
+// Leave client for unpaid leave deductions
+builder.Services.AddHttpClient<ILeavePayrollClient, LeavePayrollClient>(client =>
+{
+    client.BaseAddress = new Uri(hrmLeaveUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-Service-Name", "PayrollService");
 })
 .ConfigurePrimaryHttpMessageHandler(() => sslHandler)
