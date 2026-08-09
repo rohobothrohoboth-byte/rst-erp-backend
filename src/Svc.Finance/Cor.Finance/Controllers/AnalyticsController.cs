@@ -452,8 +452,8 @@ public class AnalyticsController : BaseApiController
        return Ok(recent);
    }
 
-   [HttpGet("TopCustomers")]
-   public async Task<IActionResult> GetTopCustomers(
+   [HttpGet("TopCustomersDirect")]
+   public async Task<IActionResult> GetTopCustomersDirect(
        [FromQuery] int count = 10,
        [FromQuery] DateTime? periodStart = null,
        [FromQuery] DateTime? periodEnd = null,
@@ -468,7 +468,7 @@ public class AnalyticsController : BaseApiController
            .Select(g => new TopCustomerDto
            {
                CustomerId = g.Key,
-               CustomerName = g.FirstOrDefault().Customer.Name,
+               CustomerName = g.Select(i => i.Customer!.Name).FirstOrDefault() ?? string.Empty,
                TotalAmount = g.Sum(i => i.TotalAmount),
                Count = g.Count(),
                AverageInvoice = g.Average(i => i.TotalAmount)
@@ -569,7 +569,7 @@ public async Task<IActionResult> GetFullDashboard(
                 Status = b.Status,
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
-                Description = b.Description
+                Description = b.Description ?? string.Empty
             })
             .ToListAsync(ct);
 

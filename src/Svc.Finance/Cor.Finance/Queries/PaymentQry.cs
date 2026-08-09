@@ -51,7 +51,7 @@ public static class PaymentProjection
             EmployeeId = payment.EmployeeId,
             DateAdd = payment.DateAdd,
             DateMod = payment.DateMod,
-            RowVersion = payment.RowVersion
+            RowVersion = payment.RowVersion ?? string.Empty
         };
 }
 

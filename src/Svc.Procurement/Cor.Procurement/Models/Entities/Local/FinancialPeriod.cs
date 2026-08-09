@@ -42,7 +42,7 @@ public class FinancialPeriod : LocalBaseEntity
     public bool IsActive { get; set; } = true;
 
     // Local copy tracking
-    public DateTime? SyncedAt { get; set; }
+    public new DateTime? SyncedAt { get; set; }
     public Guid? SourceId { get; set; } // ID from Finance module
 
     public void ValidateDates()

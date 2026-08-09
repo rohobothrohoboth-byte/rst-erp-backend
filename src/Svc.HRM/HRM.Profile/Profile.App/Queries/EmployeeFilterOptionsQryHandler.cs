@@ -79,24 +79,27 @@ namespace Profile.App.Queries;
 
          // Get distinct EmpStates
          options.EmpStates = rows
-             .Where(r => !string.IsNullOrEmpty(r.EmpState))
              .Select(r => r.EmpState)
+             .Where(s => s != null)
+             .Select(s => s!)
              .Distinct()
              .OrderBy(s => s)
              .ToList();
 
          // Get distinct EmploymentNature
          options.EmpNatures = rows
-             .Where(r => !string.IsNullOrEmpty(r.EmploymentNature))
              .Select(r => r.EmploymentNature)
+             .Where(en => en != null)
+             .Select(en => en!)
              .Distinct()
              .OrderBy(en => en)
              .ToList();
 
          // Get distinct Genders
          options.Genders = rows
-             .Where(r => !string.IsNullOrEmpty(r.Gender))
              .Select(r => r.Gender)
+             .Where(g => g != null)
+             .Select(g => g!)
              .Distinct()
              .OrderBy(g => g)
              .ToList();

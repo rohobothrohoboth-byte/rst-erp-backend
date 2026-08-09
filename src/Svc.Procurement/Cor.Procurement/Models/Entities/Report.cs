@@ -22,7 +22,7 @@ public class Report : BaseEntity
     public DateTime GeneratedDate { get; set; }
 
     [MaxLength(50)]
-    public string Period { get; set; } = string.Empty;
+    public new string Period { get; set; } = string.Empty;
 
     [MaxLength(20)]
     public string Status { get; set; } = "ready"; // ready, generating, scheduled

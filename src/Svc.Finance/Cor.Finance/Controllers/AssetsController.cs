@@ -76,7 +76,7 @@ namespace Cor.Finance.Controllers
                  $"{searchTerm ?? "Null"}_{pageNumber}_{pageSize}_{sortBy ?? "AcquisitionDate"}_{sortDirection ?? "DESC"}";
 
              // ✅ Check cache (only return if not empty)
-             if (_cache.TryGetValue(cacheKey, out List<AssetDto> cachedResult) &&
+             if (_cache.TryGetValue(cacheKey, out List<AssetDto>? cachedResult) &&
                  cachedResult != null && cachedResult.Count > 0)
              {
                  _logger.LogInformation("✅ Cache HIT: {Count} assets", cachedResult.Count);
@@ -159,7 +159,7 @@ namespace Cor.Finance.Controllers
             {
                 string cacheKey = $"Asset_{id}";
 
-                if (_cache.TryGetValue(cacheKey, out AssetDto cachedResult))
+                if (_cache.TryGetValue(cacheKey, out AssetDto? cachedResult))
                 {
                     _logger.LogInformation("✅ Asset {Id} retrieved from cache", id);
                     return Ok(cachedResult);
@@ -196,7 +196,7 @@ namespace Cor.Finance.Controllers
             {
                 string cacheKey = $"Assets_Branch_{branchId}";
 
-                if (_cache.TryGetValue(cacheKey, out List<AssetDto> cachedResult))
+                if (_cache.TryGetValue(cacheKey, out List<AssetDto>? cachedResult))
                 {
                     _logger.LogInformation("✅ Assets for branch {BranchId} retrieved from cache", branchId);
                     return Ok(cachedResult);
@@ -229,7 +229,7 @@ namespace Cor.Finance.Controllers
             {
                 string cacheKey = $"Assets_Department_{departmentId}";
 
-                if (_cache.TryGetValue(cacheKey, out List<AssetDto> cachedResult))
+                if (_cache.TryGetValue(cacheKey, out List<AssetDto>? cachedResult))
                 {
                     _logger.LogInformation("✅ Assets for department {DepartmentId} retrieved from cache", departmentId);
                     return Ok(cachedResult);
@@ -262,7 +262,7 @@ namespace Cor.Finance.Controllers
             {
                 string cacheKey = $"Assets_Employee_{employeeId}";
 
-                if (_cache.TryGetValue(cacheKey, out List<AssetDto> cachedResult))
+                if (_cache.TryGetValue(cacheKey, out List<AssetDto>? cachedResult))
                 {
                     _logger.LogInformation("✅ Assets for employee {EmployeeId} retrieved from cache", employeeId);
                     return Ok(cachedResult);

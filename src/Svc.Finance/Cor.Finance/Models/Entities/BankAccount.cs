@@ -62,7 +62,7 @@ public class BankAccount : BaseEntity
     public bool IsReconciled { get; set; }
 
     // ✅ PeriodId for tracking which period the account was created/active
-    public Guid? PeriodId { get; set; }
+    public new Guid? PeriodId { get; set; }
 
     // ✅ Timestamps (BaseEntity already has DateAdd, DateMod)
     public DateTime? SyncedAt { get; set; }

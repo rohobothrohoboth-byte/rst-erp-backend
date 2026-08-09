@@ -98,12 +98,12 @@ public async Task<IActionResult> PublicView(string token)
         if (viewableTypes.Contains(extension))
         {
             // Inline display
-            Response.Headers.Add("Content-Disposition", $"inline; filename=\"{fileName}\"");
+            Response.Headers["Content-Disposition"] = $"inline; filename=\"{fileName}\"";
         }
         else
         {
             // Force download for non-viewable types
-            Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{fileName}\"");
+            Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
         }
 
         return File(result.FileBytes, contentType);
@@ -152,7 +152,6 @@ public async Task<IActionResult> PublicView(string token)
 
             // ✅ Check file existence with multiple paths
             var basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadPath = "uploads";
             var dbPath = document.FilePath ?? "";
             var fileName = Path.GetFileName(dbPath);
             var originalFileName = document.OriginalFileName ?? "";

@@ -18,7 +18,7 @@ public class IFRSReport : BaseEntity
     public string? Description { get; set; }
 
     [MaxLength(50)]
-    public string? Period { get; set; } // 'Q1 2024', 'FY 2024', etc.
+    public new string? Period { get; set; } // 'Q1 2024', 'FY 2024', etc.
 
     public DateTime? ReportDate { get; set; }
 

@@ -12,10 +12,10 @@ public class RequisitionLine : BaseEntity
     public decimal TotalAmount { get; set; }
     public string? UnitOfMeasure { get; set; }
     public string? Notes { get; set; }
-    public bool IsDeleted { get; set; }
-    public DateTime DateAdd { get; set; }
-    public DateTime? DateMod { get; set; }
-    public string? RowVersion { get; set; }
+    public new bool IsDeleted { get; set; }
+    public new DateTime DateAdd { get; set; }
+    public new DateTime? DateMod { get; set; }
+    public new string? RowVersion { get; set; }
 
     // Navigation
     public virtual Requisition Requisition { get; set; } = null!;

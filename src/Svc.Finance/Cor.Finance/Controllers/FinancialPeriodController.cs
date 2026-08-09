@@ -1132,7 +1132,7 @@ public async Task<IActionResult> ClearCache()
     // HELPER METHODS
     // ============================================================
 
-    private bool IsValidDateRange(DateTime start, DateTime end)
+    private new bool IsValidDateRange(DateTime start, DateTime end)
     {
         return start < end;
     }

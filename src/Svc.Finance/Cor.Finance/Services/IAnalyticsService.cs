@@ -15,7 +15,7 @@ public interface IAnalyticsService
         DateTime? periodStart = null,
         DateTime? periodEnd = null,
         string periodType = "month",
-        string fiscalYear = null,
+        string? fiscalYear = null,
         CancellationToken ct = default);
 
     // Trends with date filtering

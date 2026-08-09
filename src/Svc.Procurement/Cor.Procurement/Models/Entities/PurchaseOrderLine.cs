@@ -15,11 +15,11 @@ public class PurchaseOrderLine : BaseEntity
     public decimal? TaxAmount { get; set; }
     public string? UnitOfMeasure { get; set; }
     public Guid? RequisitionLineId { get; set; }
-    public bool IsDeleted { get; set; }
-    public DateTime DateAdd { get; set; }
-    public DateTime? DateMod { get; set; }
-    public string? RowVersion { get; set; }
-    public Guid? PeriodId { get; set; }
+    public new bool IsDeleted { get; set; }
+    public new DateTime DateAdd { get; set; }
+    public new DateTime? DateMod { get; set; }
+    public new string? RowVersion { get; set; }
+    public new Guid? PeriodId { get; set; }
 
     // Navigation
     public virtual PurchaseOrder PurchaseOrder { get; set; } = null!;

@@ -101,7 +101,7 @@ public class LvReqAppService(IUnitOfWork _uow, ILeaveLedgerService _lgrSer, IHrm
             lReq.Status = actRej;
             lReq.DateApp = DateTime.UtcNow;
             lReq.PerApp = 100;
-            _uow.Update(lReq);
+            await _uow.Update(lReq);
 
             result.Message = "Leave request has been REJECTED";
         }
@@ -117,7 +117,7 @@ public class LvReqAppService(IUnitOfWork _uow, ILeaveLedgerService _lgrSer, IHrm
                 var per = CalPer(currentStep.StepOrder, approvalSteps.Count);
                 lReq.CurrentAppStep++;
                 lReq.PerApp = per;
-                _uow.Update(lReq);
+                await _uow.Update(lReq);
 
                 result.Message = $"Approved at Step {currentStep.StepOrder}. Moved to Step {lReq.CurrentAppStep}";
             }
@@ -212,7 +212,7 @@ public class LvReqAppService(IUnitOfWork _uow, ILeaveLedgerService _lgrSer, IHrm
             addded.Comment = dt.Comment;
             addded.ApprovedById = dt.ApprovedById;
             addded.DateApp = now;
-            _uow.Update(addded);
+            await _uow.Update(addded);
         }
     }
 
@@ -222,7 +222,7 @@ public class LvReqAppService(IUnitOfWork _uow, ILeaveLedgerService _lgrSer, IHrm
         lReq.Status = actApp;
         lReq.DateApp = DateTime.UtcNow;
         lReq.PerApp = 100;
-        _uow.Update(lReq);
+        await _uow.Update(lReq);
 
         var bal = lReq.DaysRequested;
         var lBal = await _uow.Set<LeaveBalance>().FirstOrDefaultAsync(b => b.EmployeeId == lReq.EmployeeId && b.LeaveTypeId == lReq.LeaveTypeId, ct);

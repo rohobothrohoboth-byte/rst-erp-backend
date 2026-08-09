@@ -6,6 +6,7 @@ using Dapper;
 using Helpers;
 using MediatR;
 using Cor.CRM.Models.Entities;
+using ContractStatus = Cor.CRM.Models.Entities.ContractStatus;
 namespace Cor.CRM.Queries;
 
 public class ContractByIdQry : IRequest<ContractDto?>

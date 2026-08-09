@@ -371,7 +371,7 @@ public class PurchaseOrderController : BaseApiController
             };
 
             var result = await _mediator.Send(command);
-            if (result==null)
+            if (!result)
                 return NotFound(new { message = $"Purchase Order with ID '{id}' not found" });
 
             // Invalidate cache

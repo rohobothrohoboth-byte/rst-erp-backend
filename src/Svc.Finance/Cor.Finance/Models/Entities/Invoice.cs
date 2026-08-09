@@ -86,7 +86,7 @@ public class Invoice : BaseEntity
 
     // ✅ Period navigation (if not already in BaseEntity)
     [ForeignKey(nameof(PeriodId))]
-    public virtual FinancialPeriod? Period { get; set; }
+    public new virtual FinancialPeriod? Period { get; set; }
 
     // Collections
     public virtual ICollection<InvoiceLine> Lines { get; set; } = new List<InvoiceLine>();

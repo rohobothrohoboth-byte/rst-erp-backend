@@ -51,8 +51,8 @@ public class Ticket : BaseEntity
     public Guid? AssignedToUserId { get; set; }
     public string? AssignedToUserName { get; set; }
 
-    public Guid? CreatedByUserId { get; set; }
-    public string? CreatedByUserName { get; set; }
+    public new Guid? CreatedByUserId { get; set; }
+    public new string? CreatedByUserName { get; set; }
 
     public DateTime? AssignedDate { get; set; }
     public DateTime? ResolvedDate { get; set; }

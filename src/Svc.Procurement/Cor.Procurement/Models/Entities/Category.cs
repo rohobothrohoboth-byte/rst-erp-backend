@@ -23,11 +23,11 @@ public class Category : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
-    public bool IsDeleted { get; set; }
+    public new bool IsDeleted { get; set; }
 
-    public DateTime DateAdd { get; set; }
+    public new DateTime DateAdd { get; set; }
 
-    public DateTime? DateMod { get; set; }
+    public new DateTime? DateMod { get; set; }
 
     [ForeignKey(nameof(ParentId))]
     public virtual Category? Parent { get; set; }

@@ -80,7 +80,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // ✅ Resolve all {ServiceHost} placeholders in configuration
 var configSections = builder.Configuration.AsEnumerable().ToList();
-var updates = new Dictionary<string, string>();
+var updates = new Dictionary<string, string?>();
 
 foreach (var kvp in configSections)
 {
@@ -639,7 +639,7 @@ app.Use(async (context, next) =>
     await next();
     stopwatch.Stop();
 
-    context.Response.Headers.Add("X-Response-Time-ms", stopwatch.ElapsedMilliseconds.ToString());
-    context.Response.Headers.Add("X-Dashboard-Generation-ms",
-        context.Items["DashboardGenerationMs"]?.ToString() ?? "N/A");
+    context.Response.Headers["X-Response-Time-ms"] = stopwatch.ElapsedMilliseconds.ToString();
+    context.Response.Headers["X-Dashboard-Generation-ms"] =
+        context.Items["DashboardGenerationMs"]?.ToString() ?? "N/A";
 });

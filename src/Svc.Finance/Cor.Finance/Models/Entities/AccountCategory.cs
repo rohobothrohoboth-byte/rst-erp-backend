@@ -25,7 +25,7 @@ public class AccountCategory : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
-    public bool IsDeleted { get; set; } = false;
+    public new bool IsDeleted { get; set; } = false;
 
     public Guid? ParentId { get; set; }
 

@@ -67,7 +67,7 @@ public class BudgetController : BaseApiController
                 string cacheKey = GenerateCacheKey(status, branchId, departmentId, fiscalYear,
                     fromDateUtc, toDateUtc, periodId, pageNumber, pageSize);
 
-                if (_cache.TryGetValue(cacheKey, out PaginatedResponse<BudgetDto> cachedResult))
+                if (_cache.TryGetValue(cacheKey, out PaginatedResponse<BudgetDto>? cachedResult))
                 {
                     _logger.LogInformation("✅ Budgets retrieved from cache for key: {CacheKey}", cacheKey);
                     return Ok(cachedResult);
@@ -126,7 +126,7 @@ public class BudgetController : BaseApiController
             {
                 string cacheKey = $"Budget_{id}";
 
-                if (_cache.TryGetValue(cacheKey, out BudgetDto cachedResult))
+                if (_cache.TryGetValue(cacheKey, out BudgetDto? cachedResult))
                 {
                     _logger.LogInformation("✅ Budget {Id} retrieved from cache", id);
                     return Ok(cachedResult);
@@ -166,7 +166,7 @@ public class BudgetController : BaseApiController
 
                 string cacheKey = $"Budgets_Branch_{branchId}_{periodId?.ToString() ?? "All"}_{pageNumber}_{pageSize}";
 
-                if (_cache.TryGetValue(cacheKey, out PaginatedResponse<BudgetDto> cachedResult))
+                if (_cache.TryGetValue(cacheKey, out PaginatedResponse<BudgetDto>? cachedResult))
                 {
                     _logger.LogInformation("✅ Budgets for branch {BranchId} retrieved from cache", branchId);
                     return Ok(cachedResult);
@@ -204,7 +204,7 @@ public class BudgetController : BaseApiController
         {
             string cacheKey = $"Budgets_Period_{periodId}";
 
-            if (_cache.TryGetValue(cacheKey, out List<BudgetDto> cachedResult))
+            if (_cache.TryGetValue(cacheKey, out List<BudgetDto>? cachedResult))
             {
                 _logger.LogInformation("? Budgets for period {PeriodId} retrieved from cache", periodId);
                 return Ok(cachedResult);

@@ -160,7 +160,7 @@ public class ViewLeave(IDapperHelper _dapper, IHrmProfileClient _hrmPro, ILvReqA
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<LeaveRequest>(v, x => x.Id, x => x.StartDate, x => x.EndDate, x => x.DaysRequested, x => x.IsHalfDay, x => x.Status, x => x.Comments, x => x.CurrentAppStep, x => x.PerApp, x => x.DateApp, x => x.EmployeeId, x => x.BranchId, x => x.DeptId, x => x.DateAdd, x => x.LeaveTypeId)
+            .Select<LeaveRequest>(v, x => x.Id, x => x.StartDate, x => x.EndDate, x => x.DaysRequested, x => x.IsHalfDay, x => x.Status, x => x.Comments, x => x.CurrentAppStep, x => x.PerApp, x => x.DateApp!, x => x.EmployeeId, x => x.BranchId, x => x.DeptId, x => x.DateAdd, x => x.LeaveTypeId)
             .SelectAs<LeaveType, ViewLvReqJoin>(c, x => x.Name, d => d.LeaveType)
             .From<LeaveRequest>(v)
             .Join<LeaveRequest, LeaveType>(v, c, x => x.LeaveTypeId, x => x.Id)

@@ -62,7 +62,7 @@ public class HrDashboardHandler(
     public async Task<HrDashboardDto> Handle(HrDashboardQry request, CancellationToken ct)
     {
         // Try get from cache
-        if (_cache.TryGetValue(CacheKey, out HrDashboardDto cached))
+        if (_cache.TryGetValue(CacheKey, out HrDashboardDto? cached) && cached is not null)
         {
             return cached;
         }
@@ -83,7 +83,7 @@ public class HrDashboardHandler(
 
     private async Task<LocalReferenceData> GetLocalReferenceDataAsync(CancellationToken ct)
     {
-        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData cached))
+        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData? cached) && cached is not null)
         {
             return cached;
         }
@@ -375,7 +375,7 @@ public class EmpDbPendHandler(
 
     private async Task<LocalReferenceData> GetLocalReferenceDataAsync(CancellationToken ct)
     {
-        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData cached))
+        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData? cached) && cached is not null)
         {
             return cached;
         }
@@ -482,7 +482,7 @@ public class EmpDbPendEduExpHandler(
 
     private async Task<LocalReferenceData> GetLocalReferenceDataAsync(CancellationToken ct)
     {
-        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData cached))
+        if (_cache.TryGetValue(RefCacheKey, out LocalReferenceData? cached) && cached is not null)
         {
             return cached;
         }

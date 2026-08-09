@@ -720,9 +720,9 @@ public class PolicyAssignHandler : IRequestHandler<PolicyAssignCmd, string>
                 // STEP 4: Build active policies query
                 const string ep = "ep";
                 var qbActive = new QueryBuilder()
-                    .Select<EmpLeavePolicy>(ep, x => x.Id, x => x.EmployeeId, x => x.LeaveTypeId, x => x.LeavePolicyId, x => x.EffectiveFrom, x => x.EffectiveTo, x => x.AssignedEntitlement)
+                    .Select<EmpLeavePolicy>(ep, x => x.Id, x => x.EmployeeId, x => x.LeaveTypeId, x => x.LeavePolicyId!, x => x.EffectiveFrom, x => x.EffectiveTo!, x => x.AssignedEntitlement)
                     .From<EmpLeavePolicy>(ep)
-                    .WhereRaw<EmpLeavePolicy>(ep, x => x.EffectiveTo, "IS NULL");
+                    .WhereRaw<EmpLeavePolicy>(ep, x => x.EffectiveTo!, "IS NULL");
 
                 var (sqlAct, paramAct) = qbActive.Build();
                 Console.WriteLine($"Active policies SQL: {sqlAct}");
