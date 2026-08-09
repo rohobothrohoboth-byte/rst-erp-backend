@@ -1,10 +1,12 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Svc.HRM.Reports.Services;
 
 namespace Svc.HRM.Reports.Controllers;
 
 [ApiController]
+[Authorize]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/reports")]
 public class HrReportsController(IHrReportService reports) : ControllerBase

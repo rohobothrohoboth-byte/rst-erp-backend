@@ -48,7 +48,11 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Host.UseSerilog();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddApiVersioning(options =>
@@ -84,6 +88,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -95,11 +101,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-var sslHandler = new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-};
-
 void AddUpstream(string name, string url)
 {
     builder.Services.AddHttpClient(name, client =>
@@ -108,7 +109,12 @@ void AddUpstream(string name, string url)
         client.Timeout = TimeSpan.FromSeconds(60);
         client.DefaultRequestHeaders.Add("Accept", "application/json");
         client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
-    }).ConfigurePrimaryHttpMessageHandler(() => sslHandler);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    })
+    .AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 }
 
 AddUpstream("profile", GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004"));
@@ -127,6 +133,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseCors("AllowAll");
+app.UseMiddleware<Svc.HRM.Reports.Middleware.ApiExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
