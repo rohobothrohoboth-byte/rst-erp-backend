@@ -18,6 +18,10 @@ public class LocalPayrollRun
     public DateTime? ApprovedAt { get; set; }
     public string? ApprovedBy { get; set; }
     public string? Notes { get; set; }
+    public Guid? FinanceJournalEntryId { get; set; }
+    public string? FinancePostingStatus { get; set; } // Created, Posted, Failed
+    public DateTime? FinancePostedAt { get; set; }
+    public string? FinancePostingError { get; set; }
     public DateTime DateAdd { get; set; } = DateTime.UtcNow;
     public DateTime? DateMod { get; set; }
     public bool IsDeleted { get; set; }

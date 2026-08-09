@@ -7,7 +7,6 @@ public interface IEmployeeService
     Task<List<EmployeeDto>> GetAllEmployeesAsync(CancellationToken ct = default);
     Task<EmployeeDto?> GetEmployeeAsync(Guid id, CancellationToken ct = default);
     Task<List<EmployeeDto>> GetEmployeesByDepartmentAsync(Guid departmentId, CancellationToken ct = default);
-    Task<EmployeeAttendanceDto> GetEmployeeAttendanceAsync(Guid employeeId, DateTime startDate, DateTime endDate, CancellationToken ct = default);
 }
 
 public class EmployeeDto
@@ -110,26 +109,6 @@ public class EmployeeService : IEmployeeService
         {
             _logger.LogError(ex, "Error fetching employees by department");
             return new List<EmployeeDto>();
-        }
-    }
-
-    public async Task<EmployeeAttendanceDto> GetEmployeeAttendanceAsync(Guid employeeId, DateTime startDate, DateTime endDate, CancellationToken ct = default)
-    {
-        try
-        {
-            var url = $"/api/hrm/attendance/v1/Attendance/Employee/{employeeId}/Period?start={startDate:yyyy-MM-dd}&end={endDate:yyyy-MM-dd}";
-            var response = await _httpClient.GetAsync(url, ct);
-            if (!response.IsSuccessStatusCode)
-                return new EmployeeAttendanceDto { EmployeeId = employeeId, StartDate = startDate, EndDate = endDate };
-
-            var json = await response.Content.ReadAsStringAsync(ct);
-            var result = JsonSerializer.Deserialize<ApiResponse<EmployeeAttendanceDto>>(json);
-            return result?.Data ?? new EmployeeAttendanceDto { EmployeeId = employeeId, StartDate = startDate, EndDate = endDate };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching attendance for employee {Id}", employeeId);
-            return new EmployeeAttendanceDto { EmployeeId = employeeId, StartDate = startDate, EndDate = endDate };
         }
     }
 

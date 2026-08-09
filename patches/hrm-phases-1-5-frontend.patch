@@ -1,0 +1,4034 @@
+From c73137479b4b52e3d29b114981c028710b3a8bbc Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sat, 8 Aug 2026 23:26:21 +0000
+Subject: [PATCH] =?UTF-8?q?Wire=20HR=20Phases=201=E2=80=935=20frontend=20t?=
+ =?UTF-8?q?o=20backend=20APIs?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add react-query services and pages for contracts, promotions, transfers,
+terminations/offboarding, job offers, performance, training, and HR
+reports. Update App routes, sidebar menus, and gateway env prefixes.
+---
+ .env.development                              |    5 +-
+ src/App.tsx                                   |   51 +
+ src/components/hr/career/ContractsSection.tsx |   98 ++
+ .../hr/career/PromotionsSection.tsx           |   92 ++
+ src/components/hr/career/TransfersSection.tsx |   88 ++
+ .../hr/jobOffer/JobOfferSection.tsx           |   78 +
+ .../hr/performance/PerformanceSection.tsx     |  124 ++
+ .../hr/reports/HrReportsSection.tsx           |   54 +
+ src/components/hr/shared/HrPageShell.tsx      |   52 +
+ src/components/hr/shared/SimpleModal.tsx      |   45 +
+ .../hr/termination/TerminationSection.tsx     |  133 ++
+ .../hr/training/TrainingCalendarSection.tsx   |   36 +
+ .../training/TrainingCertificatesSection.tsx  |   54 +
+ .../hr/training/TrainingFeedbackSection.tsx   |   31 +
+ .../hr/training/TrainingProgramsSection.tsx   |   88 ++
+ src/layout/Sidebar.tsx                        |  167 ++-
+ src/pages/hr/careerpage/ContractsPage.tsx     |    2 +
+ src/pages/hr/careerpage/PromotionsPage.tsx    |    2 +
+ src/pages/hr/careerpage/TransfersPage.tsx     |    2 +
+ src/pages/hr/employeepage/Termination.tsx     |   11 +-
+ .../hr/performancepage/PerformancePage.tsx    |    2 +
+ .../hr/recruitmentpage/JobOffersPage.tsx      |    2 +
+ src/pages/hr/reportspage/HrReportsPages.tsx   |    8 +
+ src/pages/hr/trainingpage/Training.tsx        | 1277 +----------------
+ .../hr/trainingpage/TrainingCalendarPage.tsx  |    2 +
+ .../trainingpage/TrainingCertificatesPage.tsx |    2 +
+ .../hr/trainingpage/TrainingFeedbackPage.tsx  |    2 +
+ .../hr/trainingpage/TrainingProgramsPage.tsx  |    2 +
+ src/services/hr/apiError.ts                   |   11 +
+ src/services/hr/career/career.api.ts          |  108 ++
+ src/services/hr/career/career.keys.ts         |    5 +
+ src/services/hr/career/career.queries.ts      |   84 ++
+ src/services/hr/jobOffer/jobOffer.api.ts      |   32 +
+ src/services/hr/jobOffer/jobOffer.keys.ts     |    1 +
+ src/services/hr/jobOffer/jobOffer.queries.ts  |   33 +
+ .../hr/performance/performance.api.ts         |   53 +
+ .../hr/performance/performance.keys.ts        |    5 +
+ .../hr/performance/performance.queries.ts     |   44 +
+ src/services/hr/reports/reports.api.ts        |   32 +
+ src/services/hr/reports/reports.keys.ts       |    4 +
+ src/services/hr/reports/reports.queries.ts    |   13 +
+ .../hr/termination/termination.api.ts         |   50 +
+ .../hr/termination/termination.keys.ts        |    5 +
+ .../hr/termination/termination.queries.ts     |   59 +
+ src/services/hr/training/training.api.ts      |   54 +
+ src/services/hr/training/training.keys.ts     |    7 +
+ src/services/hr/training/training.queries.ts  |   55 +
+ src/types/hr/career.ts                        |  103 ++
+ src/types/hr/jobOffer.ts                      |   30 +
+ src/types/hr/performance.ts                   |   76 +
+ src/types/hr/reports.ts                       |   16 +
+ src/types/hr/termination.ts                   |   69 +
+ src/types/hr/training.ts                      |   84 ++
+ 53 files changed, 2249 insertions(+), 1294 deletions(-)
+ create mode 100644 src/components/hr/career/ContractsSection.tsx
+ create mode 100644 src/components/hr/career/PromotionsSection.tsx
+ create mode 100644 src/components/hr/career/TransfersSection.tsx
+ create mode 100644 src/components/hr/jobOffer/JobOfferSection.tsx
+ create mode 100644 src/components/hr/performance/PerformanceSection.tsx
+ create mode 100644 src/components/hr/reports/HrReportsSection.tsx
+ create mode 100644 src/components/hr/shared/HrPageShell.tsx
+ create mode 100644 src/components/hr/shared/SimpleModal.tsx
+ create mode 100644 src/components/hr/termination/TerminationSection.tsx
+ create mode 100644 src/components/hr/training/TrainingCalendarSection.tsx
+ create mode 100644 src/components/hr/training/TrainingCertificatesSection.tsx
+ create mode 100644 src/components/hr/training/TrainingFeedbackSection.tsx
+ create mode 100644 src/components/hr/training/TrainingProgramsSection.tsx
+ create mode 100644 src/pages/hr/careerpage/ContractsPage.tsx
+ create mode 100644 src/pages/hr/careerpage/PromotionsPage.tsx
+ create mode 100644 src/pages/hr/careerpage/TransfersPage.tsx
+ create mode 100644 src/pages/hr/performancepage/PerformancePage.tsx
+ create mode 100644 src/pages/hr/recruitmentpage/JobOffersPage.tsx
+ create mode 100644 src/pages/hr/reportspage/HrReportsPages.tsx
+ create mode 100644 src/pages/hr/trainingpage/TrainingCalendarPage.tsx
+ create mode 100644 src/pages/hr/trainingpage/TrainingCertificatesPage.tsx
+ create mode 100644 src/pages/hr/trainingpage/TrainingFeedbackPage.tsx
+ create mode 100644 src/pages/hr/trainingpage/TrainingProgramsPage.tsx
+ create mode 100644 src/services/hr/apiError.ts
+ create mode 100644 src/services/hr/career/career.api.ts
+ create mode 100644 src/services/hr/career/career.keys.ts
+ create mode 100644 src/services/hr/career/career.queries.ts
+ create mode 100644 src/services/hr/jobOffer/jobOffer.api.ts
+ create mode 100644 src/services/hr/jobOffer/jobOffer.keys.ts
+ create mode 100644 src/services/hr/jobOffer/jobOffer.queries.ts
+ create mode 100644 src/services/hr/performance/performance.api.ts
+ create mode 100644 src/services/hr/performance/performance.keys.ts
+ create mode 100644 src/services/hr/performance/performance.queries.ts
+ create mode 100644 src/services/hr/reports/reports.api.ts
+ create mode 100644 src/services/hr/reports/reports.keys.ts
+ create mode 100644 src/services/hr/reports/reports.queries.ts
+ create mode 100644 src/services/hr/termination/termination.api.ts
+ create mode 100644 src/services/hr/termination/termination.keys.ts
+ create mode 100644 src/services/hr/termination/termination.queries.ts
+ create mode 100644 src/services/hr/training/training.api.ts
+ create mode 100644 src/services/hr/training/training.keys.ts
+ create mode 100644 src/services/hr/training/training.queries.ts
+ create mode 100644 src/types/hr/career.ts
+ create mode 100644 src/types/hr/jobOffer.ts
+ create mode 100644 src/types/hr/performance.ts
+ create mode 100644 src/types/hr/reports.ts
+ create mode 100644 src/types/hr/termination.ts
+ create mode 100644 src/types/hr/training.ts
+
+diff --git a/.env.development b/.env.development
+index 182e8cd..9e34338 100644
+--- a/.env.development
++++ b/.env.development
+@@ -5,4 +5,7 @@ VITE_CORE_MODULE_URL=/core/module/v1
+ VITE_CORE_HRMM_URL=/core/hrmm/v1
+ VITE_HRMM_PROFILE_URL=/hrm/profile/v1
+ VITE_HRMM_LEAVE_URL=/hrm/leave/v1
+-VITE_HRMM_RECRUIT_URL=/hrm/recruit/v1
+\ No newline at end of file
++VITE_HRMM_RECRUIT_URL=/hrm/recruit/v1
++VITE_HR_PERFORMANCE_URL=/performance
++VITE_HR_TRAINING_URL=/training
++VITE_HR_REPORTS_URL=/hrm/reports
+\ No newline at end of file
+diff --git a/src/App.tsx b/src/App.tsx
+index 489b942..73634bc 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -9,6 +9,11 @@ import Finance from "./pages/modules/Finance";
+ import Procurement from "./pages/modules/Procurement";
+ import JobGrade from "./pages/settings/hrSettings/jobgrade/JobGrade";
+ import Termination from "./pages/hr/employeepage/Termination";
++import ContractsPage from "./pages/hr/careerpage/ContractsPage";
++import PromotionsPage from "./pages/hr/careerpage/PromotionsPage";
++import TransfersPage from "./pages/hr/careerpage/TransfersPage";
++import PerformancePage from "./pages/hr/performancepage/PerformancePage";
++import JobOffersPage from "./pages/hr/recruitmentpage/JobOffersPage";
+ import CandidatePipeline from "./pages/hr/recruitmentpage/CandidatePipeline";
+ import OnBoarding from "./pages/hr/recruitmentpage/OnBoarding";
+ import RecruitmentList from "./pages/hr/recruitmentpage/RecruitmentList";
+@@ -18,6 +23,18 @@ import LeaveEntitlementPage from "./pages/hr/leavepage/LeaveEntitlementPage";
+ import LeaveList from "./pages/hr/leavepage/myLeavePage";
+ import LeaveRequestForm from "./pages/hr/leavepage/LeaveRequestForm";
+ import Training from "./pages/hr/trainingpage/Training";
++import TrainingProgramsPage from "./pages/hr/trainingpage/TrainingProgramsPage";
++import TrainingCalendarPage from "./pages/hr/trainingpage/TrainingCalendarPage";
++import TrainingFeedbackPage from "./pages/hr/trainingpage/TrainingFeedbackPage";
++import TrainingCertificatesPage from "./pages/hr/trainingpage/TrainingCertificatesPage";
++import {
++  HrReportsPage,
++  HrEmployeeReportsPage,
++  HrAttendanceReportsPage,
++  HrLeaveReportsPage,
++  HrPayrollReportsPage,
++  HrRecruitmentReportsPage,
++} from "./pages/hr/reportspage/HrReportsPages";
+ import AttendanceList from "./pages/hr/attendancepage/AttendanceList";
+ import ShiftScheduler from "./pages/hr/attendancepage/ShiftScheduler";
+ import TimeClock from "./pages/hr/attendancepage/TimeClock";
+@@ -365,6 +382,30 @@ function App() {
+                 path="/hr/employees/termination"
+                 element={<Termination />}
+               />
++              <Route
++                path="/hr/employees/terminations"
++                element={<Termination />}
++              />
++              <Route
++                path="/hr/employees/contracts"
++                element={<ContractsPage />}
++              />
++              <Route
++                path="/hr/employees/promotions"
++                element={<PromotionsPage />}
++              />
++              <Route
++                path="/hr/employees/transfers"
++                element={<TransfersPage />}
++              />
++              <Route
++                path="/hr/employees/performance"
++                element={<PerformancePage />}
++              />
++              <Route
++                path="/hr/recruitment/offers"
++                element={<JobOffersPage />}
++              />
+               <Route
+                 path="/hr/recruitment/pipeline"
+                 element={<CandidatePipeline />}
+@@ -546,6 +587,16 @@ function App() {
+                 element={<PageOnboardingTask />}
+               />
+               <Route path="/hr/training" element={<Training />} />
++              <Route path="/hr/training/programs" element={<TrainingProgramsPage />} />
++              <Route path="/hr/training/calendar" element={<TrainingCalendarPage />} />
++              <Route path="/hr/training/feedback" element={<TrainingFeedbackPage />} />
++              <Route path="/hr/training/certificates" element={<TrainingCertificatesPage />} />
++              <Route path="/hr/reports" element={<HrReportsPage />} />
++              <Route path="/hr/reports/employees" element={<HrEmployeeReportsPage />} />
++              <Route path="/hr/reports/attendance" element={<HrAttendanceReportsPage />} />
++              <Route path="/hr/reports/leave" element={<HrLeaveReportsPage />} />
++              <Route path="/hr/reports/payroll" element={<HrPayrollReportsPage />} />
++              <Route path="/hr/reports/recruitment" element={<HrRecruitmentReportsPage />} />
+               {/* END HR ROUTES */}
+               {/* START FINANCE ROUTES */}
+               <Route path="/finance/gl" element={<GlPage />} />
+diff --git a/src/components/hr/career/ContractsSection.tsx b/src/components/hr/career/ContractsSection.tsx
+new file mode 100644
+index 0000000..719e7c3
+--- /dev/null
++++ b/src/components/hr/career/ContractsSection.tsx
+@@ -0,0 +1,98 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import { useContracts, useCreateContract, useDeleteContract, useTerminateContract } from '../../../services/hr/career/career.queries';
++import type { EmpContractListDto } from '../../../types/hr/career';
++
++const ContractsSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [form, setForm] = useState({ employeeId: '', contractType: 'Permanent', startDate: '', endDate: '', notes: '' });
++  const { data = [], isLoading, error } = useContracts();
++  const createMut = useCreateContract({
++    onSuccess: () => { showToast.success('Contract created'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const termMut = useTerminateContract({
++    onSuccess: () => showToast.success('Contract terminated'),
++    onError: (e) => showToast.error(e.message),
++  });
++  const delMut = useDeleteContract({
++    onSuccess: () => showToast.success('Contract deleted'),
++    onError: (e) => showToast.error(e.message),
++  });
++
++  const rows = useMemo(() => data.filter((c) =>
++    !search || c.contractNumber?.toLowerCase().includes(search.toLowerCase()) ||
++    c.employeeId.toLowerCase().includes(search.toLowerCase()) ||
++    c.statusName?.toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  const terminate = (c: EmpContractListDto) => {
++    const reason = window.prompt('Termination reason');
++    if (!reason) return;
++    termMut.mutate({ id: c.id, reason, rowVersion: c.rowVersion });
++  };
++
++  return (
++    <HrPageShell
++      title="Contracts" subtitle="Employee contract lifecycle"
++      actionLabel="New Contract" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch}
++      loading={isLoading} error={error?.message}
++    >
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr>
++              <th className="p-3">Number</th><th className="p-3">Employee</th><th className="p-3">Type</th>
++              <th className="p-3">Status</th><th className="p-3">Start</th><th className="p-3">Actions</th>
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((c) => (
++              <tr key={c.id} className="border-t">
++                <td className="p-3 font-medium">{c.contractNumber}</td>
++                <td className="p-3 font-mono text-xs">{c.employeeId.slice(0, 8)}…</td>
++                <td className="p-3">{c.contractType}</td>
++                <td className="p-3">{c.statusName || c.status}</td>
++                <td className="p-3">{c.startDate?.slice(0, 10)}</td>
++                <td className="p-3 space-x-2">
++                  {c.status !== 'Terminated' && (
++                    <Button size="sm" variant="outline" onClick={() => terminate(c)}>Terminate</Button>
++                  )}
++                  <Button size="sm" variant="destructive" onClick={() => delMut.mutate(c.id)}>Delete</Button>
++                </td>
++              </tr>
++            ))}
++            {!rows.length && <tr><td colSpan={6} className="p-6 text-center text-gray-500">No contracts</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Create Contract" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          employeeId: form.employeeId.trim(),
++          contractType: form.contractType,
++          startDate: new Date(form.startDate).toISOString(),
++          endDate: form.endDate ? new Date(form.endDate).toISOString() : null,
++          notes: form.notes || null,
++          activateImmediately: true,
++        })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Type</Label><Input value={form.contractType} onChange={(e) => setForm({ ...form, contractType: e.target.value })} /></div>
++        <div className="grid grid-cols-2 gap-3">
++          <div className="space-y-2"><Label>Start</Label><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></div>
++          <div className="space-y-2"><Label>End</Label><Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} /></div>
++        </div>
++        <div className="space-y-2"><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default ContractsSection;
+diff --git a/src/components/hr/career/PromotionsSection.tsx b/src/components/hr/career/PromotionsSection.tsx
+new file mode 100644
+index 0000000..770d796
+--- /dev/null
++++ b/src/components/hr/career/PromotionsSection.tsx
+@@ -0,0 +1,92 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import { useCreatePromotion, usePromotionDecision, usePromotions } from '../../../services/hr/career/career.queries';
++import type { EmpPromotionListDto } from '../../../types/hr/career';
++
++const PromotionsSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [form, setForm] = useState({
++    employeeId: '', effectiveDate: '', toJobGradeId: '', toPositionId: '', toDepartmentId: '', reason: '',
++  });
++  const { data = [], isLoading, error } = usePromotions();
++  const createMut = useCreatePromotion({
++    onSuccess: () => { showToast.success('Promotion requested'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const approveMut = usePromotionDecision('approve', { onSuccess: () => showToast.success('Approved'), onError: (e) => showToast.error(e.message) });
++  const rejectMut = usePromotionDecision('reject', { onSuccess: () => showToast.success('Rejected'), onError: (e) => showToast.error(e.message) });
++  const applyMut = usePromotionDecision('apply', { onSuccess: () => showToast.success('Applied'), onError: (e) => showToast.error(e.message) });
++
++  const rows = useMemo(() => data.filter((p) =>
++    !search || p.employeeId.includes(search) || (p.statusName || p.status).toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  const decide = (p: EmpPromotionListDto, action: 'approve' | 'reject' | 'apply') => {
++    const payload = { id: p.id, rowVersion: p.rowVersion };
++    if (action === 'approve') approveMut.mutate(payload);
++    else if (action === 'reject') rejectMut.mutate(payload);
++    else applyMut.mutate(payload);
++  };
++
++  return (
++    <HrPageShell title="Promotions" subtitle="Approve and apply employee promotions"
++      actionLabel="Request Promotion" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch} loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr><th className="p-3">Employee</th><th className="p-3">Effective</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr>
++          </thead>
++          <tbody>
++            {rows.map((p) => (
++              <tr key={p.id} className="border-t">
++                <td className="p-3 font-mono text-xs">{p.employeeId}</td>
++                <td className="p-3">{p.effectiveDate?.slice(0, 10)}</td>
++                <td className="p-3">{p.statusName || p.status}</td>
++                <td className="p-3 space-x-2">
++                  {p.status === 'Pending' && (
++                    <>
++                      <Button size="sm" onClick={() => decide(p, 'approve')}>Approve</Button>
++                      <Button size="sm" variant="outline" onClick={() => decide(p, 'reject')}>Reject</Button>
++                    </>
++                  )}
++                  {p.status === 'Approved' && (
++                    <Button size="sm" className="bg-green-700 text-white" onClick={() => decide(p, 'apply')}>Apply</Button>
++                  )}
++                </td>
++              </tr>
++            ))}
++            {!rows.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No promotions</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Request Promotion" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          employeeId: form.employeeId.trim(),
++          effectiveDate: new Date(form.effectiveDate).toISOString(),
++          toJobGradeId: form.toJobGradeId.trim(),
++          toPositionId: form.toPositionId.trim(),
++          toDepartmentId: form.toDepartmentId.trim(),
++          reason: form.reason || null,
++        })}>
++        {(['employeeId', 'toJobGradeId', 'toPositionId', 'toDepartmentId'] as const).map((k) => (
++          <div key={k} className="space-y-2">
++            <Label>{k}</Label>
++            <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />
++          </div>
++        ))}
++        <div className="space-y-2"><Label>Effective Date</Label><Input type="date" value={form.effectiveDate} onChange={(e) => setForm({ ...form, effectiveDate: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Reason</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default PromotionsSection;
+diff --git a/src/components/hr/career/TransfersSection.tsx b/src/components/hr/career/TransfersSection.tsx
+new file mode 100644
+index 0000000..eca999c
+--- /dev/null
++++ b/src/components/hr/career/TransfersSection.tsx
+@@ -0,0 +1,88 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import { useCreateTransfer, useTransferDecision, useTransfers } from '../../../services/hr/career/career.queries';
++import type { EmpTransferListDto } from '../../../types/hr/career';
++
++const TransfersSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [form, setForm] = useState({
++    employeeId: '', effectiveDate: '', toDepartmentId: '', toPositionId: '', reason: '',
++  });
++  const { data = [], isLoading, error } = useTransfers();
++  const createMut = useCreateTransfer({
++    onSuccess: () => { showToast.success('Transfer requested'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const approveMut = useTransferDecision('approve', { onSuccess: () => showToast.success('Approved'), onError: (e) => showToast.error(e.message) });
++  const rejectMut = useTransferDecision('reject', { onSuccess: () => showToast.success('Rejected'), onError: (e) => showToast.error(e.message) });
++  const applyMut = useTransferDecision('apply', { onSuccess: () => showToast.success('Applied'), onError: (e) => showToast.error(e.message) });
++
++  const rows = useMemo(() => data.filter((t) =>
++    !search || t.employeeId.includes(search) || (t.statusName || t.status).toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  const decide = (t: EmpTransferListDto, action: 'approve' | 'reject' | 'apply') => {
++    const payload = { id: t.id, rowVersion: t.rowVersion };
++    if (action === 'approve') approveMut.mutate(payload);
++    else if (action === 'reject') rejectMut.mutate(payload);
++    else applyMut.mutate(payload);
++  };
++
++  return (
++    <HrPageShell title="Transfers" subtitle="Department / position transfers"
++      actionLabel="Request Transfer" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch} loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr><th className="p-3">Employee</th><th className="p-3">Effective</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr>
++          </thead>
++          <tbody>
++            {rows.map((t) => (
++              <tr key={t.id} className="border-t">
++                <td className="p-3 font-mono text-xs">{t.employeeId}</td>
++                <td className="p-3">{t.effectiveDate?.slice(0, 10)}</td>
++                <td className="p-3">{t.statusName || t.status}</td>
++                <td className="p-3 space-x-2">
++                  {t.status === 'Pending' && (
++                    <>
++                      <Button size="sm" onClick={() => decide(t, 'approve')}>Approve</Button>
++                      <Button size="sm" variant="outline" onClick={() => decide(t, 'reject')}>Reject</Button>
++                    </>
++                  )}
++                  {t.status === 'Approved' && (
++                    <Button size="sm" className="bg-green-700 text-white" onClick={() => decide(t, 'apply')}>Apply</Button>
++                  )}
++                </td>
++              </tr>
++            ))}
++            {!rows.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No transfers</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Request Transfer" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          employeeId: form.employeeId.trim(),
++          effectiveDate: new Date(form.effectiveDate).toISOString(),
++          toDepartmentId: form.toDepartmentId.trim(),
++          toPositionId: form.toPositionId.trim(),
++          reason: form.reason || null,
++        })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>To Department ID</Label><Input value={form.toDepartmentId} onChange={(e) => setForm({ ...form, toDepartmentId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>To Position ID</Label><Input value={form.toPositionId} onChange={(e) => setForm({ ...form, toPositionId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Effective Date</Label><Input type="date" value={form.effectiveDate} onChange={(e) => setForm({ ...form, effectiveDate: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Reason</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default TransfersSection;
+diff --git a/src/components/hr/jobOffer/JobOfferSection.tsx b/src/components/hr/jobOffer/JobOfferSection.tsx
+new file mode 100644
+index 0000000..2a06123
+--- /dev/null
++++ b/src/components/hr/jobOffer/JobOfferSection.tsx
+@@ -0,0 +1,78 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import { useCreateJobOffer, useJobOfferAction, useJobOffers } from '../../../services/hr/jobOffer/jobOffer.queries';
++
++const JobOfferSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [form, setForm] = useState({ jobApplicationId: '', offeredSalary: '', currency: 'ETB', startDate: '', notes: '' });
++  const { data = [], isLoading, error } = useJobOffers();
++  const createMut = useCreateJobOffer({
++    onSuccess: () => { showToast.success('Offer created'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const submitMut = useJobOfferAction('submit', { onSuccess: () => showToast.success('Submitted'), onError: (e) => showToast.error(e.message) });
++  const approveMut = useJobOfferAction('approve', { onSuccess: () => showToast.success('Approved'), onError: (e) => showToast.error(e.message) });
++  const acceptMut = useJobOfferAction('accept', { onSuccess: () => showToast.success('Accepted'), onError: (e) => showToast.error(e.message) });
++  const hireMut = useJobOfferAction('hire', { onSuccess: () => showToast.success('Hired — employee created'), onError: (e) => showToast.error(e.message) });
++
++  const rows = useMemo(() => data.filter((o) =>
++    !search || String(o.jobApplicationId || '').includes(search) || String(o.status || '').toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  return (
++    <HrPageShell title="Job Offers" subtitle="Offer → accept → hire into Profile"
++      actionLabel="New Offer" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch} loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr>
++              <th className="p-3">Application</th><th className="p-3">Salary</th><th className="p-3">Status</th><th className="p-3">Actions</th>
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((o) => (
++              <tr key={o.id} className="border-t">
++                <td className="p-3 font-mono text-xs">{String(o.jobApplicationId).slice(0, 8)}…</td>
++                <td className="p-3">{o.offeredSalary ?? '—'} {o.currency || ''}</td>
++                <td className="p-3">{String(o.statusName || o.status)}</td>
++                <td className="p-3 space-x-1">
++                  <Button size="sm" variant="outline" onClick={() => submitMut.mutate({ id: o.id })}>Submit</Button>
++                  <Button size="sm" onClick={() => approveMut.mutate({ id: o.id, rowVersion: o.rowVersion })}>Approve</Button>
++                  <Button size="sm" variant="outline" onClick={() => acceptMut.mutate({ id: o.id, rowVersion: o.rowVersion })}>Accept</Button>
++                  <Button size="sm" className="bg-green-700 text-white" onClick={() => hireMut.mutate({ id: o.id, rowVersion: o.rowVersion })}>Hire</Button>
++                </td>
++              </tr>
++            ))}
++            {!rows.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No offers</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Create Job Offer" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          jobApplicationId: form.jobApplicationId.trim(),
++          offeredSalary: form.offeredSalary ? Number(form.offeredSalary) : null,
++          currency: form.currency,
++          startDate: form.startDate ? new Date(form.startDate).toISOString() : null,
++          notes: form.notes || null,
++        })}>
++        <div className="space-y-2"><Label>Job Application ID</Label><Input value={form.jobApplicationId} onChange={(e) => setForm({ ...form, jobApplicationId: e.target.value })} /></div>
++        <div className="grid grid-cols-2 gap-3">
++          <div className="space-y-2"><Label>Salary</Label><Input value={form.offeredSalary} onChange={(e) => setForm({ ...form, offeredSalary: e.target.value })} /></div>
++          <div className="space-y-2"><Label>Currency</Label><Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></div>
++        </div>
++        <div className="space-y-2"><Label>Start date</Label><Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default JobOfferSection;
+diff --git a/src/components/hr/performance/PerformanceSection.tsx b/src/components/hr/performance/PerformanceSection.tsx
+new file mode 100644
+index 0000000..f539bc3
+--- /dev/null
++++ b/src/components/hr/performance/PerformanceSection.tsx
+@@ -0,0 +1,124 @@
++import React, { useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import {
++  useCreateGoal, useCreateReview, useGoals, useReviewAction, useReviews,
++} from '../../../services/hr/performance/performance.queries';
++
++const PerformanceSection: React.FC = () => {
++  const [goalOpen, setGoalOpen] = useState(false);
++  const [reviewOpen, setReviewOpen] = useState(false);
++  const [goalForm, setGoalForm] = useState({ employeeId: '', title: '', startDate: '', targetDate: '' });
++  const [reviewForm, setReviewForm] = useState({ employeeId: '', title: '', periodStart: '', periodEnd: '' });
++
++  const goalsQ = useGoals();
++  const reviewsQ = useReviews();
++  const createGoal = useCreateGoal({
++    onSuccess: () => { showToast.success('Goal created'); setGoalOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const createReview = useCreateReview({
++    onSuccess: () => { showToast.success('Review created'); setReviewOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const submitMut = useReviewAction('submit', { onSuccess: () => showToast.success('Submitted'), onError: (e) => showToast.error(e.message) });
++  const approveMut = useReviewAction('approve', { onSuccess: () => showToast.success('Approved'), onError: (e) => showToast.error(e.message) });
++  const rejectMut = useReviewAction('reject', { onSuccess: () => showToast.success('Rejected'), onError: (e) => showToast.error(e.message) });
++
++  return (
++    <HrPageShell title="Performance" subtitle="Goals and performance reviews"
++      error={goalsQ.error?.message || reviewsQ.error?.message}>
++      <Tabs defaultValue="reviews">
++        <TabsList>
++          <TabsTrigger value="reviews">Reviews</TabsTrigger>
++          <TabsTrigger value="goals">Goals</TabsTrigger>
++        </TabsList>
++
++        <TabsContent value="reviews" className="space-y-3">
++          <Button className="bg-green-700 text-white" onClick={() => setReviewOpen(true)}>New Review</Button>
++          <div className="bg-white border rounded-lg overflow-x-auto">
++            <table className="min-w-full text-sm">
++              <thead className="bg-gray-50 text-left">
++                <tr><th className="p-3">Title</th><th className="p-3">Employee</th><th className="p-3">Status</th><th className="p-3">Actions</th></tr>
++              </thead>
++              <tbody>
++                {(reviewsQ.data || []).map((r) => (
++                  <tr key={r.id} className="border-t">
++                    <td className="p-3">{r.title}</td>
++                    <td className="p-3 font-mono text-xs">{r.employeeId.slice(0, 8)}…</td>
++                    <td className="p-3">{r.status}</td>
++                    <td className="p-3 space-x-1">
++                      <Button size="sm" variant="outline" onClick={() => submitMut.mutate({ id: r.id })}>Submit</Button>
++                      <Button size="sm" onClick={() => approveMut.mutate({ id: r.id, decision: {} })}>Approve</Button>
++                      <Button size="sm" variant="outline" onClick={() => rejectMut.mutate({ id: r.id, decision: { rejectionReason: 'Needs revision' } })}>Reject</Button>
++                    </td>
++                  </tr>
++                ))}
++                {!reviewsQ.data?.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No reviews</td></tr>}
++              </tbody>
++            </table>
++          </div>
++        </TabsContent>
++
++        <TabsContent value="goals" className="space-y-3">
++          <Button className="bg-green-700 text-white" onClick={() => setGoalOpen(true)}>New Goal</Button>
++          <div className="bg-white border rounded-lg overflow-x-auto">
++            <table className="min-w-full text-sm">
++              <thead className="bg-gray-50 text-left">
++                <tr><th className="p-3">Title</th><th className="p-3">Employee</th><th className="p-3">Status</th><th className="p-3">Progress</th></tr>
++              </thead>
++              <tbody>
++                {(goalsQ.data || []).map((g) => (
++                  <tr key={g.id} className="border-t">
++                    <td className="p-3">{g.title}</td>
++                    <td className="p-3 font-mono text-xs">{g.employeeId.slice(0, 8)}…</td>
++                    <td className="p-3">{g.status}</td>
++                    <td className="p-3">{g.progressPercent}%</td>
++                  </tr>
++                ))}
++                {!goalsQ.data?.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No goals</td></tr>}
++              </tbody>
++            </table>
++          </div>
++        </TabsContent>
++      </Tabs>
++
++      <SimpleModal open={goalOpen} title="Create Goal" onClose={() => setGoalOpen(false)} loading={createGoal.isPending}
++        onSubmit={() => createGoal.mutate({
++          employeeId: goalForm.employeeId.trim(),
++          title: goalForm.title.trim(),
++          startDate: new Date(goalForm.startDate).toISOString(),
++          targetDate: new Date(goalForm.targetDate).toISOString(),
++        })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={goalForm.employeeId} onChange={(e) => setGoalForm({ ...goalForm, employeeId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Title</Label><Input value={goalForm.title} onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })} /></div>
++        <div className="grid grid-cols-2 gap-3">
++          <div className="space-y-2"><Label>Start</Label><Input type="date" value={goalForm.startDate} onChange={(e) => setGoalForm({ ...goalForm, startDate: e.target.value })} /></div>
++          <div className="space-y-2"><Label>Target</Label><Input type="date" value={goalForm.targetDate} onChange={(e) => setGoalForm({ ...goalForm, targetDate: e.target.value })} /></div>
++        </div>
++      </SimpleModal>
++
++      <SimpleModal open={reviewOpen} title="Create Review" onClose={() => setReviewOpen(false)} loading={createReview.isPending}
++        onSubmit={() => createReview.mutate({
++          employeeId: reviewForm.employeeId.trim(),
++          title: reviewForm.title.trim(),
++          periodStart: new Date(reviewForm.periodStart).toISOString(),
++          periodEnd: new Date(reviewForm.periodEnd).toISOString(),
++        })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={reviewForm.employeeId} onChange={(e) => setReviewForm({ ...reviewForm, employeeId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Title</Label><Input value={reviewForm.title} onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })} /></div>
++        <div className="grid grid-cols-2 gap-3">
++          <div className="space-y-2"><Label>Period start</Label><Input type="date" value={reviewForm.periodStart} onChange={(e) => setReviewForm({ ...reviewForm, periodStart: e.target.value })} /></div>
++          <div className="space-y-2"><Label>Period end</Label><Input type="date" value={reviewForm.periodEnd} onChange={(e) => setReviewForm({ ...reviewForm, periodEnd: e.target.value })} /></div>
++        </div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default PerformanceSection;
+diff --git a/src/components/hr/reports/HrReportsSection.tsx b/src/components/hr/reports/HrReportsSection.tsx
+new file mode 100644
+index 0000000..69a93ed
+--- /dev/null
++++ b/src/components/hr/reports/HrReportsSection.tsx
+@@ -0,0 +1,54 @@
++import React from 'react';
++import { Link } from 'react-router-dom';
++import { Badge } from '../../ui/badge';
++import HrPageShell from '../shared/HrPageShell';
++import { useHrReport, useHrReportsSummary } from '../../../services/hr/reports/reports.queries';
++import type { HrReportEnvelope } from '../../../types/hr/reports';
++
++const DomainCard: React.FC<{ title: string; to: string; envelope?: HrReportEnvelope }> = ({ title, to, envelope }) => (
++  <Link to={to} className="block bg-white border rounded-lg p-4 hover:border-green-600 transition">
++    <div className="flex items-center justify-between mb-2">
++      <h3 className="font-semibold text-gray-900">{title}</h3>
++      <Badge variant={envelope?.upstreamSuccess ? 'default' : 'destructive'}>
++        {envelope?.upstreamSuccess ? 'OK' : 'Error'}
++      </Badge>
++    </div>
++    <p className="text-xs text-gray-500">{envelope?.message || 'Open report'}</p>
++  </Link>
++);
++
++export const HrReportsHome: React.FC = () => {
++  const { data, isLoading, error } = useHrReportsSummary();
++  return (
++    <HrPageShell title="HR Reports" subtitle="Cross-module report hub" loading={isLoading} error={error?.message}>
++      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
++        <DomainCard title="Employees" to="/hr/reports/employees" envelope={data?.employees} />
++        <DomainCard title="Attendance" to="/hr/reports/attendance" envelope={data?.attendance} />
++        <DomainCard title="Leave" to="/hr/reports/leave" envelope={data?.leave} />
++        <DomainCard title="Payroll" to="/hr/reports/payroll" envelope={data?.payroll} />
++        <DomainCard title="Recruitment" to="/hr/reports/recruitment" envelope={data?.recruitment} />
++      </div>
++    </HrPageShell>
++  );
++};
++
++export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' | 'leave' | 'payroll' | 'recruitment'; title: string }> = ({
++  domain, title,
++}) => {
++  const { data, isLoading, error } = useHrReport(domain);
++  return (
++    <HrPageShell title={title} subtitle={`Upstream: ${data?.domain || domain}`} loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg p-4">
++        <div className="mb-3 flex gap-2 items-center">
++          <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
++            {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
++          </Badge>
++          <span className="text-xs text-gray-500">{data?.message}</span>
++        </div>
++        <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
++          {JSON.stringify(data?.data ?? data, null, 2)}
++        </pre>
++      </div>
++    </HrPageShell>
++  );
++};
+diff --git a/src/components/hr/shared/HrPageShell.tsx b/src/components/hr/shared/HrPageShell.tsx
+new file mode 100644
+index 0000000..690ba90
+--- /dev/null
++++ b/src/components/hr/shared/HrPageShell.tsx
+@@ -0,0 +1,52 @@
++import React from 'react';
++import { motion } from 'framer-motion';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++
++type Props = {
++  title: string;
++  subtitle?: string;
++  actionLabel?: string;
++  onAction?: () => void;
++  search?: string;
++  onSearchChange?: (v: string) => void;
++  error?: string | null;
++  loading?: boolean;
++  children: React.ReactNode;
++};
++
++const HrPageShell: React.FC<Props> = ({
++  title, subtitle, actionLabel, onAction, search, onSearchChange, error, loading, children,
++}) => (
++  <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 min-h-screen p-6 space-y-4">
++    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
++      <div>
++        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
++        {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
++      </div>
++      {actionLabel && onAction && (
++        <Button onClick={onAction} className="bg-green-700 hover:bg-green-800 text-white">{actionLabel}</Button>
++      )}
++    </div>
++
++    {onSearchChange && (
++      <Input
++        value={search || ''}
++        onChange={(e) => onSearchChange(e.target.value)}
++        placeholder="Search…"
++        className="max-w-md bg-white"
++      />
++    )}
++
++    {error && (
++      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm">{error}</div>
++    )}
++    {loading ? (
++      <div className="bg-white border rounded-lg p-8 text-center text-gray-500">Loading…</div>
++    ) : (
++      children
++    )}
++  </motion.section>
++);
++
++export default HrPageShell;
+diff --git a/src/components/hr/shared/SimpleModal.tsx b/src/components/hr/shared/SimpleModal.tsx
+new file mode 100644
+index 0000000..d085d6a
+--- /dev/null
++++ b/src/components/hr/shared/SimpleModal.tsx
+@@ -0,0 +1,45 @@
++import React from 'react';
++import { AnimatePresence, motion } from 'framer-motion';
++import { Button } from '../../ui/button';
++
++type Props = {
++  open: boolean;
++  title: string;
++  onClose: () => void;
++  onSubmit?: () => void;
++  submitLabel?: string;
++  loading?: boolean;
++  children: React.ReactNode;
++};
++
++const SimpleModal: React.FC<Props> = ({
++  open, title, onClose, onSubmit, submitLabel = 'Save', loading, children,
++}) => (
++  <AnimatePresence>
++    {open && (
++      <motion.div
++        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
++        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4"
++        onClick={(e) => { if (e.target === e.currentTarget && !loading) onClose(); }}
++      >
++        <motion.div
++          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
++          className="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto"
++        >
++          <div className="px-6 py-4 border-b font-semibold text-gray-900">{title}</div>
++          <div className="p-6 space-y-3">{children}</div>
++          <div className="px-6 py-4 border-t flex justify-end gap-2">
++            <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
++            {onSubmit && (
++              <Button className="bg-green-700 hover:bg-green-800 text-white" onClick={onSubmit} disabled={loading}>
++                {loading ? 'Saving…' : submitLabel}
++              </Button>
++            )}
++          </div>
++        </motion.div>
++      </motion.div>
++    )}
++  </AnimatePresence>
++);
++
++export default SimpleModal;
+diff --git a/src/components/hr/termination/TerminationSection.tsx b/src/components/hr/termination/TerminationSection.tsx
+new file mode 100644
+index 0000000..c9a4bce
+--- /dev/null
++++ b/src/components/hr/termination/TerminationSection.tsx
+@@ -0,0 +1,133 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import { Textarea } from '../../ui/textarea';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import {
++  useCreateTermination,
++  useOffboardingTasks,
++  useTerminationAction,
++  useTerminations,
++  useUpdateOffboardingTask,
++} from '../../../services/hr/termination/termination.queries';
++import type { EmpTerminationListDto } from '../../../types/hr/termination';
++
++const TerminationSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [selected, setSelected] = useState<EmpTerminationListDto | null>(null);
++  const [form, setForm] = useState({
++    employeeId: '', lastWorkingDate: '', reason: '', terminationType: 'Voluntary', exitInterviewNotes: '',
++  });
++
++  const { data = [], isLoading, error } = useTerminations();
++  const { data: tasks = [] } = useOffboardingTasks(selected?.id);
++  const createMut = useCreateTermination({
++    onSuccess: () => { showToast.success('Termination request created'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const approveMut = useTerminationAction('approve', { onSuccess: () => showToast.success('Approved'), onError: (e) => showToast.error(e.message) });
++  const rejectMut = useTerminationAction('reject', { onSuccess: () => showToast.success('Rejected'), onError: (e) => showToast.error(e.message) });
++  const applyMut = useTerminationAction('apply', { onSuccess: () => showToast.success('Applied — employee terminated & settlement hooked'), onError: (e) => showToast.error(e.message) });
++  const taskMut = useUpdateOffboardingTask({
++    onSuccess: () => showToast.success('Checklist updated'),
++    onError: (e) => showToast.error(e.message),
++  });
++
++  const rows = useMemo(() => data.filter((t) =>
++    !search || t.employeeId.includes(search) || t.reason.toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  return (
++    <HrPageShell title="Terminations" subtitle="Exit requests, offboarding checklist, final-pay hooks"
++      actionLabel="New Termination" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch} loading={isLoading} error={error?.message}>
++      <div className="grid lg:grid-cols-2 gap-4">
++        <div className="bg-white border rounded-lg overflow-x-auto">
++          <table className="min-w-full text-sm">
++            <thead className="bg-gray-50 text-left">
++              <tr>
++                <th className="p-3">Employee</th><th className="p-3">Last day</th><th className="p-3">Status</th>
++                <th className="p-3">Offboarding</th><th className="p-3">Actions</th>
++              </tr>
++            </thead>
++            <tbody>
++              {rows.map((t) => (
++                <tr key={t.id} className={`border-t cursor-pointer ${selected?.id === t.id ? 'bg-green-50' : ''}`} onClick={() => setSelected(t)}>
++                  <td className="p-3 font-mono text-xs">{t.employeeId.slice(0, 8)}…</td>
++                  <td className="p-3">{t.lastWorkingDate?.slice(0, 10)}</td>
++                  <td className="p-3">{t.statusName || t.status}</td>
++                  <td className="p-3">{t.offboardingCompleted}/{t.offboardingTotal}</td>
++                  <td className="p-3 space-x-1" onClick={(e) => e.stopPropagation()}>
++                    {t.status === 'Pending' && (
++                      <>
++                        <Button size="sm" onClick={() => approveMut.mutate({ id: t.id, rowVersion: t.rowVersion })}>Approve</Button>
++                        <Button size="sm" variant="outline" onClick={() => rejectMut.mutate({ id: t.id, rowVersion: t.rowVersion })}>Reject</Button>
++                      </>
++                    )}
++                    {t.status === 'Approved' && (
++                      <Button size="sm" className="bg-green-700 text-white" onClick={() => applyMut.mutate({ id: t.id, rowVersion: t.rowVersion })}>Apply</Button>
++                    )}
++                  </td>
++                </tr>
++              ))}
++              {!rows.length && <tr><td colSpan={5} className="p-6 text-center text-gray-500">No terminations</td></tr>}
++            </tbody>
++          </table>
++        </div>
++
++        <div className="bg-white border rounded-lg p-4 space-y-3">
++          <h2 className="font-semibold text-gray-900">Offboarding checklist</h2>
++          {!selected && <p className="text-sm text-gray-500">Select a termination to manage checklist / exit notes.</p>}
++          {selected && (
++            <>
++              <p className="text-xs text-gray-600">Settlement: {selected.settlementStatus || '—'} {selected.settlementNotes ? `— ${selected.settlementNotes}` : ''}</p>
++              {selected.exitInterviewNotes && (
++                <p className="text-sm bg-gray-50 rounded p-2"><span className="font-medium">Exit interview:</span> {selected.exitInterviewNotes}</p>
++              )}
++              <ul className="space-y-2">
++                {tasks.map((task) => (
++                  <li key={task.id} className="flex items-center justify-between gap-2 border rounded p-2">
++                    <div>
++                      <div className="text-sm font-medium">{task.title}</div>
++                      <div className="text-xs text-gray-500">{task.category} · {task.status}</div>
++                    </div>
++                    {task.status !== 'Completed' && (
++                      <Button size="sm" variant="outline" onClick={() => taskMut.mutate({
++                        id: task.id, status: 'Completed', rowVersion: task.rowVersion,
++                      })}>Complete</Button>
++                    )}
++                  </li>
++                ))}
++                {!tasks.length && <li className="text-sm text-gray-500">No checklist tasks</li>}
++              </ul>
++            </>
++          )}
++        </div>
++      </div>
++
++      <SimpleModal open={open} title="Create Termination" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          employeeId: form.employeeId.trim(),
++          lastWorkingDate: new Date(form.lastWorkingDate).toISOString(),
++          reason: form.reason.trim(),
++          terminationType: form.terminationType,
++          exitInterviewNotes: form.exitInterviewNotes || null,
++          requestFinalPay: true,
++          requestLeaveSettlement: true,
++          seedDefaultChecklist: true,
++        })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={form.employeeId} onChange={(e) => setForm({ ...form, employeeId: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Last working date</Label><Input type="date" value={form.lastWorkingDate} onChange={(e) => setForm({ ...form, lastWorkingDate: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Type</Label><Input value={form.terminationType} onChange={(e) => setForm({ ...form, terminationType: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Reason</Label><Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Exit interview notes</Label><Textarea value={form.exitInterviewNotes} onChange={(e) => setForm({ ...form, exitInterviewNotes: e.target.value })} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default TerminationSection;
+diff --git a/src/components/hr/training/TrainingCalendarSection.tsx b/src/components/hr/training/TrainingCalendarSection.tsx
+new file mode 100644
+index 0000000..3a55a4e
+--- /dev/null
++++ b/src/components/hr/training/TrainingCalendarSection.tsx
+@@ -0,0 +1,36 @@
++import React from 'react';
++import HrPageShell from '../shared/HrPageShell';
++import { useTrainingSessions } from '../../../services/hr/training/training.queries';
++
++const TrainingCalendarSection: React.FC = () => {
++  const { data = [], isLoading, error } = useTrainingSessions();
++  return (
++    <HrPageShell title="Training Calendar" subtitle="Scheduled sessions" loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr>
++              <th className="p-3">Title</th><th className="p-3">Start</th><th className="p-3">End</th>
++              <th className="p-3">Location</th><th className="p-3">Status</th><th className="p-3">Enrolled</th>
++            </tr>
++          </thead>
++          <tbody>
++            {data.map((s) => (
++              <tr key={s.id} className="border-t">
++                <td className="p-3">{s.title}</td>
++                <td className="p-3">{s.startAt?.slice(0, 16).replace('T', ' ')}</td>
++                <td className="p-3">{s.endAt?.slice(0, 16).replace('T', ' ')}</td>
++                <td className="p-3">{s.location || s.mode || '—'}</td>
++                <td className="p-3">{s.status}</td>
++                <td className="p-3">{s.enrollmentCount}{s.capacity ? ` / ${s.capacity}` : ''}</td>
++              </tr>
++            ))}
++            {!data.length && <tr><td colSpan={6} className="p-6 text-center text-gray-500">No sessions scheduled</td></tr>}
++          </tbody>
++        </table>
++      </div>
++    </HrPageShell>
++  );
++};
++
++export default TrainingCalendarSection;
+diff --git a/src/components/hr/training/TrainingCertificatesSection.tsx b/src/components/hr/training/TrainingCertificatesSection.tsx
+new file mode 100644
+index 0000000..a271ac0
+--- /dev/null
++++ b/src/components/hr/training/TrainingCertificatesSection.tsx
+@@ -0,0 +1,54 @@
++import React, { useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import { useIssueCertificate, useTrainingCertificates } from '../../../services/hr/training/training.queries';
++
++const TrainingCertificatesSection: React.FC = () => {
++  const [open, setOpen] = useState(false);
++  const [enrollmentId, setEnrollmentId] = useState('');
++  const { data = [], isLoading, error } = useTrainingCertificates();
++  const issueMut = useIssueCertificate({
++    onSuccess: () => { showToast.success('Certificate issued'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++
++  return (
++    <HrPageShell title="Certifications" subtitle="Issued training certificates"
++      actionLabel="Issue Certificate" onAction={() => setOpen(true)}
++      loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr>
++              <th className="p-3">Number</th><th className="p-3">Title</th><th className="p-3">Employee</th>
++              <th className="p-3">Status</th><th className="p-3">Issued</th>
++            </tr>
++          </thead>
++          <tbody>
++            {data.map((c) => (
++              <tr key={c.id} className="border-t">
++                <td className="p-3 font-medium">{c.certificateNumber}</td>
++                <td className="p-3">{c.title}</td>
++                <td className="p-3 font-mono text-xs">{c.employeeId.slice(0, 8)}…</td>
++                <td className="p-3">{c.status}</td>
++                <td className="p-3">{c.issuedAt?.slice(0, 10)}</td>
++              </tr>
++            ))}
++            {!data.length && <tr><td colSpan={5} className="p-6 text-center text-gray-500">No certificates</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Issue Certificate" onClose={() => setOpen(false)} loading={issueMut.isPending}
++        submitLabel="Issue" onSubmit={() => issueMut.mutate(enrollmentId.trim())}>
++        <div className="space-y-2"><Label>Enrollment ID</Label><Input value={enrollmentId} onChange={(e) => setEnrollmentId(e.target.value)} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default TrainingCertificatesSection;
+diff --git a/src/components/hr/training/TrainingFeedbackSection.tsx b/src/components/hr/training/TrainingFeedbackSection.tsx
+new file mode 100644
+index 0000000..e0f16b4
+--- /dev/null
++++ b/src/components/hr/training/TrainingFeedbackSection.tsx
+@@ -0,0 +1,31 @@
++import React from 'react';
++import HrPageShell from '../shared/HrPageShell';
++import { useTrainingEvaluations } from '../../../services/hr/training/training.queries';
++
++const TrainingFeedbackSection: React.FC = () => {
++  const { data = [], isLoading, error } = useTrainingEvaluations();
++  return (
++    <HrPageShell title="Training Feedback" subtitle="Program evaluations" loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr><th className="p-3">Employee</th><th className="p-3">Rating</th><th className="p-3">Feedback</th><th className="p-3">Submitted</th></tr>
++          </thead>
++          <tbody>
++            {data.map((e) => (
++              <tr key={e.id} className="border-t">
++                <td className="p-3 font-mono text-xs">{e.employeeId.slice(0, 8)}…</td>
++                <td className="p-3">{e.rating}/5</td>
++                <td className="p-3">{e.feedback || '—'}</td>
++                <td className="p-3">{e.submittedAt?.slice(0, 10)}</td>
++              </tr>
++            ))}
++            {!data.length && <tr><td colSpan={4} className="p-6 text-center text-gray-500">No feedback yet</td></tr>}
++          </tbody>
++        </table>
++      </div>
++    </HrPageShell>
++  );
++};
++
++export default TrainingFeedbackSection;
+diff --git a/src/components/hr/training/TrainingProgramsSection.tsx b/src/components/hr/training/TrainingProgramsSection.tsx
+new file mode 100644
+index 0000000..c8e4a86
+--- /dev/null
++++ b/src/components/hr/training/TrainingProgramsSection.tsx
+@@ -0,0 +1,88 @@
++import React, { useMemo, useState } from 'react';
++import { showToast } from '../../../layout/layout';
++import { Button } from '../../ui/button';
++import { Input } from '../../ui/input';
++import { Label } from '../../ui/label';
++import HrPageShell from '../shared/HrPageShell';
++import SimpleModal from '../shared/SimpleModal';
++import {
++  useCreateTrainingProgram, useEnrollTraining, usePublishTrainingProgram, useTrainingPrograms,
++} from '../../../services/hr/training/training.queries';
++
++const TrainingProgramsSection: React.FC = () => {
++  const [search, setSearch] = useState('');
++  const [open, setOpen] = useState(false);
++  const [enrollOpen, setEnrollOpen] = useState<string | null>(null);
++  const [form, setForm] = useState({ code: '', title: '', category: 'General', description: '' });
++  const [employeeId, setEmployeeId] = useState('');
++
++  const { data = [], isLoading, error } = useTrainingPrograms();
++  const createMut = useCreateTrainingProgram({
++    onSuccess: () => { showToast.success('Program created'); setOpen(false); },
++    onError: (e) => showToast.error(e.message),
++  });
++  const publishMut = usePublishTrainingProgram({
++    onSuccess: () => showToast.success('Published'),
++    onError: (e) => showToast.error(e.message),
++  });
++  const enrollMut = useEnrollTraining({
++    onSuccess: () => { showToast.success('Enrolled'); setEnrollOpen(null); },
++    onError: (e) => showToast.error(e.message),
++  });
++
++  const rows = useMemo(() => data.filter((p) =>
++    !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.code.toLowerCase().includes(search.toLowerCase())
++  ), [data, search]);
++
++  return (
++    <HrPageShell title="Training Programs" subtitle="Programs, publish, and enroll employees"
++      actionLabel="New Program" onAction={() => setOpen(true)}
++      search={search} onSearchChange={setSearch} loading={isLoading} error={error?.message}>
++      <div className="bg-white border rounded-lg overflow-x-auto">
++        <table className="min-w-full text-sm">
++          <thead className="bg-gray-50 text-left">
++            <tr>
++              <th className="p-3">Code</th><th className="p-3">Title</th><th className="p-3">Status</th>
++              <th className="p-3">Courses</th><th className="p-3">Actions</th>
++            </tr>
++          </thead>
++          <tbody>
++            {rows.map((p) => (
++              <tr key={p.id} className="border-t">
++                <td className="p-3 font-medium">{p.code}</td>
++                <td className="p-3">{p.title}</td>
++                <td className="p-3">{p.status}</td>
++                <td className="p-3">{p.courseCount}</td>
++                <td className="p-3 space-x-1">
++                  {p.status === 'Draft' && (
++                    <Button size="sm" onClick={() => publishMut.mutate(p.id)}>Publish</Button>
++                  )}
++                  <Button size="sm" variant="outline" onClick={() => setEnrollOpen(p.id)}>Enroll</Button>
++                </td>
++              </tr>
++            ))}
++            {!rows.length && <tr><td colSpan={5} className="p-6 text-center text-gray-500">No programs</td></tr>}
++          </tbody>
++        </table>
++      </div>
++
++      <SimpleModal open={open} title="Create Program" onClose={() => setOpen(false)} loading={createMut.isPending}
++        onSubmit={() => createMut.mutate({
++          code: form.code.trim(), title: form.title.trim(), category: form.category, description: form.description || null,
++        })}>
++        <div className="space-y-2"><Label>Code</Label><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
++        <div className="space-y-2"><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
++      </SimpleModal>
++
++      <SimpleModal open={!!enrollOpen} title="Enroll Employee" onClose={() => setEnrollOpen(null)} loading={enrollMut.isPending}
++        submitLabel="Enroll"
++        onSubmit={() => enrollOpen && enrollMut.mutate({ programId: enrollOpen, employeeId: employeeId.trim() })}>
++        <div className="space-y-2"><Label>Employee ID</Label><Input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} /></div>
++      </SimpleModal>
++    </HrPageShell>
++  );
++};
++
++export default TrainingProgramsSection;
+diff --git a/src/layout/Sidebar.tsx b/src/layout/Sidebar.tsx
+index ace9cdb..07394d2 100644
+--- a/src/layout/Sidebar.tsx
++++ b/src/layout/Sidebar.tsx
+@@ -427,6 +427,58 @@ const Sidebar: React.FC = () => {
+               collapsed={collapsed}
+             />
+ 
++            <NavGroup
++              icon={<Users size={18} />}
++              label="Employee Lifecycle"
++              isOpen={openGroup === "EmployeeLifecycle"}
++              onToggle={() => toggleGroup(activeModule, "EmployeeLifecycle")}
++              hoverBg={theme.hoverBg}
++              textColor={theme.textColor}
++              activeBg={theme.activeBg}
++              collapsed={collapsed}
++            >
++              <NavItem
++                to="/hr/employees/contracts"
++                icon={<FileCheck size={18} />}
++                label="Contracts"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/employees/promotions"
++                icon={<Trophy size={18} />}
++                label="Promotions"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/employees/transfers"
++                icon={<RefreshCw size={18} />}
++                label="Transfers"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/employees/performance"
++                icon={<LineChart size={18} />}
++                label="Performance"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/employees/terminations"
++                icon={<Trash2 size={18} />}
++                label="Terminations"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++            </NavGroup>
++
+             <NavGroup
+               icon={<ClipboardCheck size={18} />}
+               label="Recruitment"
+@@ -485,6 +537,14 @@ const Sidebar: React.FC = () => {
+                 isChild
+                 collapsed={collapsed}
+               />
++              <NavItem
++                to="/hr/recruitment/offers"
++                icon={<FileCheck size={18} />}
++                label="Job Offers"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
+             </NavGroup>
+ 
+             <NavGroup
+@@ -567,20 +627,109 @@ const Sidebar: React.FC = () => {
+               />
+             </NavGroup>
+ 
+-            <NavItem
+-              to="/hr/training"
++            <NavGroup
+               icon={<GraduationCap size={18} />}
+               label="Training"
+-              {...theme}
++              isOpen={openGroup === "Training"}
++              onToggle={() => toggleGroup(activeModule, "Training")}
++              hoverBg={theme.hoverBg}
++              textColor={theme.textColor}
++              activeBg={theme.activeBg}
+               collapsed={collapsed}
+-            />
+-            <NavItem
+-              to="/hr/reports"
++            >
++              <NavItem
++                to="/hr/training/programs"
++                icon={<ClipboardList size={18} />}
++                label="Programs"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/training/calendar"
++                icon={<Calendar size={18} />}
++                label="Calendar"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/training/feedback"
++                icon={<FileText size={18} />}
++                label="Feedback"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/training/certificates"
++                icon={<Trophy size={18} />}
++                label="Certifications"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++            </NavGroup>
++
++            <NavGroup
+               icon={<FileSpreadsheet size={18} />}
+-              label="Reports"
+-              {...theme}
++              label="HR Reports"
++              isOpen={openGroup === "HrReports"}
++              onToggle={() => toggleGroup(activeModule, "HrReports")}
++              hoverBg={theme.hoverBg}
++              textColor={theme.textColor}
++              activeBg={theme.activeBg}
+               collapsed={collapsed}
+-            />
++            >
++              <NavItem
++                to="/hr/reports"
++                icon={<BarChart4 size={18} />}
++                label="Summary"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/reports/employees"
++                icon={<Users size={18} />}
++                label="Employees"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/reports/attendance"
++                icon={<Clock size={18} />}
++                label="Attendance"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/reports/leave"
++                icon={<Calendar size={18} />}
++                label="Leave"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/reports/payroll"
++                icon={<FileSpreadsheet size={18} />}
++                label="Payroll"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++              <NavItem
++                to="/hr/reports/recruitment"
++                icon={<ClipboardCheck size={18} />}
++                label="Recruitment"
++                {...theme}
++                isChild
++                collapsed={collapsed}
++              />
++            </NavGroup>
+           </>
+         );
+ 
+diff --git a/src/pages/hr/careerpage/ContractsPage.tsx b/src/pages/hr/careerpage/ContractsPage.tsx
+new file mode 100644
+index 0000000..c5c0e6a
+--- /dev/null
++++ b/src/pages/hr/careerpage/ContractsPage.tsx
+@@ -0,0 +1,2 @@
++import ContractsSection from '../../../components/hr/career/ContractsSection';
++export default function ContractsPage() { return <ContractsSection />; }
+diff --git a/src/pages/hr/careerpage/PromotionsPage.tsx b/src/pages/hr/careerpage/PromotionsPage.tsx
+new file mode 100644
+index 0000000..5c5fca2
+--- /dev/null
++++ b/src/pages/hr/careerpage/PromotionsPage.tsx
+@@ -0,0 +1,2 @@
++import PromotionsSection from '../../../components/hr/career/PromotionsSection';
++export default function PromotionsPage() { return <PromotionsSection />; }
+diff --git a/src/pages/hr/careerpage/TransfersPage.tsx b/src/pages/hr/careerpage/TransfersPage.tsx
+new file mode 100644
+index 0000000..fbcf20d
+--- /dev/null
++++ b/src/pages/hr/careerpage/TransfersPage.tsx
+@@ -0,0 +1,2 @@
++import TransfersSection from '../../../components/hr/career/TransfersSection';
++export default function TransfersPage() { return <TransfersSection />; }
+diff --git a/src/pages/hr/employeepage/Termination.tsx b/src/pages/hr/employeepage/Termination.tsx
+index b7d4d67..0cfd68d 100644
+--- a/src/pages/hr/employeepage/Termination.tsx
++++ b/src/pages/hr/employeepage/Termination.tsx
+@@ -1,9 +1,2 @@
+-import React from 'react'
+-
+-function Termination() {
+-  return (
+-    <div>Termination</div>
+-  )
+-}
+-
+-export default Termination
+\ No newline at end of file
++import TerminationSection from '../../../components/hr/termination/TerminationSection';
++export default function Termination() { return <TerminationSection />; }
+diff --git a/src/pages/hr/performancepage/PerformancePage.tsx b/src/pages/hr/performancepage/PerformancePage.tsx
+new file mode 100644
+index 0000000..6c654d7
+--- /dev/null
++++ b/src/pages/hr/performancepage/PerformancePage.tsx
+@@ -0,0 +1,2 @@
++import PerformanceSection from '../../../components/hr/performance/PerformanceSection';
++export default function PerformancePage() { return <PerformanceSection />; }
+diff --git a/src/pages/hr/recruitmentpage/JobOffersPage.tsx b/src/pages/hr/recruitmentpage/JobOffersPage.tsx
+new file mode 100644
+index 0000000..cc7c4a0
+--- /dev/null
++++ b/src/pages/hr/recruitmentpage/JobOffersPage.tsx
+@@ -0,0 +1,2 @@
++import JobOfferSection from '../../../components/hr/jobOffer/JobOfferSection';
++export default function JobOffersPage() { return <JobOfferSection />; }
+diff --git a/src/pages/hr/reportspage/HrReportsPages.tsx b/src/pages/hr/reportspage/HrReportsPages.tsx
+new file mode 100644
+index 0000000..d92858e
+--- /dev/null
++++ b/src/pages/hr/reportspage/HrReportsPages.tsx
+@@ -0,0 +1,8 @@
++import { HrReportDomainPage, HrReportsHome } from '../../../components/hr/reports/HrReportsSection';
++
++export function HrReportsPage() { return <HrReportsHome />; }
++export function HrEmployeeReportsPage() { return <HrReportDomainPage domain="employees" title="Employee Reports" />; }
++export function HrAttendanceReportsPage() { return <HrReportDomainPage domain="attendance" title="Attendance Reports" />; }
++export function HrLeaveReportsPage() { return <HrReportDomainPage domain="leave" title="Leave Reports" />; }
++export function HrPayrollReportsPage() { return <HrReportDomainPage domain="payroll" title="Payroll Reports" />; }
++export function HrRecruitmentReportsPage() { return <HrReportDomainPage domain="recruitment" title="Recruitment Reports" />; }
+diff --git a/src/pages/hr/trainingpage/Training.tsx b/src/pages/hr/trainingpage/Training.tsx
+index d2d7e41..a87a2e9 100644
+--- a/src/pages/hr/trainingpage/Training.tsx
++++ b/src/pages/hr/trainingpage/Training.tsx
+@@ -1,1275 +1,2 @@
+-import { motion } from 'framer-motion';
+-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
+-import { Button } from '../../../components/ui/button';
+-import { Plus, BookOpen, Award, Clock, FileText, Users, Calendar, BarChart2, CheckCircle, ChevronRight, ArrowRight, Download } from 'lucide-react';
+-import { useModuleStore } from '../../../stores/module.store';
+-import { Badge } from '../../../components/ui/badge';
+-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui/tabs';
+-import { useState, useEffect } from 'react';
+-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+-
+-interface TrainingCourse {
+-  id: number;
+-  title: string;
+-  category: string;
+-  duration: string;
+-  format: 'Online' | 'Classroom' | 'Hybrid';
+-  status: 'Active' | 'Draft' | 'Archived';
+-  enrolled: number;
+-  completionRate: number;
+-}
+-
+-interface EmployeeTraining {
+-  id: number;
+-  employee: string;
+-  position: string;
+-  department: string;
+-  course: string;
+-  status: 'Completed' | 'In Progress' | 'Not Started';
+-  completionDate: string;
+-  score?: number;
+-  certification: boolean;
+-}
+-
+-interface TrainingProgram {
+-  id: number;
+-  name: string;
+-  description: string;
+-  startDate: string;
+-  endDate: string;
+-  participants: number;
+-  budget: string;
+-  status: 'Planning' | 'Ongoing' | 'Completed' | 'Cancelled';
+-}
+-
+-interface TrainingEvaluation {
+-  id: number;
+-  course: string;
+-  participants: number;
+-  averageScore: number;
+-  effectiveness: number;
+-  feedback: string;
+-}
+-
+-interface TrainingBudget {
+-  id: number;
+-  category: string;
+-  allocated: string;
+-  spent: string;
+-  remaining: string;
+-  utilization: number;
+-}
+-
+-interface Employee {
+-  id: number;
+-  name: string;
+-  department: string;
+-}
+-
+-const CourseOverview: React.FC<{ courses: TrainingCourse[] }> = ({ courses }) => (
+-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-    {courses.map(course => (
+-      <motion.div 
+-        key={course.id}
+-        whileHover={{ y: -5 }}
+-        className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
+-      >
+-        <div className="p-4">
+-          <div className="flex items-center gap-3">
+-            <div className={`p-2 rounded-full ${
+-              course.status === 'Active' ? 'bg-emerald-100 dark:bg-emerald-900/50' : 
+-              course.status === 'Draft' ? 'bg-yellow-100 dark:bg-yellow-900/50' : 'bg-gray-100 dark:bg-gray-800'
+-            }`}>
+-              <BookOpen className={`h-5 w-5 ${
+-                course.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 
+-                course.status === 'Draft' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
+-              }`} />
+-            </div>
+-            <div>
+-              <h3 className="font-semibold text-lg">{course.title}</h3>
+-              <div className="flex items-center gap-2 mt-1">
+-                <Badge variant="outline" className="text-xs capitalize">
+-                  {course.category}
+-                </Badge>
+-                <Badge variant="outline" className="text-xs">
+-                  {course.duration}
+-                </Badge>
+-                <Badge variant={course.format === 'Online' ? 'default' : 'secondary'} className="text-xs">
+-                  {course.format}
+-                </Badge>
+-              </div>
+-            </div>
+-          </div>
+-          
+-          <div className="mt-4 flex justify-between items-center">
+-            <div className="flex items-center gap-2">
+-              <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+-              <span className="text-sm text-gray-500 dark:text-gray-400">
+-                {course.enrolled} enrolled
+-              </span>
+-            </div>
+-            
+-            <div className="flex items-center gap-2">
+-              <div className="w-24 h-2 bg-gray-200 rounded-full dark:bg-gray-800">
+-                <div 
+-                  className="h-2 rounded-full bg-emerald-500" 
+-                  style={{ width: `${course.completionRate}%` }}
+-                ></div>
+-              </div>
+-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+-                {course.completionRate}%
+-              </span>
+-            </div>
+-          </div>
+-        </div>
+-        <div className="border-t px-4 py-2 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+-          <span className="text-xs text-gray-500 dark:text-gray-400">Last updated: 2 days ago</span>
+-          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
+-            Details <ChevronRight className="h-3 w-3" />
+-          </Button>
+-        </div>
+-      </motion.div>
+-    ))}
+-  </div>
+-);
+-
+-const EmployeeTrainingOverview: React.FC<{ records: EmployeeTraining[] }> = ({ records }) => (
+-  <div className="space-y-4">
+-    {records.map(record => (
+-      <motion.div 
+-        key={record.id}
+-        whileHover={{ x: 5 }}
+-        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
+-      >
+-        <div className="flex items-start justify-between">
+-          <div>
+-            <h3 className="font-semibold text-lg">{record.employee}</h3>
+-            <p className="text-sm text-gray-500 dark:text-gray-400">
+-              {record.position} • {record.department}
+-            </p>
+-            <p className="text-sm font-medium mt-2 text-gray-700 dark:text-gray-300">
+-              {record.course}
+-            </p>
+-          </div>
+-          <div className="text-right">
+-            <Badge 
+-              variant={
+-                record.status === 'Completed' ? 'default' : 
+-                record.status === 'In Progress' ? 'secondary' : 'outline'
+-              }
+-              className="capitalize"
+-            >
+-              {record.status}
+-            </Badge>
+-            {record.completionDate && (
+-              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+-                {record.completionDate}
+-              </p>
+-            )}
+-          </div>
+-        </div>
+-        
+-        <div className="mt-4 flex justify-between items-center flex-wrap">
+-          <div className="flex items-center gap-2">
+-            {record.certification && (
+-              <Badge variant="default" className="px-2 py-0.5 text-xs flex items-center gap-1">
+-                <Award className="h-3 w-3" /> Certified
+-              </Badge>
+-            )}
+-            {record.score && (
+-              <Badge variant="outline" className="px-2 py-0.5 text-xs">
+-                Score: {record.score}/100
+-              </Badge>
+-            )}
+-          </div>
+-          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs md:mt-1">
+-            View Record <ArrowRight className="h-3 w-3" />
+-          </Button>
+-        </div>
+-      </motion.div>
+-    ))}
+-  </div>
+-);
+-
+-const ProgramOverview: React.FC<{ programs: TrainingProgram[] }> = ({ programs }) => (
+-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-    {programs.map(program => (
+-      <motion.div 
+-        key={program.id}
+-        whileHover={{ scale: 1.02 }}
+-        className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900 ${
+-          program.status === 'Ongoing' 
+-            ? 'ring-2 ring-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-900/20' 
+-            : ''
+-        }`}
+-      >
+-        <div className="flex items-center justify-between">
+-          <div>
+-            <h3 className="font-semibold text-lg">{program.name}</h3>
+-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+-              {program.startDate} - {program.endDate}
+-            </p>
+-          </div>
+-          <Badge 
+-            variant={
+-              program.status === 'Ongoing' ? 'default' : 
+-              program.status === 'Planning' ? 'secondary' : 
+-              program.status === 'Completed' ? 'outline' : 'destructive'
+-            }
+-            className="capitalize"
+-          >
+-            {program.status}
+-          </Badge>
+-        </div>
+-        
+-        <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
+-          {program.description}
+-        </p>
+-        
+-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
+-            <p className="text-sm text-gray-500 dark:text-gray-400">Participants</p>
+-            <p className="font-medium">{program.participants}</p>
+-          </div>
+-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
+-            <p className="text-sm text-gray-500 dark:text-gray-400">Budget</p>
+-            <p className="font-medium">{program.budget}</p>
+-          </div>
+-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
+-            <p className="text-sm text-gray-500 dark:text-gray-400">Days Left</p>
+-            <p className="font-medium">
+-              {program.status === 'Completed' ? 'Finished' : 
+-               program.status === 'Planning' ? '--' : '14'}
+-            </p>
+-          </div>
+-        </div>
+-      </motion.div>
+-    ))}
+-  </div>
+-);
+-
+-const EvaluationOverview: React.FC<{ evaluations: TrainingEvaluation[] }> = ({ evaluations }) => (
+-  <div className="space-y-4">
+-    {evaluations.map(evalItem => (
+-      <motion.div 
+-        key={evalItem.id}
+-        whileHover={{ scale: 1.01 }}
+-        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
+-      >
+-        <div className="flex items-start justify-between">
+-          <div>
+-            <h3 className="font-semibold text-lg">{evalItem.course}</h3>
+-            <div className="flex items-center gap-4 mt-2">
+-              <div className="flex items-center gap-1 text-sm">
+-                <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+-                <span>{evalItem.participants} participants</span>
+-              </div>
+-              <div className="flex items-center gap-1 text-sm">
+-                <BarChart2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+-                <span>Avg. score: {evalItem.averageScore}/100</span>
+-              </div>
+-            </div>
+-          </div>
+-          <div className="flex items-center gap-2">
+-            <div className="relative w-12 h-12">
+-              <svg className="w-full h-full" viewBox="0 0 36 36">
+-                <path
+-                  d="M18 2.0845
+-                    a 15.9155 15.9155 0 0 1 0 31.831
+-                    a 15.9155 15.9155 0 0 1 0 -31.831"
+-                  fill="none"
+-                  stroke="#eee"
+-                  strokeWidth="3"
+-                />
+-                <path
+-                  d="M18 2.0845
+-                    a 15.9155 15.9155 0 0 1 0 31.831
+-                    a 15.9155 15.9155 0 0 1 0 -31.831"
+-                  fill="none"
+-                  stroke={evalItem.effectiveness > 70 ? "#10b981" : evalItem.effectiveness > 40 ? "#f59e0b" : "#ef4444"}
+-                  strokeWidth="3"
+-                  strokeDasharray={`${evalItem.effectiveness}, 100`}
+-                />
+-                <text x="18" y="20.5" textAnchor="middle" fontSize="8" fill={evalItem.effectiveness > 70 ? "#10b981" : evalItem.effectiveness > 40 ? "#f59e0b" : "#ef4444"} fontWeight="bold">
+-                  {evalItem.effectiveness}%
+-                </text>
+-              </svg>
+-            </div>
+-          </div>
+-        </div>
+-        
+-        <div className="mt-3">
+-          <p className="text-sm text-gray-600 dark:text-gray-300">
+-            <span className="font-medium">Feedback:</span> {evalItem.feedback}
+-          </p>
+-        </div>
+-        
+-        <div className="mt-4 flex justify-end">
+-          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
+-            Detailed Report <Download className="h-3 w-3" />
+-          </Button>
+-        </div>
+-      </motion.div>
+-    ))}
+-  </div>
+-);
+-
+-const BudgetOverview: React.FC<{ budgets: TrainingBudget[] }> = ({ budgets }) => (
+-  <div className="space-y-4">
+-    {budgets.map(budget => {
+-      // Ensure utilization doesn't exceed 100% for the progress bar
+-      const displayUtilization = Math.min(budget.utilization, 100);
+-      
+-      return (
+-        <motion.div 
+-          key={budget.id}
+-          whileHover={{ scale: 1.01 }}
+-          className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
+-        >
+-          <div className="flex items-center justify-between">
+-            <h3 className="font-semibold text-lg">{budget.category}</h3>
+-            <Badge 
+-              variant={
+-                budget.utilization > 90 ? 'destructive' : 
+-                budget.utilization > 70 ? 'secondary' : 'outline'
+-              }
+-              className="text-xs"
+-            >
+-              {budget.utilization}% utilized
+-            </Badge>
+-          </div>
+-          
+-          <div className="mt-4 grid grid-cols-3 gap-4">
+-            <div>
+-              <p className="text-sm text-gray-500 dark:text-gray-400">Allocated</p>
+-              <p className="font-medium">{budget.allocated}</p>
+-            </div>
+-            <div>
+-              <p className="text-sm text-gray-500 dark:text-gray-400">Spent</p>
+-              <p className="font-medium">{budget.spent}</p>
+-            </div>
+-            <div>
+-              <p className="text-sm text-gray-500 dark:text-gray-400">Remaining</p>
+-              <p className="font-medium" style={{ 
+-                color: parseFloat(budget.remaining.replace(/[^0-9.]/g, '')) < 0 ? '#ef4444' : 'inherit'
+-              }}>
+-                {budget.remaining}
+-              </p>
+-            </div>
+-          </div>
+-          
+-          <div className="mt-4 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+-            <div 
+-              className={`h-2.5 rounded-full ${
+-                budget.utilization > 90 ? 'bg-red-500' : 
+-                budget.utilization > 70 ? 'bg-yellow-500' : 'bg-emerald-500'
+-              }`} 
+-              style={{ width: `${displayUtilization}%` }}
+-            ></div>
+-          </div>
+-          
+-          {/* Show warning if utilization exceeds 100% */}
+-          {budget.utilization > 100 && (
+-            <p className="mt-2 text-xs text-red-500">
+-              Warning: Budget exceeded by {budget.utilization - 100}%
+-            </p>
+-          )}
+-        </motion.div>
+-      );
+-    })}
+-  </div>
+-);
+-const TrainingList = () => (
+-  <Card>
+-    <CardHeader>
+-      <CardTitle className="flex items-center gap-2">
+-        <BookOpen className="h-5 w-5 text-emerald-500" />
+-        <span>Training List</span>
+-      </CardTitle>
+-      <CardDescription>
+-        Comprehensive list of all training programs and courses
+-      </CardDescription>
+-    </CardHeader>
+-    <CardContent>
+-      <div className="space-y-4">
+-        {courseData.map(course => (
+-          <div key={course.id} className="border rounded-lg p-4 flex justify-between items-center">
+-            <div>
+-              <h3 className="font-medium">{course.title}</h3>
+-              <p className="text-sm text-gray-500">{course.category} • {course.duration}</p>
+-            </div>
+-            <Button variant="outline" size="sm">
+-              View Details
+-            </Button>
+-          </div>
+-        ))}
+-      </div>
+-    </CardContent>
+-  </Card>
+-);
+-
+-const TrainingForm = () => (
+-  <Card>
+-    <CardHeader>
+-      <CardTitle className="flex items-center gap-2">
+-        <Plus className="h-5 w-5 text-emerald-500" />
+-        <span>Create New Training</span>
+-      </CardTitle>
+-      <CardDescription>
+-        Add a new training program or course to the system
+-      </CardDescription>
+-    </CardHeader>
+-    <CardContent>
+-      <form className="space-y-4">
+-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-          <div className="space-y-2">
+-            <label className="text-sm font-medium">Training Title</label>
+-            <input className="w-full p-2 border rounded" placeholder="Enter title" />
+-          </div>
+-          <div className="space-y-2">
+-            <label className="text-sm font-medium">Category</label>
+-            <select className="w-full p-2 border rounded">
+-              <option>Select category</option>
+-              <option>Leadership</option>
+-              <option>Technical</option>
+-              <option>Compliance</option>
+-            </select>
+-          </div>
+-          <div className="space-y-2">
+-            <label className="text-sm font-medium">Start Date</label>
+-            <input type="date" className="w-full p-2 border rounded" />
+-          </div>
+-          <div className="space-y-2">
+-            <label className="text-sm font-medium">End Date</label>
+-            <input type="date" className="w-full p-2 border rounded" />
+-          </div>
+-        </div>
+-        <div className="space-y-2">
+-          <label className="text-sm font-medium">Description</label>
+-          <textarea className="w-full p-2 border rounded" rows={3} placeholder="Enter description"></textarea>
+-        </div>
+-        <div className="flex justify-end gap-2">
+-          <Button variant="outline">Cancel</Button>
+-          <Button className="bg-emerald-600 hover:bg-emerald-700">Save Training</Button>
+-        </div>
+-      </form>
+-    </CardContent>
+-  </Card>
+-);
+-
+-const EnrollmentManagement: React.FC<{ courseId: number }> = ({ courseId }) => {
+-  const [employees, setEmployees] = useState<Employee[]>([]);
+-  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+-  const [departmentFilter, setDepartmentFilter] = useState<string>('All');
+-  
+-  // Fetch employees (mock data for example)
+-  useEffect(() => {
+-    const mockEmployees = [
+-      { id: 1, name: 'John Smith', department: 'Finance' },
+-      { id: 2, name: 'Jane Doe', department: 'HR' },
+-      { id: 3, name: 'Robert Johnson', department: 'IT' },
+-      { id: 4, name: 'Emily Davis', department: 'Finance' },
+-      { id: 5, name: 'Michael Brown', department: 'IT' },
+-      { id: 6, name: 'Sarah Wilson', department: 'HR' },
+-    ];
+-    setEmployees(mockEmployees);
+-  }, []);
+-
+-  const departments = ['All', ...new Set(employees.map(e => e.department))];
+-
+-  const filteredEmployees = departmentFilter === 'All' 
+-    ? employees 
+-    : employees.filter(e => e.department === departmentFilter);
+-
+-  const handleSelectAll = () => {
+-    if (selectedEmployees.length === filteredEmployees.length) {
+-      setSelectedEmployees([]);
+-    } else {
+-      setSelectedEmployees(filteredEmployees.map(e => e.id));
+-    }
+-  };
+-
+-  const handleEnroll = () => {
+-    console.log(`Enrolling employees ${selectedEmployees.join(', ')} in course ${courseId}`);
+-    alert(`Successfully enrolled ${selectedEmployees.length} employees`);
+-    setSelectedEmployees([]);
+-  };
+-    return (
+-    <Card>
+-      <CardHeader>
+-        <CardTitle className="flex items-center gap-2">
+-          <Users className="h-5 w-5 text-emerald-500" />
+-          <span>Enroll Employees</span>
+-        </CardTitle>
+-        <CardDescription>
+-          Select employees to enroll in this training program
+-        </CardDescription>
+-      </CardHeader>
+-      <CardContent>
+-        <div className="space-y-4">
+-          <div className="flex flex-col sm:flex-row gap-4">
+-            <div className="flex-1">
+-              <label htmlFor="department-filter" className="block text-sm font-medium mb-1">
+-                Filter by Department
+-              </label>
+-              <select
+-                id="department-filter"
+-                value={departmentFilter}
+-                onChange={(e) => setDepartmentFilter(e.target.value)}
+-                className="w-full p-2 border rounded"
+-              >
+-                {departments.map(dept => (
+-                  <option key={dept} value={dept}>{dept}</option>
+-                ))}
+-              </select>
+-            </div>
+-            <div className="flex items-end">
+-              <Button 
+-                variant="outline"
+-                onClick={handleSelectAll}
+-                className="w-full sm:w-auto"
+-              >
+-                {selectedEmployees.length === filteredEmployees.length ? 'Deselect All' : 'Select All'}
+-              </Button>
+-            </div>
+-          </div>
+-          
+-          <div className="grid gap-2 max-h-96 overflow-y-auto p-1">
+-            {filteredEmployees.map(employee => (
+-              <div key={employee.id} className="flex items-center gap-3 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800">
+-                <input 
+-                  type="checkbox" 
+-                  id={`employee-${employee.id}`}
+-                  checked={selectedEmployees.includes(employee.id)}
+-                  onChange={() => {
+-                    setSelectedEmployees(prev => 
+-                      prev.includes(employee.id)
+-                        ? prev.filter(id => id !== employee.id)
+-                        : [...prev, employee.id]
+-                    );
+-                  }}
+-                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+-                />
+-                <label 
+-                  htmlFor={`employee-${employee.id}`} 
+-                  className="flex-1 flex justify-between items-center"
+-                >
+-                  <span>{employee.name}</span>
+-                  <Badge variant="outline" className="text-xs">
+-                    {employee.department}
+-                  </Badge>
+-                </label>
+-              </div>
+-            ))}
+-          </div>
+-          
+-          <Button 
+-            onClick={handleEnroll}
+-            disabled={selectedEmployees.length === 0}
+-            className="w-full bg-emerald-600 hover:bg-emerald-700"
+-          >
+-            Enroll Selected Employees ({selectedEmployees.length})
+-          </Button>
+-        </div>
+-      </CardContent>
+-    </Card>
+-  );
+-};
+-
+-
+-const TrainingDetails = () => {
+-  const [activeTab, setActiveTab] = useState('details');
+-  
+-  return (
+-    <Card>
+-      <CardHeader>
+-        <CardTitle className="flex items-center gap-2">
+-          <FileText className="h-5 w-5 text-emerald-500" />
+-          <span>Training Details</span>
+-        </CardTitle>
+-        <CardDescription>
+-          Detailed information about the selected training program
+-        </CardDescription>
+-        
+-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+-          <TabsList className="grid w-full grid-cols-2">
+-            <TabsTrigger value="details" className='cursor-pointer'>Details</TabsTrigger>
+-            <TabsTrigger value="enrollment" className='cursor-pointer'>Enrollment</TabsTrigger>
+-          </TabsList>
+-        </Tabs>
+-      </CardHeader>
+-      
+-      <CardContent>
+-        {activeTab === 'details' ? (
+-          <div className="space-y-4">
+-            <div className="border-b pb-4">
+-              <h2 className="text-xl font-bold">Leadership Development Program</h2>
+-              <div className="flex gap-2 mt-2">
+-                <Badge variant="default">Active</Badge>
+-                <Badge variant="secondary">8 weeks</Badge>
+-                <Badge variant="outline">Hybrid</Badge>
+-              </div>
+-            </div>
+-            
+-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+-              <div className="space-y-2">
+-                <h3 className="font-medium">Description</h3>
+-                <p className="text-sm text-gray-600">
+-                  Comprehensive leadership training for managers and team leads.
+-                </p>
+-              </div>
+-              <div className="space-y-2">
+-                <h3 className="font-medium">Schedule</h3>
+-                <p className="text-sm text-gray-600">
+-                  Every Tuesday & Thursday<br />
+-                  2:00 PM - 4:00 PM<br />
+-                  Starts: Jun 15, 2024
+-                </p>
+-              </div>
+-              <div className="space-y-2">
+-                <h3 className="font-medium">Statistics</h3>
+-                <p className="text-sm text-gray-600">
+-                  24 enrolled<br />
+-                  78% completion rate<br />
+-                  4.5/5 average rating
+-                </p>
+-              </div>
+-            </div>
+-          </div>
+-        ) : (
+-          <EnrollmentManagement courseId={1} />
+-        )}
+-      </CardContent>
+-    </Card>
+-  );
+-};
+-
+-const TrainingCalendar = () => (
+-  <Card>
+-    <CardHeader>
+-      <CardTitle className="flex items-center gap-2">
+-        <Calendar className="h-5 w-5 text-emerald-500" />
+-        <span>Training Calendar</span>
+-      </CardTitle>
+-      <CardDescription>
+-        View and manage all scheduled training sessions
+-      </CardDescription>
+-    </CardHeader>
+-    <CardContent>
+-      <div className="border rounded-lg overflow-hidden">
+-        <div className="grid grid-cols-7 bg-gray-100 dark:bg-gray-800">
+-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+-            <div key={day} className="p-2 text-center font-medium text-sm">
+-              {day}
+-            </div>
+-          ))}
+-        </div>
+-        <div className="grid grid-cols-7">
+-          {Array.from({ length: 35 }).map((_, i) => {
+-            const day = i - 5 + 1;
+-            const hasTraining = [2, 7, 9, 14, 16, 21, 23, 28, 30].includes(day);
+-            
+-            return (
+-              <div 
+-                key={i} 
+-                className={`min-h-16 p-1 border ${i >= 5 && day <= 30 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}`}
+-              >
+-                {i >= 5 && day <= 30 && (
+-                  <>
+-                    <div className="text-sm font-medium">{day}</div>
+-                    {hasTraining && (
+-                      <div className="mt-1 text-xs p-1 bg-emerald-100 dark:bg-emerald-900 rounded">
+-                        Training Session
+-                      </div>
+-                    )}
+-                  </>
+-                )}
+-              </div>
+-            );
+-          })}
+-        </div>
+-      </div>
+-    </CardContent>
+-  </Card>
+-);
+-
+-const TrainingRecords = () => (
+-  <Card>
+-    <CardHeader>
+-      <CardTitle className="flex items-center gap-2">
+-        <Users className="h-5 w-5 text-emerald-500" />
+-        <span>Training Records</span>
+-      </CardTitle>
+-      <CardDescription>
+-        Track and manage employee training participation and completion
+-      </CardDescription>
+-    </CardHeader>
+-    <CardContent>
+-      <div className="overflow-x-auto">
+-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+-          <thead className="bg-gray-50 dark:bg-gray-800">
+-            <tr>
+-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Training</th>
+-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Completion</th>
+-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+-            </tr>
+-          </thead>
+-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+-            {employeeTrainingData.map(record => (
+-              <tr key={record.id}>
+-                <td className="px-4 py-3 whitespace-nowrap">
+-                  <div className="font-medium">{record.employee}</div>
+-                  <div className="text-sm text-gray-500">{record.department}</div>
+-                </td>
+-                <td className="px-4 py-3 whitespace-nowrap">
+-                  <div className="font-medium">{record.course}</div>
+-                </td>
+-                <td className="px-4 py-3 whitespace-nowrap">
+-                  <Badge 
+-                    variant={
+-                      record.status === 'Completed' ? 'default' : 
+-                      record.status === 'In Progress' ? 'secondary' : 'outline'
+-                    }
+-                    className="capitalize"
+-                  >
+-                    {record.status}
+-                  </Badge>
+-                </td>
+-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+-                  {record.completionDate || '-'}
+-                </td>
+-                <td className="px-4 py-3 whitespace-nowrap">
+-                  {record.score ? `${record.score}/100` : '-'}
+-                </td>
+-              </tr>
+-            ))}
+-          </tbody>
+-        </table>
+-      </div>
+-    </CardContent>
+-  </Card>
+-);
+-
+-const AnalysisImprovement = () => {
+-  // Data for charts
+-  const data = [
+-  { name: 'Jan', enrolled: 12, completed: 10 },
+-  { name: 'Feb', enrolled: 19, completed: 13 },
+-  { name: 'Mar', enrolled: 15, completed: 12 },
+-  { name: 'Apr', enrolled: 18, completed: 16 },
+-  { name: 'May', enrolled: 22, completed: 19 },
+-  { name: 'Jun', enrolled: 25, completed: 22 },
+-];
+-
+-const pieData = [
+-  { name: 'Completed', value: 78 },
+-  { name: 'In Progress', value: 15 },
+-  { name: 'Not Started', value: 7 },
+-];
+-
+-const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+-
+-
+-    return (
+-    <div className="space-y-6">
+-      <div className="flex justify-between items-center">
+-        <h2 className="text-2xl font-bold">Training Analytics</h2>
+-        <Button variant="outline">
+-          <Download className="mr-2 h-4 w-4" />
+-          Export Report
+-        </Button>
+-      </div>
+-
+-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+-        <Card>
+-          <CardHeader>
+-            <CardTitle>Monthly Training Participation</CardTitle>
+-          </CardHeader>
+-          <CardContent className="h-[300px]">
+-            <ResponsiveContainer width="100%" height="100%">
+-              <BarChart data={data}>
+-                <CartesianGrid strokeDasharray="3 3" />
+-                <XAxis dataKey="name" />
+-                <YAxis />
+-                <Tooltip />
+-                <Legend />
+-                <Bar dataKey="enrolled" fill="#8884d8" name="Enrolled" />
+-                <Bar dataKey="completed" fill="#82ca9d" name="Completed" />
+-              </BarChart>
+-            </ResponsiveContainer>
+-          </CardContent>
+-        </Card>
+-
+-        <Card>
+-          <CardHeader>
+-            <CardTitle>Completion Status</CardTitle>
+-          </CardHeader>
+-          <CardContent className="h-[300px]">
+-            <ResponsiveContainer width="100%" height="100%">
+-              <PieChart>
+-                <Pie
+-                  data={pieData}
+-                  cx="50%"
+-                  cy="50%"
+-                  labelLine={false}
+-                  outerRadius={80}
+-                  fill="#8884d8"
+-                  dataKey="value"
+-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+-                >
+-                  {pieData.map((entry, index) => (
+-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+-                  ))}
+-                </Pie>
+-                <Tooltip />
+-              </PieChart>
+-            </ResponsiveContainer>
+-          </CardContent>
+-        </Card>
+-      </div>
+-
+-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+-        <Card>
+-          <CardHeader>
+-            <CardTitle className="text-sm font-medium">Key Metrics</CardTitle>
+-          </CardHeader>
+-          <CardContent className="space-y-4">
+-            <div>
+-              <div className="text-2xl font-bold">84%</div>
+-              <p className="text-sm text-gray-600">Completion Rate</p>
+-            </div>
+-            <div>
+-              <div className="text-2xl font-bold">4.7/5</div>
+-              <p className="text-sm text-gray-600">Average Satisfaction</p>
+-            </div>
+-            <div>
+-              <div className="text-2xl font-bold">92%</div>
+-              <p className="text-sm text-gray-600">Attendance Rate</p>
+-            </div>
+-          </CardContent>
+-        </Card>
+-
+-        <Card className="md:col-span-2">
+-          <CardHeader>
+-            <CardTitle className="text-sm font-medium">Top Performers</CardTitle>
+-          </CardHeader>
+-          <CardContent>
+-            <div className="space-y-4">
+-              <div className="flex items-center justify-between">
+-                <div className="flex items-center space-x-4">
+-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">JD</div>
+-                  <div>
+-                    <p className="font-medium">John Doe</p>
+-                    <p className="text-sm text-gray-600">Completed 12 trainings</p>
+-                  </div>
+-                </div>
+-                <div className="text-green-600 font-medium">98% avg</div>
+-              </div>
+-              <div className="flex items-center justify-between">
+-                <div className="flex items-center space-x-4">
+-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">AS</div>
+-                  <div>
+-                    <p className="font-medium">Alice Smith</p>
+-                    <p className="text-sm text-gray-600">Completed 10 trainings</p>
+-                  </div>
+-                </div>
+-                <div className="text-green-600 font-medium">96% avg</div>
+-              </div>
+-              <div className="flex items-center justify-between">
+-                <div className="flex items-center space-x-4">
+-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">RJ</div>
+-                  <div>
+-                    <p className="font-medium">Robert Johnson</p>
+-                    <p className="text-sm text-gray-600">Completed 9 trainings</p>
+-                  </div>
+-                </div>
+-                <div className="text-green-600 font-medium">94% avg</div>
+-              </div>
+-            </div>
+-          </CardContent>
+-        </Card>
+-      </div>
+-    </div>
+-
+-  );
+-};
+-const AttendanceTracking = () => (
+-  <Card>
+-    <CardHeader>
+-      <CardTitle className="flex items-center gap-2">
+-        <Clock className="h-5 w-5 text-emerald-500" />
+-        <span>Attendance Tracking</span>
+-      </CardTitle>
+-      <CardDescription>
+-        Track training attendance and participation
+-      </CardDescription>
+-    </CardHeader>
+-    <CardContent>
+-      <div className="space-y-6">
+-        <div>
+-          <h3 className="font-medium mb-2">Time Tracking</h3>
+-          <div className="grid gap-4 md:grid-cols-2">
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="text-sm">Check-in Methods</CardTitle>
+-              </CardHeader>
+-              <CardContent>
+-                <div className="space-y-2">
+-                  <div className="flex items-center gap-2">
+-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+-                    <span>Biometric</span>
+-                  </div>
+-                  <div className="flex items-center gap-2">
+-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+-                    <span>RFID</span>
+-                  </div>
+-                  <div className="flex items-center gap-2">
+-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+-                    <span>Mobile App</span>
+-                  </div>
+-                </div>
+-              </CardContent>
+-            </Card>
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="text-sm">Recent Check-ins</CardTitle>
+-              </CardHeader>
+-              <CardContent>
+-                <div className="space-y-2 text-sm">
+-                  <p>John Smith - 9:02 AM</p>
+-                  <p>Jane Doe - 9:05 AM</p>
+-                  <p>Robert Johnson - 8:58 AM</p>
+-                </div>
+-              </CardContent>
+-            </Card>
+-          </div>
+-        </div>
+-        
+-        <div>
+-          <h3 className="font-medium mb-2">Absence Management</h3>
+-          <div className="grid gap-4 md:grid-cols-3">
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="text-sm">Pending Requests</CardTitle>
+-              </CardHeader>
+-              <CardContent>
+-                <p className="text-2xl font-bold">3</p>
+-              </CardContent>
+-            </Card>
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="text-sm">Approved Leaves</CardTitle>
+-              </CardHeader>
+-              <CardContent>
+-                <p className="text-2xl font-bold">12</p>
+-              </CardContent>
+-            </Card>
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="text-sm">Unexcused Absences</CardTitle>
+-              </CardHeader>
+-              <CardContent>
+-                <p className="text-2xl font-bold">2</p>
+-              </CardContent>
+-            </Card>
+-          </div>
+-        </div>
+-      </div>
+-    </CardContent>
+-  </Card>
+-);
+-
+-// Sample data
+-const courseData: TrainingCourse[] = [
+-  { id: 1, title: 'Leadership Development', category: 'Management', duration: '8 weeks', format: 'Hybrid', status: 'Active', enrolled: 24, completionRate: 78 },
+-  { id: 2, title: 'Cybersecurity Awareness', category: 'IT', duration: '2 hours', format: 'Online', status: 'Active', enrolled: 156, completionRate: 92 },
+-  { id: 3, title: 'Diversity & Inclusion', category: 'HR', duration: '4 hours', format: 'Classroom', status: 'Active', enrolled: 89, completionRate: 65 },
+-  { id: 4, title: 'Advanced Excel', category: 'Finance', duration: '3 days', format: 'Online', status: 'Draft', enrolled: 0, completionRate: 0 },
+-];
+-
+-const employeeTrainingData: EmployeeTraining[] = [
+-  { id: 1, employee: 'John Smith', position: 'Manager', department: 'Finance', course: 'Leadership Development', status: 'Completed', completionDate: 'May 15, 2024', score: 88, certification: true },
+-  { id: 2, employee: 'Jane Doe', position: 'HR Specialist', department: 'HR', course: 'Diversity & Inclusion', status: 'In Progress', completionDate: '', certification: false },
+-  { id: 3, employee: 'Robert Johnson', position: 'IT Support', department: 'IT', course: 'Cybersecurity Awareness', status: 'Completed', completionDate: 'Apr 28, 2024', score: 95, certification: true },
+-  { id: 4, employee: 'Emily Davis', position: 'Accountant', department: 'Finance', course: 'Advanced Excel', status: 'Not Started', completionDate: '', certification: false },
+-];
+-
+-const programData: TrainingProgram[] = [
+-  { id: 1, name: 'Annual Leadership Program', description: 'Year-long leadership development for managers', startDate: 'Jan 1, 2024', endDate: 'Dec 31, 2024', participants: 24, budget: '$45,000', status: 'Ongoing' },
+-  { id: 2, name: 'Q3 Technical Training', description: 'Technical skills upgrade for IT department', startDate: 'Jul 15, 2024', endDate: 'Sep 30, 2024', participants: 18, budget: '$22,500', status: 'Planning' },
+-  { id: 3, name: 'New Hire Orientation', description: 'Monthly onboarding for new employees', startDate: 'Jun 1, 2024', endDate: 'Jun 30, 2024', participants: 12, budget: '$8,000', status: 'Completed' },
+-];
+-
+-const evaluationData: TrainingEvaluation[] = [
+-  { id: 1, course: 'Leadership Development', participants: 24, averageScore: 82, effectiveness: 85, feedback: 'Excellent content and delivery. Some participants requested more case studies.' },
+-  { id: 2, course: 'Cybersecurity Awareness', participants: 156, averageScore: 91, effectiveness: 92, feedback: 'Highly effective training. Employees reported increased awareness.' },
+-  { id: 3, course: 'Diversity & Inclusion', participants: 89, averageScore: 76, effectiveness: 68, feedback: 'Good foundation but needs more interactive elements.' },
+-];
+-
+-const budgetData: TrainingBudget[] = [
+-  { id: 1, category: 'Leadership Development', allocated: '$50,000', spent: '$42,300', remaining: '$7,700', utilization: 85 },
+-  { id: 2, category: 'Technical Skills', allocated: '$35,000', spent: '$28,150', remaining: '$6,850', utilization: 80 },
+-  { id: 3, category: 'Compliance Training', allocated: '$15,000', spent: '$16,200', remaining: '$-1,200', utilization: 108 },
+-  { id: 4, category: 'Soft Skills', allocated: '$20,000', spent: '$12,000', remaining: '$8,000', utilization: 60 },
+-];
+-
+-type StatKey = 'totalCourses' | 'activeTrainings' | 'employeesTraining' | 'completionRate' | 'trainingBudget';
+-
+-interface Stats {
+-  totalCourses: number;
+-  activeTrainings: number;
+-  employeesTraining: number;
+-  completionRate: number;
+-  trainingBudget: string;
+-}
+-
+-const containerVariants = {
+-  hidden: { opacity: 0 },
+-  visible: { 
+-    opacity: 1, 
+-    transition: { 
+-      staggerChildren: 0.1,
+-      when: "beforeChildren" as const
+-    } 
+-  }
+-};
+-
+-const itemVariants = {
+-  hidden: { y: 20, opacity: 0 },
+-  visible: { 
+-    y: 0, 
+-    opacity: 1, 
+-    transition: { 
+-      type: 'spring' as const, 
+-      stiffness: 260, 
+-      damping: 20 
+-    }
+-  }
+-};
+-
+-const statCardVariants = {
+-  hidden: { scale: 0.9, opacity: 0 },
+-  visible: {
+-    scale: 1,
+-    opacity: 1,
+-    transition: { type: "spring" as const, stiffness: 300 }
+-  }
+-};
+-
+-const Training = () => {
+-  const activeModule = useModuleStore((s) => s.activeModule);
+-  
+-  const stats: Stats = {
+-    totalCourses: courseData.length,
+-    activeTrainings: programData.filter(p => p.status === 'Ongoing').length,
+-    employeesTraining: employeeTrainingData.filter(e => e.status === 'In Progress').length,
+-    completionRate: Math.round(
+-      employeeTrainingData.filter(e => e.status === 'Completed').length / 
+-      employeeTrainingData.length * 100
+-    ),
+-    trainingBudget: '$120,000'
+-  };
+-
+-  const statConfig = {
+-    totalCourses: {
+-      icon: <BookOpen className="h-4 w-4 text-emerald-600" />,
+-      title: 'Total Courses',
+-      description: 'Available training programs'
+-    },
+-    activeTrainings: {
+-      icon: <Clock className="h-4 w-4 text-emerald-500" />,
+-      title: 'Active Trainings',
+-      description: 'Ongoing programs'
+-    },
+-    employeesTraining: {
+-      icon: <Users className="h-4 w-4 text-emerald-500" />,
+-      title: 'Employees Training',
+-      description: 'Currently in training'
+-    },
+-    completionRate: {
+-      icon: <CheckCircle className="h-4 w-4 text-emerald-400" />,
+-      title: 'Completion Rate',
+-      description: 'Overall training completion'
+-    },
+-    trainingBudget: {
+-      icon: <FileText className="h-4 w-4 text-emerald-600" />,
+-      title: 'Training Budget',
+-      description: 'Annual training allocation'
+-    }
+-  };
+-
+-  return (
+-    <motion.div 
+-      variants={containerVariants} 
+-      initial="hidden" 
+-      animate="visible"
+-      className="space-y-6"
+-    >
+-      {/* Header Section with Gradient Title */}
+-      <section className="flex flex-col gap-4">
+-        <div>
+-          <h1 className="text-3xl font-bold">
+-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-500 mr-3">
+-              Training 
+-            </span>& Development
+-          </h1>
+-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+-            Central hub for managing employee training programs, tracking progress, and evaluating effectiveness.
+-          </p>
+-        </div>
+-      </section>
+-
+-      {/* Stats Overview */}
+-      <motion.div 
+-        variants={containerVariants}
+-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+-      >
+-        {(Object.keys(statConfig) as StatKey[]).map((key) => (
+-          <motion.div key={key} variants={statCardVariants}>
+-            <Card className="hover:shadow-lg hover:ring-1 hover:ring-emerald-400 transition-all">
+-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+-                <CardTitle className="text-sm font-medium text-gray-500">
+-                  {statConfig[key].title}
+-                </CardTitle>
+-                {statConfig[key].icon}
+-              </CardHeader>
+-              <CardContent>
+-                <div className="text-2xl font-bold">
+-                  {key === 'completionRate' 
+-                    ? `${stats[key]}%`
+-                    : key === 'trainingBudget'
+-                    ? stats[key]
+-                    : stats[key]
+-                  }
+-                </div>
+-                <p className="text-xs text-gray-500 mt-1">
+-                  {statConfig[key].description}
+-                </p>
+-              </CardContent>
+-            </Card>
+-          </motion.div>
+-        ))}
+-      </motion.div>
+-
+-      {/* Tabs Navigation */}
+-      <Tabs defaultValue="Overview" className="space-y-6">
+-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7">
+-          <TabsTrigger value="Overview" className="cursor-pointer">Overview</TabsTrigger>
+-          <TabsTrigger value="list" className="cursor-pointer">Training List</TabsTrigger>
+-          <TabsTrigger value="form" className="cursor-pointer">New Training</TabsTrigger>
+-          <TabsTrigger value="details" className="cursor-pointer">Details</TabsTrigger>
+-          <TabsTrigger value="calendar" className="cursor-pointer">Calendar</TabsTrigger>
+-          <TabsTrigger value="records" className="cursor-pointer">Records</TabsTrigger>
+-          <TabsTrigger value="analysis" className="cursor-pointer">Analysis</TabsTrigger>
+-        </TabsList>
+-
+-        <TabsContent value="Overview">
+-          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+-            <Card className="lg:col-span-2">
+-              <CardHeader>
+-                <CardTitle className="flex items-center gap-2">
+-                  <BookOpen className="h-5 w-5 text-emerald-500" />
+-                  <span>Course Overview</span>
+-                </CardTitle>
+-                <CardDescription>
+-                  View and manage all available training courses
+-                </CardDescription>
+-              </CardHeader>
+-              <CardContent>
+-                <CourseOverview courses={courseData} />
+-              </CardContent>
+-            </Card>
+-
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="flex items-center gap-2">
+-                  <Users className="h-5 w-5 text-emerald-500" />
+-                  <span>Employee Training</span>
+-                </CardTitle>
+-                <CardDescription>
+-                  Track employee participation and progress
+-                </CardDescription>
+-              </CardHeader>
+-              <CardContent>
+-                <EmployeeTrainingOverview records={employeeTrainingData} />
+-              </CardContent>
+-            </Card>
+-
+-            <Card className="lg:col-span-2">
+-              <CardHeader>
+-                <CardTitle className="flex items-center gap-2">
+-                  <Calendar className="h-5 w-5 text-emerald-500" />
+-                  <span>Program Overview</span>
+-                </CardTitle>
+-                <CardDescription>
+-                  Current and upcoming training programs
+-                </CardDescription>
+-              </CardHeader>
+-              <CardContent>
+-                <ProgramOverview programs={programData} />
+-              </CardContent>
+-            </Card>
+-
+-            <Card>
+-              <CardHeader>
+-                <CardTitle className="flex items-center gap-2">
+-                  <BarChart2 className="h-5 w-5 text-emerald-500" />
+-                  <span>Training Evaluation</span>
+-                </CardTitle>
+-                <CardDescription>
+-                  Effectiveness metrics and feedback
+-                </CardDescription>
+-              </CardHeader>
+-              <CardContent>
+-                <EvaluationOverview evaluations={evaluationData} />
+-              </CardContent>
+-            </Card>
+-
+-            <Card className="lg:col-span-3">
+-              <CardHeader>
+-                <CardTitle className="flex items-center gap-2">
+-                  <FileText className="h-5 w-5 text-emerald-500" />
+-                  <span>Budget Overview</span>
+-                </CardTitle>
+-                <CardDescription>
+-                  Training budget allocation and utilization
+-                </CardDescription>
+-              </CardHeader>
+-              <CardContent>
+-                <BudgetOverview budgets={budgetData} />
+-              </CardContent>
+-            </Card>
+-          </motion.div>
+-        </TabsContent>
+-
+-        <TabsContent value="list">
+-          <TrainingList />
+-        </TabsContent>
+-
+-        <TabsContent value="form">
+-          <TrainingForm />
+-        </TabsContent>
+-
+-        <TabsContent value="details">
+-          <TrainingDetails />
+-        </TabsContent>
+-
+-        <TabsContent value="calendar">
+-          <TrainingCalendar />
+-        </TabsContent>
+-
+-        <TabsContent value="records">
+-          <TrainingRecords />
+-        </TabsContent>
+-
+-        <TabsContent value="analysis">
+-          <AnalysisImprovement />
+-        </TabsContent>
+-      </Tabs>
+-    </motion.div>
+-  );
+-};
+-
+-export default Training;
+\ No newline at end of file
++import { Navigate } from 'react-router-dom';
++export default function Training() { return <Navigate to="/hr/training/programs" replace />; }
+diff --git a/src/pages/hr/trainingpage/TrainingCalendarPage.tsx b/src/pages/hr/trainingpage/TrainingCalendarPage.tsx
+new file mode 100644
+index 0000000..e7becb9
+--- /dev/null
++++ b/src/pages/hr/trainingpage/TrainingCalendarPage.tsx
+@@ -0,0 +1,2 @@
++import TrainingCalendarSection from '../../../components/hr/training/TrainingCalendarSection';
++export default function TrainingCalendarPage() { return <TrainingCalendarSection />; }
+diff --git a/src/pages/hr/trainingpage/TrainingCertificatesPage.tsx b/src/pages/hr/trainingpage/TrainingCertificatesPage.tsx
+new file mode 100644
+index 0000000..06452f9
+--- /dev/null
++++ b/src/pages/hr/trainingpage/TrainingCertificatesPage.tsx
+@@ -0,0 +1,2 @@
++import TrainingCertificatesSection from '../../../components/hr/training/TrainingCertificatesSection';
++export default function TrainingCertificatesPage() { return <TrainingCertificatesSection />; }
+diff --git a/src/pages/hr/trainingpage/TrainingFeedbackPage.tsx b/src/pages/hr/trainingpage/TrainingFeedbackPage.tsx
+new file mode 100644
+index 0000000..eeead8d
+--- /dev/null
++++ b/src/pages/hr/trainingpage/TrainingFeedbackPage.tsx
+@@ -0,0 +1,2 @@
++import TrainingFeedbackSection from '../../../components/hr/training/TrainingFeedbackSection';
++export default function TrainingFeedbackPage() { return <TrainingFeedbackSection />; }
+diff --git a/src/pages/hr/trainingpage/TrainingProgramsPage.tsx b/src/pages/hr/trainingpage/TrainingProgramsPage.tsx
+new file mode 100644
+index 0000000..4a50526
+--- /dev/null
++++ b/src/pages/hr/trainingpage/TrainingProgramsPage.tsx
+@@ -0,0 +1,2 @@
++import TrainingProgramsSection from '../../../components/hr/training/TrainingProgramsSection';
++export default function TrainingProgramsPage() { return <TrainingProgramsSection />; }
+diff --git a/src/services/hr/apiError.ts b/src/services/hr/apiError.ts
+new file mode 100644
+index 0000000..b2ecc1b
+--- /dev/null
++++ b/src/services/hr/apiError.ts
+@@ -0,0 +1,11 @@
++export const extractApiError = (error: any): string => {
++  if (error?.response?.data?.message) return error.response.data.message;
++  if (error?.response?.data?.errors) {
++    return (Object.values(error.response.data.errors) as string[][]).flat().join(', ');
++  }
++  return error?.message || 'An unexpected error occurred';
++};
++
++/** Profile/Leave/Recruit wrap payloads in { data: T } */
++export const unwrapData = <T>(res: { data: any }): T =>
++  (res.data?.data !== undefined ? res.data.data : res.data) as T;
+diff --git a/src/services/hr/career/career.api.ts b/src/services/hr/career/career.api.ts
+new file mode 100644
+index 0000000..830332f
+--- /dev/null
++++ b/src/services/hr/career/career.api.ts
+@@ -0,0 +1,108 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type {
++  EmpContractAddDto,
++  EmpContractListDto,
++  EmpContractTerminateDto,
++  EmpDecisionDto,
++  EmpPromotionAddDto,
++  EmpPromotionListDto,
++  EmpTransferAddDto,
++  EmpTransferListDto,
++} from '../../../types/hr/career';
++
++const PROFILE = import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1';
++
++export const contractApi = {
++  getAll: async () => {
++    try {
++      return unwrapData<EmpContractListDto[]>(await api.get(`${PROFILE}/EmpContract/All`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  create: async (data: EmpContractAddDto) => {
++    try {
++      return unwrapData<EmpContractListDto>(await api.post(`${PROFILE}/EmpContract/Add`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  terminate: async (data: EmpContractTerminateDto) => {
++    try {
++      return unwrapData<EmpContractListDto>(await api.post(`${PROFILE}/EmpContract/Terminate`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  activate: async (id: string) => {
++    try {
++      return unwrapData<EmpContractListDto>(await api.post(`${PROFILE}/EmpContract/Activate/${id}`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  delete: async (id: string) => {
++    try {
++      await api.delete(`${PROFILE}/EmpContract/Del/${id}`);
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
++
++export const promotionApi = {
++  getAll: async () => {
++    try {
++      return unwrapData<EmpPromotionListDto[]>(await api.get(`${PROFILE}/EmpPromotion/All`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  create: async (data: EmpPromotionAddDto) => {
++    try {
++      return unwrapData<EmpPromotionListDto>(await api.post(`${PROFILE}/EmpPromotion/Add`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  approve: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpPromotionListDto>(await api.post(`${PROFILE}/EmpPromotion/Approve`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  reject: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpPromotionListDto>(await api.post(`${PROFILE}/EmpPromotion/Reject`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  apply: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpPromotionListDto>(await api.post(`${PROFILE}/EmpPromotion/Apply`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  delete: async (id: string) => {
++    try {
++      await api.delete(`${PROFILE}/EmpPromotion/Del/${id}`);
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
++
++export const transferApi = {
++  getAll: async () => {
++    try {
++      return unwrapData<EmpTransferListDto[]>(await api.get(`${PROFILE}/EmpTransfer/All`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  create: async (data: EmpTransferAddDto) => {
++    try {
++      return unwrapData<EmpTransferListDto>(await api.post(`${PROFILE}/EmpTransfer/Add`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  approve: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpTransferListDto>(await api.post(`${PROFILE}/EmpTransfer/Approve`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  reject: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpTransferListDto>(await api.post(`${PROFILE}/EmpTransfer/Reject`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  apply: async (data: EmpDecisionDto) => {
++    try {
++      return unwrapData<EmpTransferListDto>(await api.post(`${PROFILE}/EmpTransfer/Apply`, data));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  delete: async (id: string) => {
++    try {
++      await api.delete(`${PROFILE}/EmpTransfer/Del/${id}`);
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/career/career.keys.ts b/src/services/hr/career/career.keys.ts
+new file mode 100644
+index 0000000..5c678f7
+--- /dev/null
++++ b/src/services/hr/career/career.keys.ts
+@@ -0,0 +1,5 @@
++export const careerKeys = {
++  contracts: ['hr', 'contracts'] as const,
++  promotions: ['hr', 'promotions'] as const,
++  transfers: ['hr', 'transfers'] as const,
++};
+diff --git a/src/services/hr/career/career.queries.ts b/src/services/hr/career/career.queries.ts
+new file mode 100644
+index 0000000..50890e3
+--- /dev/null
++++ b/src/services/hr/career/career.queries.ts
+@@ -0,0 +1,84 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { contractApi, promotionApi, transferApi } from './career.api';
++import { careerKeys } from './career.keys';
++import type {
++  EmpContractAddDto,
++  EmpContractTerminateDto,
++  EmpDecisionDto,
++  EmpPromotionAddDto,
++  EmpTransferAddDto,
++} from '../../../types/hr/career';
++
++export const useContracts = () =>
++  useQuery({ queryKey: careerKeys.contracts, queryFn: contractApi.getAll, staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreateContract = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpContractAddDto) => contractApi.create(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.contracts }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useTerminateContract = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpContractTerminateDto) => contractApi.terminate(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.contracts }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useDeleteContract = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (id: string) => contractApi.delete(id),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.contracts }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const usePromotions = () =>
++  useQuery({ queryKey: careerKeys.promotions, queryFn: promotionApi.getAll, staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreatePromotion = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpPromotionAddDto) => promotionApi.create(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.promotions }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const usePromotionDecision = (action: 'approve' | 'reject' | 'apply', opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  const fn = action === 'approve' ? promotionApi.approve : action === 'reject' ? promotionApi.reject : promotionApi.apply;
++  return useMutation({
++    mutationFn: (d: EmpDecisionDto) => fn(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.promotions }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useTransfers = () =>
++  useQuery({ queryKey: careerKeys.transfers, queryFn: transferApi.getAll, staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreateTransfer = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpTransferAddDto) => transferApi.create(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.transfers }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useTransferDecision = (action: 'approve' | 'reject' | 'apply', opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  const fn = action === 'approve' ? transferApi.approve : action === 'reject' ? transferApi.reject : transferApi.apply;
++  return useMutation({
++    mutationFn: (d: EmpDecisionDto) => fn(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: careerKeys.transfers }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
+diff --git a/src/services/hr/jobOffer/jobOffer.api.ts b/src/services/hr/jobOffer/jobOffer.api.ts
+new file mode 100644
+index 0000000..a35700c
+--- /dev/null
++++ b/src/services/hr/jobOffer/jobOffer.api.ts
+@@ -0,0 +1,32 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type { JobOfferAddDto, JobOfferHireDto, JobOfferListDto } from '../../../types/hr/jobOffer';
++
++const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobOffer`;
++
++export const jobOfferApi = {
++  getAll: async () => {
++    try { return unwrapData<JobOfferListDto[]>(await api.get(`${BASE}/All`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  create: async (data: JobOfferAddDto) => {
++    try { return unwrapData<JobOfferListDto>(await api.post(`${BASE}/Add`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  submit: async (id: string) => {
++    try { return unwrapData<JobOfferListDto>(await api.post(`${BASE}/Submit/${id}`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  approve: async (data: { id: string; rowVersion?: string; comments?: string }) => {
++    try { return unwrapData<JobOfferListDto>(await api.post(`${BASE}/Approve`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  accept: async (data: { id: string; rowVersion?: string }) => {
++    try { return unwrapData<JobOfferListDto>(await api.post(`${BASE}/Accept`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  hire: async (data: JobOfferHireDto) => {
++    try { return unwrapData<JobOfferListDto>(await api.post(`${BASE}/Hire`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/jobOffer/jobOffer.keys.ts b/src/services/hr/jobOffer/jobOffer.keys.ts
+new file mode 100644
+index 0000000..a968f10
+--- /dev/null
++++ b/src/services/hr/jobOffer/jobOffer.keys.ts
+@@ -0,0 +1 @@
++export const jobOfferKeys = { all: ['hr', 'jobOffers'] as const };
+diff --git a/src/services/hr/jobOffer/jobOffer.queries.ts b/src/services/hr/jobOffer/jobOffer.queries.ts
+new file mode 100644
+index 0000000..3662c54
+--- /dev/null
++++ b/src/services/hr/jobOffer/jobOffer.queries.ts
+@@ -0,0 +1,33 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { jobOfferApi } from './jobOffer.api';
++import { jobOfferKeys } from './jobOffer.keys';
++import type { JobOfferAddDto, JobOfferHireDto } from '../../../types/hr/jobOffer';
++
++export const useJobOffers = () =>
++  useQuery({ queryKey: jobOfferKeys.all, queryFn: jobOfferApi.getAll, staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreateJobOffer = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: JobOfferAddDto) => jobOfferApi.create(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: jobOfferKeys.all }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useJobOfferAction = (
++  action: 'submit' | 'approve' | 'accept' | 'hire',
++  opts?: { onSuccess?: () => void; onError?: (e: Error) => void },
++) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: async (payload: any) => {
++      if (action === 'submit') return jobOfferApi.submit(payload.id);
++      if (action === 'approve') return jobOfferApi.approve(payload);
++      if (action === 'accept') return jobOfferApi.accept(payload);
++      return jobOfferApi.hire(payload as JobOfferHireDto);
++    },
++    onSuccess: () => { qc.invalidateQueries({ queryKey: jobOfferKeys.all }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
+diff --git a/src/services/hr/performance/performance.api.ts b/src/services/hr/performance/performance.api.ts
+new file mode 100644
+index 0000000..2ec5269
+--- /dev/null
++++ b/src/services/hr/performance/performance.api.ts
+@@ -0,0 +1,53 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type {
++  GoalCreateDto,
++  GoalDto,
++  KPIDto,
++  PerformanceReviewCreateDto,
++  PerformanceReviewDto,
++  ReviewDecisionDto,
++} from '../../../types/hr/performance';
++
++const BASE = import.meta.env.VITE_HR_PERFORMANCE_URL || '/performance';
++
++export const performanceApi = {
++  getGoals: async (employeeId?: string) => {
++    try {
++      const q = employeeId ? `?employeeId=${employeeId}` : '';
++      return unwrapData<GoalDto[]>(await api.get(`${BASE}/goals${q}`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  createGoal: async (data: GoalCreateDto) => {
++    try { return unwrapData<GoalDto>(await api.post(`${BASE}/goals`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getKpis: async (employeeId?: string) => {
++    try {
++      const q = employeeId ? `?employeeId=${employeeId}` : '';
++      return unwrapData<KPIDto[]>(await api.get(`${BASE}/kpis${q}`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getReviews: async (employeeId?: string) => {
++    try {
++      const q = employeeId ? `?employeeId=${employeeId}` : '';
++      return unwrapData<PerformanceReviewDto[]>(await api.get(`${BASE}/reviews${q}`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  createReview: async (data: PerformanceReviewCreateDto) => {
++    try { return unwrapData<PerformanceReviewDto>(await api.post(`${BASE}/reviews`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  submitReview: async (id: string) => {
++    try { return unwrapData<PerformanceReviewDto>(await api.post(`${BASE}/reviews/${id}/submit`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  approveReview: async (id: string, data: ReviewDecisionDto) => {
++    try { return unwrapData<PerformanceReviewDto>(await api.post(`${BASE}/reviews/${id}/approve`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  rejectReview: async (id: string, data: ReviewDecisionDto) => {
++    try { return unwrapData<PerformanceReviewDto>(await api.post(`${BASE}/reviews/${id}/reject`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/performance/performance.keys.ts b/src/services/hr/performance/performance.keys.ts
+new file mode 100644
+index 0000000..11aed67
+--- /dev/null
++++ b/src/services/hr/performance/performance.keys.ts
+@@ -0,0 +1,5 @@
++export const performanceKeys = {
++  goals: ['hr', 'performance', 'goals'] as const,
++  kpis: ['hr', 'performance', 'kpis'] as const,
++  reviews: ['hr', 'performance', 'reviews'] as const,
++};
+diff --git a/src/services/hr/performance/performance.queries.ts b/src/services/hr/performance/performance.queries.ts
+new file mode 100644
+index 0000000..b74f1e0
+--- /dev/null
++++ b/src/services/hr/performance/performance.queries.ts
+@@ -0,0 +1,44 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { performanceApi } from './performance.api';
++import { performanceKeys } from './performance.keys';
++import type { GoalCreateDto, PerformanceReviewCreateDto, ReviewDecisionDto } from '../../../types/hr/performance';
++
++export const useGoals = () =>
++  useQuery({ queryKey: performanceKeys.goals, queryFn: () => performanceApi.getGoals(), staleTime: 0, refetchOnMount: 'always' });
++
++export const useReviews = () =>
++  useQuery({ queryKey: performanceKeys.reviews, queryFn: () => performanceApi.getReviews(), staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreateGoal = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: GoalCreateDto) => performanceApi.createGoal(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: performanceKeys.goals }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useCreateReview = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: PerformanceReviewCreateDto) => performanceApi.createReview(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: performanceKeys.reviews }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useReviewAction = (
++  action: 'submit' | 'approve' | 'reject',
++  opts?: { onSuccess?: () => void; onError?: (e: Error) => void },
++) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: async ({ id, decision }: { id: string; decision?: ReviewDecisionDto }) => {
++      if (action === 'submit') return performanceApi.submitReview(id);
++      if (action === 'approve') return performanceApi.approveReview(id, decision || {});
++      return performanceApi.rejectReview(id, decision || {});
++    },
++    onSuccess: () => { qc.invalidateQueries({ queryKey: performanceKeys.reviews }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
+diff --git a/src/services/hr/reports/reports.api.ts b/src/services/hr/reports/reports.api.ts
+new file mode 100644
+index 0000000..fb4a885
+--- /dev/null
++++ b/src/services/hr/reports/reports.api.ts
+@@ -0,0 +1,32 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
++
++const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
++
++export const reportsApi = {
++  summary: async () => {
++    try { return unwrapData<HrReportsSummaryDto>(await api.get(`${BASE}/summary`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  employees: async () => {
++    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/employees`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  attendance: async () => {
++    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/attendance`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  leave: async () => {
++    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/leave`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  payroll: async () => {
++    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/payroll`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  recruitment: async () => {
++    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/recruitment`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/reports/reports.keys.ts b/src/services/hr/reports/reports.keys.ts
+new file mode 100644
+index 0000000..5b5d62b
+--- /dev/null
++++ b/src/services/hr/reports/reports.keys.ts
+@@ -0,0 +1,4 @@
++export const reportsKeys = {
++  summary: ['hr', 'reports', 'summary'] as const,
++  domain: (name: string) => ['hr', 'reports', name] as const,
++};
+diff --git a/src/services/hr/reports/reports.queries.ts b/src/services/hr/reports/reports.queries.ts
+new file mode 100644
+index 0000000..477844a
+--- /dev/null
++++ b/src/services/hr/reports/reports.queries.ts
+@@ -0,0 +1,13 @@
++import { useQuery } from '@tanstack/react-query';
++import { reportsApi } from './reports.api';
++import { reportsKeys } from './reports.keys';
++
++export const useHrReportsSummary = () =>
++  useQuery({ queryKey: reportsKeys.summary, queryFn: reportsApi.summary, staleTime: 60_000 });
++
++export const useHrReport = (domain: 'employees' | 'attendance' | 'leave' | 'payroll' | 'recruitment') =>
++  useQuery({
++    queryKey: reportsKeys.domain(domain),
++    queryFn: () => reportsApi[domain](),
++    staleTime: 60_000,
++  });
+diff --git a/src/services/hr/termination/termination.api.ts b/src/services/hr/termination/termination.api.ts
+new file mode 100644
+index 0000000..033a2b4
+--- /dev/null
++++ b/src/services/hr/termination/termination.api.ts
+@@ -0,0 +1,50 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type {
++  EmpOffboardingTaskDto,
++  EmpOffboardingTaskUpdateDto,
++  EmpTerminationAddDto,
++  EmpTerminationDecisionDto,
++  EmpTerminationListDto,
++} from '../../../types/hr/termination';
++
++const BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/EmpTermination`;
++
++export const terminationApi = {
++  getAll: async () => {
++    try { return unwrapData<EmpTerminationListDto[]>(await api.get(`${BASE}/All`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getById: async (id: string) => {
++    try { return unwrapData<EmpTerminationListDto>(await api.get(`${BASE}/Get/${id}`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  create: async (data: EmpTerminationAddDto) => {
++    try { return unwrapData<EmpTerminationListDto>(await api.post(`${BASE}/Add`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  approve: async (data: EmpTerminationDecisionDto) => {
++    try { return unwrapData<EmpTerminationListDto>(await api.post(`${BASE}/Approve`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  reject: async (data: EmpTerminationDecisionDto) => {
++    try { return unwrapData<EmpTerminationListDto>(await api.post(`${BASE}/Reject`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  apply: async (data: EmpTerminationDecisionDto) => {
++    try { return unwrapData<EmpTerminationListDto>(await api.post(`${BASE}/Apply`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  delete: async (id: string) => {
++    try { await api.delete(`${BASE}/Del/${id}`); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getOffboarding: async (terminationId: string) => {
++    try { return unwrapData<EmpOffboardingTaskDto[]>(await api.get(`${BASE}/Offboarding/${terminationId}`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  updateTask: async (data: EmpOffboardingTaskUpdateDto) => {
++    try { return unwrapData<EmpOffboardingTaskDto>(await api.put(`${BASE}/Offboarding/Update`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/termination/termination.keys.ts b/src/services/hr/termination/termination.keys.ts
+new file mode 100644
+index 0000000..0f5709e
+--- /dev/null
++++ b/src/services/hr/termination/termination.keys.ts
+@@ -0,0 +1,5 @@
++export const terminationKeys = {
++  all: ['hr', 'terminations'] as const,
++  detail: (id: string) => ['hr', 'terminations', id] as const,
++  tasks: (id: string) => ['hr', 'terminations', id, 'tasks'] as const,
++};
+diff --git a/src/services/hr/termination/termination.queries.ts b/src/services/hr/termination/termination.queries.ts
+new file mode 100644
+index 0000000..2c4ea82
+--- /dev/null
++++ b/src/services/hr/termination/termination.queries.ts
+@@ -0,0 +1,59 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { terminationApi } from './termination.api';
++import { terminationKeys } from './termination.keys';
++import type { EmpOffboardingTaskUpdateDto, EmpTerminationAddDto, EmpTerminationDecisionDto } from '../../../types/hr/termination';
++
++export const useTerminations = () =>
++  useQuery({ queryKey: terminationKeys.all, queryFn: terminationApi.getAll, staleTime: 0, refetchOnMount: 'always' });
++
++export const useTermination = (id?: string) =>
++  useQuery({
++    queryKey: terminationKeys.detail(id || ''),
++    queryFn: () => terminationApi.getById(id!),
++    enabled: !!id,
++  });
++
++export const useOffboardingTasks = (terminationId?: string) =>
++  useQuery({
++    queryKey: terminationKeys.tasks(terminationId || ''),
++    queryFn: () => terminationApi.getOffboarding(terminationId!),
++    enabled: !!terminationId,
++  });
++
++const invalidate = (qc: ReturnType<typeof useQueryClient>) =>
++  qc.invalidateQueries({ queryKey: terminationKeys.all });
++
++export const useCreateTermination = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpTerminationAddDto) => terminationApi.create(d),
++    onSuccess: () => { invalidate(qc); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useTerminationAction = (
++  action: 'approve' | 'reject' | 'apply',
++  opts?: { onSuccess?: () => void; onError?: (e: Error) => void },
++) => {
++  const qc = useQueryClient();
++  const fn = action === 'approve' ? terminationApi.approve : action === 'reject' ? terminationApi.reject : terminationApi.apply;
++  return useMutation({
++    mutationFn: (d: EmpTerminationDecisionDto) => fn(d),
++    onSuccess: () => { invalidate(qc); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useUpdateOffboardingTask = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: EmpOffboardingTaskUpdateDto) => terminationApi.updateTask(d),
++    onSuccess: (task) => {
++      qc.invalidateQueries({ queryKey: terminationKeys.tasks(task.terminationId) });
++      invalidate(qc);
++      opts?.onSuccess?.();
++    },
++    onError: opts?.onError,
++  });
++};
+diff --git a/src/services/hr/training/training.api.ts b/src/services/hr/training/training.api.ts
+new file mode 100644
+index 0000000..2265b6f
+--- /dev/null
++++ b/src/services/hr/training/training.api.ts
+@@ -0,0 +1,54 @@
++import { api } from '../../api';
++import { extractApiError, unwrapData } from '../apiError';
++import type {
++  TrainingCertificateDto,
++  TrainingEnrollmentCreateDto,
++  TrainingEnrollmentDto,
++  TrainingEvaluationDto,
++  TrainingProgramCreateDto,
++  TrainingProgramDto,
++  TrainingSessionDto,
++} from '../../../types/hr/training';
++
++const BASE = import.meta.env.VITE_HR_TRAINING_URL || '/training';
++
++export const trainingApi = {
++  getPrograms: async (status?: string) => {
++    try {
++      const q = status ? `?status=${encodeURIComponent(status)}` : '';
++      return unwrapData<TrainingProgramDto[]>(await api.get(`${BASE}/programs${q}`));
++    } catch (e) { throw new Error(extractApiError(e)); }
++  },
++  createProgram: async (data: TrainingProgramCreateDto) => {
++    try { return unwrapData<TrainingProgramDto>(await api.post(`${BASE}/programs`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  publishProgram: async (id: string) => {
++    try { return unwrapData<TrainingProgramDto>(await api.post(`${BASE}/programs/${id}/publish`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getSessions: async () => {
++    try { return unwrapData<TrainingSessionDto[]>(await api.get(`${BASE}/sessions`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getEnrollments: async () => {
++    try { return unwrapData<TrainingEnrollmentDto[]>(await api.get(`${BASE}/enrollments`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  enroll: async (data: TrainingEnrollmentCreateDto) => {
++    try { return unwrapData<TrainingEnrollmentDto>(await api.post(`${BASE}/enrollments`, data)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getEvaluations: async () => {
++    try { return unwrapData<TrainingEvaluationDto[]>(await api.get(`${BASE}/evaluations`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  getCertificates: async () => {
++    try { return unwrapData<TrainingCertificateDto[]>(await api.get(`${BASE}/certificates`)); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++  issueCertificate: async (enrollmentId: string) => {
++    try { return unwrapData<TrainingCertificateDto>(await api.post(`${BASE}/certificates/issue`, { enrollmentId })); }
++    catch (e) { throw new Error(extractApiError(e)); }
++  },
++};
+diff --git a/src/services/hr/training/training.keys.ts b/src/services/hr/training/training.keys.ts
+new file mode 100644
+index 0000000..498520d
+--- /dev/null
++++ b/src/services/hr/training/training.keys.ts
+@@ -0,0 +1,7 @@
++export const trainingKeys = {
++  programs: ['hr', 'training', 'programs'] as const,
++  sessions: ['hr', 'training', 'sessions'] as const,
++  enrollments: ['hr', 'training', 'enrollments'] as const,
++  evaluations: ['hr', 'training', 'evaluations'] as const,
++  certificates: ['hr', 'training', 'certificates'] as const,
++};
+diff --git a/src/services/hr/training/training.queries.ts b/src/services/hr/training/training.queries.ts
+new file mode 100644
+index 0000000..4c54851
+--- /dev/null
++++ b/src/services/hr/training/training.queries.ts
+@@ -0,0 +1,55 @@
++import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
++import { trainingApi } from './training.api';
++import { trainingKeys } from './training.keys';
++import type { TrainingEnrollmentCreateDto, TrainingProgramCreateDto } from '../../../types/hr/training';
++
++export const useTrainingPrograms = () =>
++  useQuery({ queryKey: trainingKeys.programs, queryFn: () => trainingApi.getPrograms(), staleTime: 0, refetchOnMount: 'always' });
++
++export const useTrainingSessions = () =>
++  useQuery({ queryKey: trainingKeys.sessions, queryFn: trainingApi.getSessions, staleTime: 0, refetchOnMount: 'always' });
++
++export const useTrainingEnrollments = () =>
++  useQuery({ queryKey: trainingKeys.enrollments, queryFn: trainingApi.getEnrollments, staleTime: 0, refetchOnMount: 'always' });
++
++export const useTrainingEvaluations = () =>
++  useQuery({ queryKey: trainingKeys.evaluations, queryFn: trainingApi.getEvaluations, staleTime: 0, refetchOnMount: 'always' });
++
++export const useTrainingCertificates = () =>
++  useQuery({ queryKey: trainingKeys.certificates, queryFn: trainingApi.getCertificates, staleTime: 0, refetchOnMount: 'always' });
++
++export const useCreateTrainingProgram = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: TrainingProgramCreateDto) => trainingApi.createProgram(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: trainingKeys.programs }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const usePublishTrainingProgram = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (id: string) => trainingApi.publishProgram(id),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: trainingKeys.programs }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useEnrollTraining = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (d: TrainingEnrollmentCreateDto) => trainingApi.enroll(d),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: trainingKeys.enrollments }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
++
++export const useIssueCertificate = (opts?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
++  const qc = useQueryClient();
++  return useMutation({
++    mutationFn: (enrollmentId: string) => trainingApi.issueCertificate(enrollmentId),
++    onSuccess: () => { qc.invalidateQueries({ queryKey: trainingKeys.certificates }); opts?.onSuccess?.(); },
++    onError: opts?.onError,
++  });
++};
+diff --git a/src/types/hr/career.ts b/src/types/hr/career.ts
+new file mode 100644
+index 0000000..09372fd
+--- /dev/null
++++ b/src/types/hr/career.ts
+@@ -0,0 +1,103 @@
++export interface EmpContractListDto {
++  id: string;
++  contractNumber: string;
++  status: string;
++  statusName: string;
++  contractType: string;
++  startDate: string;
++  endDate?: string | null;
++  signedDate?: string | null;
++  terminatedDate?: string | null;
++  terminationReason?: string | null;
++  documentRef?: string | null;
++  notes?: string | null;
++  employeeId: string;
++  renewedFromId?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpContractAddDto {
++  employeeId: string;
++  contractType: string;
++  startDate: string;
++  endDate?: string | null;
++  signedDate?: string | null;
++  documentRef?: string | null;
++  notes?: string | null;
++  activateImmediately?: boolean;
++}
++
++export interface EmpContractTerminateDto {
++  id: string;
++  reason: string;
++  terminatedDate?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpPromotionListDto {
++  id: string;
++  status: string;
++  statusName: string;
++  effectiveDate: string;
++  reason?: string | null;
++  comments?: string | null;
++  approvedById?: string | null;
++  approvedDate?: string | null;
++  appliedDate?: string | null;
++  employeeId: string;
++  fromJobGradeId: string;
++  fromPositionId: string;
++  fromDepartmentId: string;
++  fromJgStepId?: string | null;
++  toJobGradeId: string;
++  toPositionId: string;
++  toDepartmentId: string;
++  toJgStepId?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpPromotionAddDto {
++  employeeId: string;
++  effectiveDate: string;
++  toJobGradeId: string;
++  toPositionId: string;
++  toDepartmentId: string;
++  toJgStepId?: string | null;
++  reason?: string | null;
++}
++
++export interface EmpDecisionDto {
++  id: string;
++  approvedById?: string | null;
++  comments?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpTransferListDto {
++  id: string;
++  status: string;
++  statusName: string;
++  effectiveDate: string;
++  reason?: string | null;
++  comments?: string | null;
++  approvedById?: string | null;
++  approvedDate?: string | null;
++  appliedDate?: string | null;
++  employeeId: string;
++  fromDepartmentId: string;
++  fromPositionId: string;
++  fromJobGradeId?: string | null;
++  toDepartmentId: string;
++  toPositionId: string;
++  toJobGradeId?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpTransferAddDto {
++  employeeId: string;
++  effectiveDate: string;
++  toDepartmentId: string;
++  toPositionId: string;
++  toJobGradeId?: string | null;
++  reason?: string | null;
++}
+diff --git a/src/types/hr/jobOffer.ts b/src/types/hr/jobOffer.ts
+new file mode 100644
+index 0000000..d173e6e
+--- /dev/null
++++ b/src/types/hr/jobOffer.ts
+@@ -0,0 +1,30 @@
++export interface JobOfferListDto {
++  id: string;
++  status: string;
++  statusName?: string;
++  jobApplicationId: string;
++  offeredSalary?: number | null;
++  currency?: string | null;
++  startDate?: string | null;
++  expiryDate?: string | null;
++  notes?: string | null;
++  hiredEmployeeId?: string | null;
++  rowVersion?: string;
++  [key: string]: unknown;
++}
++
++export interface JobOfferAddDto {
++  jobApplicationId: string;
++  offeredSalary?: number | null;
++  currency?: string | null;
++  startDate?: string | null;
++  expiryDate?: string | null;
++  notes?: string | null;
++  [key: string]: unknown;
++}
++
++export interface JobOfferHireDto {
++  id: string;
++  rowVersion?: string;
++  [key: string]: unknown;
++}
+diff --git a/src/types/hr/performance.ts b/src/types/hr/performance.ts
+new file mode 100644
+index 0000000..55f386c
+--- /dev/null
++++ b/src/types/hr/performance.ts
+@@ -0,0 +1,76 @@
++export interface GoalDto {
++  id: string;
++  employeeId: string;
++  title: string;
++  description?: string | null;
++  status: string;
++  startDate: string;
++  targetDate: string;
++  completedDate?: string | null;
++  progressPercent: number;
++  weight?: string | null;
++  reviewId?: string | null;
++  notes?: string | null;
++}
++
++export interface GoalCreateDto {
++  employeeId: string;
++  title: string;
++  description?: string | null;
++  startDate: string;
++  targetDate: string;
++  weight?: string | null;
++  reviewId?: string | null;
++  notes?: string | null;
++}
++
++export interface KPIDto {
++  id: string;
++  employeeId: string;
++  name: string;
++  description?: string | null;
++  metricUnit?: string | null;
++  targetValue: number;
++  actualValue: number;
++  periodStart: string;
++  periodEnd: string;
++  goalId?: string | null;
++  notes?: string | null;
++}
++
++export interface PerformanceReviewDto {
++  id: string;
++  employeeId: string;
++  reviewerId?: string | null;
++  templateId?: string | null;
++  title: string;
++  status: string;
++  periodStart: string;
++  periodEnd: string;
++  overallRating?: string | null;
++  score?: number | null;
++  summary?: string | null;
++  employeeComments?: string | null;
++  managerComments?: string | null;
++  submittedAt?: string | null;
++  approvedAt?: string | null;
++  rejectionReason?: string | null;
++}
++
++export interface PerformanceReviewCreateDto {
++  employeeId: string;
++  reviewerId?: string | null;
++  templateId?: string | null;
++  title: string;
++  periodStart: string;
++  periodEnd: string;
++  summary?: string | null;
++}
++
++export interface ReviewDecisionDto {
++  reviewerId?: string | null;
++  comments?: string | null;
++  rejectionReason?: string | null;
++  overallRating?: string | null;
++  score?: number | null;
++}
+diff --git a/src/types/hr/reports.ts b/src/types/hr/reports.ts
+new file mode 100644
+index 0000000..ac33a3f
+--- /dev/null
++++ b/src/types/hr/reports.ts
+@@ -0,0 +1,16 @@
++export interface HrReportEnvelope {
++  domain: string;
++  generatedAt: string;
++  upstreamSuccess: boolean;
++  message?: string | null;
++  data?: unknown;
++}
++
++export interface HrReportsSummaryDto {
++  generatedAt: string;
++  employees: HrReportEnvelope;
++  attendance: HrReportEnvelope;
++  leave: HrReportEnvelope;
++  payroll: HrReportEnvelope;
++  recruitment: HrReportEnvelope;
++}
+diff --git a/src/types/hr/termination.ts b/src/types/hr/termination.ts
+new file mode 100644
+index 0000000..720836c
+--- /dev/null
++++ b/src/types/hr/termination.ts
+@@ -0,0 +1,69 @@
++export interface EmpTerminationListDto {
++  id: string;
++  status: string;
++  statusName: string;
++  terminationType: string;
++  lastWorkingDate: string;
++  noticeDate?: string | null;
++  reason: string;
++  comments?: string | null;
++  exitInterviewNotes?: string | null;
++  approvedById?: string | null;
++  approvedDate?: string | null;
++  appliedDate?: string | null;
++  requestFinalPay: boolean;
++  requestLeaveSettlement: boolean;
++  settlementPayrollRunId?: string | null;
++  settlementStatus?: string | null;
++  settlementNotes?: string | null;
++  leaveUnpaidDaysSnapshot?: number | null;
++  employeeId: string;
++  offboardingTotal: number;
++  offboardingCompleted: number;
++  rowVersion: string;
++  tasks?: EmpOffboardingTaskDto[] | null;
++}
++
++export interface EmpTerminationAddDto {
++  employeeId: string;
++  lastWorkingDate: string;
++  noticeDate?: string | null;
++  reason: string;
++  terminationType?: string;
++  comments?: string | null;
++  exitInterviewNotes?: string | null;
++  requestFinalPay?: boolean;
++  requestLeaveSettlement?: boolean;
++  seedDefaultChecklist?: boolean;
++}
++
++export interface EmpTerminationDecisionDto {
++  id: string;
++  approvedById?: string | null;
++  comments?: string | null;
++  exitInterviewNotes?: string | null;
++  rowVersion: string;
++}
++
++export interface EmpOffboardingTaskDto {
++  id: string;
++  terminationId: string;
++  category: string;
++  title: string;
++  status: string;
++  assignedToId?: string | null;
++  dueDate?: string | null;
++  completedAt?: string | null;
++  notes?: string | null;
++  sortOrder: number;
++  rowVersion: string;
++}
++
++export interface EmpOffboardingTaskUpdateDto {
++  id: string;
++  status: string;
++  assignedToId?: string | null;
++  dueDate?: string | null;
++  notes?: string | null;
++  rowVersion: string;
++}
+diff --git a/src/types/hr/training.ts b/src/types/hr/training.ts
+new file mode 100644
+index 0000000..85d9e58
+--- /dev/null
++++ b/src/types/hr/training.ts
+@@ -0,0 +1,84 @@
++export interface TrainingProgramDto {
++  id: string;
++  code: string;
++  title: string;
++  description?: string | null;
++  category: string;
++  status: string;
++  durationHours?: number | null;
++  provider?: string | null;
++  isMandatory: boolean;
++  startDate?: string | null;
++  endDate?: string | null;
++  courseCount: number;
++}
++
++export interface TrainingProgramCreateDto {
++  code: string;
++  title: string;
++  description?: string | null;
++  category?: string;
++  durationHours?: number | null;
++  provider?: string | null;
++  isMandatory?: boolean;
++  startDate?: string | null;
++  endDate?: string | null;
++}
++
++export interface TrainingSessionDto {
++  id: string;
++  courseId: string;
++  title: string;
++  status: string;
++  startAt: string;
++  endAt: string;
++  location?: string | null;
++  mode?: string | null;
++  trainerName?: string | null;
++  capacity?: number | null;
++  enrollmentCount: number;
++  notes?: string | null;
++}
++
++export interface TrainingEnrollmentDto {
++  id: string;
++  programId: string;
++  courseId?: string | null;
++  sessionId?: string | null;
++  employeeId: string;
++  status: string;
++  enrolledAt: string;
++  completedAt?: string | null;
++  notes?: string | null;
++}
++
++export interface TrainingEnrollmentCreateDto {
++  programId: string;
++  courseId?: string | null;
++  sessionId?: string | null;
++  employeeId: string;
++  notes?: string | null;
++}
++
++export interface TrainingCertificateDto {
++  id: string;
++  enrollmentId: string;
++  employeeId: string;
++  programId: string;
++  certificateNumber: string;
++  title: string;
++  status: string;
++  issuedAt: string;
++  expiresAt?: string | null;
++  issuedBy?: string | null;
++  notes?: string | null;
++}
++
++export interface TrainingEvaluationDto {
++  id: string;
++  enrollmentId: string;
++  employeeId: string;
++  rating: number;
++  feedback?: string | null;
++  submittedAt: string;
++}
+-- 
+2.43.0
+

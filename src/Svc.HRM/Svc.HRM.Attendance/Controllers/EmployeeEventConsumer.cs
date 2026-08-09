@@ -70,9 +70,6 @@ public class EmployeeEventConsumer : BackgroundService
 
     private async Task ProcessEmployeeEventAsync(string message, CancellationToken ct)
     {
-        using var scope = _serviceScopeFactory.CreateScope();
-        var leaveService = scope.ServiceProvider.GetRequiredService<ILeaveService>();
-
         try
         {
             var eventData = JsonSerializer.Deserialize<EmployeeEventData>(message);
@@ -83,15 +80,16 @@ public class EmployeeEventConsumer : BackgroundService
             switch (eventData.EventType)
             {
                 case "EMPLOYEE_CREATED":
-                    // Initialize leave balance for new employee
-                    var year = DateTime.UtcNow.Year;
-                    await leaveService.InitializeLeaveBalanceAsync(eventData.EmployeeId, year, ct);
-                    _logger.LogInformation("Initialized leave balance for employee {EmployeeId}", eventData.EmployeeId);
+                    // Leave balances are owned by HRM.Leave — do not initialize local Attendance leave.
+                    _logger.LogInformation(
+                        "Employee {EmployeeId} created; leave balance managed by HRM.Leave (not Attendance).",
+                        eventData.EmployeeId);
                     break;
                 case "EMPLOYEE_DELETED":
-                    // Handle employee deletion
                     break;
             }
+
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {

@@ -17,6 +17,7 @@ public class AttendanceService : IAttendanceService
     private readonly ICacheService _cache;
     private readonly ILogger<AttendanceService> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IHrmLeaveClient _leaveClient;
 
     // ✅ Ethiopia Time Zone Offset (UTC+3)
     private static readonly TimeSpan EthiopiaOffset = TimeSpan.FromHours(3);
@@ -28,7 +29,8 @@ public class AttendanceService : IAttendanceService
         IAttendanceEventPublisher eventPublisher,
         ICacheService cache,
         ILogger<AttendanceService> logger,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IHrmLeaveClient leaveClient)
     {
         _context = context;
         _shiftService = shiftService;
@@ -37,6 +39,7 @@ public class AttendanceService : IAttendanceService
         _cache = cache;
         _logger = logger;
         _serviceProvider = serviceProvider;
+        _leaveClient = leaveClient;
     }
 
     // ✅ Get current time in Ethiopia (UTC+3)
@@ -861,10 +864,26 @@ public async Task<List<AttendanceRecordDto>> GetAbsentEmployeesAsync(DateTime da
 
             var ethiopiaNow = GetEthiopiaNow();
 
+            // Canonical leave source: HRM.Leave (not local Attendance leave tables)
+            var approvedLeaves = await _leaveClient.GetApprovedLeavesAsync(ethiopiaDate, ethiopiaDate, null, ct);
+            var onLeaveIds = approvedLeaves
+                .Where(x => x.StartDate.Date <= ethiopiaDate && x.EndDate.Date >= ethiopiaDate)
+                .Select(x => x.EmployeeId)
+                .ToHashSet();
+
             foreach (var record in records)
             {
                 if (record.CheckIn.HasValue && record.CheckOut.HasValue)
                 {
+                    continue;
+                }
+
+                if (onLeaveIds.Contains(record.EmployeeId))
+                {
+                    record.Status = AttendanceStatus.Leave.ToString();
+                    record.Notes = string.IsNullOrWhiteSpace(record.Notes)
+                        ? "Marked Leave from HRM.Leave approved request"
+                        : record.Notes;
                     continue;
                 }
 
