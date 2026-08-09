@@ -1,0 +1,142 @@
+From 42541b5eca8e8f4b3c261f5f409a9475da1dc2c4 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sun, 9 Aug 2026 02:04:08 +0000
+Subject: [PATCH] Fix HR reports timeout unwrap and API timeout handling
+
+- Only unwrap ApiResponse { success, data }, not report envelopes
+- Raise reports request timeout; clearer timeout errors
+- Show full report envelope JSON on domain pages
+---
+ .../hr/reports/HrReportsSection.tsx           | 17 +++++---
+ src/services/hr/apiError.ts                   | 24 +++++++++--
+ src/services/hr/reports/reports.api.ts        | 40 ++++++++-----------
+ 3 files changed, 49 insertions(+), 32 deletions(-)
+
+diff --git a/src/components/hr/reports/HrReportsSection.tsx b/src/components/hr/reports/HrReportsSection.tsx
+index 5eb67fd..7284b27 100644
+--- a/src/components/hr/reports/HrReportsSection.tsx
++++ b/src/components/hr/reports/HrReportsSection.tsx
+@@ -45,18 +45,25 @@ export const HrReportsHome: React.FC = () => {
+ export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' | 'leave' | 'payroll' | 'recruitment'; title: string }> = ({
+   domain, title,
+ }) => {
+-  const { data, isLoading, error } = useHrReport(domain);
++  const { data, isLoading, error, refetch, isFetching } = useHrReport(domain);
+   return (
+-    <HrPageShell title={title} subtitle={`Upstream: ${data?.domain || domain}`} loading={isLoading} error={error?.message}>
++    <HrPageShell
++      title={title}
++      subtitle={`Gateway /hrm/reports/${domain} → Reports :7018 → upstream ${data?.domain || domain}`}
++      loading={isLoading}
++      error={error?.message}
++      actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
++      onAction={() => { void refetch(); }}
++    >
+       <div className="bg-white border rounded-lg p-4">
+-        <div className="mb-3 flex gap-2 items-center">
++        <div className="mb-3 flex gap-2 items-center flex-wrap">
+           <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
+             {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
+           </Badge>
+-          <span className="text-xs text-gray-500">{data?.message}</span>
++          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Loading…')}</span>
+         </div>
+         <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
+-          {JSON.stringify(data?.data ?? data, null, 2)}
++          {JSON.stringify(data ?? null, null, 2)}
+         </pre>
+       </div>
+     </HrPageShell>
+diff --git a/src/services/hr/apiError.ts b/src/services/hr/apiError.ts
+index 85c2229..a059f22 100644
+--- a/src/services/hr/apiError.ts
++++ b/src/services/hr/apiError.ts
+@@ -7,6 +7,9 @@ export const extractApiError = (error: any): string => {
+   if (data?.errors) {
+     return (Object.values(data.errors) as string[][]).flat().join(', ');
+   }
++  if (error?.code === 'ECONNABORTED' || /timeout/i.test(error?.message || '')) {
++    return 'Request timed out. Reports service or an upstream HR API is slow/down — restart Reports (:7018) and Profile/Leave/Attendance/Payroll.';
++  }
+   if (error?.response?.status === 404) {
+     return 'API not found (check gateway route and that the service is running)';
+   }
+@@ -16,6 +19,21 @@ export const extractApiError = (error: any): string => {
+   return error?.message || 'An unexpected error occurred';
+ };
+ 
+-/** Profile/Leave/Recruit wrap payloads in { data: T } */
+-export const unwrapData = <T>(res: { data: any }): T =>
+-  (res.data?.data !== undefined ? res.data.data : res.data) as T;
++/**
++ * Unwrap gateway/ApiResponse `{ success, data }` only.
++ * Do NOT unwrap arbitrary objects that happen to have a `data` field
++ * (e.g. HR Reports envelopes: { domain, upstreamSuccess, data }).
++ */
++export const unwrapData = <T>(res: { data: any }): T => {
++  const body = res?.data;
++  if (
++    body &&
++    typeof body === 'object' &&
++    !Array.isArray(body) &&
++    Object.prototype.hasOwnProperty.call(body, 'success') &&
++    Object.prototype.hasOwnProperty.call(body, 'data')
++  ) {
++    return body.data as T;
++  }
++  return body as T;
++};
+diff --git a/src/services/hr/reports/reports.api.ts b/src/services/hr/reports/reports.api.ts
+index fb4a885..cf3887e 100644
+--- a/src/services/hr/reports/reports.api.ts
++++ b/src/services/hr/reports/reports.api.ts
+@@ -3,30 +3,22 @@ import { extractApiError, unwrapData } from '../apiError';
+ import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
+ 
+ const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
++/** Reports aggregates several upstreams — allow more time than the default 30s. */
++const REPORTS_TIMEOUT_MS = 45_000;
++
++const getReport = async <T>(path: string) => {
++  try {
++    return unwrapData<T>(await api.get(`${BASE}/${path}`, { timeout: REPORTS_TIMEOUT_MS }));
++  } catch (e) {
++    throw new Error(extractApiError(e));
++  }
++};
+ 
+ export const reportsApi = {
+-  summary: async () => {
+-    try { return unwrapData<HrReportsSummaryDto>(await api.get(`${BASE}/summary`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
+-  employees: async () => {
+-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/employees`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
+-  attendance: async () => {
+-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/attendance`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
+-  leave: async () => {
+-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/leave`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
+-  payroll: async () => {
+-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/payroll`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
+-  recruitment: async () => {
+-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/recruitment`)); }
+-    catch (e) { throw new Error(extractApiError(e)); }
+-  },
++  summary: () => getReport<HrReportsSummaryDto>('summary'),
++  employees: () => getReport<HrReportEnvelope>('employees'),
++  attendance: () => getReport<HrReportEnvelope>('attendance'),
++  leave: () => getReport<HrReportEnvelope>('leave'),
++  payroll: () => getReport<HrReportEnvelope>('payroll'),
++  recruitment: () => getReport<HrReportEnvelope>('recruitment'),
+ };
+-- 
+2.43.0
+

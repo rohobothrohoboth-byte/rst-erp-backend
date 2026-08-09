@@ -106,7 +106,8 @@ void AddUpstream(string name, string url)
     builder.Services.AddHttpClient(name, client =>
     {
         client.BaseAddress = new Uri(url);
-        client.Timeout = TimeSpan.FromSeconds(60);
+        // Keep below UI axios timeout (30s) so the Reports API can return partial failures.
+        client.Timeout = TimeSpan.FromSeconds(15);
         client.DefaultRequestHeaders.Add("Accept", "application/json");
         client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
     })
