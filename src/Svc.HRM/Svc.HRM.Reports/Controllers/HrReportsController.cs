@@ -21,7 +21,13 @@ public class HrReportsController(IHrReportService reports, IConfiguration config
     public IActionResult Build() => Ok(new
     {
         build = ReportsBuild.Id,
-        gatewayHttp = config["ServiceUrls:GatewayHttp"],
+        mode = "direct-upstreams",
+        serviceHost = config["ServiceHost"],
+        profile = config["ServiceUrls:HrmProApi"],
+        leave = config["ServiceUrls:LeaveApi"],
+        attendance = config["ServiceUrls:AttendanceApi"],
+        payroll = config["ServiceUrls:PayrollApi"],
+        recruit = config["ServiceUrls:HrmRecruitApi"],
         httpClientTimeoutSeconds = 5,
         domainBudgetSeconds = 6
     });

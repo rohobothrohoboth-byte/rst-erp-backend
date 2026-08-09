@@ -3,7 +3,7 @@ namespace Svc.HRM.Reports.Models.DTOs;
 public static class ReportsBuild
 {
     /// <summary>Bump whenever shipping a Reports behavior change so Postman can prove the binary.</summary>
-    public const string Id = "reports-20260809-hardstop-v3";
+    public const string Id = "reports-20260809-direct-v4";
 }
 
 public class HrReportEnvelope
