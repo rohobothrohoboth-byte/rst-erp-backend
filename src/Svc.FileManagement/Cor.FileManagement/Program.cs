@@ -60,7 +60,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // Resolve ServiceUrls
 var serviceUrls = builder.Configuration.GetSection("ServiceUrls");
-var resolvedUrls = new Dictionary<string, string>();
+var resolvedUrls = new Dictionary<string, string?>();
 
 foreach (var section in serviceUrls.GetChildren())
 {

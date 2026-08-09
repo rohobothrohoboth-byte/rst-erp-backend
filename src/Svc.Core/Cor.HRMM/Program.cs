@@ -56,7 +56,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // ✅ Resolve all {ServiceHost} placeholders
 var configSections = builder.Configuration.AsEnumerable().ToList();
-var updates = new Dictionary<string, string>();
+var updates = new Dictionary<string, string?>();
 
 foreach (var kvp in configSections)
 {
@@ -94,7 +94,7 @@ builder.WebHost.ConfigureKestrel(options =>
         {
             try
             {
-                var certificate = new X509Certificate2(certPath, certPassword);
+                var certificate = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
                 Console.WriteLine("✅ Production certificate loaded");
                 options.Listen(IPAddress.Any, coreHrmmPort, listenOptions =>
                 {
@@ -545,7 +545,7 @@ public class CertificateHealthCheck : IHealthCheck
 
                 if (File.Exists(certPath))
                 {
-                    var cert = new X509Certificate2(certPath, certPassword);
+                    var cert = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
 
                     if (cert.NotAfter > DateTime.Now)
                     {

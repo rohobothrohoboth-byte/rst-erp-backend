@@ -430,11 +430,11 @@ public class GetPeriodAuditHandler : IRequestHandler<GetPeriodAuditQry, List<Aud
         {
             Id = log.Id,
             EntityType = log.EntityType,
-            EntityId = log.EntityId,
+            EntityId = log.EntityId ?? string.Empty,
             Action = log.Action,
             OldValues = log.OldValues,
             NewValues = log.NewValues,
-            UserId = log.UserId.ToString(),
+            UserId = log.UserId?.ToString() ?? string.Empty,
             UserName = log.UserName,
             IpAddress = log.IpAddress,
             ActionDate = log.ActionDate,

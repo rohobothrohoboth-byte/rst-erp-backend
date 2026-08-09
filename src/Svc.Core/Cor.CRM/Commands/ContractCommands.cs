@@ -7,6 +7,7 @@ using Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Task = System.Threading.Tasks.Task;
+using ContractStatus = Cor.CRM.Models.Entities.ContractStatus;
 namespace Cor.CRM.Commands;
 
 // ============================================================

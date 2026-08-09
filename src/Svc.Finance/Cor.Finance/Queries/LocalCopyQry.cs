@@ -32,22 +32,22 @@ public class GetAllLocalEmployeesQry : IRequest<List<EmployeeDto>>
     public string? Position { get; set; }
 }
 
-public class GetLocalCompanyByIdQry : IRequest<CompanyDto>
+public class GetLocalCompanyByIdQry : IRequest<CompanyDto?>
 {
     public Guid Id { get; set; }
 }
 
-public class GetLocalBranchByIdQry : IRequest<BranchDto>
+public class GetLocalBranchByIdQry : IRequest<BranchDto?>
 {
     public Guid Id { get; set; }
 }
 
-public class GetLocalDepartmentByIdQry : IRequest<DepartmentDto>
+public class GetLocalDepartmentByIdQry : IRequest<DepartmentDto?>
 {
     public Guid Id { get; set; }
 }
 
-public class GetLocalEmployeeByIdQry : IRequest<EmployeeDto>
+public class GetLocalEmployeeByIdQry : IRequest<EmployeeDto?>
 {
     public Guid Id { get; set; }
 }
@@ -317,7 +317,7 @@ public class GetAllLocalEmployeesHandler : IRequestHandler<GetAllLocalEmployeesQ
 // SINGLE ENTITY HANDLERS (With Caching)
 // ============================================================
 
-public class GetLocalCompanyByIdHandler : IRequestHandler<GetLocalCompanyByIdQry, CompanyDto>
+public class GetLocalCompanyByIdHandler : IRequestHandler<GetLocalCompanyByIdQry, CompanyDto?>
 {
     private readonly FinanceDbContext _context;
     private readonly ICacheService _cache;
@@ -334,7 +334,7 @@ public class GetLocalCompanyByIdHandler : IRequestHandler<GetLocalCompanyByIdQry
         _logger = logger;
     }
 
-    public async Task<CompanyDto> Handle(GetLocalCompanyByIdQry request, CancellationToken ct)
+    public async Task<CompanyDto?> Handle(GetLocalCompanyByIdQry request, CancellationToken ct)
     {
         var cacheKey = $"local:company:{request.Id}";
 
@@ -370,7 +370,7 @@ public class GetLocalCompanyByIdHandler : IRequestHandler<GetLocalCompanyByIdQry
     }
 }
 
-public class GetLocalBranchByIdHandler : IRequestHandler<GetLocalBranchByIdQry, BranchDto>
+public class GetLocalBranchByIdHandler : IRequestHandler<GetLocalBranchByIdQry, BranchDto?>
 {
     private readonly FinanceDbContext _context;
     private readonly ICacheService _cache;
@@ -387,7 +387,7 @@ public class GetLocalBranchByIdHandler : IRequestHandler<GetLocalBranchByIdQry, 
         _logger = logger;
     }
 
-    public async Task<BranchDto> Handle(GetLocalBranchByIdQry request, CancellationToken ct)
+    public async Task<BranchDto?> Handle(GetLocalBranchByIdQry request, CancellationToken ct)
     {
         var cacheKey = $"local:branch:{request.Id}";
 
@@ -424,7 +424,7 @@ public class GetLocalBranchByIdHandler : IRequestHandler<GetLocalBranchByIdQry, 
     }
 }
 
-public class GetLocalDepartmentByIdHandler : IRequestHandler<GetLocalDepartmentByIdQry, DepartmentDto>
+public class GetLocalDepartmentByIdHandler : IRequestHandler<GetLocalDepartmentByIdQry, DepartmentDto?>
 {
     private readonly FinanceDbContext _context;
     private readonly ICacheService _cache;
@@ -441,7 +441,7 @@ public class GetLocalDepartmentByIdHandler : IRequestHandler<GetLocalDepartmentB
         _logger = logger;
     }
 
-    public async Task<DepartmentDto> Handle(GetLocalDepartmentByIdQry request, CancellationToken ct)
+    public async Task<DepartmentDto?> Handle(GetLocalDepartmentByIdQry request, CancellationToken ct)
     {
         var cacheKey = $"local:department:{request.Id}";
 
@@ -474,7 +474,7 @@ public class GetLocalDepartmentByIdHandler : IRequestHandler<GetLocalDepartmentB
     }
 }
 
-public class GetLocalEmployeeByIdHandler : IRequestHandler<GetLocalEmployeeByIdQry, EmployeeDto>
+public class GetLocalEmployeeByIdHandler : IRequestHandler<GetLocalEmployeeByIdQry, EmployeeDto?>
 {
     private readonly FinanceDbContext _context;
     private readonly ICacheService _cache;
@@ -491,7 +491,7 @@ public class GetLocalEmployeeByIdHandler : IRequestHandler<GetLocalEmployeeByIdQ
         _logger = logger;
     }
 
-    public async Task<EmployeeDto> Handle(GetLocalEmployeeByIdQry request, CancellationToken ct)
+    public async Task<EmployeeDto?> Handle(GetLocalEmployeeByIdQry request, CancellationToken ct)
     {
         var cacheKey = $"local:employee:{request.Id}";
 

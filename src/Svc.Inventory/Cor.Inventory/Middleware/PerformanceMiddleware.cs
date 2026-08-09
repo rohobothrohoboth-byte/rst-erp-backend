@@ -7,14 +7,11 @@ using Microsoft.Extensions.Caching.Memory;
 using Cor.Inventory.Models.Entities;
 using Cor.Inventory.Models.Enums;
 using Cor.Inventory.Services;
-using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Channels;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Caching.Memory;
 namespace Cor.Inventory.Middlewares;
 
 public class PerformanceMiddleware

@@ -109,7 +109,7 @@ public class GetAllBankAccountsHandler : IRequestHandler<GetAllBankAccountsQry, 
                 x.AccountName.ToLower().Contains(search) ||
                 x.AccountNumber.ToLower().Contains(search) ||
                 x.BankName.ToLower().Contains(search) ||
-                x.IBAN.ToLower().Contains(search) ||
+                (x.IBAN != null && x.IBAN.ToLower().Contains(search)) ||
                 (x.Description != null && x.Description.ToLower().Contains(search)));
         }
 

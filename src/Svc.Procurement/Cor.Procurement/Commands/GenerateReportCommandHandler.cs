@@ -186,7 +186,9 @@ public class GenerateReportCommandHandler
            ? (int)requisitions
                .Select(r => (r.ApprovedAt - r.SubmittedDate))
                .Where(d => d.HasValue)
-               .Average(d => d.Value.TotalDays)
+               .Select(d => d!.Value.TotalDays)
+               .DefaultIfEmpty(0)
+               .Average()
            : 0;
 
         return new

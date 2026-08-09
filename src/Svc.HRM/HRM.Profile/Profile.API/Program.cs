@@ -61,7 +61,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // ✅ Resolve all {ServiceHost} placeholders
 var configSections = builder.Configuration.AsEnumerable().ToList();
-var updates = new Dictionary<string, string>();
+var updates = new Dictionary<string, string?>();
 
 foreach (var kvp in configSections)
 {
@@ -101,7 +101,7 @@ void ConfigureKestrel(WebApplicationBuilder b)
             {
                 try
                 {
-                    var certificate = new X509Certificate2(certPath, certPassword);
+                    var certificate = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
                     Console.WriteLine("✅ Production certificate loaded");
                     options.Listen(IPAddress.Any, hrmProPort, listenOptions =>
                     {

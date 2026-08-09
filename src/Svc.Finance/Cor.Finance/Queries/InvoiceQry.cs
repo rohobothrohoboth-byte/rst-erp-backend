@@ -58,7 +58,7 @@ public static class InvoiceProjection
             ReceivedDate = invoice.ReceivedDate,
             DateAdd = invoice.DateAdd,
             DateMod = invoice.DateMod,
-            RowVersion = invoice.RowVersion,
+            RowVersion = invoice.RowVersion ?? string.Empty,
 
             Lines = invoice.Lines
                 .Where(l => !l.IsDeleted)

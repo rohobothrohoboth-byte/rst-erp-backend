@@ -33,7 +33,9 @@ public class DbPerformanceTestSeeder
     }
 public async Task<long> GetTableCountAsync(string tableName)
 {
+#pragma warning disable EF1002 // Table name is an identifier; cannot be parameterized via FormattableString
     return await _context.Set<object>().FromSqlRaw($"SELECT COUNT(*) FROM \"{tableName}\"").CountAsync();
+#pragma warning restore EF1002
 }
  private async Task ClearTestDataAsync()
     {

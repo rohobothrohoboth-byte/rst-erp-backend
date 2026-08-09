@@ -68,7 +68,7 @@ public class ModuleController : ControllerBase
 
         var query2 = new GetDocumentsByModuleQuery
         {
-            Module = module,
+            Module = module ?? string.Empty,
             Category = category
         };
 

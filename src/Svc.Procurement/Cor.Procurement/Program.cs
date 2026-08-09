@@ -61,7 +61,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // ✅ Resolve all {ServiceHost} placeholders in configuration
 var configSections = builder.Configuration.AsEnumerable().ToList();
-var updates = new Dictionary<string, string>();
+var updates = new Dictionary<string, string?>();
 
 foreach (var kvp in configSections)
 {

@@ -82,7 +82,7 @@ public class GetAuditLogsHandler : IRequestHandler<GetAuditLogsQry, AuditLogList
             .Select(x => new AuditLogDto
             {
                 Id          = x.Id,
-                UserId      = x.UserId.ToString(),
+                UserId      = x.UserId.HasValue ? x.UserId.Value.ToString() : string.Empty,
                 UserName    = x.UserName,
                 UserEmail   = x.UserEmail,
                 UserRole    = x.UserRole,
@@ -147,7 +147,7 @@ public class GetEntityAuditHandler : IRequestHandler<GetEntityAuditQry, AuditLog
                 EntityType  = x.EntityType,
                 EntityId    = x.EntityId ?? string.Empty,
                 Action      = x.Action,
-                UserId      = x.UserId.ToString(),
+                UserId      = x.UserId.HasValue ? x.UserId.Value.ToString() : string.Empty,
                 UserName    = x.UserName,
                 UserEmail   = x.UserEmail,
                 UserRole    = x.UserRole,
@@ -239,7 +239,7 @@ public class GetAuditSummaryHandler : IRequestHandler<GetAuditSummaryQry, AuditS
             .Select(x => new AuditLogDto
             {
                 Id          = x.Id,
-                UserId      = x.UserId.ToString(),
+                UserId      = x.UserId.HasValue ? x.UserId.Value.ToString() : string.Empty,
                 UserName    = x.UserName,
                 EntityType  = x.EntityType,
                 EntityId    = x.EntityId ?? string.Empty,

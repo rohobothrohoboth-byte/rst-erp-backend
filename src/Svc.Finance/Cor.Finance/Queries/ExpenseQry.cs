@@ -129,7 +129,7 @@ public class GetAllExpensesHandler : IRequestHandler<GetAllExpensesQry, List<Exp
                         VendorName = expense.Vendor?.Name ?? null,
             DateAdd = expense.DateAdd,
             DateMod = expense.DateMod,
-            RowVersion = expense.RowVersion
+            RowVersion = expense.RowVersion ?? string.Empty
         };
     }
 }
@@ -257,7 +257,7 @@ public class GetAllExpenseCategoriesHandler : IRequestHandler<GetAllExpenseCateg
         {
             Id = category.Id,
             Name = category.Name,
-            NameAm = category.NameAm,
+            NameAm = category.NameAm ?? string.Empty,
             CategoryType = category.CategoryType,
             IsActive = category.IsActive,
             DateAdd = category.DateAdd,
@@ -289,7 +289,7 @@ public class GetExpenseCategoryByIdHandler : IRequestHandler<GetExpenseCategoryB
         {
             Id = category.Id,
             Name = category.Name,
-            NameAm = category.NameAm,
+            NameAm = category.NameAm ?? string.Empty,
             CategoryType = category.CategoryType,
             IsActive = category.IsActive,
             DateAdd = category.DateAdd,

@@ -56,7 +56,7 @@ Console.WriteLine($"🏠 Service Host: {serviceHost}");
 
 // Resolve all {ServiceHost} placeholders
 var configSections = builder.Configuration.AsEnumerable().ToList();
-var updates = new Dictionary<string, string>();
+var updates = new Dictionary<string, string?>();
 
 foreach (var kvp in configSections)
 {
@@ -125,7 +125,7 @@ builder.WebHost.ConfigureKestrel(options =>
             {
                 try
                 {
-                    var certificate = new X509Certificate2(certPath, certPassword);
+                    var certificate = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
                     Console.WriteLine("✅ Production certificate loaded");
                     listenOptions.UseHttps(certificate);
                 }
@@ -207,8 +207,10 @@ builder.Services.AddScoped(sp =>
 sp.GetRequiredService<IDbContextFactory<HrmLeaveDbContext>>().CreateDbContext());
 
 // ✅ Remove the conflicting pool registrations
+#pragma warning disable EF1001 // Internal EF API used to clear conflicting pool registration
 var poolDescriptor = builder.Services.FirstOrDefault(
 d => d.ServiceType == typeof(Microsoft.EntityFrameworkCore.Internal.IDbContextPool<HrmLeaveDbContext>));
+#pragma warning restore EF1001
 if (poolDescriptor != null)
 {
 builder.Services.Remove(poolDescriptor);

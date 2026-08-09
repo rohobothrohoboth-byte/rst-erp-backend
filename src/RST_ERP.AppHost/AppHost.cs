@@ -40,14 +40,6 @@ var planDevDbCon = postgres.AddDatabase("planDevDbCon","core.PlanDevDb");
 
 // ✅ Get the local IP address
 var localIp = "192.168.1.7"; // Updated to match your config
-var useHttps = true;
-
-// Helper function to get service URL
-string GetServiceUrl(string host, int port, bool https = true)
-{
-    var protocol = https ? "https" : "http";
-    return $"{protocol}://{host}:{port}";
-}
 
 // ✅ Gateway
 builder.AddProject<Projects.Svc_Gateway>("svc-gateway")

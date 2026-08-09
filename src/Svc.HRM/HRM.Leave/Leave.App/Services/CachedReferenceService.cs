@@ -14,8 +14,6 @@ using Dapper;
 using Contracts;
 using EthiopianCalendar;
 using Leave.App.Services;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 namespace Leave.App.Services;
 
 public interface ICachedReferenceService

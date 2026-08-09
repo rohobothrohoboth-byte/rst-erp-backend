@@ -293,12 +293,11 @@ public class AnalyticsService : IAnalyticsService
         DateTime? periodStart = null,
         DateTime? periodEnd = null,
         string periodType = "month",
-        string fiscalYear = null,
+        string? fiscalYear = null,
         CancellationToken ct = default)
     {
         var stopwatch = Stopwatch.StartNew();
         var memoryBefore = GC.GetTotalMemory(false);
-        bool cacheHit = false;
         int queryCount = 0;
 
         try
@@ -310,7 +309,6 @@ public class AnalyticsService : IAnalyticsService
             var cached = await _cache.GetAsync<AnalyticsDashboardDto>(cacheKey);
             if (cached is not null)
             {
-                cacheHit = true;
                 _logger.LogDebug("📦 Cache HIT: Analytics Dashboard for {PeriodType} {FiscalYear}", periodType, fiscalYear ?? "current");
 
                 // Record performance metrics
@@ -498,7 +496,7 @@ public class AnalyticsService : IAnalyticsService
         DateTime? periodStart,
         DateTime? periodEnd,
         string periodType,
-        string fiscalYear)
+        string? fiscalYear)
     {
         var start = periodStart?.ToString("yyyy-MM-dd") ?? "none";
         var end = periodEnd?.ToString("yyyy-MM-dd") ?? "none";
@@ -530,7 +528,7 @@ public class AnalyticsService : IAnalyticsService
         DateTime? periodStart,
         DateTime? periodEnd,
         string periodType,
-        string fiscalYear,
+        string? fiscalYear,
         CancellationToken ct)
     {
         var queryCount = 0;
@@ -734,7 +732,7 @@ public class AnalyticsService : IAnalyticsService
             PeriodStart = startDate.ToString("yyyy-MM-dd"),
             PeriodEnd = endDate.ToString("yyyy-MM-dd"),
             PeriodType = periodType,
-            FiscalYear = fiscalYear
+            FiscalYear = fiscalYear ?? DateTime.UtcNow.Year.ToString()
         };
 
         return (dashboard, queryCount);
@@ -748,7 +746,7 @@ public class AnalyticsService : IAnalyticsService
       DateTime? periodStart,
       DateTime? periodEnd,
       string periodType,
-      string fiscalYear,
+      string? fiscalYear,
       CancellationToken ct)
   {
       var stopwatch = Stopwatch.StartNew();
@@ -1479,7 +1477,7 @@ public class AnalyticsService : IAnalyticsService
                PeriodStart = startDate.ToString("yyyy-MM-dd"),
                PeriodEnd = endDate.ToString("yyyy-MM-dd"),
                PeriodType = periodType,
-               FiscalYear = fiscalYear
+               FiscalYear = fiscalYear ?? DateTime.UtcNow.Year.ToString()
            };
 
            return (dashboard, queryCount);
@@ -1875,8 +1873,8 @@ private async Task<List<AnalyticsDto>> GetTopVendorsFromMainContextAsync(
     public async Task InvalidateAnalyticsCacheAsync(
         DateTime? periodStart = null,
         DateTime? periodEnd = null,
-        string periodType = null,
-        string fiscalYear = null,
+        string? periodType = null,
+        string? fiscalYear = null,
         CancellationToken ct = default)
     {
         try
@@ -2329,7 +2327,7 @@ private async Task<List<AnalyticsDto>> GetTopVendorsFromMainContextAsync(
                                 && i.CustomerId.HasValue
                                 && i.InvoiceDate >= startDate
                                 && i.InvoiceDate <= endDate)
-                    .Select(i => i.CustomerId.Value)
+                    .Select(i => i.CustomerId!.Value)
                     .Distinct()
                     .CountAsync(ct),
                 DateGenerated = DateTime.UtcNow
@@ -2400,7 +2398,7 @@ private async Task<List<AnalyticsDto>> GetTopVendorsFromMainContextAsync(
                                 && i.VendorId.HasValue
                                 && i.InvoiceDate >= startDate
                                 && i.InvoiceDate <= endDate)
-                    .Select(i => i.VendorId.Value)
+                    .Select(i => i.VendorId!.Value)
                     .Distinct()
                     .CountAsync(ct),
                 DateGenerated = DateTime.UtcNow

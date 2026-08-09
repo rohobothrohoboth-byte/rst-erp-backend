@@ -139,7 +139,7 @@ public class GetAllAccountCategoriesHandler : IRequestHandler<GetAllAccountCateg
                 .ToListAsync(ct);
 
             // ✅ FIX: Get parent names in a separate single operation
-            var parentIds = categories.Where(x => x.ParentId.HasValue).Select(x => x.ParentId.Value).Distinct().ToList();
+            var parentIds = categories.Where(x => x.ParentId.HasValue).Select(x => x.ParentId!.Value).Distinct().ToList();
             if (parentIds.Any())
             {
                 var parents = await _context.AccountCategories
@@ -149,7 +149,7 @@ public class GetAllAccountCategoriesHandler : IRequestHandler<GetAllAccountCateg
 
                 foreach (var cat in categories.Where(x => x.ParentId.HasValue))
                 {
-                    if (parents.TryGetValue(cat.ParentId.Value, out var parentName))
+                    if (parents.TryGetValue(cat.ParentId!.Value, out var parentName))
                         cat.ParentName = parentName;
                 }
             }

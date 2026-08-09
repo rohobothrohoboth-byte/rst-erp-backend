@@ -173,7 +173,7 @@ public class AuditController : BaseApiController
             // ✅ Check memory cache first (faster than ResponseCache)
             var cacheKey = $"AuditSummary_{fromDateUtc?.ToString("yyyyMMdd") ?? "All"}_{toDateUtc?.ToString("yyyyMMdd") ?? "All"}";
 
-            if (_cache.TryGetValue(cacheKey, out AuditSummaryDto cachedResult))
+            if (_cache.TryGetValue(cacheKey, out AuditSummaryDto? cachedResult))
             {
                 _logger.LogInformation("✅ Audit summary retrieved from memory cache");
                 return Ok(cachedResult);
