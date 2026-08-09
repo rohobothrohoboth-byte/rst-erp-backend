@@ -101,38 +101,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Call upstream HR APIs DIRECTLY (not back through Gateway).
-// Gateway → Reports → Gateway re-entrancy was causing long hangs for every report.
-void AddDirect(string name, string url)
+// Upstream via HTTP Gateway — same URLs that work in Postman.
+var gatewayHttp = GetConfig("ServiceUrls:GatewayHttp", $"http://{serviceHost}:5000");
+if (!gatewayHttp.EndsWith('/')) gatewayHttp += "/";
+
+builder.Services.AddHttpClient("gateway", client =>
 {
-    if (!url.EndsWith('/')) url += "/";
-    builder.Services.AddHttpClient(name, client =>
-    {
-        client.BaseAddress = new Uri(url);
-        client.Timeout = TimeSpan.FromSeconds(5);
-        client.DefaultRequestHeaders.Add("Accept", "application/json");
-        client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-    {
-        ConnectTimeout = TimeSpan.FromSeconds(2),
-        AllowAutoRedirect = false,
-        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-        SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-        {
-            RemoteCertificateValidationCallback = static (_, _, _, _) => true
-        }
-    })
-    .AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
-
-    Console.WriteLine($"HR Reports upstream [{name}]: {url}");
-}
-
-AddDirect("profile", GetConfig("ServiceUrls:HrmProApi", $"https://{serviceHost}:7004"));
-AddDirect("leave", GetConfig("ServiceUrls:LeaveApi", $"https://{serviceHost}:7003"));
-AddDirect("attendance", GetConfig("ServiceUrls:AttendanceApi", $"https://{serviceHost}:7011"));
-AddDirect("payroll", GetConfig("ServiceUrls:PayrollApi", $"https://{serviceHost}:7010"));
-AddDirect("recruit", GetConfig("ServiceUrls:HrmRecruitApi", $"https://{serviceHost}:7005"));
+    client.BaseAddress = new Uri(gatewayHttp);
+    client.Timeout = TimeSpan.FromSeconds(5);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    ConnectTimeout = TimeSpan.FromSeconds(2),
+    AllowAutoRedirect = false,
+    PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+})
+.AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 
 builder.Services.AddRequestTimeouts();
 builder.Services.AddScoped<IHrReportService, HrReportService>();
@@ -151,5 +137,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
-Console.WriteLine($"HR Reports Service starting on https://0.0.0.0:{port}");
+
+Console.WriteLine("====================================================");
+Console.WriteLine($" HR REPORTS BUILD: {Svc.HRM.Reports.Models.DTOs.ReportsBuild.Id}");
+Console.WriteLine($" Upstream gateway: {gatewayHttp}");
+Console.WriteLine($" Listening: https://0.0.0.0:{port}");
+Console.WriteLine(" If logs still mention Employee/stats, you are on an OLD binary.");
+Console.WriteLine("====================================================");
 await app.RunAsync();
