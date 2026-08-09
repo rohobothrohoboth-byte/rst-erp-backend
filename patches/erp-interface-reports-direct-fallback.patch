@@ -1,0 +1,218 @@
+From 4cece23111edc87d4e8e828887185f0b6773654d Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Sun, 9 Aug 2026 15:23:53 +0000
+Subject: [PATCH] HR reports: fall back to Profile/domain APIs when Reports
+ :7018 hangs
+
+Employee page now uses proven /hrm/profile/v1/Employee/stats if Reports
+does not answer within 8s, so UI no longer stays on Loading forever.
+---
+ .../hr/reports/HrReportsSection.tsx           |  12 +-
+ src/services/hr/reports/reports.api.ts        | 132 ++++++++++++++++--
+ src/types/hr/reports.ts                       |   2 +
+ 3 files changed, 133 insertions(+), 13 deletions(-)
+
+diff --git a/src/components/hr/reports/HrReportsSection.tsx b/src/components/hr/reports/HrReportsSection.tsx
+index fd36c48..874b529 100644
+--- a/src/components/hr/reports/HrReportsSection.tsx
++++ b/src/components/hr/reports/HrReportsSection.tsx
+@@ -49,12 +49,17 @@ export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' |
+   return (
+     <HrPageShell
+       title={title}
+-      subtitle={`Gateway /hrm/reports/${domain} → Reports :7018 → upstream ${data?.domain || domain}`}
++      subtitle={`Tries /hrm/reports/${domain} first, then falls back to the domain API (e.g. Profile Employee/stats)`}
+       loading={isLoading && !data}
+       error={error?.message}
+       actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
+       onAction={() => { void refetch(); }}
+     >
++      {isFetching && !data && (
++        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
++          Loading… if Reports (:7018) is down this will fall back to Profile/Leave/etc within a few seconds.
++        </p>
++      )}
+       {isFetching && data && (
+         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+           Refreshing report…
+@@ -65,7 +70,10 @@ export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' |
+           <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
+             {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
+           </Badge>
+-          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Waiting for Reports service…')}</span>
++          <span className="text-xs text-gray-500">
++            {data?.message || (error ? error.message : 'Loading…')}
++            {data?.build ? ` · build ${data.build}` : ''}
++          </span>
+         </div>
+         <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
+           {JSON.stringify(data ?? null, null, 2)}
+diff --git a/src/services/hr/reports/reports.api.ts b/src/services/hr/reports/reports.api.ts
+index 81527c6..31cf0d9 100644
+--- a/src/services/hr/reports/reports.api.ts
++++ b/src/services/hr/reports/reports.api.ts
+@@ -2,23 +2,133 @@ import { api } from '../../api';
+ import { extractApiError, unwrapData } from '../apiError';
+ import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
+ 
+-const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
+-/** Backend hard-stops around 6–10s; keep UI slightly above that. */
+-const REPORTS_TIMEOUT_MS = 15_000;
++const REPORTS_BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
++const PROFILE_BASE = import.meta.env.VITE_HRM_PROFILE_URL || '/hrm/profile/v1';
++const LEAVE_BASE = import.meta.env.VITE_HRM_LEAVE_URL || '/hrm/leave/v1';
++const RECRUIT_BASE = import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1';
++
++/** Keep short — if Reports (:7018) is down, fail fast and use direct domain APIs. */
++const REPORTS_TIMEOUT_MS = 8_000;
++const DIRECT_TIMEOUT_MS = 12_000;
++
++const envelope = (domain: string, ok: boolean, data: unknown, message: string): HrReportEnvelope => ({
++  domain,
++  generatedAt: new Date().toISOString(),
++  upstreamSuccess: ok,
++  message,
++  data,
++  build: 'ui-direct-v1',
++});
++
++const getViaReports = async (path: string): Promise<HrReportEnvelope> => {
++  const res = await api.get(`${REPORTS_BASE}/${path}`, { timeout: REPORTS_TIMEOUT_MS });
++  return unwrapData<HrReportEnvelope>(res);
++};
++
++const getDirect = async (url: string) => {
++  const res = await api.get(url, { timeout: DIRECT_TIMEOUT_MS });
++  return unwrapData<unknown>(res);
++};
++
++/**
++ * Prefer Reports service when it answers quickly; otherwise call the proven domain API
++ * (same paths that work in Postman) so the page never sits on Loading forever.
++ */
++const withFallback = async (
++  domain: string,
++  reportsPath: string,
++  directUrl: string,
++  directLabel: string,
++): Promise<HrReportEnvelope> => {
++  try {
++    const viaReports = await getViaReports(reportsPath);
++    // Reports may return 200 with upstreamSuccess=false — still usable if it has data.
++    if (viaReports && (viaReports.upstreamSuccess || viaReports.data != null)) {
++      return viaReports;
++    }
++  } catch {
++    // Reports down / timed out — fall through to direct.
++  }
+ 
+-const getReport = async <T>(path: string) => {
+   try {
+-    return unwrapData<T>(await api.get(`${BASE}/${path}`, { timeout: REPORTS_TIMEOUT_MS }));
++    const data = await getDirect(directUrl);
++    return envelope(domain, true, data, `OK via ${directLabel} (Reports unavailable)`);
+   } catch (e) {
+     throw new Error(extractApiError(e));
+   }
+ };
+ 
+ export const reportsApi = {
+-  summary: () => getReport<HrReportsSummaryDto>('summary'),
+-  employees: () => getReport<HrReportEnvelope>('employees'),
+-  attendance: () => getReport<HrReportEnvelope>('attendance'),
+-  leave: () => getReport<HrReportEnvelope>('leave'),
+-  payroll: () => getReport<HrReportEnvelope>('payroll'),
+-  recruitment: () => getReport<HrReportEnvelope>('recruitment'),
++  summary: async (): Promise<HrReportsSummaryDto> => {
++    // Prefer Reports summary when healthy; otherwise compose from direct domain calls.
++    try {
++      return unwrapData<HrReportsSummaryDto>(
++        await api.get(`${REPORTS_BASE}/summary`, { timeout: REPORTS_TIMEOUT_MS }),
++      );
++    } catch {
++      const [employees, attendance, leave, payroll, recruitment] = await Promise.all([
++        reportsApi.employees(),
++        reportsApi.attendance(),
++        reportsApi.leave(),
++        reportsApi.payroll(),
++        reportsApi.recruitment(),
++      ]);
++      return {
++        generatedAt: new Date().toISOString(),
++        build: 'ui-direct-v1',
++        employees,
++        attendance,
++        leave,
++        payroll,
++        recruitment,
++      };
++    }
++  },
++
++  // Proven in Postman: GET /hrm/profile/v1/Employee/stats
++  employees: () =>
++    withFallback(
++      'employees',
++      'employees',
++      `${PROFILE_BASE}/Employee/stats`,
++      'Profile Employee/stats',
++    ),
++
++  attendance: () => {
++    const now = new Date();
++    const y = now.getUTCFullYear();
++    const m = now.getUTCMonth() + 1;
++    // Gateway: /attendance/{**} → api/v1/attendance/{**}
++    return withFallback(
++      'attendance',
++      'attendance',
++      `/attendance/report/monthly?year=${y}&month=${m}`,
++      'Attendance monthly report',
++    );
++  },
++
++  leave: () =>
++    withFallback(
++      'leave',
++      'leave',
++      `${LEAVE_BASE}/dashboard/statistics`,
++      'Leave dashboard/statistics',
++    ),
++
++  payroll: () =>
++    // Gateway: /payroll/{**} → api/v1/{**}
++    withFallback(
++      'payroll',
++      'payroll',
++      '/payroll/reports/payroll-summary',
++      'Payroll payroll-summary',
++    ),
++
++  recruitment: () =>
++    withFallback(
++      'recruitment',
++      'recruitment',
++      `${RECRUIT_BASE}/JobReq/AllJobReq`,
++      'Recruit JobReq/AllJobReq',
++    ),
+ };
+diff --git a/src/types/hr/reports.ts b/src/types/hr/reports.ts
+index ac33a3f..245a39a 100644
+--- a/src/types/hr/reports.ts
++++ b/src/types/hr/reports.ts
+@@ -4,10 +4,12 @@ export interface HrReportEnvelope {
+   upstreamSuccess: boolean;
+   message?: string | null;
+   data?: unknown;
++  build?: string;
+ }
+ 
+ export interface HrReportsSummaryDto {
+   generatedAt: string;
++  build?: string;
+   employees: HrReportEnvelope;
+   attendance: HrReportEnvelope;
+   leave: HrReportEnvelope;
+-- 
+2.43.0
+

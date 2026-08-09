@@ -17,19 +17,10 @@ public class HrReportService(
     private static readonly TimeSpan DomainBudget = TimeSpan.FromSeconds(6);
 
     public Task<HrReportEnvelope> GetEmployeeReportAsync(CancellationToken ct = default) =>
-        WithBudget(async token =>
-        {
-            // EmpExp is proven fast via gateway in Postman — do NOT use Employee/stats.
-            var experience = FetchAsync("employees", "hrm/profile/v1/EmpExp/AllEmpExp", token);
-            var education = FetchAsync("employees", "hrm/profile/v1/EmpEdu/AllEmpEdu", token);
-            await Task.WhenAll(experience, education);
-            var exp = await experience;
-            var edu = await education;
-            var ok = exp.UpstreamSuccess || edu.UpstreamSuccess;
-            return Envelope("employees", ok,
-                ok ? "OK" : JoinMessages(exp.Message, edu.Message),
-                new { experience = exp.Data, education = edu.Data });
-        }, "employees", ct);
+        // Single proven Postman path: /hrm/profile/v1/Employee/stats
+        WithBudget(
+            token => FetchAsync("employees", "hrm/profile/v1/Employee/stats", token),
+            "employees", ct);
 
     public Task<HrReportEnvelope> GetAttendanceReportAsync(int? year, int? month, DateTime? date, CancellationToken ct = default)
     {

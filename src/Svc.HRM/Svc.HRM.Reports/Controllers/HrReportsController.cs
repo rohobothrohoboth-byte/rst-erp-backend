@@ -24,7 +24,7 @@ public class HrReportsController(IHrReportService reports, IConfiguration config
         mode = "gateway-upstreams",
         serviceHost = config["ServiceHost"],
         gatewayHttp = config["ServiceUrls:GatewayHttp"],
-        employeePath = "hrm/profile/v1/EmpExp/AllEmpExp",
+        employeePath = "hrm/profile/v1/Employee/stats",
         httpClientTimeoutSeconds = 5,
         domainBudgetSeconds = 6
     });
