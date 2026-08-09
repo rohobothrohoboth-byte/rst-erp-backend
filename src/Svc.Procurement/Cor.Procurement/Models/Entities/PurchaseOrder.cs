@@ -67,15 +67,15 @@ public class PurchaseOrder : BaseEntity
     public DateTime? DeliveredDate { get; set; }
     public DateTime? CancelledDate { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public new bool IsDeleted { get; set; }
 
-    public DateTime DateAdd { get; set; }
+    public new DateTime DateAdd { get; set; }
 
-    public DateTime? DateMod { get; set; }
+    public new DateTime? DateMod { get; set; }
 
-    public string? RowVersion { get; set; }
+    public new string? RowVersion { get; set; }
 
-    public Guid? PeriodId { get; set; }
+    public new Guid? PeriodId { get; set; }
 
     // ============================================================
     // ✅ NAVIGATION PROPERTIES
@@ -88,7 +88,7 @@ public class PurchaseOrder : BaseEntity
     public virtual Requisition? Requisition { get; set; }
 
     [ForeignKey(nameof(PeriodId))]
-    public virtual FinancialPeriod? Period { get; set; }
+    public new virtual FinancialPeriod? Period { get; set; }
 
     public virtual ICollection<PurchaseOrderLine> Lines { get; set; } = new List<PurchaseOrderLine>();
 }

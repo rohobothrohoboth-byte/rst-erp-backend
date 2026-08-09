@@ -22,7 +22,7 @@ public class ConsolidationReport : BaseEntity
     public string? Type { get; set; } // 'Financial' | 'Management' | 'Custom' | 'Compliance'
 
     [MaxLength(50)]
-    public string? Period { get; set; } // 'Monthly' | 'Quarterly' | 'Yearly' | 'Custom'
+    public new string? Period { get; set; } // 'Monthly' | 'Quarterly' | 'Yearly' | 'Custom'
 
     public Guid? ConsolidationGroupId { get; set; }
 

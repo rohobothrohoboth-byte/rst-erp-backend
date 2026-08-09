@@ -74,12 +74,12 @@ public class BankTransaction : BaseEntity
     public string? MetadataJson { get; set; }
 
     // ✅ PeriodId - IMPORTANT for tracking which period the transaction belongs to
-    public Guid? PeriodId { get; set; }
+    public new Guid? PeriodId { get; set; }
 
     // Navigation
     [ForeignKey(nameof(BankAccountId))]
     public virtual BankAccount? BankAccount { get; set; }
 
     [ForeignKey(nameof(PeriodId))]
-    public virtual FinancialPeriod? Period { get; set; }
+    public new virtual FinancialPeriod? Period { get; set; }
 }

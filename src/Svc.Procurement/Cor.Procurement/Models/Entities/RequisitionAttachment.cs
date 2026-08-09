@@ -13,9 +13,9 @@ public class RequisitionAttachment : BaseEntity
     public string? Description { get; set; }
     public DateTime UploadedAt { get; set; }
     public string? UploadedBy { get; set; }
-    public bool IsDeleted { get; set; }
-    public DateTime DateAdd { get; set; }
-    public DateTime? DateMod { get; set; }
+    public new bool IsDeleted { get; set; }
+    public new DateTime DateAdd { get; set; }
+    public new DateTime? DateMod { get; set; }
 
     // Navigation
     public virtual Requisition Requisition { get; set; } = null!;

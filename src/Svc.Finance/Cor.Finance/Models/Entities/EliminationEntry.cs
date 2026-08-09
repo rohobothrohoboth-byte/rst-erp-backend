@@ -47,7 +47,7 @@ public class EliminationEntry : BaseEntity
     public Guid? ConsolidationGroupId { get; set; }
 
     [MaxLength(50)]
-    public string? Period { get; set; }
+    public new string? Period { get; set; }
 
     public DateTime? PostedAt { get; set; }
 

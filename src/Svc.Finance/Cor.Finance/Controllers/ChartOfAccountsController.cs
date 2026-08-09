@@ -83,8 +83,6 @@ public class ChartOfAccountsController : BaseApiController
     /// <summary>
     /// Get chart of accounts hierarchy (CACHED)
     /// </summary>
-    /// Get chart of accounts hierarchy (CACHED)
-       /// </summary>
        [HttpGet("Hierarchy")]
        [ProducesResponseType(typeof(List<ChartOfAccountsHierarchyDto>), StatusCodes.Status200OK)]
        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]

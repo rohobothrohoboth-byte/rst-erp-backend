@@ -62,14 +62,14 @@ public class Requisition : BaseEntity
     [MaxLength(50)]
     public string? PurchaseOrderNumber { get; set; }
 
-    public bool IsDeleted { get; set; }
+    public new bool IsDeleted { get; set; }
 
-    public DateTime DateAdd { get; set; }
+    public new DateTime DateAdd { get; set; }
 
-    public DateTime? DateMod { get; set; }
+    public new DateTime? DateMod { get; set; }
 
     [MaxLength(50)]
-    public string? RowVersion { get; set; }
+    public new string? RowVersion { get; set; }
 
     // ============================================================
     // ✅ NAVIGATION PROPERTIES

@@ -15,7 +15,7 @@ public class TaxReturn : BaseEntity
     public string? TaxType { get; set; } // 'VAT' | 'WHT' | 'Corporate' | 'Payroll'
 
     [MaxLength(50)]
-    public string? Period { get; set; } // 'Monthly' | 'Quarterly' | 'Annually'
+    public new string? Period { get; set; } // 'Monthly' | 'Quarterly' | 'Annually'
 
     [MaxLength(10)]
     public string? FiscalYear { get; set; }

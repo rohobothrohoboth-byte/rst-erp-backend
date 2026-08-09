@@ -12,9 +12,9 @@ public class RequisitionApproval : BaseEntity
     public string? Comments { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public int ApprovalLevel { get; set; }
-    public bool IsDeleted { get; set; }
-    public DateTime DateAdd { get; set; }
-    public DateTime? DateMod { get; set; }
+    public new bool IsDeleted { get; set; }
+    public new DateTime DateAdd { get; set; }
+    public new DateTime? DateMod { get; set; }
 
     // Navigation
     public virtual Requisition Requisition { get; set; } = null!;

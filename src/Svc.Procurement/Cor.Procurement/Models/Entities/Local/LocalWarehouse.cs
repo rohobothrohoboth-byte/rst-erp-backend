@@ -45,6 +45,6 @@ public class LocalWarehouse : LocalBaseEntity
     public bool IsActive { get; set; } = true;
 
     // Local copy tracking
-    public DateTime? SyncedAt { get; set; }
+    public new DateTime? SyncedAt { get; set; }
     public Guid? SourceId { get; set; }
 }
