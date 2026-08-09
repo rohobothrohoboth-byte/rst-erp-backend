@@ -1,15 +1,36 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Svc.HRM.Reports.Models.DTOs;
 using Svc.HRM.Reports.Services;
 
 namespace Svc.HRM.Reports.Controllers;
 
 [ApiController]
+[Authorize]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/reports")]
-public class HrReportsController(IHrReportService reports) : ControllerBase
+[RequestTimeout(10000)] // hard stop at 10s so Gateway/UI never wait 30s+
+public class HrReportsController(IHrReportService reports, IConfiguration config) : ControllerBase
 {
+    /// <summary>Unauthenticated probe so Postman can confirm the running binary.</summary>
+    [AllowAnonymous]
+    [HttpGet("build")]
+    [RequestTimeout(3000)]
+    public IActionResult Build() => Ok(new
+    {
+        build = ReportsBuild.Id,
+        mode = "gateway-upstreams",
+        serviceHost = config["ServiceHost"],
+        gatewayHttp = config["ServiceUrls:GatewayHttp"],
+        employeePath = "hrm/profile/v1/Employee/stats",
+        httpClientTimeoutSeconds = 5,
+        domainBudgetSeconds = 6
+    });
+
     [HttpGet("summary")]
+    [RequestTimeout(12000)]
     public async Task<IActionResult> Summary(CancellationToken ct) =>
         Ok(await reports.GetSummaryAsync(ct));
 

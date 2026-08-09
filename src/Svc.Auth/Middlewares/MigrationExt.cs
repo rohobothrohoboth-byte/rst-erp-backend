@@ -152,17 +152,53 @@ public static class MigrationExt
 
          var existingMenus = await dbContext.PerMenu
              .IgnoreQueryFilters()
-             .Select(x => new { x.Key, x.IsDeleted })
+             .Where(x => !x.IsDeleted)
              .ToListAsync();
 
-         var existingKeys = existingMenus.Where(x => !x.IsDeleted).Select(x => x.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+         var existingByKey = existingMenus
+             .GroupBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
          var seedItems = SeedPerList.GetPerMenu().ToList();
          logger.LogInformation($"Found {seedItems.Count} menus in seed data");
 
          var itemsToProcess = seedItems
-             .Where(x => !existingKeys.Contains(x.Key))
+             .Where(x => !existingByKey.ContainsKey(x.Key))
              .ToList();
+
+         // Keep Path/Label/Icon/Order in sync for menus already seeded (e.g. HR reports/training hubs).
+         var updated = 0;
+         foreach (var seed in seedItems)
+         {
+             if (!existingByKey.TryGetValue(seed.Key, out var row)) continue;
+             var changed = false;
+             if (!string.Equals(row.Path ?? "", seed.Path ?? "", StringComparison.Ordinal))
+             {
+                 row.Path = seed.Path ?? "";
+                 changed = true;
+             }
+             if (!string.Equals(row.Label ?? "", seed.Label ?? "", StringComparison.Ordinal))
+             {
+                 row.Label = seed.Label ?? "";
+                 changed = true;
+             }
+             if (!string.Equals(row.Icon ?? "", seed.Icon ?? "", StringComparison.Ordinal))
+             {
+                 row.Icon = seed.Icon ?? "";
+                 changed = true;
+             }
+             if (row.Order != seed.Order)
+             {
+                 row.Order = seed.Order;
+                 changed = true;
+             }
+             if (changed) updated++;
+         }
+         if (updated > 0)
+         {
+             await dbContext.SaveChangesAsync();
+             logger.LogInformation("Updated {Count} existing menu rows from seed data", updated);
+         }
 
          if (itemsToProcess.Count == 0)
          {

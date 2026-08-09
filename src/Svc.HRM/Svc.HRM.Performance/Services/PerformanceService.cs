@@ -198,8 +198,16 @@ public class PerformanceService : IPerformanceService
     {
         var e = await _db.Reviews.FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new KeyNotFoundException($"Review {id} not found");
+
+        // Allow approving Draft/Rejected by auto-submitting first (common UI flow).
+        if (e.Status == ReviewStatus.Draft.ToString() || e.Status == ReviewStatus.Rejected.ToString())
+        {
+            e.Status = ReviewStatus.Submitted.ToString();
+            e.SubmittedAt = DateTime.UtcNow;
+        }
+
         if (e.Status != ReviewStatus.Submitted.ToString() && e.Status != ReviewStatus.InReview.ToString())
-            throw new InvalidOperationException("Only Submitted/InReview reviews can be approved.");
+            throw new InvalidOperationException($"Only Draft/Submitted/InReview reviews can be approved. Current status: {e.Status}.");
         e.Status = ReviewStatus.Approved.ToString();
         e.ApprovedAt = DateTime.UtcNow;
         e.ReviewerId = dto.ReviewerId ?? e.ReviewerId;
@@ -215,8 +223,15 @@ public class PerformanceService : IPerformanceService
     {
         var e = await _db.Reviews.FirstOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new KeyNotFoundException($"Review {id} not found");
+
+        if (e.Status == ReviewStatus.Draft.ToString())
+        {
+            e.Status = ReviewStatus.Submitted.ToString();
+            e.SubmittedAt = DateTime.UtcNow;
+        }
+
         if (e.Status != ReviewStatus.Submitted.ToString() && e.Status != ReviewStatus.InReview.ToString())
-            throw new InvalidOperationException("Only Submitted/InReview reviews can be rejected.");
+            throw new InvalidOperationException($"Only Draft/Submitted/InReview reviews can be rejected. Current status: {e.Status}.");
         e.Status = ReviewStatus.Rejected.ToString();
         e.RejectionReason = dto.RejectionReason ?? dto.Comments;
         e.ReviewerId = dto.ReviewerId ?? e.ReviewerId;

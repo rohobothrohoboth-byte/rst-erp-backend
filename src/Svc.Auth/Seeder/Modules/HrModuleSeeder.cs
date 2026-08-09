@@ -21,7 +21,7 @@ public static class HrModuleSeeder
             new() { ModKey = "mod.hrm", Key = "hr.emp.performance", Label = "Performance Reviews", Path = "/hr/employees/performance", Icon = "TrendingUp", ParKey = "hr.emp", IsChild = true, Order = 6 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.promotion", Label = "Promotions", Path = "/hr/employees/promotions", Icon = "ArrowUp", ParKey = "hr.emp", IsChild = true, Order = 7 },
             new() { ModKey = "mod.hrm", Key = "hr.emp.transfer", Label = "Transfers", Path = "/hr/employees/transfers", Icon = "ArrowLeftRight", ParKey = "hr.emp", IsChild = true, Order = 8 },
-            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/terminations", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 9 },
+            new() { ModKey = "mod.hrm", Key = "hr.emp.termination", Label = "Terminations", Path = "/hr/employees/termination", Icon = "UserX", ParKey = "hr.emp", IsChild = true, Order = 9 },
 
             // ===== RECRUITMENT =====
             new() { ModKey = "mod.hrm", Key = "hr.recruit", Label = "Recruitment", Path = "", Icon = "ClipboardCheck", ParKey = "", IsChild = false, Order = 3 },
@@ -94,14 +94,16 @@ public static class HrModuleSeeder
             new() { ModKey = "mod.hrm", Key = "hr.payroll.tax", Label = "Tax Configurations", Path = "/hr/payroll/tax", Icon = "Calculator", ParKey = "hr.payroll", IsChild = true, Order = 4 },
 
             // ===== TRAINING =====
-            new() { ModKey = "mod.hrm", Key = "hr.training", Label = "Training & Development", Path = "", Icon = "GraduationCap", ParKey = "", IsChild = false, Order = 7 },
+            new() { ModKey = "mod.hrm", Key = "hr.training", Label = "Training & Development", Path = "/hr/training", Icon = "GraduationCap", ParKey = "", IsChild = false, Order = 7 },
+            new() { ModKey = "mod.hrm", Key = "hr.training.overview", Label = "Training Hub", Path = "/hr/training", Icon = "LayoutDashboard", ParKey = "hr.training", IsChild = true, Order = 0 },
             new() { ModKey = "mod.hrm", Key = "hr.training.list", Label = "Training Programs", Path = "/hr/training/programs", Icon = "List", ParKey = "hr.training", IsChild = true, Order = 1 },
             new() { ModKey = "mod.hrm", Key = "hr.training.calendar", Label = "Training Calendar", Path = "/hr/training/calendar", Icon = "Calendar", ParKey = "hr.training", IsChild = true, Order = 2 },
             new() { ModKey = "mod.hrm", Key = "hr.training.feedback", Label = "Feedback", Path = "/hr/training/feedback", Icon = "MessageSquare", ParKey = "hr.training", IsChild = true, Order = 3 },
             new() { ModKey = "mod.hrm", Key = "hr.training.certificate", Label = "Certifications", Path = "/hr/training/certificates", Icon = "Award", ParKey = "hr.training", IsChild = true, Order = 4 },
 
             // ===== HR REPORTS =====
-            new() { ModKey = "mod.hrm", Key = "hr.reports", Label = "HR Reports", Path = "", Icon = "FileSpreadsheet", ParKey = "", IsChild = false, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.reports", Label = "HR Reports", Path = "/hr/reports", Icon = "FileSpreadsheet", ParKey = "", IsChild = false, Order = 8 },
+            new() { ModKey = "mod.hrm", Key = "hr.reports.summary", Label = "Reports Hub", Path = "/hr/reports", Icon = "LayoutDashboard", ParKey = "hr.reports", IsChild = true, Order = 0 },
             new() { ModKey = "mod.hrm", Key = "hr.reports.employee", Label = "Employee Reports", Path = "/hr/reports/employees", Icon = "Users", ParKey = "hr.reports", IsChild = true, Order = 1 },
             new() { ModKey = "mod.hrm", Key = "hr.reports.attendance", Label = "Attendance Reports", Path = "/hr/reports/attendance", Icon = "Clock", ParKey = "hr.reports", IsChild = true, Order = 2 },
             new() { ModKey = "mod.hrm", Key = "hr.reports.leave", Label = "Leave Reports", Path = "/hr/reports/leave", Icon = "CalendarDays", ParKey = "hr.reports", IsChild = true, Order = 3 },

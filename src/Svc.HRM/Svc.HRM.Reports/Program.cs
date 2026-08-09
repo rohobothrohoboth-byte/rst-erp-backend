@@ -48,7 +48,11 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Host.UseSerilog();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddApiVersioning(options =>
@@ -84,6 +88,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -95,28 +101,26 @@ builder.Services.AddCors(options =>
     });
 });
 
-var sslHandler = new HttpClientHandler
+// Upstream via HTTP Gateway — same URLs that work in Postman.
+var gatewayHttp = GetConfig("ServiceUrls:GatewayHttp", $"http://{serviceHost}:5000");
+if (!gatewayHttp.EndsWith('/')) gatewayHttp += "/";
+
+builder.Services.AddHttpClient("gateway", client =>
 {
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-};
-
-void AddUpstream(string name, string url)
+    client.BaseAddress = new Uri(gatewayHttp);
+    client.Timeout = TimeSpan.FromSeconds(5);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
 {
-    builder.Services.AddHttpClient(name, client =>
-    {
-        client.BaseAddress = new Uri(url);
-        client.Timeout = TimeSpan.FromSeconds(60);
-        client.DefaultRequestHeaders.Add("Accept", "application/json");
-        client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
-    }).ConfigurePrimaryHttpMessageHandler(() => sslHandler);
-}
+    ConnectTimeout = TimeSpan.FromSeconds(2),
+    AllowAutoRedirect = false,
+    PooledConnectionLifetime = TimeSpan.FromMinutes(2)
+})
+.AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 
-AddUpstream("profile", GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004"));
-AddUpstream("attendance", GetConfig("ServiceUrls:AttendanceApi", "https://localhost:7011"));
-AddUpstream("leave", GetConfig("ServiceUrls:HrmLeaveApi", GetConfig("ServiceUrls:LeaveApi", "https://localhost:7003")));
-AddUpstream("payroll", GetConfig("ServiceUrls:PayrollApi", "https://localhost:7010"));
-AddUpstream("recruit", GetConfig("ServiceUrls:HrmRecruitApi", GetConfig("ServiceUrls:HrmRecruit", "https://localhost:7005")));
-
+builder.Services.AddRequestTimeouts();
 builder.Services.AddScoped<IHrReportService, HrReportService>();
 builder.Services.AddHealthChecks();
 
@@ -127,9 +131,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseCors("AllowAll");
+app.UseRequestTimeouts();
+app.UseMiddleware<Svc.HRM.Reports.Middleware.ApiExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
-Console.WriteLine($"HR Reports Service starting on https://0.0.0.0:{port}");
+
+Console.WriteLine("====================================================");
+Console.WriteLine($" HR REPORTS BUILD: {Svc.HRM.Reports.Models.DTOs.ReportsBuild.Id}");
+Console.WriteLine($" ServiceHost: {serviceHost}");
+Console.WriteLine($" Upstream gateway: {gatewayHttp}");
+Console.WriteLine($" Profile: {GetConfig("ServiceUrls:HrmProApi")}");
+Console.WriteLine($" Listening: https://0.0.0.0:{port}");
+Console.WriteLine(" Upstream URLs must use the LAN IP (ServiceHost), not localhost.");
+Console.WriteLine("====================================================");
 await app.RunAsync();
