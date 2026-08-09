@@ -20,7 +20,6 @@ public class EventConsumer : BackgroundService
     private IConnection? _connection;
     private IModel? _channel;
     private readonly object _lock = new object();
-    private bool _isInitialized = false;
     private bool _isEnabled;
 
     public EventConsumer(
@@ -77,7 +76,6 @@ public class EventConsumer : BackgroundService
             _channel.QueueBind("hrm.sync.queue", "core.events", "core.#");
             _channel.QueueBind("hrm.sync.queue", "hrm.events", "hrm.#");
 
-            _isInitialized = true;
             _logger.LogInformation("✅ EventConsumer connected to RabbitMQ for HRM.Leave");
         }
         catch (Exception ex)
