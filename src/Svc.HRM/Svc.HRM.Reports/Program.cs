@@ -109,19 +109,25 @@ if (!gatewayHttp.EndsWith('/')) gatewayHttp += "/";
 builder.Services.AddHttpClient("gateway", client =>
 {
     client.BaseAddress = new Uri(gatewayHttp);
-    client.Timeout = TimeSpan.FromSeconds(8);
+    client.Timeout = TimeSpan.FromSeconds(5);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-Service-Name", "HrReportsService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
 {
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-    AllowAutoRedirect = false
+    ConnectTimeout = TimeSpan.FromSeconds(2),
+    AllowAutoRedirect = false,
+    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+    SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+    {
+        RemoteCertificateValidationCallback = static (_, _, _, _) => true
+    }
 })
 .AddHttpMessageHandler<Svc.HRM.Reports.Services.ForwardAuthHandler>();
 
 Console.WriteLine($"HR Reports upstream gateway: {gatewayHttp}");
 
+builder.Services.AddRequestTimeouts();
 builder.Services.AddScoped<IHrReportService, HrReportService>();
 builder.Services.AddHealthChecks();
 
@@ -132,6 +138,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseCors("AllowAll");
+app.UseRequestTimeouts();
 app.UseMiddleware<Svc.HRM.Reports.Middleware.ApiExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

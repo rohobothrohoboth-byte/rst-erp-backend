@@ -5,46 +5,35 @@ using Svc.HRM.Reports.Models.DTOs;
 namespace Svc.HRM.Reports.Services;
 
 /// <summary>
-/// Aggregates HR reports by calling upstream APIs through the Gateway (same paths as the UI/Postman).
-/// Each upstream call is hard-capped so the Reports API always returns quickly.
+/// Aggregates HR reports via the HTTP Gateway (same paths as UI/Postman).
+/// Uses Task.WhenAny hard budgets so the API always returns even if HttpClient ignore cancel.
 /// </summary>
 public class HrReportService(
     IHttpClientFactory httpClientFactory,
     ILogger<HrReportService> logger) : IHrReportService
 {
     private const string GatewayClient = "gateway";
-    private static readonly TimeSpan UpstreamTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan DomainBudget = TimeSpan.FromSeconds(7);
+    private static readonly TimeSpan UpstreamTimeout = TimeSpan.FromSeconds(4);
+    private static readonly TimeSpan DomainBudget = TimeSpan.FromSeconds(6);
 
-    public async Task<HrReportEnvelope> GetEmployeeReportAsync(CancellationToken ct = default)
-    {
-        // Only proven/fast Profile endpoints (Postman-verified EmpExp). Skip heavy Employee/stats.
-        return await WithBudget(async token =>
+    public Task<HrReportEnvelope> GetEmployeeReportAsync(CancellationToken ct = default) =>
+        WithBudget(async token =>
         {
             var experience = FetchAsync("employees", "hrm/profile/v1/EmpExp/AllEmpExp", token);
             var education = FetchAsync("employees", "hrm/profile/v1/EmpEdu/AllEmpEdu", token);
-            var repo = FetchAsync("employees", "hrm/profile/v1/EmpListRepo/EmpDbRepo", token);
-            await Task.WhenAll(experience, education, repo);
+            await Task.WhenAll(experience, education);
 
-            var parts = new[] { await experience, await education, await repo };
-            var ok = parts.Any(p => p.UpstreamSuccess);
+            var exp = await experience;
+            var edu = await education;
+            var ok = exp.UpstreamSuccess || edu.UpstreamSuccess;
             return new HrReportEnvelope
             {
                 Domain = "employees",
                 UpstreamSuccess = ok,
-                Message = ok
-                    ? "OK"
-                    : string.Join(" | ", parts.Select(p => p.Message).Where(m => !string.IsNullOrWhiteSpace(m)).Distinct()),
-                Data = new
-                {
-                    experience = (await experience).Data,
-                    education = (await education).Data,
-                    repository = (await repo).Data,
-                    upstream = parts.Select(p => new { p.Message, p.UpstreamSuccess })
-                }
+                Message = ok ? "OK" : string.Join(" | ", new[] { exp.Message, edu.Message }.Where(m => !string.IsNullOrWhiteSpace(m))),
+                Data = new { experience = exp.Data, education = edu.Data }
             };
         }, "employees", ct);
-    }
 
     public Task<HrReportEnvelope> GetAttendanceReportAsync(int? year, int? month, DateTime? date, CancellationToken ct = default)
     {
@@ -72,29 +61,11 @@ public class HrReportService(
             token => FetchAsync("payroll", "payroll/reports/payroll-summary", token),
             "payroll", ct);
 
-    public async Task<HrReportEnvelope> GetRecruitmentReportAsync(CancellationToken ct = default)
-    {
-        return await WithBudget(async token =>
-        {
-            var offers = FetchAsync("recruitment", "hrm/recruit/v1/JobOffer/All", token);
-            var reqs = FetchAsync("recruitment", "hrm/recruit/v1/JobReq/AllJobReq", token);
-            var interviews = FetchAsync("recruitment", "hrm/recruit/v1/Interview/All", token);
-            await Task.WhenAll(offers, reqs, interviews);
-
-            var o = await offers;
-            var r = await reqs;
-            var i = await interviews;
-            var ok = o.UpstreamSuccess || r.UpstreamSuccess || i.UpstreamSuccess;
-
-            return new HrReportEnvelope
-            {
-                Domain = "recruitment",
-                UpstreamSuccess = ok,
-                Message = ok ? "OK" : "Recruitment upstream endpoints unavailable",
-                Data = new { offers = o.Data, requisitions = r.Data, interviews = i.Data }
-            };
-        }, "recruitment", ct);
-    }
+    public Task<HrReportEnvelope> GetRecruitmentReportAsync(CancellationToken ct = default) =>
+        // Single lightweight call first — fan-out of 3× All* endpoints was too slow.
+        WithBudget(
+            token => FetchAsync("recruitment", "hrm/recruit/v1/JobReq/AllJobReq", token),
+            "recruitment", ct);
 
     public async Task<HrReportsSummaryDto> GetSummaryAsync(CancellationToken ct = default)
     {
@@ -115,26 +86,34 @@ public class HrReportService(
         };
     }
 
+    /// <summary>
+    /// Absolute wall-clock budget. Does not await abandoned HTTP calls after timeout.
+    /// </summary>
     private async Task<HrReportEnvelope> WithBudget(
         Func<CancellationToken, Task<HrReportEnvelope>> action,
         string domain,
         CancellationToken ct)
     {
         using var budgetCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        budgetCts.CancelAfter(DomainBudget);
-        try
+        var work = action(budgetCts.Token);
+        var winner = await Task.WhenAny(work, Task.Delay(DomainBudget, CancellationToken.None));
+
+        if (winner != work)
         {
-            return await action(budgetCts.Token);
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            logger.LogWarning("HR report domain {Domain} exceeded {Budget}s budget", domain, DomainBudget.TotalSeconds);
+            budgetCts.Cancel();
+            logger.LogWarning("HR report domain {Domain} hard-stopped after {Budget}s", domain, DomainBudget.TotalSeconds);
+            // Do not await `work` — it may hang; abandon it.
             return new HrReportEnvelope
             {
                 Domain = domain,
                 UpstreamSuccess = false,
-                Message = $"Report timed out after {DomainBudget.TotalSeconds:0}s"
+                Message = $"Report timed out after {DomainBudget.TotalSeconds:0}s (gateway upstream slow/down)"
             };
+        }
+
+        try
+        {
+            return await work;
         }
         catch (Exception ex)
         {
@@ -153,9 +132,7 @@ public class HrReportService(
             timeoutCts.CancelAfter(UpstreamTimeout);
 
             using var response = await client.GetAsync(gatewayPath, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
-            await using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token);
-            using var reader = new StreamReader(stream);
-            var body = await reader.ReadToEndAsync(timeoutCts.Token);
+            var body = await response.Content.ReadAsStringAsync(timeoutCts.Token);
 
             object? data = null;
             if (!string.IsNullOrWhiteSpace(body))
@@ -164,10 +141,9 @@ public class HrReportService(
                 catch { data = body; }
             }
 
-            var baseUrl = client.BaseAddress?.ToString() ?? "";
             logger.LogInformation(
                 "HR report {Domain} GET {Base}{Path} => {Status} in {Elapsed}ms",
-                domain, baseUrl, gatewayPath, (int)response.StatusCode, sw.ElapsedMilliseconds);
+                domain, client.BaseAddress, gatewayPath, (int)response.StatusCode, sw.ElapsedMilliseconds);
 
             return new HrReportEnvelope
             {
@@ -179,14 +155,14 @@ public class HrReportService(
                 Data = data
             };
         }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
-            logger.LogWarning("HR report {Domain} timed out after {Timeout}s via {Path}", domain, UpstreamTimeout.TotalSeconds, gatewayPath);
+            logger.LogWarning("HR report {Domain} canceled/timed out via {Path} after {Elapsed}ms", domain, gatewayPath, sw.ElapsedMilliseconds);
             return new HrReportEnvelope
             {
                 Domain = domain,
                 UpstreamSuccess = false,
-                Message = $"Upstream timeout after {UpstreamTimeout.TotalSeconds:0}s ({gatewayPath})"
+                Message = $"Upstream timeout ({gatewayPath})"
             };
         }
         catch (Exception ex)

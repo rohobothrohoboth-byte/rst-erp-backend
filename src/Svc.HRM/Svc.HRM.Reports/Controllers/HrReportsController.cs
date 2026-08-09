@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using Svc.HRM.Reports.Services;
 
@@ -9,9 +10,11 @@ namespace Svc.HRM.Reports.Controllers;
 [Authorize]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/reports")]
+[RequestTimeout(10000)] // hard stop at 10s so Gateway/UI never wait 30s+
 public class HrReportsController(IHrReportService reports) : ControllerBase
 {
     [HttpGet("summary")]
+    [RequestTimeout(12000)]
     public async Task<IActionResult> Summary(CancellationToken ct) =>
         Ok(await reports.GetSummaryAsync(ct));
 
