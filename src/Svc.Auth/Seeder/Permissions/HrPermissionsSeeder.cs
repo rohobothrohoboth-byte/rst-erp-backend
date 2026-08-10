@@ -185,6 +185,21 @@ public static class HrPermissionsSeeder
 
             new() { MenuKey = "hr.reports.recruitment", Key = "hr.reports.recruitment.view", Desc = "Recruitment Reports" },
             new() { MenuKey = "hr.reports.recruitment", Key = "hr.reports.recruitment.export", Desc = "Export Recruitment Reports" },
+
+            // ============================================================
+            // BASELINE PERMISSIONS (menus that previously had no actions)
+            // ============================================================
+            new() { MenuKey = "hr.emp.list", Key = "hr.emp.list.view", Desc = "View Employee List" },
+            new() { MenuKey = "hr.emp.list", Key = "hr.emp.list.export", Desc = "Export Employee List" },
+            new() { MenuKey = "hr.emp.add", Key = "hr.emp.add.view", Desc = "Access Add Employee" },
+            new() { MenuKey = "hr.emp.add", Key = "hr.emp.add.add", Desc = "Create Employee" },
+            new() { MenuKey = "hr.recruit", Key = "hr.recruit.view", Desc = "Access Recruitment" },
+            new() { MenuKey = "hr.recruit.requisition.create", Key = "hr.recruit.requisition.create.view", Desc = "Access Create Requisition" },
+            new() { MenuKey = "hr.recruit.requisition.create", Key = "hr.recruit.requisition.create.add", Desc = "Create Requisition" },
+            new() { MenuKey = "hr.recruit.posting.create", Key = "hr.recruit.posting.create.view", Desc = "Access Create Posting" },
+            new() { MenuKey = "hr.recruit.posting.create", Key = "hr.recruit.posting.create.add", Desc = "Create Posting" },
+            new() { MenuKey = "hr.recruit.workforce.create", Key = "hr.recruit.workforce.create.view", Desc = "Access Create Plan" },
+            new() { MenuKey = "hr.recruit.workforce.create", Key = "hr.recruit.workforce.create.add", Desc = "Create Workforce Plan" },
         };
     }
 }

@@ -226,8 +226,8 @@ public static class CrmPermissionsSeeder
             new() { MenuKey = "crm.marketing.sms", Key = "crm.marketing.sms.list", Desc = "Manage SMS Lists" },
 
             // Add Campaign (child of Marketing)
-            new() { MenuKey = "crm.marketing.add", Key = "crm.marketing.add.view", Desc = "View Add Campaign" },
-            new() { MenuKey = "crm.marketing.add", Key = "crm.marketing.add.create", Desc = "Create New Campaign" },
+            new() { MenuKey = "crm.marketing", Key = "crm.marketing.add.view", Desc = "View Add Campaign" },
+            new() { MenuKey = "crm.marketing", Key = "crm.marketing.add.create", Desc = "Create New Campaign" },
 
             // ============================================================
             // CUSTOMER SUPPORT - Parent Menu
@@ -254,19 +254,19 @@ public static class CrmPermissionsSeeder
             new() { MenuKey = "crm.support.tickets", Key = "crm.support.tickets.satisfaction", Desc = "Satisfaction Survey" },
 
             // Knowledge Base
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.view", Desc = "View Knowledge Base" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.add", Desc = "Add Article" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.mod", Desc = "Edit Article" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.del", Desc = "Delete Article" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.publish", Desc = "Publish Article" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.category", Desc = "Manage Categories" },
-            new() { MenuKey = "crm.support.knowledge", Key = "crm.support.knowledge.search", Desc = "Search Articles" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.view", Desc = "View Knowledge Base" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.add", Desc = "Add Article" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.mod", Desc = "Edit Article" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.del", Desc = "Delete Article" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.publish", Desc = "Publish Article" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.category", Desc = "Manage Categories" },
+            new() { MenuKey = "crm.support", Key = "crm.support.knowledge.search", Desc = "Search Articles" },
 
             // Customer Feedback
-            new() { MenuKey = "crm.support.feedback", Key = "crm.support.feedback.view", Desc = "View Feedback" },
-            new() { MenuKey = "crm.support.feedback", Key = "crm.support.feedback.respond", Desc = "Respond to Feedback" },
-            new() { MenuKey = "crm.support.feedback", Key = "crm.support.feedback.export", Desc = "Export Feedback" },
-            new() { MenuKey = "crm.support.feedback", Key = "crm.support.feedback.analytics", Desc = "Feedback Analytics" },
+            new() { MenuKey = "crm.support", Key = "crm.support.feedback.view", Desc = "View Feedback" },
+            new() { MenuKey = "crm.support", Key = "crm.support.feedback.respond", Desc = "Respond to Feedback" },
+            new() { MenuKey = "crm.support", Key = "crm.support.feedback.export", Desc = "Export Feedback" },
+            new() { MenuKey = "crm.support", Key = "crm.support.feedback.analytics", Desc = "Feedback Analytics" },
 
             // ============================================================
             // ACTIVITIES
@@ -301,27 +301,72 @@ public static class CrmPermissionsSeeder
             new() { MenuKey = "crm.analytics.dashboard", Key = "crm.analytics.dashboard.export", Desc = "Export Analytics Dashboard" },
 
             // Sales Analytics
-            new() { MenuKey = "crm.analytics.sales", Key = "crm.analytics.sales.view", Desc = "View Sales Analytics" },
-            new() { MenuKey = "crm.analytics.sales", Key = "crm.analytics.sales.export", Desc = "Export Sales Analytics" },
-            new() { MenuKey = "crm.analytics.sales", Key = "crm.analytics.sales.revenue", Desc = "Revenue Analysis" },
-            new() { MenuKey = "crm.analytics.sales", Key = "crm.analytics.sales.pipeline", Desc = "Pipeline Analysis" },
-            new() { MenuKey = "crm.analytics.sales", Key = "crm.analytics.sales.forecast", Desc = "Forecast Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.sales.view", Desc = "View Sales Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.sales.export", Desc = "Export Sales Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.sales.revenue", Desc = "Revenue Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.sales.pipeline", Desc = "Pipeline Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.sales.forecast", Desc = "Forecast Analysis" },
 
             // Customer Analytics
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.view", Desc = "View Customer Analytics" },
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.export", Desc = "Export Customer Analytics" },
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.lifetime", Desc = "Lifetime Value" },
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.churn", Desc = "Churn Analysis" },
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.segmentation", Desc = "Customer Segmentation" },
-            new() { MenuKey = "crm.analytics.customer", Key = "crm.analytics.customer.satisfaction", Desc = "Customer Satisfaction" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.view", Desc = "View Customer Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.export", Desc = "Export Customer Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.lifetime", Desc = "Lifetime Value" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.churn", Desc = "Churn Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.segmentation", Desc = "Customer Segmentation" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.customer.satisfaction", Desc = "Customer Satisfaction" },
 
             // Marketing Analytics
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.view", Desc = "View Marketing Analytics" },
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.export", Desc = "Export Marketing Analytics" },
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.roi", Desc = "Campaign ROI" },
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.conversion", Desc = "Conversion Analysis" },
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.engagement", Desc = "Engagement Analysis" },
-            new() { MenuKey = "crm.analytics.marketing", Key = "crm.analytics.marketing.channel", Desc = "Channel Performance" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.view", Desc = "View Marketing Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.export", Desc = "Export Marketing Analytics" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.roi", Desc = "Campaign ROI" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.conversion", Desc = "Conversion Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.engagement", Desc = "Engagement Analysis" },
+            new() { MenuKey = "crm.analytics", Key = "crm.analytics.marketing.channel", Desc = "Channel Performance" },
+
+            // ============================================================
+            // BASELINE PERMISSIONS (menus that previously had no actions)
+            // ============================================================
+            new() { MenuKey = "crm.settings", Key = "crm.settings.view", Desc = "Access CRM Settings" },
+            new() { MenuKey = "crm.settings.crm", Key = "crm.settings.crm.view", Desc = "View General Settings" },
+            new() { MenuKey = "crm.settings.crm", Key = "crm.settings.crm.mod", Desc = "Edit General Settings" },
+            new() { MenuKey = "crm.settings.sources", Key = "crm.settings.sources.view", Desc = "View Lead Sources" },
+            new() { MenuKey = "crm.settings.sources", Key = "crm.settings.sources.add", Desc = "Create Lead Source" },
+            new() { MenuKey = "crm.settings.sources", Key = "crm.settings.sources.mod", Desc = "Edit Lead Source" },
+            new() { MenuKey = "crm.settings.sources", Key = "crm.settings.sources.del", Desc = "Delete Lead Source" },
+            new() { MenuKey = "crm.settings.statuses", Key = "crm.settings.statuses.view", Desc = "View Lead Statuses" },
+            new() { MenuKey = "crm.settings.statuses", Key = "crm.settings.statuses.add", Desc = "Create Lead Status" },
+            new() { MenuKey = "crm.settings.statuses", Key = "crm.settings.statuses.mod", Desc = "Edit Lead Status" },
+            new() { MenuKey = "crm.settings.statuses", Key = "crm.settings.statuses.del", Desc = "Delete Lead Status" },
+            new() { MenuKey = "crm.settings.routing", Key = "crm.settings.routing.view", Desc = "View Routing Rules" },
+            new() { MenuKey = "crm.settings.routing", Key = "crm.settings.routing.add", Desc = "Create Routing Rule" },
+            new() { MenuKey = "crm.settings.routing", Key = "crm.settings.routing.mod", Desc = "Edit Routing Rule" },
+            new() { MenuKey = "crm.settings.routing", Key = "crm.settings.routing.del", Desc = "Delete Routing Rule" },
+            new() { MenuKey = "crm.settings.scoring", Key = "crm.settings.scoring.view", Desc = "View Lead Scoring" },
+            new() { MenuKey = "crm.settings.scoring", Key = "crm.settings.scoring.add", Desc = "Create Scoring Rule" },
+            new() { MenuKey = "crm.settings.scoring", Key = "crm.settings.scoring.mod", Desc = "Edit Scoring Rule" },
+            new() { MenuKey = "crm.settings.scoring", Key = "crm.settings.scoring.del", Desc = "Delete Scoring Rule" },
+            new() { MenuKey = "crm.settings.templates", Key = "crm.settings.templates.view", Desc = "View Email Templates" },
+            new() { MenuKey = "crm.settings.templates", Key = "crm.settings.templates.add", Desc = "Create Email Template" },
+            new() { MenuKey = "crm.settings.templates", Key = "crm.settings.templates.mod", Desc = "Edit Email Template" },
+            new() { MenuKey = "crm.settings.templates", Key = "crm.settings.templates.del", Desc = "Delete Email Template" },
+            new() { MenuKey = "crm.marketing.campaigns.all", Key = "crm.marketing.campaigns.all.view", Desc = "View All Campaigns" },
+            new() { MenuKey = "crm.marketing.campaigns.add", Key = "crm.marketing.campaigns.add.view", Desc = "Access Create Campaign" },
+            new() { MenuKey = "crm.marketing.campaigns.add", Key = "crm.marketing.campaigns.add.add", Desc = "Create Campaign" },
+            new() { MenuKey = "crm.marketing.social", Key = "crm.marketing.social.view", Desc = "View Social Media" },
+            new() { MenuKey = "crm.marketing.social", Key = "crm.marketing.social.mod", Desc = "Manage Social Media" },
+            new() { MenuKey = "crm.realestate", Key = "crm.realestate.view", Desc = "Access Real Estate" },
+            new() { MenuKey = "crm.realestate.properties", Key = "crm.realestate.properties.view", Desc = "View Properties" },
+            new() { MenuKey = "crm.realestate.properties", Key = "crm.realestate.properties.add", Desc = "Create Property" },
+            new() { MenuKey = "crm.realestate.properties", Key = "crm.realestate.properties.mod", Desc = "Edit Property" },
+            new() { MenuKey = "crm.realestate.properties", Key = "crm.realestate.properties.del", Desc = "Delete Property" },
+            new() { MenuKey = "crm.realestate.transactions", Key = "crm.realestate.transactions.view", Desc = "View Transactions" },
+            new() { MenuKey = "crm.realestate.transactions", Key = "crm.realestate.transactions.add", Desc = "Create Transaction" },
+            new() { MenuKey = "crm.realestate.transactions", Key = "crm.realestate.transactions.mod", Desc = "Edit Transaction" },
+            new() { MenuKey = "crm.realestate.transactions", Key = "crm.realestate.transactions.del", Desc = "Delete Transaction" },
+            new() { MenuKey = "crm.realestate.commissions", Key = "crm.realestate.commissions.view", Desc = "View Commissions" },
+            new() { MenuKey = "crm.realestate.commissions", Key = "crm.realestate.commissions.add", Desc = "Create Commission" },
+            new() { MenuKey = "crm.realestate.commissions", Key = "crm.realestate.commissions.mod", Desc = "Edit Commission" },
+            new() { MenuKey = "crm.realestate.commissions", Key = "crm.realestate.commissions.del", Desc = "Delete Commission" },
         };
     }
 }
