@@ -1,3 +1,4 @@
+using Common;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -267,6 +268,38 @@ public static class MigrationExt
       }
   }
 
+
+    // Initialize the in-memory permission registry (PermissionMap.IndexMap) from
+    // the seeded permission keys so the JWT `ph` bitmask and [PerAuth] policies
+    // cover every real permission, not just the legacy static list. Keys are
+    // ordered deterministically so bit indices are stable across restarts.
+    public static async Task InitializePermissionRegistry(this IApplicationBuilder app)
+    {
+        using var scope = app.ApplicationServices.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            if (!await dbContext.Database.CanConnectAsync())
+            {
+                logger.LogWarning("Cannot connect to database for permission registry init");
+                return;
+            }
+
+            var keys = await dbContext.PerApi
+                .Where(a => !a.IsDeleted)
+                .Select(a => a.Key)
+                .ToListAsync();
+
+            PermissionMap.Initialize(keys);
+            logger.LogInformation($"Permission registry initialized with {PermissionMap.IndexMap.Count} permissions");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error initializing permission registry");
+        }
+    }
 
     // Helper method to seed everything in the correct order
     public static async Task SeedAllPermissions(this IApplicationBuilder app)

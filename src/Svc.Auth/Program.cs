@@ -433,6 +433,9 @@ if (app.Environment.IsDevelopment())
         await app.SeedPerAccess();
         Console.WriteLine("✅ APIs seeded");
 
+        await app.InitializePermissionRegistry();
+        Console.WriteLine("✅ Permission registry initialized");
+
         Console.WriteLine("🎉 All seeding completed successfully!");
     }
     catch (Exception ex)

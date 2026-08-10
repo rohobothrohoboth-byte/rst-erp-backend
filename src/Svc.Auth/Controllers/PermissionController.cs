@@ -1,6 +1,8 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Svc.Auth.Queries;
 using Svc.Auth.Models.Dtos;
@@ -553,6 +555,54 @@ public async Task<IActionResult> DeletePerModule(Guid id)
     return Ok(ApiResponse<object>.Ok(null, "Module deleted successfully."));
 }
 
+// ==================== PERMISSION REGISTRY (enforcement foundation) ====================
 
+// Returns the deterministically-ordered canonical permission registry. Other
+// services can call this at startup and PermissionMap.Initialize(keys) to get an
+// identical IndexMap, enabling consistent cross-service [PerAuth] enforcement.
+[HttpGet("Registry")]
+[ProducesResponseType(StatusCodes.Status200OK)]
+public IActionResult PermissionRegistry()
+{
+    return Ok(ApiResponse<object>.Ok(new
+    {
+        Count = PermissionMap.IndexMap.Count,
+        Keys = PermissionMap.OrderedKeys
+    }));
+}
+
+// Verifies that the caller's JWT `ph` bitmask correctly encodes a given
+// permission (read-only; does not change access). Proves the registry + bitmask
+// pipeline end-to-end before [PerAuth] is rolled out to real endpoints.
+[HttpGet("MyPermissionCheck/{permission}")]
+[Authorize]
+[ProducesResponseType(StatusCodes.Status200OK)]
+public IActionResult MyPermissionCheck(string permission)
+{
+    var ph = User.FindFirst("ph")?.Value;
+    var granted = false;
+
+    if (!string.IsNullOrEmpty(ph) && PermissionMap.IndexMap.TryGetValue(permission, out var index))
+    {
+        try
+        {
+            var bytes = System.Convert.FromBase64String(ph);
+            var byteIndex = index / 8;
+            granted = byteIndex < bytes.Length && (bytes[byteIndex] & (1 << (index % 8))) != 0;
+        }
+        catch
+        {
+            granted = false;
+        }
+    }
+
+    return Ok(ApiResponse<object>.Ok(new
+    {
+        Permission = permission,
+        Granted = granted,
+        InRegistry = PermissionMap.IndexMap.ContainsKey(permission),
+        RegistrySize = PermissionMap.IndexMap.Count
+    }));
+}
 
 }
