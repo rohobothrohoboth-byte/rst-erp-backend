@@ -434,7 +434,7 @@ if (app.Environment.IsDevelopment())
         Console.WriteLine("✅ APIs seeded");
 
         await app.InitializePermissionRegistry();
-        Console.WriteLine("✅ Permission registry initialized");
+        Console.WriteLine("✅ Permission registry (static) verified");
 
         Console.WriteLine("🎉 All seeding completed successfully!");
     }

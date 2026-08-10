@@ -287,17 +287,35 @@ public static class MigrationExt
                 return;
             }
 
-            var keys = await dbContext.PerApi
+            // The registry is now a static single source of truth in
+            // Common.Permissions.All (shared by every service). Do NOT re-init
+            // from the DB (that would re-order indices and diverge from other
+            // services). Instead, verify the DB/seeder hasn't drifted from it.
+            var dbKeys = await dbContext.PerApi
                 .Where(a => !a.IsDeleted)
                 .Select(a => a.Key)
                 .ToListAsync();
 
-            PermissionMap.Initialize(keys);
-            logger.LogInformation($"Permission registry initialized with {PermissionMap.IndexMap.Count} permissions");
+            var staticSet = new HashSet<string>(PermissionMap.OrderedKeys, StringComparer.Ordinal);
+            var dbSet = new HashSet<string>(dbKeys, StringComparer.Ordinal);
+
+            var missingFromStatic = dbKeys.Where(k => !staticSet.Contains(k)).Distinct().ToList();
+            var missingFromDb = PermissionMap.OrderedKeys.Where(k => !dbSet.Contains(k)).ToList();
+
+            logger.LogInformation($"Permission registry (static) has {PermissionMap.IndexMap.Count} keys");
+
+            if (missingFromStatic.Count > 0)
+            {
+                logger.LogWarning($"⚠️ {missingFromStatic.Count} seeded permission key(s) are NOT in Common.Permissions.All — regenerate it so enforcement stays consistent. Examples: {string.Join(", ", missingFromStatic.Take(20))}");
+            }
+            if (missingFromDb.Count > 0)
+            {
+                logger.LogInformation($"{missingFromDb.Count} registry key(s) are not present in the DB (legacy or not-yet-seeded).");
+            }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error initializing permission registry");
+            logger.LogError(ex, "Error checking permission registry drift");
         }
     }
 

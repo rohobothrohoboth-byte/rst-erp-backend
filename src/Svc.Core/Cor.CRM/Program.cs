@@ -499,42 +499,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ============= PERMISSION REGISTRY (for [PerAuth] enforcement) =============
-// Initialize the shared permission registry from Auth so the ph bitmask indices
-// match Auth's. Must run before the request pipeline handles [PerAuth] policies.
-try
-{
-    using var regHandler = new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    };
-    using var regHttp = new HttpClient(regHandler)
-    {
-        BaseAddress = new Uri(authUrl),
-        Timeout = TimeSpan.FromSeconds(15)
-    };
-
-    var regResp = await regHttp.GetAsync("/api/auth/v1/Permission/Registry");
-    regResp.EnsureSuccessStatusCode();
-
-    await using var regStream = await regResp.Content.ReadAsStreamAsync();
-    using var regDoc = await System.Text.Json.JsonDocument.ParseAsync(regStream);
-
-    var regKeys = regDoc.RootElement.GetProperty("data").GetProperty("keys")
-        .EnumerateArray()
-        .Select(e => e.GetString())
-        .Where(s => !string.IsNullOrWhiteSpace(s))
-        .Select(s => s!)
-        .ToList();
-
-    PermissionMap.Initialize(regKeys);
-    Console.WriteLine($"✅ Permission registry initialized from Auth with {PermissionMap.IndexMap.Count} permissions");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"⚠️ Failed to initialize permission registry from Auth: {ex.Message}. " +
-                      "[PerAuth] checks may deny non-admins until Auth is reachable and this service is restarted.");
-}
+// Permission registry is a static single source of truth in Common.Permissions.All,
+// shared by every service — so [PerAuth] bit indices already match Auth's with no
+// runtime fetch required.
+Console.WriteLine($"✅ Permission registry (static) has {PermissionMap.IndexMap.Count} permissions");
 
 // ============= PIPELINE =============
 if (app.Environment.IsDevelopment())
