@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/SalesForecastController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
 using Helpers;
@@ -29,6 +30,7 @@ public class SalesForecastController : ControllerBase
     /// Get sales forecast data
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.sales.forecast.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetForecast([FromQuery] string? period = "quarter")
     {

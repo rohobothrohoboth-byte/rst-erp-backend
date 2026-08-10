@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/SMSCampaignController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -28,6 +29,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? status,
@@ -64,6 +66,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -84,6 +87,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateSMSCampaignDto dto)
@@ -103,6 +107,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -122,6 +127,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -139,6 +145,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost("{id:guid}/send")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -157,6 +164,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost("{id:guid}/duplicate")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -175,6 +183,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost("{id:guid}/pause")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -193,6 +202,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost("{id:guid}/resume")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -211,6 +221,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpPost("{id:guid}/cancel")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -229,6 +240,7 @@ public class SMSCampaignController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [PerAuth("crm.marketing.sms.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? campaignId,

@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/PropertyController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
 using Cor.CRM.Commands;
@@ -27,6 +28,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth("crm.realestate.properties.view")]
     public async Task<IActionResult> GetAll([FromQuery] PropertyFilterDto filter)
     {
         try
@@ -43,6 +45,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.realestate.properties.view")]
     public async Task<IActionResult> GetById(Guid id)
     {
         try
@@ -60,6 +63,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth("crm.realestate.properties.add")]
     public async Task<IActionResult> Create([FromBody] CreatePropertyDto dto)
     {
         try
@@ -77,6 +81,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.realestate.properties.mod")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePropertyDto dto)
     {
         try
@@ -93,6 +98,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.realestate.properties.del")]
     public async Task<IActionResult> Delete(Guid id)
     {
         try
@@ -108,6 +114,7 @@ public class PropertyController : ControllerBase
     }
 
     [HttpPost("{id:guid}/publish")]
+    [PerAuth("crm.realestate.properties.view")]
     public async Task<IActionResult> Publish(Guid id)
     {
         try
@@ -122,6 +129,7 @@ public class PropertyController : ControllerBase
         }
     }
     [HttpGet("stats")]
+        [PerAuth("crm.realestate.properties.view")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetStats()
         {

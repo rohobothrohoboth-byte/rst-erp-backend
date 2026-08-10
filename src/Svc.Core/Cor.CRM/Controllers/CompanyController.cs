@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/CompanyController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class CompanyController : ControllerBase
     /// Get all companies with optional filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.contacts.companies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
@@ -67,6 +69,7 @@ public class CompanyController : ControllerBase
     /// Get a single company by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.contacts.companies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -90,6 +93,7 @@ public class CompanyController : ControllerBase
     /// Create a new company
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.contacts.companies.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateCompanyDto dto)
@@ -112,6 +116,7 @@ public class CompanyController : ControllerBase
     /// Update an existing company
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.contacts.companies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -134,6 +139,7 @@ public class CompanyController : ControllerBase
     /// Delete a company
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.contacts.companies.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -154,6 +160,7 @@ public class CompanyController : ControllerBase
     /// Get company statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.contacts.companies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

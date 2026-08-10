@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class SalesOrderController : ControllerBase
     /// Create a new sales order
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.sales.orders.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ResponseCache(NoStore = true)]
@@ -53,6 +55,7 @@ public class SalesOrderController : ControllerBase
     /// Update an existing order
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.sales.orders.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,6 +79,7 @@ public class SalesOrderController : ControllerBase
     /// Get order by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(Duration = 120, VaryByQueryKeys = new[] { "id" })]
@@ -100,6 +104,7 @@ public class SalesOrderController : ControllerBase
     /// Get all orders with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "customerId", "opportunityId", "quoteId", "status", "fromDate", "toDate", "page", "pageSize" })]
     public async Task<IActionResult> GetAll(
@@ -140,6 +145,7 @@ public class SalesOrderController : ControllerBase
     /// Get order statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30)] // Cache for 30 seconds
     public async Task<IActionResult> GetStats()
@@ -160,6 +166,7 @@ public class SalesOrderController : ControllerBase
     /// Send an order (change status to Pending)
     /// </summary>
     [HttpPost("{id:guid}/send")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -182,6 +189,7 @@ public class SalesOrderController : ControllerBase
     /// Accept an order (change status to Processing)
     /// </summary>
     [HttpPost("{id:guid}/accept")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -204,6 +212,7 @@ public class SalesOrderController : ControllerBase
     /// Reject an order (change status to Cancelled)
     /// </summary>
     [HttpPost("{id:guid}/reject")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -226,6 +235,7 @@ public class SalesOrderController : ControllerBase
     /// Complete an order (change status to Completed)
     /// </summary>
     [HttpPost("{id:guid}/complete")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -248,6 +258,7 @@ public class SalesOrderController : ControllerBase
     /// Cancel an order (change status to Cancelled)
     /// </summary>
     [HttpPost("{id:guid}/cancel")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -270,6 +281,7 @@ public class SalesOrderController : ControllerBase
     /// Delete an order (soft delete)
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.sales.orders.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(NoStore = true)]
@@ -293,6 +305,7 @@ public class SalesOrderController : ControllerBase
     /// Get sales pipeline data for dashboard
     /// </summary>
     [HttpGet("Pipeline")]
+    [PerAuth("crm.sales.orders.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPipeline([FromQuery] string period = "quarter")
     {

@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/CommissionController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class CommissionController : ControllerBase
     /// Get all commissions
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.realestate.commissions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? agentId,
@@ -66,6 +68,7 @@ public class CommissionController : ControllerBase
     /// Get commission by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.realestate.commissions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -88,6 +91,7 @@ public class CommissionController : ControllerBase
     /// Get commissions by agent
     /// </summary>
     [HttpGet("agent/{agentId:guid}")]
+    [PerAuth("crm.realestate.commissions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByAgent(
         Guid agentId,
@@ -116,6 +120,7 @@ public class CommissionController : ControllerBase
     /// Create a new commission
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.realestate.commissions.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateCommissionDto dto)
@@ -138,6 +143,7 @@ public class CommissionController : ControllerBase
     /// Update a commission
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.realestate.commissions.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -160,6 +166,7 @@ public class CommissionController : ControllerBase
     /// Approve a commission
     /// </summary>
     [HttpPost("{id:guid}/approve")]
+    [PerAuth("crm.realestate.commissions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -181,6 +188,7 @@ public class CommissionController : ControllerBase
     /// Mark commission as paid
     /// </summary>
     [HttpPost("{id:guid}/pay")]
+    [PerAuth("crm.realestate.commissions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -202,6 +210,7 @@ public class CommissionController : ControllerBase
     /// Delete a commission
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.realestate.commissions.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

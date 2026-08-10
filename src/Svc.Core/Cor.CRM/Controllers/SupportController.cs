@@ -1,5 +1,6 @@
 // Cor.CRM/Controllers/SupportController.cs
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class SupportController : ControllerBase
     /// Get all tickets with filters
     /// </summary>
     [HttpGet("Tickets")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTickets(
         [FromQuery] string? status,
@@ -75,6 +77,7 @@ public class SupportController : ControllerBase
     /// Get ticket by ID
     /// </summary>
     [HttpGet("Tickets/{id:guid}")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTicketById(Guid id)
@@ -98,6 +101,7 @@ public class SupportController : ControllerBase
     /// Create a new ticket
     /// </summary>
     [HttpPost("Tickets")]
+    [PerAuth("crm.support.tickets.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTicket([FromBody] CreateTicketDto dto)
@@ -120,6 +124,7 @@ public class SupportController : ControllerBase
     /// Update a ticket
     /// </summary>
     [HttpPut("Tickets/{id:guid}")]
+    [PerAuth("crm.support.tickets.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -142,6 +147,7 @@ public class SupportController : ControllerBase
     /// Update ticket status
     /// </summary>
     [HttpPatch("Tickets/{id:guid}/status")]
+    [PerAuth("crm.support.tickets.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -164,6 +170,7 @@ public class SupportController : ControllerBase
     /// Assign a ticket to a user
     /// </summary>
     [HttpPost("Tickets/{id:guid}/assign")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AssignTicket(Guid id, [FromBody] Guid assignedToUserId)
@@ -185,6 +192,7 @@ public class SupportController : ControllerBase
     /// Resolve a ticket
     /// </summary>
     [HttpPost("Tickets/{id:guid}/resolve")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ResolveTicket(Guid id, [FromBody] ResolveTicketDto dto)
@@ -206,6 +214,7 @@ public class SupportController : ControllerBase
     /// Close a ticket
     /// </summary>
     [HttpPost("Tickets/{id:guid}/close")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CloseTicket(Guid id, [FromBody] CloseTicketDto dto)
@@ -227,6 +236,7 @@ public class SupportController : ControllerBase
     /// Delete a ticket (soft delete)
     /// </summary>
     [HttpDelete("Tickets/{id:guid}")]
+    [PerAuth("crm.support.tickets.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTicket(Guid id)
@@ -247,6 +257,7 @@ public class SupportController : ControllerBase
     /// Get ticket statistics
     /// </summary>
     [HttpGet("Tickets/stats")]
+    [PerAuth("crm.support.tickets.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTicketStats()
     {

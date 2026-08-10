@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/InteractionController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class InteractionController : ControllerBase
     /// Get all interactions with optional filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.contacts.interactions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? type,
@@ -81,6 +83,7 @@ public class InteractionController : ControllerBase
     /// Get a single interaction by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.contacts.interactions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -104,6 +107,7 @@ public class InteractionController : ControllerBase
     /// Create a new interaction
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.contacts.interactions.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateInteractionDto dto)
@@ -126,6 +130,7 @@ public class InteractionController : ControllerBase
     /// Update an existing interaction
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.contacts.interactions.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -148,6 +153,7 @@ public class InteractionController : ControllerBase
     /// Delete an interaction
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.contacts.interactions.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -168,6 +174,7 @@ public class InteractionController : ControllerBase
     /// Get interaction statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.contacts.interactions.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

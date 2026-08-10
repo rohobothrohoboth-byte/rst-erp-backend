@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/CampaignController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -31,6 +32,7 @@ public class CampaignController : ControllerBase
     /// Get all campaigns with optional filters
     /// </summary>
     [HttpGet("AllCampaigns")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllCampaigns([FromQuery] string? status, [FromQuery] string? type)
     {
@@ -50,6 +52,7 @@ public class CampaignController : ControllerBase
     /// Get a single campaign by ID
     /// </summary>
     [HttpGet("GetCampaign/{id:guid}")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCampaign(Guid id)
@@ -74,6 +77,7 @@ public class CampaignController : ControllerBase
     /// Create a new campaign
     /// </summary>
     [HttpPost("AddCampaign")]
+    [PerAuth("crm.marketing.campaigns.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateCampaign([FromBody] CreateCampaignDto addDto)
@@ -102,6 +106,7 @@ public class CampaignController : ControllerBase
     /// Update an existing campaign
     /// </summary>
     [HttpPut("ModCampaign/{id:guid}")]
+    [PerAuth("crm.marketing.campaigns.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateCampaign(Guid id, [FromBody] UpdateCampaignDto modDto)
@@ -130,6 +135,7 @@ public class CampaignController : ControllerBase
     /// Delete a campaign
     /// </summary>
     [HttpDelete("DelCampaign/{id:guid}")]
+    [PerAuth("crm.marketing.campaigns.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCampaign(Guid id)
@@ -151,6 +157,7 @@ public class CampaignController : ControllerBase
     /// Get campaign statistics
     /// </summary>
     [HttpGet("Stats")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
@@ -170,6 +177,7 @@ public class CampaignController : ControllerBase
     /// Add leads to campaign
     /// </summary>
     [HttpPost("{id:guid}/AddLeads")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AddLeadsToCampaign(Guid id, [FromBody] List<Guid> leadIds)
     {
@@ -190,6 +198,7 @@ public class CampaignController : ControllerBase
     /// Get leads in campaign
     /// </summary>
     [HttpGet("{id:guid}/Leads")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCampaignLeads(Guid id)
     {
@@ -213,6 +222,7 @@ public class CampaignController : ControllerBase
     /// Start a campaign (Draft/Scheduled -> Active)
     /// </summary>
     [HttpPost("{id:guid}/Start")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -235,6 +245,7 @@ public class CampaignController : ControllerBase
     /// Pause a campaign (Active -> Paused)
     /// </summary>
     [HttpPost("{id:guid}/Pause")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -257,6 +268,7 @@ public class CampaignController : ControllerBase
     /// Resume a campaign (Paused -> Active)
     /// </summary>
     [HttpPost("{id:guid}/Resume")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -279,6 +291,7 @@ public class CampaignController : ControllerBase
     /// Archive a campaign (Completed/Cancelled -> Archived)
     /// </summary>
     [HttpPost("{id:guid}/Archive")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -301,6 +314,7 @@ public class CampaignController : ControllerBase
     /// Cancel a campaign (Active/Paused/Draft/Scheduled -> Cancelled)
     /// </summary>
     [HttpPost("{id:guid}/Cancel")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -323,6 +337,7 @@ public class CampaignController : ControllerBase
     /// Duplicate a campaign
     /// </summary>
     [HttpPost("{id:guid}/Duplicate")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -349,6 +364,7 @@ public class CampaignController : ControllerBase
     /// Get campaign analytics
     /// </summary>
     [HttpGet("{id:guid}/Analytics")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCampaignAnalytics(Guid id, [FromQuery] string? fromDate, [FromQuery] string? toDate)
     {
@@ -373,6 +389,7 @@ public class CampaignController : ControllerBase
     /// Get campaign performance
     /// </summary>
     [HttpGet("{id:guid}/Performance")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCampaignPerformance(Guid id)
     {
@@ -392,6 +409,7 @@ public class CampaignController : ControllerBase
     /// Get campaign ROI
     /// </summary>
     [HttpGet("{id:guid}/ROI")]
+    [PerAuth("crm.marketing.campaigns.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCampaignROI(Guid id)
     {
