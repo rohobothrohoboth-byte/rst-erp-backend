@@ -54,7 +54,22 @@ public class GetUserMenuStructureHandler : IRequestHandler<GetUserMenuStructureQ
         if (user == null)
             return new List<object>();
 
-        // Get user's API permissions
+        // The sidebar is driven by the menus explicitly assigned to the user
+        // (UserPerMenu) — this is what the admin selects on the Menus tab.
+        var assignedMenuIds = await _uow.Set<UserPerMenu>()
+            .Where(x => x.UserId == user.Id && !x.IsDeleted)
+            .Select(x => x.PerMenuId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        if (assignedMenuIds.Count == 0)
+        {
+            var empty = new List<ModuleTokenDto>();
+            _cache.Set(cacheKey, empty, GetCacheOptions());
+            return empty;
+        }
+
+        // Granted API actions (own + position) are attached to each menu as A[].
         var userApiKeys = await _uow.Set<UserPerApi>()
             .Where(x => x.UserId == user.Id && !x.IsDeleted)
             .Select(x => x.PerApi.Key)
@@ -72,20 +87,20 @@ public class GetUserMenuStructureHandler : IRequestHandler<GetUserMenuStructureQ
 
         var allApiKeys = userApiKeys.Union(positionApiKeys).Distinct().ToList();
 
-        // Build the menu tree
-        var modules = await BuildMenuTree(allApiKeys, ct);
+        // Build the menu tree from the assigned menus (+ their ancestors).
+        var modules = await BuildMenuTree(assignedMenuIds, allApiKeys, ct);
 
-        // Cache for 15 minutes (or until token expires)
-        var cacheOptions = new MemoryCacheEntryOptions()
-            .SetSlidingExpiration(TimeSpan.FromMinutes(25))
-            .SetAbsoluteExpiration(TimeSpan.FromMinutes(35));
-
-        _cache.Set(cacheKey, modules, cacheOptions);
+        _cache.Set(cacheKey, modules, GetCacheOptions());
 
         return modules;
     }
 
-    private async Task<List<ModuleTokenDto>> BuildMenuTree(List<string> apiKeys, CancellationToken ct)
+    private static MemoryCacheEntryOptions GetCacheOptions() =>
+        new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(25))
+            .SetAbsoluteExpiration(TimeSpan.FromMinutes(35));
+
+    private async Task<List<ModuleTokenDto>> BuildMenuTree(List<Guid> assignedMenuIds, List<string> apiKeys, CancellationToken ct)
     {
         // Get the connection string from configuration
         var connectionString = _configuration.GetConnectionString("AuthConnection")
@@ -94,13 +109,25 @@ public class GetUserMenuStructureHandler : IRequestHandler<GetUserMenuStructureQ
         if (string.IsNullOrEmpty(connectionString))
         {
             // Fallback: Use EF Core if connection string not available
-            return await BuildMenuTreeWithEF(apiKeys, ct);
+            return await BuildMenuTreeWithEF(assignedMenuIds, apiKeys, ct);
         }
 
         using var connection = new NpgsqlConnection(connectionString);
 
-        // Build the SQL query using Dapper
+        // Include the assigned menus AND all of their ancestors (recursive CTE) so
+        // parent/group nodes still render even when only child menus were assigned.
+        // Only API actions the user actually has are attached (no IS NULL leak).
         var sql = @"
+            WITH RECURSIVE menu_closure AS (
+                SELECT m.""Id"", m.""ParentId""
+                FROM ""PerMenu"" m
+                WHERE m.""Id"" = ANY(@MenuIds) AND m.""IsDeleted"" = false
+                UNION
+                SELECT p.""Id"", p.""ParentId""
+                FROM ""PerMenu"" p
+                INNER JOIN menu_closure c ON c.""ParentId"" = p.""Id""
+                WHERE p.""IsDeleted"" = false
+            )
             SELECT
                 pm.""Key"" AS ModKey,
                 pm.""Desc"" AS ModDesc,
@@ -113,16 +140,15 @@ public class GetUserMenuStructureHandler : IRequestHandler<GetUserMenuStructureQ
                 mn.""Order"",
                 mn.""ParentId"",
                 pa.""Key"" AS ApiKey
-            FROM ""PerModule"" pm
-            INNER JOIN ""PerMenu"" mn ON pm.""Id"" = mn.""PerModuleId""
-            LEFT JOIN ""PerApi"" pa ON mn.""Id"" = pa.""PerMenuId""
-            WHERE (pa.""Key"" = ANY(@ApiKeys) OR pa.""Key"" IS NULL)
-            AND pm.""IsDeleted"" = false
-            AND mn.""IsDeleted"" = false
-            AND (pa.""IsDeleted"" IS NULL OR pa.""IsDeleted"" = false)
+            FROM menu_closure mc
+            INNER JOIN ""PerMenu"" mn ON mn.""Id"" = mc.""Id"" AND mn.""IsDeleted"" = false
+            INNER JOIN ""PerModule"" pm ON pm.""Id"" = mn.""PerModuleId"" AND pm.""IsDeleted"" = false
+            LEFT JOIN ""PerApi"" pa ON pa.""PerMenuId"" = mn.""Id""
+                AND pa.""Key"" = ANY(@ApiKeys)
+                AND (pa.""IsDeleted"" IS NULL OR pa.""IsDeleted"" = false)
             ORDER BY pm.""Key"", mn.""Order"", pa.""Key""";
 
-        var parameters = new { ApiKeys = apiKeys.ToArray() };
+        var parameters = new { MenuIds = assignedMenuIds.ToArray(), ApiKeys = apiKeys.ToArray() };
 
         var data = (await connection.QueryAsync<FlatPermissionDto>(sql, parameters)).ToList();
 
@@ -130,12 +156,32 @@ public class GetUserMenuStructureHandler : IRequestHandler<GetUserMenuStructureQ
         return BuildMenuTreeFromData(data);
     }
 
-    private async Task<List<ModuleTokenDto>> BuildMenuTreeWithEF(List<string> apiKeys, CancellationToken ct)
+    private async Task<List<ModuleTokenDto>> BuildMenuTreeWithEF(List<Guid> assignedMenuIds, List<string> apiKeys, CancellationToken ct)
     {
-        // Fallback using EF Core
+        // Fallback using EF Core. Compute the ancestor closure in memory.
+        var allMenus = await _uow.Set<PerMenu>()
+            .Where(m => !m.IsDeleted)
+            .Select(m => new { m.Id, m.ParentId })
+            .ToListAsync(ct);
+        var byId = allMenus.ToDictionary(m => m.Id, m => m.ParentId);
+
+        var closure = new HashSet<Guid>();
+        foreach (var id in assignedMenuIds)
+        {
+            var cur = (Guid?)id;
+            while (cur.HasValue && byId.ContainsKey(cur.Value))
+            {
+                if (!closure.Add(cur.Value)) break; // chain already processed
+                cur = byId[cur.Value];
+            }
+        }
+
+        var apiKeySet = new HashSet<string>(apiKeys);
+
         var query = from pm in _uow.Set<PerModule>().Where(m => !m.IsDeleted)
                     join mn in _uow.Set<PerMenu>().Where(m => !m.IsDeleted) on pm.Id equals mn.PerModuleId
-                    join pa in _uow.Set<PerApi>().Where(a => !a.IsDeleted && apiKeys.Contains(a.Key)) on mn.Id equals pa.PerMenuId into paJoin
+                    where closure.Contains(mn.Id)
+                    join pa in _uow.Set<PerApi>().Where(a => !a.IsDeleted && apiKeySet.Contains(a.Key)) on mn.Id equals pa.PerMenuId into paJoin
                     from pa in paJoin.DefaultIfEmpty()
                     orderby pm.Key, mn.Order, pa.Key
                     select new FlatPermissionDto

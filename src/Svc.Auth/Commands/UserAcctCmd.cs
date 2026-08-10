@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;  // ADD THIS for UserManager
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Svc.Auth.Commands;
 
@@ -113,11 +114,13 @@ public class UpdateUserPermissionsHandler : IRequestHandler<UpdateUserPermission
 {
     private readonly IDapperHelper _dapper;
     private readonly IUnitOfWork _uow;
+    private readonly IMemoryCache _cache;
 
-    public UpdateUserPermissionsHandler(IDapperHelper dapper, IUnitOfWork uow)
+    public UpdateUserPermissionsHandler(IDapperHelper dapper, IUnitOfWork uow, IMemoryCache cache)
     {
         _dapper = dapper;
         _uow = uow;
+        _cache = cache;
     }
 
     public async Task<bool> Handle(UpdateUserPermissionsCmd request, CancellationToken cancellationToken)
@@ -260,6 +263,10 @@ public class UpdateUserPermissionsHandler : IRequestHandler<UpdateUserPermission
 
             // ? COMMIT: All operations succeeded
             await _uow.Commit(cancellationToken);
+
+            // Invalidate the cached sidebar structure so the change is reflected
+            // immediately (GetUserMenuStructureHandler caches by AppUser.Id).
+            _cache.Remove($"menu_structure_{request.UserId}");
 
             Console.WriteLine("=== PERMISSIONS UPDATED SUCCESSFULLY ===");
             return true;
