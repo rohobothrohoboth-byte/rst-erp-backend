@@ -205,17 +205,18 @@ public class PerApiFilteredByUserHandler : IRequestHandler<PerApiFilteredByUserQ
 
         const string sql = @"
             SELECT DISTINCT
-                m.Id AS PerMenuId,
-                m.Label AS PerMenu,
-                a.Id AS ApiId,
-                a.[Key] AS ApiKey,
-                a.[Desc] AS ApiDesc
-            FROM PerMenu m
-            INNER JOIN PerApi a ON a.PerMenuId = m.Id AND a.IsDeleted = 0
-            WHERE m.Id IN @MenuIds AND m.IsDeleted = 0
-            ORDER BY m.[Order], a.[Key]";
+                m.""Id"" AS ""PerMenuId"",
+                m.""Label"" AS ""PerMenu"",
+                a.""Id"" AS ""ApiId"",
+                a.""Key"" AS ""ApiKey"",
+                a.""Desc"" AS ""ApiDesc"",
+                m.""Order"" AS ""MenuOrder""
+            FROM ""PerMenu"" m
+            INNER JOIN ""PerApi"" a ON a.""PerMenuId"" = m.""Id"" AND a.""IsDeleted"" = false
+            WHERE m.""Id"" = ANY(@MenuIds) AND m.""IsDeleted"" = false
+            ORDER BY m.""Order"", a.""Key""";
 
-        var parameters = new { MenuIds = request.MenuIds };
+        var parameters = new { MenuIds = request.MenuIds.ToArray() };
 
         var result = await _dapper.QueryAsync<dynamic>(sql, parameters, ct);
 
@@ -255,16 +256,18 @@ public class PerMenuFilteredByUserHandler : IRequestHandler<PerMenuFilteredByUse
 
         const string sql = @"
             SELECT DISTINCT
-                mod.Id AS ModuleId,
-                mod.[Desc] AS ModuleDesc,
-                m.Id AS MenuId,
-                m.Label AS MenuLabel
-            FROM PerModule mod
-            INNER JOIN PerMenu m ON m.PerModuleId = mod.Id AND m.IsDeleted = 0
-            WHERE mod.Id IN @ModuleIds AND mod.IsDeleted = 0
-            ORDER BY mod.[Key], m.[Order]";
+                pm.""Id"" AS ""ModuleId"",
+                pm.""Desc"" AS ""ModuleDesc"",
+                m.""Id"" AS ""MenuId"",
+                m.""Label"" AS ""MenuLabel"",
+                pm.""Key"" AS ""ModuleKey"",
+                m.""Order"" AS ""MenuOrder""
+            FROM ""PerModule"" pm
+            INNER JOIN ""PerMenu"" m ON m.""PerModuleId"" = pm.""Id"" AND m.""IsDeleted"" = false
+            WHERE pm.""Id"" = ANY(@ModuleIds) AND pm.""IsDeleted"" = false
+            ORDER BY pm.""Key"", m.""Order""";
 
-        var parameters = new { ModuleIds = request.ModuleIds };
+        var parameters = new { ModuleIds = request.ModuleIds.ToArray() };
 
         var result = await _dapper.QueryAsync<dynamic>(sql, parameters, ct);
 

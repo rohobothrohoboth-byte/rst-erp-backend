@@ -14,32 +14,36 @@ public class GetPermissionStructureHandler(IDapperHelper _dapper)
 {
     public async Task<PermissionStructureDto> Handle(GetPermissionStructureQry request, CancellationToken ct)
     {
-        // Get all modules
+        // Get all modules (PostgreSQL, case-sensitive quoted identifiers)
         const string moduleSql = @"
-            SELECT Id, Key, Desc as Name, 0 as Order
-            FROM PerModule
-            WHERE IsDeleted = 0
-            ORDER BY Key";
+            SELECT ""Id"", ""Key"", ""Desc"" AS ""Name"", ""Icon"", ""Order""
+            FROM ""PerModule""
+            WHERE ""IsDeleted"" = false
+            ORDER BY ""Order"", ""Key""";
 
-        var modules = await _dapper.QueryAsync<ModuleStructureDto>(moduleSql, null, ct);
+        var modules = (await _dapper.QueryAsync<ModuleStructureDto>(moduleSql, null, ct)).ToList();
 
         // Get all menus with their actions
         const string menuSql = @"
             SELECT
-                m.Id, m.Key, m.Label, m.Path, m.Icon, m.IsChild, m.[Order], m.ParentId,
-                a.Id as ActionId, a.Key as ActionKey, a.Desc as ActionName
-            FROM PerMenu m
-            LEFT JOIN PerApi a ON a.PerMenuId = m.Id AND a.IsDeleted = 0
-            WHERE m.IsDeleted = 0
-            ORDER BY m.[Order], a.Key";
+                m.""Id"", m.""Key"", m.""Label"", m.""Path"", m.""Icon"", m.""IsChild"", m.""Order"", m.""ParentId"", m.""PerModuleId"",
+                a.""Id"" AS ""ActionId"", a.""Key"" AS ""ActionKey"", a.""Desc"" AS ""ActionName""
+            FROM ""PerMenu"" m
+            LEFT JOIN ""PerApi"" a ON a.""PerMenuId"" = m.""Id"" AND a.""IsDeleted"" = false
+            WHERE m.""IsDeleted"" = false
+            ORDER BY m.""Order"", a.""Key""";
 
         var menuData = await _dapper.QueryAsync<dynamic>(menuSql, null, ct);
 
         // Build menu tree
         var menus = new Dictionary<Guid, MenuStructureDto>();
+        // Track each menu's owning module so we can assign by FK, not by key prefix.
+        var menuModuleMap = new Dictionary<Guid, Guid>();
 
         foreach (var row in menuData)
         {
+            menuModuleMap[(Guid)row.Id] = (Guid)row.PerModuleId;
+
             if (!menus.ContainsKey(row.Id))
             {
                 menus[row.Id] = new MenuStructureDto
@@ -82,10 +86,12 @@ public class GetPermissionStructureHandler(IDapperHelper _dapper)
             }
         }
 
-        // Assign menus to modules
+        // Assign menus to modules by their real PerModuleId FK.
         foreach (var module in modules)
         {
-            module.Menus = rootMenus.Where(m => m.Key.StartsWith(module.Key.Split('.').Last())).ToList();
+            module.Menus = rootMenus
+                .Where(m => menuModuleMap.TryGetValue(m.Id, out var moduleId) && moduleId == module.Id)
+                .ToList();
         }
 
         return new PermissionStructureDto { Modules = modules.ToList() };
