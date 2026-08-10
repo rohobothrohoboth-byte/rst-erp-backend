@@ -14,15 +14,32 @@ public interface IPerValService
 
 public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
 {
+    // Privileged roles bypass fine-grained permission checks so administrators
+    // are never locked out while [PerAuth] is rolled out across the system.
+    private static readonly string[] PrivilegedRoles =
+    {
+        "Admin", "admin", "super_admin", "SuperAdmin", "superadmin"
+    };
+
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PerReq requirement)
     {
+        if (Array.Exists(PrivilegedRoles, context.User.IsInRole))
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
+
         var hash = context.User.FindFirst("ph")?.Value;
 
         if (string.IsNullOrEmpty(hash)) { return Task.CompletedTask; }
 
-        var bytes = Convert.FromBase64String(hash);
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(hash); }
+        catch { return Task.CompletedTask; }
 
-        var hasPermission = (bytes[requirement.BitIndex / 8] & (1 << (requirement.BitIndex % 8))) != 0;
+        var byteIndex = requirement.BitIndex / 8;
+        var hasPermission = byteIndex < bytes.Length
+            && (bytes[byteIndex] & (1 << (requirement.BitIndex % 8))) != 0;
 
         if (hasPermission)
         {
