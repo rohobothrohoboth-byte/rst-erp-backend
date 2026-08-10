@@ -160,6 +160,25 @@ public static class MigrationExt
          var seedItems = SeedPerList.GetPerMenu().ToList();
          logger.LogInformation($"Found {seedItems.Count} menus in seed data");
 
+         // Prune stale menus: soft-delete active menus that are no longer defined
+         // in the seeder. This removes leftovers/duplicates from older seeder
+         // versions (e.g. renamed leave menus) that would otherwise keep showing
+         // in the sidebar because seeding only ever adds, never removes.
+         var seedKeys = seedItems.Select(x => x.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+         var activeMenus = await dbContext.PerMenu.Where(m => !m.IsDeleted).ToListAsync();
+         var staleMenus = activeMenus.Where(m => !seedKeys.Contains(m.Key)).ToList();
+         if (staleMenus.Count > 0)
+         {
+             foreach (var stale in staleMenus)
+             {
+                 stale.IsDeleted = true;
+                 stale.DateMod = DateTime.UtcNow;
+                 logger.LogWarning($"Pruned stale menu not in seed list: {stale.Key} ({stale.Label})");
+             }
+             await dbContext.SaveChangesAsync();
+             logger.LogInformation($"Pruned {staleMenus.Count} stale menu(s) not present in the seed list");
+         }
+
          var itemsToProcess = seedItems
              .Where(x => !existingKeys.Contains(x.Key))
              .ToList();
