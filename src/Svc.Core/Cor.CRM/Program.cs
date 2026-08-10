@@ -9,6 +9,7 @@ using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Common;
@@ -387,6 +388,11 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Admin", "CRMManager"));
 });
 
+// Enable [PerAuth("permission")] enforcement (resolves "api:{permission}" policies
+// and checks them against the JWT `ph` bitmask).
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
+
 // ============= REGISTER CRM SERVICES =============
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDapperHelper, DapperHelper>();
@@ -491,6 +497,43 @@ using (var scope = app.Services.CreateScope())
     {
         Log.Error(ex, "❌ An error occurred while migrating the database.");
     }
+}
+
+// ============= PERMISSION REGISTRY (for [PerAuth] enforcement) =============
+// Initialize the shared permission registry from Auth so the ph bitmask indices
+// match Auth's. Must run before the request pipeline handles [PerAuth] policies.
+try
+{
+    using var regHandler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    };
+    using var regHttp = new HttpClient(regHandler)
+    {
+        BaseAddress = new Uri(authUrl),
+        Timeout = TimeSpan.FromSeconds(15)
+    };
+
+    var regResp = await regHttp.GetAsync("/api/auth/v1/Permission/Registry");
+    regResp.EnsureSuccessStatusCode();
+
+    await using var regStream = await regResp.Content.ReadAsStreamAsync();
+    using var regDoc = await System.Text.Json.JsonDocument.ParseAsync(regStream);
+
+    var regKeys = regDoc.RootElement.GetProperty("data").GetProperty("keys")
+        .EnumerateArray()
+        .Select(e => e.GetString())
+        .Where(s => !string.IsNullOrWhiteSpace(s))
+        .Select(s => s!)
+        .ToList();
+
+    PermissionMap.Initialize(regKeys);
+    Console.WriteLine($"✅ Permission registry initialized from Auth with {PermissionMap.IndexMap.Count} permissions");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Failed to initialize permission registry from Auth: {ex.Message}. " +
+                      "[PerAuth] checks may deny non-admins until Auth is reachable and this service is restarted.");
 }
 
 // ============= PIPELINE =============
