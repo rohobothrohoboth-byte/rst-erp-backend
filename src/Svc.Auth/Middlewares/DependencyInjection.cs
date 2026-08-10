@@ -2,6 +2,7 @@ using Asp.Versioning;
 using Asp.Versioning.Conventions;
 using Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -151,6 +152,11 @@ public static class DependencyInjection
         });
 
         builder.Services.AddAuthorization();
+
+        // Enable [PerAuth("permission")] enforcement: resolve "api:{permission}"
+        // policies and check them against the JWT `ph` bitmask.
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
 
         return builder;
     }

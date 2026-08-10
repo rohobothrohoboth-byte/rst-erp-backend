@@ -605,4 +605,16 @@ public IActionResult MyPermissionCheck(string permission)
     }));
 }
 
+// Live enforcement demo: only callers whose token grants "core.company.view"
+// reach this action (200); everyone else is rejected by [PerAuth] (403).
+// Use this as the pattern for protecting real endpoints with [PerAuth("key")].
+[HttpGet("PerAuthDemo")]
+[PerAuth("core.company.view")]
+[ProducesResponseType(StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
+public IActionResult PerAuthDemo()
+{
+    return Ok(ApiResponse<object>.Ok("Access granted: you hold core.company.view"));
+}
+
 }
