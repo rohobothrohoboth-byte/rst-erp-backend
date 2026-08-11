@@ -15,6 +15,7 @@ public interface ISetupService
     Task<bool> IsFirstRunAsync();
     Task<SetupStatusDto> GetSetupStatusAsync();
     Task TriggerSyncAsync();
+    Task InvalidateStatusCacheAsync();
 }
 
 public class SetupService : ISetupService
@@ -149,7 +150,12 @@ public class SetupService : ISetupService
             var userCount = await _context.Users.CountAsync(cts.Token);
             var moduleCount = await _context.PerModule.CountAsync(cts.Token);
             var roleCount = await _context.Roles.CountAsync(cts.Token);
-            var adminExists = await _context.Users.AnyAsync(u => u.UserName == "Admin", cts.Token);
+            // Setup is "complete" when a user in the admin role exists. The admin
+            // username is chosen during setup, so we must not hard-code "Admin".
+            var adminExists = await _context.Users.AnyAsync(u =>
+                _context.UserRoles
+                    .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur, r })
+                    .Any(x => x.ur.UserId == u.Id && x.r.Name == "admin"), cts.Token);
 
             Console.WriteLine($"📊 User count: {userCount}");
             Console.WriteLine($"📊 Module count: {moduleCount}");
@@ -197,6 +203,18 @@ public class SetupService : ISetupService
                 RoleCount = 0
             };
         }
+    }
+
+    // Clear the cached setup status (static + Redis) so the very next status
+    // check reflects reality — called right after setup completes.
+    public async Task InvalidateStatusCacheAsync()
+    {
+        lock (_statusLock)
+        {
+            _cachedSetupStatus = null;
+            _lastStatusCheck = DateTime.MinValue;
+        }
+        await _cache.RemoveAsync("setup_status");
     }
 
     public async Task TriggerSyncAsync()

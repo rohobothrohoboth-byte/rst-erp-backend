@@ -61,6 +61,11 @@ public class SetupController : ControllerBase
         }
 
         var response = await _med.Send(request);
+
+        // Refresh the cached setup status so a subsequent /status call correctly
+        // reports the system as set up (prevents re-showing the setup wizard).
+        await _setupService.InvalidateStatusCacheAsync();
+
         return Ok(ApiResponse<object>.Ok(response, "System setup completed successfully!"));
     }
 
