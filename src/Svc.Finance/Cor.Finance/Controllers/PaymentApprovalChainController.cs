@@ -1,4 +1,5 @@
 // Controllers/PaymentApprovalChainController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -29,6 +30,7 @@ public class PaymentApprovalChainController : BaseApiController
     /// Get all payment approval chains
     /// </summary>
     [HttpGet]
+    [PerAuth("fnm.ap.approval.view")]
     [ProducesResponseType(typeof(List<PaymentApprovalChainDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] bool? isActive,
@@ -53,6 +55,7 @@ public class PaymentApprovalChainController : BaseApiController
     /// Get payment approval chain by ID
     /// </summary>
     [HttpGet("{id}")]
+    [PerAuth("fnm.ap.approval.view")]
     [ProducesResponseType(typeof(PaymentApprovalChainDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -76,6 +79,7 @@ public class PaymentApprovalChainController : BaseApiController
     /// Create a new payment approval chain
     /// </summary>
     [HttpPost]
+    [PerAuth("fnm.ap.approval.view")]
     [ProducesResponseType(typeof(PaymentApprovalChainDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddPaymentApprovalChainDto dto)
@@ -99,6 +103,7 @@ public class PaymentApprovalChainController : BaseApiController
     /// Update a payment approval chain
     /// </summary>
     [HttpPut]
+    [PerAuth("fnm.ap.approval.view")]
     [ProducesResponseType(typeof(PaymentApprovalChainDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -127,6 +132,7 @@ public class PaymentApprovalChainController : BaseApiController
     /// Delete a payment approval chain
     /// </summary>
     [HttpDelete("{id}")]
+    [PerAuth("fnm.ap.approval.view")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

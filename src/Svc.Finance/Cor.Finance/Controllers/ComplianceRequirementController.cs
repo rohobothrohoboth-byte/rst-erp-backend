@@ -1,4 +1,5 @@
 // Controllers/ComplianceRequirementController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -25,6 +26,7 @@ public class ComplianceRequirementController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.compliance.requirements.view")]
     [ProducesResponseType(typeof(List<ComplianceRequirementDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? status,
@@ -48,6 +50,7 @@ public class ComplianceRequirementController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.compliance.requirements.view")]
     [ProducesResponseType(typeof(ComplianceRequirementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -64,6 +67,7 @@ public class ComplianceRequirementController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.compliance.requirements.add")]
     [ProducesResponseType(typeof(ComplianceRequirementDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddComplianceRequirementDto dto)
@@ -80,6 +84,7 @@ public class ComplianceRequirementController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.compliance.requirements.mod")]
     [ProducesResponseType(typeof(ComplianceRequirementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,6 +102,7 @@ public class ComplianceRequirementController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.compliance.requirements.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

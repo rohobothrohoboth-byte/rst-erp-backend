@@ -1,3 +1,4 @@
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -33,6 +34,7 @@ public class BudgetController : BaseApiController
             _cache = cache;
         }
     [HttpGet("All")]
+        [PerAuth("fnm.gl.budget.view")]
         [ProducesResponseType(typeof(PaginatedResponse<BudgetDto>), StatusCodes.Status200OK)] // ✅ FIXED
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ResponseCache(Duration = 300, VaryByQueryKeys = new[] {
@@ -118,6 +120,7 @@ public class BudgetController : BaseApiController
 
         // ✅ GET BY ID - same as before (returns single BudgetDto)
         [HttpGet("{id}")]
+        [PerAuth("fnm.gl.budget.view")]
         [ProducesResponseType(typeof(BudgetDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(Guid id)
@@ -152,6 +155,7 @@ public class BudgetController : BaseApiController
 
         // ✅ GET BY BRANCH - returns PaginatedResponse
         [HttpGet("ByBranch/{branchId}")]
+        [PerAuth("fnm.gl.budget.view")]
         [ProducesResponseType(typeof(PaginatedResponse<BudgetDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetByBranch(
             Guid branchId,
@@ -197,6 +201,7 @@ public class BudgetController : BaseApiController
         }
 
     [HttpGet("ByPeriod")]
+    [PerAuth("fnm.gl.budget.view")]
     [ProducesResponseType(typeof(List<BudgetDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByPeriod([FromQuery] Guid periodId)
     {
@@ -230,6 +235,7 @@ public class BudgetController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.gl.budget.add")]
     [ProducesResponseType(typeof(BudgetDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddBudgetDto dto)
@@ -262,6 +268,7 @@ public class BudgetController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.gl.budget.mod")]
     [ProducesResponseType(typeof(BudgetDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -292,6 +299,7 @@ public class BudgetController : BaseApiController
     }
 
     [HttpPatch("{id}/toggle-status")]
+    [PerAuth("fnm.gl.budget.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleStatus(Guid id)
@@ -319,6 +327,7 @@ public class BudgetController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.gl.budget.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -347,6 +356,7 @@ public class BudgetController : BaseApiController
     }
 
     [HttpPost("ClearCache")]
+    [PerAuth("fnm.gl.budget.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ClearCache()
     {

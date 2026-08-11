@@ -1,3 +1,4 @@
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -20,6 +21,7 @@ public class EntityController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.cons.entities.view")]
     [ProducesResponseType(typeof(List<EntityDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] bool? isActive)
     {
@@ -35,6 +37,7 @@ public class EntityController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.cons.entities.view")]
     [ProducesResponseType(typeof(EntityDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -51,6 +54,7 @@ public class EntityController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.cons.entities.add")]
     [ProducesResponseType(typeof(EntityDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddEntityDto dto)
@@ -70,6 +74,7 @@ public class EntityController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.cons.entities.mod")]
     [ProducesResponseType(typeof(EntityDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -90,6 +95,7 @@ public class EntityController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.cons.entities.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

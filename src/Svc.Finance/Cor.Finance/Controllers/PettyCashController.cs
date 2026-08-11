@@ -1,4 +1,5 @@
 // Cor.Finance/Controllers/PettyCashController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Persistence;
@@ -32,6 +33,7 @@ public class PettyCashController : BaseApiController
     /// Get petty cash balance
     /// </summary>
     [HttpGet("Balance")]
+    [PerAuth("fnm.cash.petty.view")]
     [ProducesResponseType(typeof(PettyCashDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBalance([FromQuery] Guid? bankAccountId)
     {
@@ -118,6 +120,7 @@ public class PettyCashController : BaseApiController
     /// Get all petty cash transactions with period filtering
     /// </summary>
     [HttpGet("Transactions")]
+    [PerAuth("fnm.cash.petty.view")]
     [ProducesResponseType(typeof(List<BankTransactionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTransactions(
         [FromQuery] Guid? bankAccountId,
@@ -200,6 +203,7 @@ public class PettyCashController : BaseApiController
     /// Record petty cash transaction with period validation
     /// </summary>
     [HttpPost("Transaction")]
+    [PerAuth("fnm.cash.petty.add")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -345,6 +349,7 @@ public class PettyCashController : BaseApiController
 /// Approve a petty cash transaction
 /// </summary>
 [HttpPost("Transaction/{id:guid}/approve")]
+[PerAuth("fnm.cash.petty.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status404NotFound)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -389,6 +394,7 @@ public async Task<IActionResult> ApproveTransaction(Guid id)
 /// Reject a petty cash transaction
 /// </summary>
 [HttpPost("Transaction/{id:guid}/reject")]
+[PerAuth("fnm.cash.petty.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status404NotFound)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -448,6 +454,7 @@ public async Task<IActionResult> RejectTransaction(Guid id)
 /// Delete a petty cash transaction (soft delete)
 /// </summary>
 [HttpDelete("Transaction/{id:guid}")]
+[PerAuth("fnm.cash.petty.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status404NotFound)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -504,6 +511,7 @@ public async Task<IActionResult> DeleteTransaction(Guid id)
     /// Replenish petty cash with period validation
     /// </summary>
     [HttpPost("Replenish")]
+    [PerAuth("fnm.cash.petty.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

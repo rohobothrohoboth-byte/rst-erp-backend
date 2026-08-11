@@ -1,3 +1,4 @@
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -34,6 +35,7 @@ public class JournalEntryController : BaseApiController
     /// Get all journal entries with pagination (CACHED)
     /// </summary>
     [HttpGet("All")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(PagedResult<JournalEntryDto>), StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new[] { "page", "pageSize", "sortBy", "sortOrder", "fromDate", "toDate", "isPosted", "entryType", "periodId", "minAmount", "maxAmount" })]
     public async Task<IActionResult> GetAll(
@@ -82,6 +84,7 @@ public class JournalEntryController : BaseApiController
     /// Get unposted journal entries
     /// </summary>
     [HttpGet("Unposted")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(List<JournalEntryDto>), StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetUnposted()
@@ -101,6 +104,7 @@ public class JournalEntryController : BaseApiController
     /// Get journal entries by period
     /// </summary>
     [HttpGet("ByPeriod/{periodId}")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(List<JournalEntryDto>), StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetByPeriod(Guid periodId)
@@ -120,6 +124,7 @@ public class JournalEntryController : BaseApiController
     /// Get journal entry by reference
     /// </summary>
     [HttpGet("ByReference/{reference}")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(JournalEntryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(Duration = 30, Location = ResponseCacheLocation.Any)]
@@ -144,6 +149,7 @@ public class JournalEntryController : BaseApiController
     /// Get journal entry by ID
     /// </summary>
     [HttpGet("{id}")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(JournalEntryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -165,6 +171,7 @@ public class JournalEntryController : BaseApiController
     /// Get journal entry summary (CACHED)
     /// </summary>
     [HttpGet("Summary")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(JournalEntrySummaryDto), StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, VaryByQueryKeys = new[] { "periodId", "fromDate", "toDate" })]
     public async Task<IActionResult> GetSummary(
@@ -196,6 +203,7 @@ public class JournalEntryController : BaseApiController
     /// Export journal entries
     /// </summary>
     [HttpGet("Export")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> Export(
         [FromQuery] Guid? periodId = null,
@@ -244,6 +252,7 @@ public class JournalEntryController : BaseApiController
     /// Create a new journal entry
     /// </summary>
     [HttpPost]
+    [PerAuth("fnm.gl.journal.add")]
     [ProducesResponseType(typeof(JournalEntryDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddJournalEntryDto dto)
@@ -287,6 +296,7 @@ public class JournalEntryController : BaseApiController
     /// Post a journal entry
     /// </summary>
     [HttpPost("{id}/post")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -317,6 +327,7 @@ public class JournalEntryController : BaseApiController
     /// Unpost a journal entry
     /// </summary>
     [HttpPost("{id}/unpost")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -347,6 +358,7 @@ public class JournalEntryController : BaseApiController
     /// Approve a journal entry
     /// </summary>
     [HttpPost("{id}/approve")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -377,6 +389,7 @@ public class JournalEntryController : BaseApiController
     /// Reject a journal entry
     /// </summary>
     [HttpPost("{id}/reject")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -413,6 +426,7 @@ public class JournalEntryController : BaseApiController
     /// Reverse a journal entry
     /// </summary>
     [HttpPost("{id}/reverse")]
+    [PerAuth("fnm.gl.journal.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -455,6 +469,7 @@ public class JournalEntryController : BaseApiController
     /// Update a journal entry
     /// </summary>
     [HttpPut]
+    [PerAuth("fnm.gl.journal.mod")]
     [ProducesResponseType(typeof(JournalEntryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -505,6 +520,7 @@ public class JournalEntryController : BaseApiController
     /// Delete a journal entry
     /// </summary>
     [HttpDelete("{id}")]
+    [PerAuth("fnm.gl.journal.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

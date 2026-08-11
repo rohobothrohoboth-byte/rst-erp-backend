@@ -1,4 +1,5 @@
 // Controllers/ConsolidationGroupController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -24,6 +25,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.cons.groups.view")]
     [ProducesResponseType(typeof(List<ConsolidationGroupDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] string? status, [FromQuery] Guid? periodId)
     {
@@ -39,6 +41,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.cons.groups.view")]
     [ProducesResponseType(typeof(ConsolidationGroupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -55,6 +58,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.cons.groups.add")]
     [ProducesResponseType(typeof(ConsolidationGroupDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddConsolidationGroupDto dto)
@@ -71,6 +75,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.cons.groups.mod")]
     [ProducesResponseType(typeof(ConsolidationGroupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -88,6 +93,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpPost("{id}/run")]
+    [PerAuth("fnm.cons.groups.view")]
     [ProducesResponseType(typeof(ConsolidationGroupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -105,6 +111,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpGet("{id}/results")]
+    [PerAuth("fnm.cons.groups.view")]
     [ProducesResponseType(typeof(ConsolidationGroupDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetResults(Guid id)
@@ -121,6 +128,7 @@ public class ConsolidationGroupController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.cons.groups.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
