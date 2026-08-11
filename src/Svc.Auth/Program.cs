@@ -110,11 +110,16 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
+/*var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
 var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
 var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
 var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");*/
+var CorModUrl = "https://192.168.1.7:7002";
+var CorHrmmUrl = "https://192.168.1.7:7001";
+var hrmProUrl = "https://192.168.1.7:7004";
+var financeApiUrl = "https://192.168.1.7:7008";
+var gatewayApiUrl = "https://192.168.1.7:5000";
 
 // ============= API KEYS =============
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
