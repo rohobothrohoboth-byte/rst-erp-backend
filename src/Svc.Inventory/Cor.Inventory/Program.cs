@@ -403,6 +403,11 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Enable [PerAuth("permission")] enforcement. This must be registered directly here
+// because AddApiServices() (which also registers it) is not called in this Program.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
+
 // ============================================================
 // ✅ BUILD APP
 // ============================================================
