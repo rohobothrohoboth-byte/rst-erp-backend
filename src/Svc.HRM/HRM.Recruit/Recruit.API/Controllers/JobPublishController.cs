@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobPublishController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPost("PublishJobPost")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -38,6 +40,7 @@ public class JobPublishController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New JOB POSTING successfully PUBLISHED."));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPost("PublishAllJobPost")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,6 +61,7 @@ public class JobPublishController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "All JOB POSTINGS successfully PUBLISHED."));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPost("CloseJobPost/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

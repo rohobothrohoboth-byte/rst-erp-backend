@@ -1,5 +1,6 @@
 // Recruit.API/Controllers/OnboardingTaskController.cs
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +21,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class OnboardingTaskController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.onboard.view")]
     [HttpGet("All")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> All()
@@ -28,6 +30,7 @@ public class OnboardingTaskController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.onboard.view")]
     [HttpGet("Get/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -39,6 +42,7 @@ public class OnboardingTaskController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.onboard.manage")]
     [HttpPost("Add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,6 +62,7 @@ public class OnboardingTaskController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New ONBOARDING TASK successfully created."));
     }
 
+    [PerAuth("hr.recruit.onboard.manage")]
     [HttpPut("Mod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -82,6 +87,7 @@ public class OnboardingTaskController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected ONBOARDING TASK successfully updated."));
     }
 
+    [PerAuth("hr.recruit.onboard.manage")]
     [HttpDelete("Del/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

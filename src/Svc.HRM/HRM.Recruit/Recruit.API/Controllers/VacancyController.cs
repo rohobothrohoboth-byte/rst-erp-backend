@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class VacancyController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("PublishedVacancy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PublishedVacancy()
@@ -24,6 +26,7 @@ public class VacancyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("InternalVacancy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> InternalVacancy()
@@ -32,6 +35,7 @@ public class VacancyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("ExternalVacancy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ExternalVacancy()
@@ -40,6 +44,7 @@ public class VacancyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("GetVacancy/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

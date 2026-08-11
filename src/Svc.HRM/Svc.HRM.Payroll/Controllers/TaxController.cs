@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 namespace Svc.HRM.Payroll.Controllers;
 
 [ApiController]
@@ -20,6 +21,7 @@ public class TaxController : ControllerBase
     }
 
     [HttpPost("calculate")]
+    [PerAuth(PayPerm.TaxCalculate)]
     public async Task<IActionResult> Calculate([FromBody] TaxCalculationRequest request, CancellationToken ct)
     {
         var result = await _payrollService.CalculateTaxAsync(request.GrossIncome, ct);
@@ -27,6 +29,7 @@ public class TaxController : ControllerBase
     }
 
     [HttpGet("rates")]
+    [PerAuth(PayPerm.TaxView)]
     public async Task<IActionResult> GetRates([FromQuery] string? taxYear, CancellationToken ct)
     {
         var rates = await _payrollService.GetTaxRatesAsync(taxYear, ct);
@@ -34,6 +37,7 @@ public class TaxController : ControllerBase
     }
 
     [HttpPost("rates")]
+    [PerAuth(PayPerm.TaxManage)]
     public async Task<IActionResult> CreateRate([FromBody] TaxRateCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.CreateTaxRateAsync(dto, ct);

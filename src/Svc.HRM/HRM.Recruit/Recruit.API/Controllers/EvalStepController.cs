@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,7 @@ public class EvalStepController(IMediator med) : ControllerBase
     /// <summary>
     /// All EVALUATION STEP by EVALUATION FLOW id
     /// </summary>
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("EvalFlowAllStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -31,6 +33,7 @@ public class EvalStepController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("AllEvalStep")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEvalStep()
@@ -39,6 +42,7 @@ public class EvalStepController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("GetEvalStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -49,6 +53,7 @@ public class EvalStepController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("AddEvalStep")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -65,6 +70,7 @@ public class EvalStepController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EVALUATION STEP successfully created."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPut("ModEvalStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -83,6 +89,7 @@ public class EvalStepController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EVALUATION STEP successfully updated."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpDelete("DelEvalStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

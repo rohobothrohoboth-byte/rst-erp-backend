@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 
 
 namespace Svc.HRM.Payroll.Controllers;
@@ -27,6 +28,7 @@ public class ReportController : ControllerBase
     /// Get payroll summary report
     /// </summary>
     [HttpGet("payroll-summary")]
+    [PerAuth(PayPerm.ReportView)]
     public async Task<IActionResult> GetPayrollSummary([FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
     {
         var report = await _payrollService.GetPayrollSummaryReportAsync(from, to, ct);
@@ -37,6 +39,7 @@ public class ReportController : ControllerBase
     /// Get employee payslip history
     /// </summary>
     [HttpGet("employee/{employeeId}/history")]
+    [PerAuth(PayPerm.ReportView)]
     public async Task<IActionResult> GetEmployeeHistory(Guid employeeId, [FromQuery] int year, CancellationToken ct)
     {
         if (year == 0) year = DateTime.UtcNow.Year;
@@ -48,6 +51,7 @@ public class ReportController : ControllerBase
     /// Export bank file
     /// </summary>
     [HttpGet("payroll-run/{payrollRunId}/bank-export")]
+    [PerAuth(PayPerm.ReportView)]
     public async Task<IActionResult> ExportBankFile(Guid payrollRunId, CancellationToken ct, [FromQuery] string? format = null)
     {
         // Default to CSV if not specified

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobReqController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("AllJobReq")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -30,6 +32,7 @@ public class JobReqController(IMediator med) : ControllerBase
     /// <summary>
     /// All JOB REQUISITION of selected Work force plan.
     /// </summary>
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("AllWfpJobReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -40,6 +43,7 @@ public class JobReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.view")]
     [HttpGet("GetJobReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -50,6 +54,7 @@ public class JobReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.manage")]
     [HttpPost("AddJobReq")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -66,6 +71,7 @@ public class JobReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New JOB REQUISITION successfully created."));
     }
 
+    [PerAuth("hr.recruit.requisition.manage")]
     [HttpPut("ModJobReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -84,6 +90,7 @@ public class JobReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected JOB REQUISITION successfully updated."));
     }
 
+    [PerAuth("hr.recruit.requisition.manage")]
     [HttpDelete("DelJobReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

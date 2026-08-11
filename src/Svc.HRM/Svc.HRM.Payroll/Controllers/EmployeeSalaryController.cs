@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 namespace Svc.HRM.Payroll.Controllers;
 
 [ApiController]
@@ -20,6 +21,7 @@ public class EmployeeSalaryController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth(PayPerm.SalaryView)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var salaries = await _payrollService.GetAllEmployeeSalariesAsync(ct);
@@ -27,6 +29,7 @@ public class EmployeeSalaryController : ControllerBase
     }
 
     [HttpGet("employee/{employeeId}")]
+    [PerAuth(PayPerm.SalaryView)]
     public async Task<IActionResult> GetByEmployee(Guid employeeId, CancellationToken ct)
     {
         var salaries = await _payrollService.GetEmployeeSalariesAsync(employeeId, ct);
@@ -34,6 +37,7 @@ public class EmployeeSalaryController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [PerAuth(PayPerm.SalaryView)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var salary = await _payrollService.GetEmployeeSalaryAsync(id, ct);
@@ -41,6 +45,7 @@ public class EmployeeSalaryController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth(PayPerm.SalaryManage)]
     public async Task<IActionResult> Create([FromBody] EmployeeSalaryCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.AssignSalaryToEmployeeAsync(dto, ct);
@@ -48,6 +53,7 @@ public class EmployeeSalaryController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [PerAuth(PayPerm.SalaryManage)]
     public async Task<IActionResult> Update(Guid id, [FromBody] EmployeeSalaryCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.UpdateEmployeeSalaryAsync(id, dto, ct);

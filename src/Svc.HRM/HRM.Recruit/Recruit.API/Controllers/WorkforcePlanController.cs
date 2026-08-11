@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +21,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class WorkforcePlanController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.workforce.view")]
     [HttpGet("AllWorkforcePlan")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllWorkforcePlan()
@@ -28,6 +30,7 @@ public class WorkforcePlanController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.workforce.view")]
     [HttpGet("GetWorkforcePlan/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -38,6 +41,7 @@ public class WorkforcePlanController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.workforce.manage")]
     [HttpPost("AddWorkforcePlan")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,6 +62,7 @@ public class WorkforcePlanController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New WORKFORCE PLAN successfully created."));
     }
 
+    [PerAuth("hr.recruit.workforce.manage")]
     [HttpPut("ModWorkforcePlan/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -76,6 +81,7 @@ public class WorkforcePlanController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected WORKFORCE PLAN successfully updated."));
     }
 
+    [PerAuth("hr.recruit.workforce.manage")]
     [HttpDelete("DelWorkforcePlan/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

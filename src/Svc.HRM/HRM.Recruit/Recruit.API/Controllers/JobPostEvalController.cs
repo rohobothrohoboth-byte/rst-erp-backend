@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobPostEvalController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("JpStartEval/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -28,6 +30,7 @@ public class JobPostEvalController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"Successfully STARTED EVALUATION for this JOB POSTING."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("JpAppEvaluate")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

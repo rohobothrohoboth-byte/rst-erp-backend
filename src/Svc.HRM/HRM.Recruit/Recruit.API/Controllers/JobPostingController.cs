@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +21,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobPostingController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.posting.view")]
     [HttpGet("AllJobPosting")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobPosting()
@@ -31,6 +33,7 @@ public class JobPostingController(IMediator med) : ControllerBase
     /// <summary>
     /// JOB POSTINGS by WORK FORCE PLAN Id
     /// </summary>
+    [PerAuth("hr.recruit.posting.view")]
     [HttpGet("JobPostByWfp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -44,6 +47,7 @@ public class JobPostingController(IMediator med) : ControllerBase
     /// <summary>
     /// JOB POSTINGS by Department Id
     /// </summary>
+    [PerAuth("hr.recruit.posting.view")]
     [HttpGet("JobPostByDept")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -59,6 +63,7 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.posting.view")]
     [HttpGet("GetJobPosting/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,6 +74,7 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPost("AddJobPosting")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -85,6 +91,7 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New JOB POSTING successfully created."));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPost("AddAllJobPosting")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -101,6 +108,7 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "All JOB POSTINGS successfully created."));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpPut("ModJobPosting/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -119,6 +127,7 @@ public class JobPostingController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected JOB POSTING successfully updated."));
     }
 
+    [PerAuth("hr.recruit.posting.manage")]
     [HttpDelete("DelJobPosting/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 namespace Svc.HRM.Payroll.Controllers;
 
 [ApiController]
@@ -22,6 +23,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth(PayPerm.RunView)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var runs = await _payrollService.GetAllPayrollRunsAsync(ct);
@@ -29,6 +31,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [PerAuth(PayPerm.RunView)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var run = await _payrollService.GetPayrollRunAsync(id, ct);
@@ -36,6 +39,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth(PayPerm.RunCreate)]
     public async Task<IActionResult> Create([FromBody] PayrollRunCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.CreatePayrollRunAsync(dto, ct);
@@ -43,6 +47,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpPost("{id}/process")]
+    [PerAuth(PayPerm.RunProcess)]
     public async Task<IActionResult> Process(Guid id, CancellationToken ct)
     {
         var result = await _payrollService.ProcessPayrollRunAsync(id, ct);
@@ -50,6 +55,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpPost("{id}/approve")]
+    [PerAuth(PayPerm.RunApprove)]
     public async Task<IActionResult> Approve(Guid id, [FromBody] ApprovePayrollRequest request, CancellationToken ct)
     {
         var result = await _payrollService.ApprovePayrollRunAsync(id, request.ApprovedBy, ct);
@@ -57,6 +63,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpPut("{id}/status")]
+    [PerAuth(PayPerm.RunApprove)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] PayrollRunStatusUpdateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.UpdatePayrollRunStatusAsync(id, dto, ct);
@@ -64,6 +71,7 @@ public class PayrollRunController : ControllerBase
     }
 
     [HttpPost("{id}/payslips")]
+    [PerAuth(PayPerm.PayslipGenerate)]
     public async Task<IActionResult> GeneratePayslips(Guid id, CancellationToken ct)
     {
         var result = await _payrollService.GeneratePayslipsAsync(id, ct);

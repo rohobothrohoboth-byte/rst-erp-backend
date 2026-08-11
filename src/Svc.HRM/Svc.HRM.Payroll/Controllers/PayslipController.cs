@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 
 namespace Svc.HRM.Payroll.Controllers;
 
@@ -26,6 +27,7 @@ public class PayslipController : ControllerBase
     /// Get all payslips with pagination
     /// </summary>
     [HttpGet]
+    [PerAuth(PayPerm.PayslipView)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 100, CancellationToken ct = default)
     {
         try
@@ -56,6 +58,7 @@ public class PayslipController : ControllerBase
     /// Get payslip by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth(PayPerm.PayslipView)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         try
@@ -78,6 +81,7 @@ public class PayslipController : ControllerBase
     /// Get payslips by employee ID
     /// </summary>
     [HttpGet("employee/{employeeId:guid}")]
+    [PerAuth(PayPerm.PayslipView)]
     public async Task<IActionResult> GetByEmployee(Guid employeeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100, CancellationToken ct = default)
     {
         try
@@ -109,6 +113,7 @@ public class PayslipController : ControllerBase
     /// Get payslip by employee ID and payroll run ID
     /// </summary>
     [HttpGet("employee/{employeeId:guid}/payroll-run/{payrollRunId:guid}")]
+    [PerAuth(PayPerm.PayslipView)]
     public async Task<IActionResult> GetByEmployeeAndPayrollRun(Guid employeeId, Guid payrollRunId, CancellationToken ct)
     {
         try
@@ -131,6 +136,7 @@ public class PayslipController : ControllerBase
     /// Generate payslip for a specific payroll employee
     /// </summary>
     [HttpPost("generate")]
+    [PerAuth(PayPerm.PayslipGenerate)]
     public async Task<IActionResult> Generate([FromBody] GeneratePayslipRequest request, CancellationToken ct)
     {
         try
@@ -153,6 +159,7 @@ public class PayslipController : ControllerBase
     /// Generate payslips for a payroll run
     /// </summary>
     [HttpPost("generate/payroll-run/{payrollRunId:guid}")]
+    [PerAuth(PayPerm.PayslipGenerate)]
     public async Task<IActionResult> GenerateForPayrollRun(Guid payrollRunId, CancellationToken ct)
     {
         try
@@ -176,6 +183,7 @@ public class PayslipController : ControllerBase
         }
     }
     [HttpGet("{id:guid}/download")]
+    [PerAuth(PayPerm.PayslipDownload)]
     public async Task<IActionResult> Download(Guid id, CancellationToken ct)
     {
         try

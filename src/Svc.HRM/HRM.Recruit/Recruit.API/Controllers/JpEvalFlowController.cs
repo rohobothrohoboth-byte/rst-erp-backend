@@ -1,6 +1,7 @@
 // Recruit.API/Controllers/JpEvalFlowController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,7 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
 {
    // Recruit.API/Controllers/JpEvalFlowController.cs
 
+   [PerAuth("hr.recruit.evaluation.manage")]
    [HttpPost("AllJpEvalFlow/{id:guid}")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -39,6 +41,7 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
        return Ok(ApiResponse<object>.Ok(response));
    }
 
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("GetJpEvalFlow/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -53,6 +56,7 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("AddJpEvalFlow")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -69,6 +73,7 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "JOB POST'S EVALUATION FLOW successfully assigned."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPut("ModJpEvalFlow/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -87,6 +92,7 @@ public class JpEvalFlowController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected JOB POST'S EVALUATION FLOW successfully updated."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpDelete("DelJpEvalFlow/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
