@@ -37,7 +37,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/root - Get root folders
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("root")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRootFolders()
@@ -48,7 +48,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders - Get all folders
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFolders([FromQuery] GetFoldersQuery query)
@@ -58,7 +58,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/{id} - Get folder by ID
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,7 +69,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/{id}/contents - Get folder contents (sub-folders and documents)
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("{id}/contents")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -81,7 +81,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/{id}/subfolders - Get sub-folders only
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("{id}/subfolders")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,7 +93,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/{id}/documents - Get documents only
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("{id}/documents")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -105,7 +105,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/folders - Create folder
-    [PerAuth("flm.company.folders.create")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -118,7 +118,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ PUT /api/file/v1/folders/{id} - Update folder
-    [PerAuth("flm.company.folders.mod")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -132,7 +132,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ DELETE /api/file/v1/folders/{id} - Delete folder
-    [PerAuth("flm.company.folders.del")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -151,7 +151,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/folders/{id}/move - Move folder
-    [PerAuth("flm.company.folders.move")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpPost("{id}/move")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -163,7 +163,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/folders/{id}/share - Share a folder
-    [PerAuth("flm.company.folders.mod")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpPost("{id}/share")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -188,7 +188,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/folders/{id}/shares - Get folder shares
-    [PerAuth("flm.company.folders.view")]
+    [PerAuth(FlmPerm.FolderView)]
     [HttpGet("{id}/shares")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFolderShares(Guid id)
@@ -199,7 +199,7 @@ public class FolderController : ControllerBase
     }
 
     // ✅ DELETE /api/file/v1/folders/{id}/share/{shareId} - Remove folder share
-    [PerAuth("flm.company.folders.mod")]
+    [PerAuth(FlmPerm.FolderManage)]
     [HttpDelete("{id}/share/{shareId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

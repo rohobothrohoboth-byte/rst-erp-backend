@@ -37,13 +37,14 @@ public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
         try { bytes = Convert.FromBase64String(hash); }
         catch { return Task.CompletedTask; }
 
-        var byteIndex = requirement.BitIndex / 8;
-        var hasPermission = byteIndex < bytes.Length
-            && (bytes[byteIndex] & (1 << (requirement.BitIndex % 8))) != 0;
-
-        if (hasPermission)
+        foreach (var bitIndex in requirement.BitIndexes)
         {
-            context.Succeed(requirement);
+            var byteIndex = bitIndex / 8;
+            if (byteIndex < bytes.Length && (bytes[byteIndex] & (1 << (bitIndex % 8))) != 0)
+            {
+                context.Succeed(requirement);
+                break;
+            }
         }
 
         return Task.CompletedTask;

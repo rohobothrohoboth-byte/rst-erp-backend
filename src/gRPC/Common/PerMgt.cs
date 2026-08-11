@@ -5,8 +5,11 @@ namespace Common;
 
 public sealed class PerReq : IAuthorizationRequirement
 {
-    public int BitIndex { get; }
-    public PerReq(int bitIndex) { BitIndex = bitIndex; }
+    // A requirement is satisfied when the user holds ANY one of these permission
+    // bits. Single-permission [PerAuth("x")] yields a one-element array; the
+    // pipe form [PerAuth("a|b|c")] yields OR semantics across a, b and c.
+    public int[] BitIndexes { get; }
+    public PerReq(params int[] bitIndexes) { BitIndexes = bitIndexes; }
 }
 
 public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
@@ -22,8 +25,13 @@ public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
         if (policyName.StartsWith("api:"))
         {
             var permission = policyName["api:".Length..];
-            if (!PermissionMap.IndexMap.TryGetValue(permission, out var index)) { return Task.FromResult<AuthorizationPolicy?>(null); }
-            var policy = new AuthorizationPolicyBuilder().AddRequirements(new PerReq(index)).Build();
+            var indexes = new List<int>();
+            foreach (var key in permission.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (PermissionMap.IndexMap.TryGetValue(key, out var index)) { indexes.Add(index); }
+            }
+            if (indexes.Count == 0) { return Task.FromResult<AuthorizationPolicy?>(null); }
+            var policy = new AuthorizationPolicyBuilder().AddRequirements(new PerReq(indexes.ToArray())).Build();
             return Task.FromResult<AuthorizationPolicy?>(policy);
         }
 

@@ -37,7 +37,7 @@ public class ModuleController : ControllerBase
 
     // ✅ GET /api/file/v1/module/{module}/reference/{referenceId}
     // Get documents by module and reference (e.g., for invoice attachments)
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{module}/reference/{referenceId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDocumentsByModuleAndReference(string module, Guid referenceId, [FromQuery] string? category = null)
@@ -55,7 +55,7 @@ public class ModuleController : ControllerBase
 
     // ✅ GET /api/file/v1/module/{module}
     // Get documents by module only
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{module}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDocumentsByModule(string module, [FromQuery] string? category = null)

@@ -48,7 +48,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/all - Get all documents with filtering
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("all")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllDocuments([FromQuery] GetDocumentsQuery query)
@@ -58,7 +58,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/favorites - Get favorite documents
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("favorites")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFavorites()
@@ -69,7 +69,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/recent - Get recent documents
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("recent")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecent([FromQuery] int limit = 10)
@@ -80,7 +80,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/archived - Get archived documents
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("archived")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArchived([FromQuery] string? search = null)
@@ -91,7 +91,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/{id} - Get document by ID
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -103,7 +103,7 @@ public class DocumentController : ControllerBase
 
     // In DocumentController.cs - UploadDocument method
 
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPost("upload")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -174,7 +174,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ PUT /api/file/v1/documents/{id} - Update document
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -188,7 +188,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ DELETE /api/file/v1/documents/{id} - Delete document
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -208,7 +208,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/restore - Restore document
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPost("{id}/restore")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -227,7 +227,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/archive - Toggle archive status
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPost("{id}/archive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -270,7 +270,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ PUT /api/file/v1/documents/{id}/archive - Set archive status explicitly
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPut("{id}/archive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -315,7 +315,7 @@ public class DocumentController : ControllerBase
 
 
 
- [PerAuth("flm.company.manage")]
+ [PerAuth(FlmPerm.Manage)]
     [HttpPost("{id}/generate-share-link")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -381,7 +381,7 @@ public class DocumentController : ControllerBase
 
 
     // ✅ POST /api/file/v1/documents/{id}/favorite - Toggle favorite
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpPost("{id}/favorite")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -400,7 +400,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/move - Move document
-    [PerAuth("flm.company.manage")]
+    [PerAuth(FlmPerm.Manage)]
     [HttpPost("{id}/move")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -412,7 +412,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/{id}/download - Download document
-    [PerAuth("flm.company.view")]
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{id}/download")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
