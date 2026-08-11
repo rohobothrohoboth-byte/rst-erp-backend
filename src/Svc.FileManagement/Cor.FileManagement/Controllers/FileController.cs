@@ -1,6 +1,7 @@
 // E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Controllers\DocumentController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +48,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/all - Get all documents with filtering
+    [PerAuth("flm.company.view")]
     [HttpGet("all")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllDocuments([FromQuery] GetDocumentsQuery query)
@@ -56,6 +58,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/favorites - Get favorite documents
+    [PerAuth("flm.company.view")]
     [HttpGet("favorites")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFavorites()
@@ -66,6 +69,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/recent - Get recent documents
+    [PerAuth("flm.company.view")]
     [HttpGet("recent")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecent([FromQuery] int limit = 10)
@@ -76,6 +80,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/archived - Get archived documents
+    [PerAuth("flm.company.view")]
     [HttpGet("archived")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArchived([FromQuery] string? search = null)
@@ -86,6 +91,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/{id} - Get document by ID
+    [PerAuth("flm.company.view")]
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,6 +103,7 @@ public class DocumentController : ControllerBase
 
     // In DocumentController.cs - UploadDocument method
 
+    [PerAuth("flm.company.manage")]
     [HttpPost("upload")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -167,6 +174,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ PUT /api/file/v1/documents/{id} - Update document
+    [PerAuth("flm.company.manage")]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -180,6 +188,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ DELETE /api/file/v1/documents/{id} - Delete document
+    [PerAuth("flm.company.manage")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -199,6 +208,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/restore - Restore document
+    [PerAuth("flm.company.manage")]
     [HttpPost("{id}/restore")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -217,6 +227,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/archive - Toggle archive status
+    [PerAuth("flm.company.manage")]
     [HttpPost("{id}/archive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -259,6 +270,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ PUT /api/file/v1/documents/{id}/archive - Set archive status explicitly
+    [PerAuth("flm.company.manage")]
     [HttpPut("{id}/archive")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -303,7 +315,8 @@ public class DocumentController : ControllerBase
 
 
 
- [HttpPost("{id}/generate-share-link")]
+ [PerAuth("flm.company.manage")]
+    [HttpPost("{id}/generate-share-link")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GenerateShareLink(Guid id)
@@ -368,6 +381,7 @@ public class DocumentController : ControllerBase
 
 
     // ✅ POST /api/file/v1/documents/{id}/favorite - Toggle favorite
+    [PerAuth("flm.company.view")]
     [HttpPost("{id}/favorite")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -386,6 +400,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ POST /api/file/v1/documents/{id}/move - Move document
+    [PerAuth("flm.company.manage")]
     [HttpPost("{id}/move")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -397,6 +412,7 @@ public class DocumentController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/documents/{id}/download - Download document
+    [PerAuth("flm.company.view")]
     [HttpGet("{id}/download")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
