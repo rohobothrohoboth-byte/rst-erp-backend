@@ -37,7 +37,6 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpGet("AllJobGrade")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobGrade()
     {
@@ -55,7 +54,6 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpGet("GetJobGrade/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetJobGrade(Guid id)

@@ -36,7 +36,6 @@ public class PositionController : ControllerBase
     }
 
     [HttpGet("AllPosition")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPosition()
     {
@@ -56,7 +55,6 @@ public class PositionController : ControllerBase
     }
 
     [HttpGet("GetPosition/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPosition(Guid id)

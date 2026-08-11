@@ -24,7 +24,6 @@ public class PositionExpController(IMediator med) : ControllerBase
     /// End point to get list of Position Experience by PositionId
     /// </summary>   
     [HttpGet("AllPositionExp/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionExp(Guid id)
     {
@@ -33,7 +32,6 @@ public class PositionExpController(IMediator med) : ControllerBase
     }
 
     [HttpGet("GetPositionExp/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPositionExp(Guid id)

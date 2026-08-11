@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Dapper;
 using Helpers;
 using MediatR;
@@ -14,7 +15,7 @@ namespace Svc.Auth.Controllers;
 /// <summary>
 /// Employees Management by ADMIN end points
 /// </summary>
-[Authorize(Roles = "Admin,admin")]
+[Authorize]
 [ApiController]
 [Route("api/auth/v{version:apiVersion}/AdminEmp")]
 [ApiVersion("1.0")]
@@ -29,6 +30,7 @@ public class EmpController : ControllerBase
         _configuration = configuration;
     }
 
+    [PerAuth("hr.emp.view|hr.emp.list.view|core.users.view|hr.db.view")]
     [HttpGet("AllEmployee")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEmployee()
@@ -76,6 +78,7 @@ public class EmpController : ControllerBase
         return Ok(ApiResponse<object>.Ok(employees, "Employees retrieved successfully."));
     }
 
+    [PerAuth("hr.emp.view|hr.emp.list.view|core.users.view|hr.db.view")]
     [HttpGet("ByDepartment/{departmentId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployeesByDepartment(Guid departmentId)
@@ -124,6 +127,7 @@ public class EmpController : ControllerBase
         return Ok(ApiResponse<object>.Ok(employees, "Employees retrieved successfully."));
     }
 
+    [PerAuth("hr.emp.view|hr.emp.list.view|core.users.view|hr.db.view")]
     [HttpGet("ByPosition/{positionId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployeesByPosition(Guid positionId)

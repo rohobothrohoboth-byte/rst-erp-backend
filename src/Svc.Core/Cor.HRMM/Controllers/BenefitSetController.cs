@@ -22,7 +22,6 @@ namespace Cor.HRMM.Controllers;
 public class BenefitSetController(IMediator med) : ControllerBase
 {
     [HttpGet("AllBenefitSet")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBenefitSet()
     {
@@ -31,7 +30,6 @@ public class BenefitSetController(IMediator med) : ControllerBase
     }
 
     [HttpGet("GetBenefitSet/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBenefitSet(Guid id)

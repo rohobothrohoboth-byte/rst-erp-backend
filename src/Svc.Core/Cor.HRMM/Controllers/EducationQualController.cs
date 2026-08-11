@@ -21,7 +21,6 @@ namespace Cor.HRMM.Controllers;
 public class EducationQualController(IMediator med) : ControllerBase
 {
     [HttpGet("AllEducationQual")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEducationQual()
     {
@@ -30,7 +29,6 @@ public class EducationQualController(IMediator med) : ControllerBase
     }
 
     [HttpGet("GetEducationQual/{id:guid}")]
-    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEducationQual(Guid id)
