@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpEduController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view")]
     [HttpGet("AllEmpEdu")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEmpEdu()
@@ -28,6 +30,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("GetEmpEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -38,6 +41,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPost("AddEmpEdu")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -56,6 +60,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE'S EDUCATION successfully created."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ModEmpEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -74,6 +79,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S EDUCATION successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ReviewEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -90,6 +96,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EDUCATION successfully REVIEWED."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ReviewEduAll/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -106,6 +113,7 @@ public class EmpEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EDUCATIONS successfully REVIEWED."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpDelete("DelEmpEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

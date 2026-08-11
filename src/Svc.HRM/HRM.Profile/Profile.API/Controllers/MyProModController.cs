@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class MyProModController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.profile.mod")]
     [HttpPost("MyBioMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,6 +39,7 @@ public class MyProModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Biographical Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.profile.mod")]
     [HttpPost("MyFinanceMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -55,6 +58,7 @@ public class MyProModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Biographical Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.profile.mod")]
     [HttpPost("MyEmContMod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,6 +77,7 @@ public class MyProModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Emergency Contact Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.profile.mod")]
     [HttpPost("MyFamilyAdd")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -91,6 +96,7 @@ public class MyProModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Family Info successfully Added."));
     }
 
+    [PerAuth("hr.emp.profile.mod")]
     [HttpPut("MyFamilyMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -106,6 +112,7 @@ public class MyProModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Family Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.profile.mod")]
     [HttpDelete("MyFamilyDel/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

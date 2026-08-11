@@ -14,6 +14,7 @@ using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Common;
@@ -399,6 +400,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AttendanceDelete", policy =>
         policy.RequireRole("Admin"));
 });
+
+// Enable [PerAuth("permission")] enforcement against the shared Common.Permissions registry.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
 
 // ============ REGISTER SERVICES ============
 

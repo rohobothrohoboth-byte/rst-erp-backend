@@ -1,5 +1,6 @@
 // Leave.API/Controllers/EmpLeavePolicyController.cs
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -27,6 +28,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Get all employee leave policy assignments
     /// </summary>
     [HttpGet("All")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
@@ -38,6 +40,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Get leave policy assignments for a specific employee
     /// </summary>
     [HttpGet("ByEmployee/{employeeId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByEmployee(Guid employeeId)
     {
@@ -49,6 +52,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Get leave policy assignment by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -60,6 +64,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Assign leave policy to an employee
     /// </summary>
     [HttpPost("Assign")]
+    [PerAuth("leave.policies.assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Assign([FromBody] EmpLeavePolicyAddDto addDto)
     {
@@ -72,6 +77,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Bulk assign leave policy to multiple employees
     /// </summary>
     [HttpPost("BulkAssign")]
+    [PerAuth("leave.policies.assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> BulkAssign([FromBody] BatchAssignDto batchDto)
     {
@@ -84,6 +90,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Update leave policy assignment
     /// </summary>
     [HttpPut("Update/{id:guid}")]
+    [PerAuth("leave.policies.assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, [FromBody] EmpLeavePolicyModDto modDto)
     {
@@ -99,6 +106,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Soft delete leave policy assignment
     /// </summary>
     [HttpDelete("Delete/{id:guid}")]
+    [PerAuth("leave.policies.assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -111,6 +119,7 @@ public class EmpLeavePolicyController : ControllerBase
     /// Assign leave type to all employees in a department
     /// </summary>
     [HttpPost("AssignByDepartment")]
+    [PerAuth("leave.policies.assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignByDepartment([FromBody] DepartmentAssignDto assignDto)
     {

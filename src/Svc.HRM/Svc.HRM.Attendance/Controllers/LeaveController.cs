@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 
 namespace Svc.HRM.Attendance.Controllers;
 
@@ -25,6 +26,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get all leave requests (with optional filtering)
     /// </summary>
+    [PerAuth("leave.approve.view")]
     [HttpGet("requests")]
     public async Task<IActionResult> GetAllRequests([FromQuery] string? status = null, CancellationToken ct = default)
     {
@@ -43,6 +45,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get leave requests by employee ID
     /// </summary>
+    [PerAuth("my.leave.view")]
     [HttpGet("requests/employee/{employeeId}")]
     public async Task<IActionResult> GetByEmployee(Guid employeeId, CancellationToken ct)
     {
@@ -53,6 +56,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get leave request by ID
     /// </summary>
+    [PerAuth("my.leave.view")]
     [HttpGet("requests/{id}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
@@ -63,6 +67,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Create a leave request
     /// </summary>
+    [PerAuth("my.leave.add")]
     [HttpPost("requests")]
     public async Task<IActionResult> Create([FromBody] LeaveRequestCreateDto dto, CancellationToken ct)
     {
@@ -73,6 +78,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Update a leave request
     /// </summary>
+    [PerAuth("my.leave.mod")]
     [HttpPut("requests/{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] LeaveRequestCreateDto dto, CancellationToken ct)
     {
@@ -83,6 +89,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Approve a leave request
     /// </summary>
+    [PerAuth("leave.approve.process")]
     [HttpPost("requests/{id}/approve")]
     public async Task<IActionResult> Approve(Guid id, [FromBody] LeaveApproveDto dto, CancellationToken ct)
     {
@@ -93,6 +100,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Reject a leave request
     /// </summary>
+    [PerAuth("leave.approve.process")]
     [HttpPost("requests/{id}/reject")]
     public async Task<IActionResult> Reject(Guid id, [FromBody] RejectLeaveRequest request, CancellationToken ct)
     {
@@ -103,6 +111,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Delete a leave request
     /// </summary>
+    [PerAuth("my.leave.del")]
     [HttpDelete("requests/{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
@@ -113,6 +122,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get leave balances for an employee
     /// </summary>
+    [PerAuth("leave.balance.view")]
     [HttpGet("balances/employee/{employeeId}")]
     public async Task<IActionResult> GetBalances(Guid employeeId, [FromQuery] int year, CancellationToken ct)
     {
@@ -124,6 +134,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get leave balance by type
     /// </summary>
+    [PerAuth("leave.balance.view")]
     [HttpGet("balances/employee/{employeeId}/type/{leaveType}")]
     public async Task<IActionResult> GetBalanceByType(Guid employeeId, string leaveType, [FromQuery] int year, CancellationToken ct)
     {
@@ -135,6 +146,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Initialize leave balance for an employee
     /// </summary>
+    [PerAuth("hr.leave.manage")]
     [HttpPost("balances/employee/{employeeId}/initialize")]
     public async Task<IActionResult> InitializeBalance(Guid employeeId, [FromQuery] int year, CancellationToken ct)
     {
@@ -146,6 +158,7 @@ public class LeaveController : ControllerBase
     /// <summary>
     /// Get leave calendar
     /// </summary>
+    [PerAuth("my.leave.view")]
     [HttpGet("calendar")]
     public async Task<IActionResult> GetCalendar([FromQuery] int year, [FromQuery] int? month, CancellationToken ct)
     {

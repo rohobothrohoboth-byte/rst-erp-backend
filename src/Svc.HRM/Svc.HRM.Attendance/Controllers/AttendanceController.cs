@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 namespace Svc.HRM.Attendance.Controllers;
 
 [ApiController]
@@ -24,6 +25,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Clock in
     /// </summary>
+    [PerAuth("hr.attend.checkin.do")]
     [HttpPost("clock-in")]
     public async Task<IActionResult> ClockIn([FromBody] ClockInDto dto, CancellationToken ct)
     {
@@ -34,6 +36,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Clock out
     /// </summary>
+    [PerAuth("hr.attend.checkin.do")]
     [HttpPost("clock-out")]
     public async Task<IActionResult> ClockOut([FromBody] ClockOutDto dto, CancellationToken ct)
     {
@@ -44,6 +47,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get today's attendance for employee
     /// </summary>
+    [PerAuth("hr.attend.list.view")]
     [HttpGet("today/{employeeId}")]
     public async Task<IActionResult> GetToday(Guid employeeId, CancellationToken ct)
     {
@@ -54,6 +58,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get attendance by period
     /// </summary>
+    [PerAuth("hr.attend.list.view")]
     [HttpGet("employee/{employeeId}/period")]
     public async Task<IActionResult> GetByPeriod(Guid employeeId, [FromQuery] DateTime start, [FromQuery] DateTime end, CancellationToken ct)
     {
@@ -64,6 +69,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get attendance summary
     /// </summary>
+    [PerAuth("hr.attend.report.view")]
     [HttpGet("employee/{employeeId}/summary")]
     public async Task<IActionResult> GetSummary(Guid employeeId, [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
     {
@@ -74,6 +80,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get daily report
     /// </summary>
+    [PerAuth("hr.attend.report.view")]
     [HttpGet("report/daily")]
     public async Task<IActionResult> GetDailyReport([FromQuery] DateTime date, CancellationToken ct)
     {
@@ -84,6 +91,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get monthly report
     /// </summary>
+    [PerAuth("hr.attend.report.view")]
     [HttpGet("report/monthly")]
     public async Task<IActionResult> GetMonthlyReport([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
     {
@@ -94,6 +102,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get late employees
     /// </summary>
+    [PerAuth("hr.attend.list.view")]
     [HttpGet("late/{date}")]
     public async Task<IActionResult> GetLateEmployees(DateTime date, [FromQuery] int? thresholdMinutes, CancellationToken ct)
     {
@@ -104,6 +113,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Get absent employees
     /// </summary>
+    [PerAuth("hr.attend.list.view")]
     [HttpGet("absent/{date}")]
     public async Task<IActionResult> GetAbsentEmployees(DateTime date, CancellationToken ct)
     {
@@ -114,6 +124,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Update attendance record
     /// </summary>
+    [PerAuth("hr.attend.checkin.correction")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAttendanceDto dto, CancellationToken ct)
     {
@@ -124,6 +135,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Mark attendance manually (Admin)
     /// </summary>
+    [PerAuth("hr.attend.checkin.manual")]
     [HttpPost("admin/mark")]
     public async Task<IActionResult> MarkAttendance([FromBody] MarkAttendanceRequest request, CancellationToken ct)
     {
@@ -134,6 +146,7 @@ public class AttendanceController : ControllerBase
     /// <summary>
     /// Process daily attendance
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpPost("admin/process-daily")]
     public async Task<IActionResult> ProcessDaily([FromQuery] DateTime? date, CancellationToken ct)
     {

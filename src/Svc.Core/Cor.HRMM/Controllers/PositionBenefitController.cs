@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
@@ -23,6 +24,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     /// End point to get list of Position Benefits by PositionId
     /// </summary>
     [HttpGet("AllPositionBenefit/{id:guid}")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionBenefit(Guid id)
     {
@@ -31,6 +33,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     }
     
     [HttpGet("GetPositionBenefit/{id:guid}")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPositionBenefit(Guid id)
@@ -41,6 +44,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     }
 
     [HttpPost("AddPositionBenefit")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PosBenefitAddDto addDto)
@@ -57,6 +61,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     }
 
     [HttpPut("ModPositionBenefit/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -75,6 +80,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     }
 
     [HttpDelete("DelPositionBenefit/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

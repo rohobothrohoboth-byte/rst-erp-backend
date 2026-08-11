@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -35,6 +36,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== LEAVE TYPE ====================
 
     [HttpGet("Type/All")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllLeaveTypes()
     {
@@ -43,6 +45,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Type/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetLeaveType(Guid id)
@@ -53,6 +56,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Type/Names")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLeaveTypeNames()
     {
@@ -61,6 +65,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Type/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateLeaveType([FromBody] LeaveTypeAddDto addDto)
     {
@@ -71,6 +76,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Type/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateLeaveType(Guid id, [FromBody] LeaveTypeModDto modDto)
     {
@@ -81,6 +87,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Type/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteLeaveType(Guid id)
     {
@@ -89,6 +96,7 @@ public class LeavePolicyController : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, "Leave type deleted successfully."));
     }
 
+    [PerAuth("leave.policies.mod")]
     [HttpPatch("Type/Status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeLeaveTypeStatus([FromBody] StatChangeDto statDto)
@@ -102,6 +110,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== LEAVE POLICY ====================
 
     [HttpGet("All")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllPolicies()
     {
@@ -110,6 +119,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Active")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActivePolicy()
     {
@@ -118,6 +128,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPolicy(Guid id)
@@ -128,6 +139,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreatePolicy([FromBody] LeavePolicyAddDto addDto)
     {
@@ -138,6 +150,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePolicy(Guid id, [FromBody] LeavePolicyModDto modDto)
     {
@@ -148,6 +161,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeletePolicy(Guid id)
     {
@@ -157,6 +171,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Assign")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignPolicy()
     {
@@ -167,6 +182,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== POLICY CONFIGURATION ====================
 
     [HttpGet("Config/Active/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveConfig(Guid policyId)
     {
@@ -175,6 +191,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Config/All/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllConfigs(Guid policyId)
     {
@@ -183,6 +200,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Config/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetConfig(Guid id)
     {
@@ -192,6 +210,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Config/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateConfig([FromBody] LeavePolicyConfigAddDto addDto)
     {
@@ -202,6 +221,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Config/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateConfig(Guid id, [FromBody] LeavePolicyConfigModDto modDto)
     {
@@ -212,6 +232,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Config/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteConfig(Guid id)
     {
@@ -223,6 +244,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== APPROVAL CHAIN ====================
 
     [HttpGet("Chain/Active/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveChain(Guid policyId)
     {
@@ -231,6 +253,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Chain/All/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllChains(Guid policyId)
     {
@@ -239,6 +262,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Chain/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetChain(Guid id)
     {
@@ -248,6 +272,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Chain/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateChain([FromBody] LeaveAppChainAddDto addDto)
     {
@@ -258,6 +283,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Chain/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateChain(Guid id, [FromBody] LeaveAppChainModDto modDto)
     {
@@ -268,6 +294,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Chain/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteChain(Guid id)
     {
@@ -279,6 +306,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== CHAIN STEPS ====================
 
     [HttpGet("Chain/Step/All/{chainId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllSteps(Guid chainId)
     {
@@ -287,6 +315,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Chain/Step/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStep(Guid id)
     {
@@ -296,6 +325,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Chain/Step/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateStep([FromBody] LeaveAppStepAddDto addDto)
     {
@@ -306,6 +336,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Chain/Step/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateStep(Guid id, [FromBody] LeaveAppStepModDto modDto)
     {
@@ -316,6 +347,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Chain/Step/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteStep(Guid id)
     {
@@ -324,6 +356,7 @@ public class LeavePolicyController : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, "Step deleted successfully."));
     }
 
+    [PerAuth("leave.policies.mod")]
     [HttpPatch("Chain/Step/Status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ChangeStepStatus([FromBody] StatChangeDto statDto)
@@ -337,6 +370,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== ASSIGNMENT RULES ====================
 
     [HttpGet("Rule/Active/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveRules(Guid policyId)
     {
@@ -345,6 +379,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Rule/All/{policyId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllRules(Guid policyId)
     {
@@ -353,6 +388,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Rule/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRule(Guid id)
     {
@@ -362,6 +398,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Rule/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateRule([FromBody] PolicyAssignmentRuleAddDto addDto)
     {
@@ -372,6 +409,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Rule/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateRule(Guid id, [FromBody] PolicyAssignmentRuleModDto modDto)
     {
@@ -382,6 +420,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Rule/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteRule(Guid id)
     {
@@ -393,6 +432,7 @@ public class LeavePolicyController : ControllerBase
     // ==================== RULE CONDITIONS ====================
 
     [HttpGet("Rule/Condition/All/{ruleId:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllConditions(Guid ruleId)
     {
@@ -401,6 +441,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpGet("Rule/Condition/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCondition(Guid id)
     {
@@ -410,6 +451,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPost("Rule/Condition/Add")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateCondition([FromBody] PolicyRuleCondAddDto addDto)
     {
@@ -420,6 +462,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpPut("Rule/Condition/Update/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateCondition(Guid id, [FromBody] PolicyRuleCondModDto modDto)
     {
@@ -430,6 +473,7 @@ public class LeavePolicyController : ControllerBase
     }
 
     [HttpDelete("Rule/Condition/Delete/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteCondition(Guid id)
     {

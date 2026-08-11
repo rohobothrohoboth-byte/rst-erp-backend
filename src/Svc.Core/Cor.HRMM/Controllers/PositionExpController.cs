@@ -24,6 +24,7 @@ public class PositionExpController(IMediator med) : ControllerBase
     /// End point to get list of Position Experience by PositionId
     /// </summary>   
     [HttpGet("AllPositionExp/{id:guid}")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionExp(Guid id)
     {
@@ -32,6 +33,7 @@ public class PositionExpController(IMediator med) : ControllerBase
     }
 
     [HttpGet("GetPositionExp/{id:guid}")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPositionExp(Guid id)
@@ -42,6 +44,7 @@ public class PositionExpController(IMediator med) : ControllerBase
     }
 
     [HttpPost("AddPositionExp")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionExpAddDto addDto)
@@ -58,6 +61,7 @@ public class PositionExpController(IMediator med) : ControllerBase
     }
 
     [HttpPut("ModPositionExp/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,6 +80,7 @@ public class PositionExpController(IMediator med) : ControllerBase
     }
 
     [HttpDelete("DelPositionExp/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

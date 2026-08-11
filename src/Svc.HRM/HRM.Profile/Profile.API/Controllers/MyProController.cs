@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class MyProController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetEmpPhoto")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -27,6 +29,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Photo NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetPhotoThumbnail")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,6 +40,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Photo Thumbnail NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProfileInfo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,6 +51,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Profile Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProOverview")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -57,6 +62,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Overview Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProBasic")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,6 +73,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Basic Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProBio")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -77,6 +84,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Biographical Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProEmContact")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -87,6 +95,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Emergency Contact Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProFamily")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,6 +106,7 @@ public class MyProController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Families Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetEmpGuaranty")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

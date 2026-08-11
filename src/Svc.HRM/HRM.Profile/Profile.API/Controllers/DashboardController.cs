@@ -1,6 +1,7 @@
 // Profile.API/Controllers/DashboardController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,7 @@ public class DashboardController : ControllerBase
     /// <summary>
     /// Get recent activities
     /// </summary>
+    [PerAuth("hr.db.view")]
     [HttpGet("activities")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecentActivities([FromQuery] int limit = 10)
@@ -39,6 +41,7 @@ public class DashboardController : ControllerBase
     /// <summary>
     /// Get upcoming events
     /// </summary>
+    [PerAuth("hr.db.view")]
     [HttpGet("events/upcoming")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUpcomingEvents()

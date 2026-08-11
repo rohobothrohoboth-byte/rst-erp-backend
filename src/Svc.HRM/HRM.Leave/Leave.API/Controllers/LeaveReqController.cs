@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -37,6 +38,7 @@ public class LeaveRequestController : ControllerBase
             .Select(e => e.ErrorMessage);
     }
 [HttpPost("AddNewReq")]
+[PerAuth("my.leave.add")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 public async Task<IActionResult> AddNewReq([FromBody] LeaveRequestAddDto addDto)
 {
@@ -60,6 +62,7 @@ public async Task<IActionResult> AddNewReq([FromBody] LeaveRequestAddDto addDto)
     return Ok(ApiResponse<object>.Ok(response, "Leave request created successfully."));
 }
     [HttpGet("MyLeaveReq")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> MyLeaveReq()
     {
@@ -70,6 +73,7 @@ public async Task<IActionResult> AddNewReq([FromBody] LeaveRequestAddDto addDto)
         return Ok(ApiResponse<object>.Ok(response));
     }
 [HttpGet("AllRequests")]
+[PerAuth("leave.approve.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 public async Task<IActionResult> AllRequests()
 {
@@ -77,6 +81,7 @@ public async Task<IActionResult> AllRequests()
     return Ok(ApiResponse<object>.Ok(response));
 }
     [HttpGet("GetLeaveReq/{id:guid}")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetLeaveReq(Guid id)
@@ -87,6 +92,7 @@ public async Task<IActionResult> AllRequests()
     }
 
     [HttpPut("UpdateLeaveReq/{id:guid}")]
+    [PerAuth("my.leave.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateLeaveReq(Guid id, [FromBody] LeaveRequestModDto modDto)
     {
@@ -97,6 +103,7 @@ public async Task<IActionResult> AllRequests()
     }
 
     [HttpDelete("DeleteLeaveReq/{id:guid}")]
+    [PerAuth("my.leave.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DeleteLeaveReq(Guid id)
     {
@@ -107,6 +114,7 @@ public async Task<IActionResult> AllRequests()
 
     // In LeaveRequestController.cs
     [HttpPut("Approve/{id:guid}")]
+    [PerAuth("leave.approve.process")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ApproveRequest(Guid id, [FromBody] ApprovalCommentDto? commentDto = null)
     {
@@ -125,6 +133,7 @@ public async Task<IActionResult> AllRequests()
     }
 
     [HttpPut("Reject/{id:guid}")]
+    [PerAuth("leave.approve.process")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> RejectRequest(Guid id, [FromBody] ApprovalCommentDto? commentDto = null)
     {
@@ -139,6 +148,7 @@ public async Task<IActionResult> AllRequests()
     }
 
     [HttpPut("Cancel/{id:guid}")]
+    [PerAuth("my.leave.withdraw")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CancelRequest(Guid id, [FromBody] CancelRequestDto? cancelDto = null)
     {
@@ -153,6 +163,7 @@ public async Task<IActionResult> AllRequests()
 
     // SINGLE debug method - check policy assignment for employee
     [HttpGet("DebugPolicy/{employeeId}")]
+    [PerAuth("leave.balance.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DebugPolicy(Guid employeeId)
     {

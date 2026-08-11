@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Queries;
 using MediatR;
@@ -18,6 +19,7 @@ namespace Leave.API.Controllers;
 public class LeaveReqPendController(IMediator med) : ControllerBase
 {
     [HttpGet("MyPendReq")]
+    [PerAuth("leave.approve.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MyPendReq()
@@ -29,6 +31,7 @@ public class LeaveReqPendController(IMediator med) : ControllerBase
     }
 
     [HttpGet("DeptPendReq")]
+    [PerAuth("leave.approve.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeptPendReq()
@@ -40,6 +43,7 @@ public class LeaveReqPendController(IMediator med) : ControllerBase
     }
 
     [HttpGet("BraPendReq")]
+    [PerAuth("leave.approve.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> BraPendReq()
@@ -51,6 +55,7 @@ public class LeaveReqPendController(IMediator med) : ControllerBase
     }
 
     [HttpGet("AllPendReq")]
+    [PerAuth("leave.approve.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AllPendReq()

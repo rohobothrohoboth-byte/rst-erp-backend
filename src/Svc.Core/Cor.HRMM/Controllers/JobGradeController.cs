@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Constants;
 using Cor.HRMM.Models.DTOs;
@@ -36,6 +37,7 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpGet("AllJobGrade")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobGrade()
     {
@@ -53,6 +55,7 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpGet("GetJobGrade/{id:guid}")]
+    [PerAuth("position.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetJobGrade(Guid id)
@@ -78,6 +81,7 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpPost("AddJobGrade")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] JobGradeAddDto addDto)
@@ -99,6 +103,7 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpPut("ModJobGrade/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,6 +129,7 @@ public class JobGradeController : ControllerBase
     }
 
     [HttpDelete("DelJobGrade/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

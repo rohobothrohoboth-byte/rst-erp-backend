@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
@@ -18,6 +19,7 @@ namespace Cor.Module.Controllers;
 [ApiVersion("1.0")]
 public class PeriodController(IMediator med) : ControllerBase
 {
+    [PerAuth("core.fiscal.view")]
     [HttpGet("AllPeriod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPeriod()
@@ -26,6 +28,7 @@ public class PeriodController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.fiscal.view")]
     [HttpGet("GetPeriod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,6 +39,7 @@ public class PeriodController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
     
+    [PerAuth("core.fiscal.add")]
     [HttpPost("AddPeriod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -52,6 +56,7 @@ public class PeriodController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New PERIOD successfully created."));
     }
 
+    [PerAuth("core.fiscal.mod")]
     [HttpPut("ModPeriod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -71,6 +76,7 @@ public class PeriodController(IMediator med) : ControllerBase
 
     }
 
+    [PerAuth("core.fiscal.del")]
     [HttpDelete("DelPeriod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

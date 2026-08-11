@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpExpController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view")]
     [HttpGet("AllEmpExp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEmpExp()
@@ -28,6 +30,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("GetEmpExp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -38,6 +41,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPost("AddEmpExp")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -56,6 +60,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE'S EXPERIENCE successfully created."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ModEmpExp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -74,6 +79,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S EXPERIENCE successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ReviewExp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -90,6 +96,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIANCE successfully REVIEWED."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ReviewExpAll/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -106,6 +113,7 @@ public class EmpExpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIANCES successfully REVIEWED."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpDelete("DelEmpExp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

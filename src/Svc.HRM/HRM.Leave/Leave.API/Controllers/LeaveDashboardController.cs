@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Queries;
 using MediatR;
@@ -27,6 +28,7 @@ public class LeaveDashboardController : ControllerBase
     /// Get pending leave requests
     /// </summary>
     [HttpGet("pending")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingLeaveRequests([FromQuery] int limit = 10)
     {
@@ -38,6 +40,7 @@ public class LeaveDashboardController : ControllerBase
     /// Get employees on leave today
     /// </summary>
     [HttpGet("on-leave")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployeesOnLeave()
     {
@@ -49,6 +52,7 @@ public class LeaveDashboardController : ControllerBase
     /// Get leave balance summary
     /// </summary>
     [HttpGet("balance-summary")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLeaveBalanceSummary()
     {
@@ -60,6 +64,7 @@ public class LeaveDashboardController : ControllerBase
     /// Get leave statistics
     /// </summary>
     [HttpGet("statistics")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetLeaveStatistics()
     {

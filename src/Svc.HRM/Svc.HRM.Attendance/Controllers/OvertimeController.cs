@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 
 namespace Svc.HRM.Attendance.Controllers;
 
@@ -25,6 +26,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Get all overtime requests (with optional filtering)
     /// </summary>
+    [PerAuth("hr.attend.view")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? status = null, CancellationToken ct = default)
     {
@@ -42,6 +44,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Get overtime requests by employee ID
     /// </summary>
+    [PerAuth("hr.attend.view")]
     [HttpGet("employee/{employeeId}")]
     public async Task<IActionResult> GetByEmployee(Guid employeeId, CancellationToken ct)
     {
@@ -52,6 +55,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Get overtime request by ID
     /// </summary>
+    [PerAuth("hr.attend.view")]
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
@@ -62,6 +66,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Create an overtime request
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] OvertimeRequestDto dto, CancellationToken ct)
     {
@@ -72,6 +77,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Update an overtime request
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] OvertimeRequestDto dto, CancellationToken ct)
     {
@@ -82,6 +88,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Approve an overtime request
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpPost("{id}/approve")]
     public async Task<IActionResult> Approve(Guid id, [FromBody] OvertimeApproveDto dto, CancellationToken ct)
     {
@@ -92,6 +99,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Reject an overtime request
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpPost("{id}/reject")]
     public async Task<IActionResult> Reject(Guid id, [FromBody] RejectOvertimeRequest request, CancellationToken ct)
     {
@@ -102,6 +110,7 @@ public class OvertimeController : ControllerBase
     /// <summary>
     /// Delete an overtime request
     /// </summary>
+    [PerAuth("hr.attend.manage")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {

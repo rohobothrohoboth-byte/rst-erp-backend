@@ -53,6 +53,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: All Employees (Non-Paginated)
     // ============================================================
+   [PerAuth("hr.emp.view")]
    [HttpGet("AllEmployee")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
@@ -74,6 +75,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Employee by ID
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("GetEmployee/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -94,6 +96,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Employee Code by ID
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("GetEmployeeCode/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -110,6 +113,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Employee Print Details
     // ============================================================
+    [PerAuth("hr.emp.print")]
     [HttpGet("Print/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -126,6 +130,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Step 2 (Basic Info)
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("Step2/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -142,6 +147,7 @@ public class EmployeeController : ControllerBase
    // ============================================================
    // GET: Paginated Employees (With Caching - FIXED)
    // ============================================================
+   [PerAuth("hr.emp.view")]
    [HttpGet("paginated")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    public async Task<IActionResult> GetPaginatedEmployees(
@@ -221,6 +227,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Filter Options (With Caching)
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("filter-options")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFilterOptions()
@@ -294,6 +301,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Employee Stats (With Caching)
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("stats")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployeeStats()
@@ -321,6 +329,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // PATCH: Update Employee Status
     // ============================================================
+    [PerAuth("hr.emp.mod")]
     [HttpPatch("UpdateEmployeeStatus/{id}")]
     [HttpPost("UpdateEmployeeStatus/{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -361,6 +370,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // PUT: Update Employee
     // ============================================================
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ModEmployee/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -391,6 +401,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // DELETE: Employee
     // ============================================================
+    [PerAuth("hr.emp.del")]
     [HttpDelete("DelEmployee/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -413,6 +424,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: User Scope
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("user-scope/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -432,6 +444,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: User Branch ID
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("user-branch/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserBranchId(string employeeId)
@@ -445,6 +458,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: User Department ID
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("user-department/{employeeId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserDepartmentId(string employeeId)
@@ -458,6 +472,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // GET: Users Paginated
     // ============================================================
+    [PerAuth("hr.emp.view")]
     [HttpGet("users/paginated")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPaginatedUsers([FromQuery] UserPaginatedQry query)
@@ -473,6 +488,7 @@ public class EmployeeController : ControllerBase
     // ============================================================
     // POST: Invalidate Cache (Admin only)
     // ============================================================
+    [PerAuth("hr.emp.mod")]
     [HttpPost("invalidate-cache")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult InvalidateCache()

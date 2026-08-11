@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Queries;
 using MediatR;
@@ -18,6 +19,7 @@ namespace Leave.API.Controllers;
 public class LeaveReqHistController(IMediator med) : ControllerBase
 {
     [HttpGet("MyReqHist")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MyReqHist()
@@ -29,6 +31,7 @@ public class LeaveReqHistController(IMediator med) : ControllerBase
     }
 
     [HttpGet("DeptReqHist")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeptReqHist()
@@ -40,6 +43,7 @@ public class LeaveReqHistController(IMediator med) : ControllerBase
     }
 
     [HttpGet("BraReqHist")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> BraReqHist()
@@ -51,6 +55,7 @@ public class LeaveReqHistController(IMediator med) : ControllerBase
     }
 
     [HttpGet("AllReqHist")]
+    [PerAuth("my.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AllReqHist()
