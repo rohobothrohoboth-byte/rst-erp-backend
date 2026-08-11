@@ -287,6 +287,10 @@ builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClien
 
 // ============= SERVICES =============
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUnitService, UnitService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
 
 // ✅ Register API Key Services
 builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));

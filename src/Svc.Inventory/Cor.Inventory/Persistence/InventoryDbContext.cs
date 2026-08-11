@@ -13,9 +13,25 @@ public class InventoryDbContext : DbContext
     public DbSet<Warehouse> Warehouses { get; set; }
     public DbSet<StockLevel> StockLevels { get; set; }
     public DbSet<ExternalSystem> ExternalSystems { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Unit> Units { get; set; }
+    public DbSet<Product> Products { get; set; }
+    public DbSet<MaterialRequest> MaterialRequests { get; set; }
+    public DbSet<MaterialAssignment> MaterialAssignments { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Product catalog + employee-materials domain
+        modelBuilder.Entity<Category>().HasQueryFilter(c => !c.IsDeleted);
+        modelBuilder.Entity<Unit>().HasQueryFilter(u => !u.IsDeleted);
+        modelBuilder.Entity<Product>().HasQueryFilter(p => !p.IsDeleted);
+        modelBuilder.Entity<MaterialRequest>().HasQueryFilter(m => !m.IsDeleted);
+        modelBuilder.Entity<MaterialAssignment>().HasQueryFilter(m => !m.IsDeleted);
+
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.Sku)
+            .IsUnique();
 
         // Warehouse indexes
         modelBuilder.Entity<Warehouse>()

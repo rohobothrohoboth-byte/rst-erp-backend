@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.Inventory.Models.DTOs;
 using Cor.Inventory.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth("inv.warehouse.list.view")]
     [ProducesResponseType(typeof(List<WarehouseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
@@ -38,6 +40,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [PerAuth("inv.warehouse.list.view")]
     [ProducesResponseType(typeof(WarehouseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -58,6 +61,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth("inv.warehouse.list.add")]
     [ProducesResponseType(typeof(WarehouseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateWarehouseDto dto)
@@ -80,6 +84,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpPut]
+    [PerAuth("inv.warehouse.list.mod")]
     [ProducesResponseType(typeof(WarehouseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -111,6 +116,7 @@ public class WarehouseController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("inv.warehouse.list.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
