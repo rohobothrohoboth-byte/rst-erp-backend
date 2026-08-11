@@ -291,6 +291,12 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IWarehouseZoneService, WarehouseZoneService>();
+builder.Services.AddScoped<IReorderService, ReorderService>();
+builder.Services.AddScoped<IValuationService, ValuationService>();
+builder.Services.AddScoped<IInvAnalyticsService, InvAnalyticsService>();
+builder.Services.AddScoped<IInvDashboardService, InvDashboardService>();
 
 // ✅ Register API Key Services
 builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));

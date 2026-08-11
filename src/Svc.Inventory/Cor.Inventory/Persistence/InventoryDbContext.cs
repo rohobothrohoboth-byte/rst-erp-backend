@@ -18,6 +18,14 @@ public class InventoryDbContext : DbContext
     public DbSet<Product> Products { get; set; }
     public DbSet<MaterialRequest> MaterialRequests { get; set; }
     public DbSet<MaterialAssignment> MaterialAssignments { get; set; }
+    public DbSet<StockMovement> StockMovements { get; set; }
+    public DbSet<StockCount> StockCounts { get; set; }
+    public DbSet<StockCountLine> StockCountLines { get; set; }
+    public DbSet<WarehouseZone> WarehouseZones { get; set; }
+    public DbSet<Bin> Bins { get; set; }
+    public DbSet<ReorderRule> ReorderRules { get; set; }
+    public DbSet<ReorderRequest> ReorderRequests { get; set; }
+    public DbSet<ValuationSetting> ValuationSettings { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -28,6 +36,18 @@ public class InventoryDbContext : DbContext
         modelBuilder.Entity<Product>().HasQueryFilter(p => !p.IsDeleted);
         modelBuilder.Entity<MaterialRequest>().HasQueryFilter(m => !m.IsDeleted);
         modelBuilder.Entity<MaterialAssignment>().HasQueryFilter(m => !m.IsDeleted);
+
+        // Stock-movement engine + stock counts
+        modelBuilder.Entity<StockMovement>().HasQueryFilter(m => !m.IsDeleted);
+        modelBuilder.Entity<StockCount>().HasQueryFilter(c => !c.IsDeleted);
+        modelBuilder.Entity<StockCountLine>().HasQueryFilter(l => !l.IsDeleted);
+
+        // Warehouse zones/bins + reorder + valuation
+        modelBuilder.Entity<WarehouseZone>().HasQueryFilter(z => !z.IsDeleted);
+        modelBuilder.Entity<Bin>().HasQueryFilter(b => !b.IsDeleted);
+        modelBuilder.Entity<ReorderRule>().HasQueryFilter(r => !r.IsDeleted);
+        modelBuilder.Entity<ReorderRequest>().HasQueryFilter(r => !r.IsDeleted);
+        modelBuilder.Entity<ValuationSetting>().HasQueryFilter(v => !v.IsDeleted);
 
         modelBuilder.Entity<Product>()
             .HasIndex(p => p.Sku)
