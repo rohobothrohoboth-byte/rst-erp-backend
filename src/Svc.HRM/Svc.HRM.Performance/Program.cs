@@ -52,7 +52,7 @@ builder.Services.AddScoped<IPerformanceService, PerformanceService>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<PerformanceDbContext>().Database.EnsureCreated();
+    scope.ServiceProvider.GetRequiredService<PerformanceDbContext>().Database.Migrate();
 }
 app.UseCors("AllowAll");
 app.UseAuthentication();

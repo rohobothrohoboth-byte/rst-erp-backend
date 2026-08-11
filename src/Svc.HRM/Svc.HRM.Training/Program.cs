@@ -52,7 +52,7 @@ builder.Services.AddScoped<ITrainingService, TrainingService>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<TrainingDbContext>().Database.EnsureCreated();
+    scope.ServiceProvider.GetRequiredService<TrainingDbContext>().Database.Migrate();
 }
 app.UseCors("AllowAll");
 app.UseAuthentication();
