@@ -26,8 +26,22 @@ if (int.TryParse(builder.Configuration["PERFORMANCE_PORT"], out var envPort)) { 
 else { var m = System.Text.RegularExpressions.Regex.Match(urlString, @":(\d+)"); if (m.Success && int.TryParse(m.Groups[1].Value, out var p)) { port = p; } }
 builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Any, port, lo => lo.UseHttps()));
 
-var conn = builder.Configuration.GetConnectionString("PerformanceDb")
-    ?? "Host=localhost;Port=5432;Database=HRM.PerformanceDb;Username=postgres;Password=root";
+// NOTE: read a specific key ("HrmPerformanceDb") that intentionally does NOT match the
+// Aspire database resource name ("performanceDb"). Aspire injects ConnectionStrings__performanceDb
+// with its own generated password parameter, which does not match the actual Postgres
+// password ("root"), causing 28P01 auth failures. Every working service in this repo
+// sidesteps that by building the connection string from POSTGRES_* env vars (password
+// "root"), pointing at localhost:5432 — the same instance they all use.
+var conn = builder.Configuration["ConnectionStrings:HrmPerformanceDb"];
+if (string.IsNullOrEmpty(conn))
+{
+    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+    var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
+    var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
+    var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "HRM.PerformanceDb";
+    conn = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};Include Error Detail=true";
+}
 builder.Services.AddDbContext<PerformanceDbContext>(o => o.UseNpgsql(conn));
 
 builder.Services.AddControllers();
