@@ -16,8 +16,14 @@ if (File.Exists(sharedConfigPath))
     builder.Configuration.AddJsonFile(sharedConfigPath, optional: true, reloadOnChange: true);
 builder.Configuration.AddEnvironmentVariables();
 
+// The configured URL may contain an unsubstituted {ServiceHost} placeholder
+// (e.g. "https://{ServiceHost}:5007"), which is not a valid Uri, so extract the
+// port from the trailing :NNNN instead of parsing the whole URL. Env override:
+// TRAINING_PORT.
 var urlString = builder.Configuration["ServiceUrls:TrainingApi"] ?? "https://localhost:5007";
-var port = new Uri(urlString).Port;
+var port = 5007;
+if (int.TryParse(builder.Configuration["TRAINING_PORT"], out var envPort)) { port = envPort; }
+else { var m = System.Text.RegularExpressions.Regex.Match(urlString, @":(\d+)"); if (m.Success && int.TryParse(m.Groups[1].Value, out var p)) { port = p; } }
 builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Any, port, lo => lo.UseHttps()));
 
 var conn = builder.Configuration.GetConnectionString("TrainingDb")
