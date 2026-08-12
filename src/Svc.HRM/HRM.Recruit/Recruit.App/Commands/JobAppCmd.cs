@@ -48,11 +48,13 @@ public class JobAppIntAddHandler : IRequestHandler<JobAppIntAddCmd, JobAppListDt
 {
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
+    private readonly IRecruitNotificationService _notificationService;
 
-    public JobAppIntAddHandler(IUnitOfWork uow, IMediator med)
+    public JobAppIntAddHandler(IUnitOfWork uow, IMediator med, IRecruitNotificationService notificationService)
     {
         _uow = uow;
         _med = med;
+        _notificationService = notificationService;
     }
 
     public async Task<JobAppListDto> Handle(JobAppIntAddCmd request, CancellationToken ct)
@@ -128,6 +130,11 @@ public class JobAppIntAddHandler : IRequestHandler<JobAppIntAddCmd, JobAppListDt
             await _uow.Add(pBlob, ct);
 
             await _uow.Commit(ct);
+
+            // Notify HR that a new application was received (non-blocking: a
+            // notification failure must not fail the application submission).
+            try { await _notificationService.NotifyApplicationReceivedAsync(data.Id, ct); }
+            catch { /* swallow — notification is best-effort */ }
 
             // Get the created application
             var response = await _med.Send(new JobAppByIdQry { Id = data.Id }, ct);
