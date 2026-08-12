@@ -56,6 +56,9 @@ public class EmployeeModCmdHandler : IRequestHandler<EmployeeModCmd, EmployeeLis
             oldData.JobGradeId = request.ModDto.JobGradeId;
             oldData.PositionId = request.ModDto.PositionId;
             oldData.DepartmentId = request.ModDto.DepartmentId;
+            // Preserve the existing manager when the edit form doesn't send one,
+            // so editing other fields never accidentally clears reports-to.
+            oldData.ReportsToId = request.ModDto.ReportsToId ?? oldData.ReportsToId;
             oldData.EmploymentType = request.ModDto.EmploymentType;
             oldData.EmploymentNature = request.ModDto.EmploymentNature;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
