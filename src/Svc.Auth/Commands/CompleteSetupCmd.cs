@@ -29,6 +29,12 @@ public class SetupCompanyDto
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? Address { get; set; }
+    public string? Website { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? Mission { get; set; }
+    public string? Vision { get; set; }
+    public string? Values { get; set; }
+    public string? Structure { get; set; }
 }
 
 public class SetupBranchDto
@@ -37,6 +43,11 @@ public class SetupBranchDto
     public string NameAm { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string BranchType { get; set; } = "Main";
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
 }
 
 public class SetupDepartmentDto
@@ -378,8 +389,8 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     private async Task<Guid> CreateCompany(SetupCompanyDto dto, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
         const string sql = @"
-            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, NOW(), false)";
+            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""Website"", ""LogoUrl"", ""Mission"", ""Vision"", ""Values"", ""Structure"", ""DateAdd"", ""IsDeleted"")
+            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, @Website, @LogoUrl, @Mission, @Vision, @Values, @Structure, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         await connection.ExecuteAsync(sql, new
@@ -390,7 +401,13 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             dto.TaxId,
             dto.Phone,
             dto.Email,
-            dto.Address
+            dto.Address,
+            dto.Website,
+            dto.LogoUrl,
+            dto.Mission,
+            dto.Vision,
+            dto.Values,
+            dto.Structure
         }, transaction: tx);
 
         return id;
@@ -400,8 +417,8 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     private async Task<Guid> CreateBranch(SetupBranchDto dto, Guid companyId, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
         const string sql = @"
-            INSERT INTO ""Branch"" (""Id"", ""Name"", ""NameAm"", ""Code"", ""Location"", ""OpenDate"", ""BranchType"", ""BranchStat"", ""CompId"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @Code, @Location, NOW(), @BranchType, 'Active', @CompId, NOW(), false)";
+            INSERT INTO ""Branch"" (""Id"", ""Name"", ""NameAm"", ""Code"", ""Location"", ""OpenDate"", ""BranchType"", ""BranchStat"", ""CompId"", ""Phone"", ""Email"", ""Address"", ""City"", ""ManagerName"", ""DateAdd"", ""IsDeleted"")
+            VALUES (@Id, @Name, @NameAm, @Code, @Location, NOW(), @BranchType, 'Active', @CompId, @Phone, @Email, @Address, @City, @ManagerName, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         var code = $"BR-{new Random().Next(1, 9999):D4}";
@@ -414,7 +431,12 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             Code = code,
             dto.Location,
             dto.BranchType,
-            CompId = companyId
+            CompId = companyId,
+            dto.Phone,
+            dto.Email,
+            dto.Address,
+            dto.City,
+            dto.ManagerName
         }, transaction: tx);
 
         return id;
