@@ -12,6 +12,7 @@ public class CompListDto : BaseDTO
     public string? Address { get; set; }
     public string? Website { get; set; }
     public string? LogoUrl { get; set; }
+    public string? Motto { get; set; }
     public string? Mission { get; set; }
     public string? Vision { get; set; }
     public string? Values { get; set; }
@@ -31,6 +32,7 @@ public class AddCompDto
     public string? Address { get; set; }
     public string? Website { get; set; }
     public string? LogoUrl { get; set; }
+    public string? Motto { get; set; }
     public string? Mission { get; set; }
     public string? Vision { get; set; }
     public string? Values { get; set; }
@@ -48,6 +50,7 @@ public class EditCompDto
     public string? Address { get; set; }
     public string? Website { get; set; }
     public string? LogoUrl { get; set; }
+    public string? Motto { get; set; }
     public string? Mission { get; set; }
     public string? Vision { get; set; }
     public string? Values { get; set; }
@@ -66,6 +69,7 @@ public class CompDto
     public string? Address { get; set; }
     public string? Website { get; set; }
     public string? LogoUrl { get; set; }
+    public string? Motto { get; set; }
     public string? Mission { get; set; }
     public string? Vision { get; set; }
     public string? Values { get; set; }

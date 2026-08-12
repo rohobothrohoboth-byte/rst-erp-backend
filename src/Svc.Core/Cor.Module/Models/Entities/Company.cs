@@ -13,6 +13,7 @@ public class Company : BaseEntity
         public string? LogoUrl { get; set; }
 
         // Organization identity / profile
+        public string? Motto { get; set; }
         public string? Mission { get; set; }
         public string? Vision { get; set; }
         public string? Values { get; set; }
