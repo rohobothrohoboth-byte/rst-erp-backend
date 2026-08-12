@@ -22,7 +22,7 @@ public class AllDeptsHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
        const string v = "v";
        const string b = "b";
        var qb = new QueryBuilder()
-           .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.BranchId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+           .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.BranchId, x => x.ManagerName!, x => x.Description!, x => x.Phone!, x => x.Email!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
            .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
            .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
            .From<Department>(v)
@@ -47,6 +47,10 @@ public class AllDeptsHandler : IRequestHandler<AllDeptsQry, List<DeptListDto>>
                BranchId = data.BranchId,  // ? ADD THIS - maps the value
                Branch = data.Branch,
                BranchAm = data.BranchAm,
+               ManagerName = data.ManagerName,
+               Description = data.Description,
+               Phone = data.Phone,
+               Email = data.Email,
                IsDeleted = data.IsDeleted,
                DateAdd = data.DateAdd,
                DateMod = data.DateMod,
@@ -65,7 +69,7 @@ public class DeptByIdHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
         const string v = "v";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Department>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.DeptStat, x => x.ManagerName!, x => x.Description!, x => x.Phone!, x => x.Email!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<Branch, DeptListDto>(b, x => x.Name, d => d.Branch)
             .SelectAs<Branch, DeptListDto>(b, x => x.NameAm, d => d.BranchAm)
             .From<Department>(v)
@@ -86,6 +90,10 @@ public class DeptByIdHandler : IRequestHandler<DeptByIdQry, DeptListDto?>
             DeptStatStr = MyEnumHelper.FormatEnum<DeptStat>(data.DeptStat),
             Branch = data.Branch,
             BranchAm = data.BranchAm,
+            ManagerName = data.ManagerName,
+            Description = data.Description,
+            Phone = data.Phone,
+            Email = data.Email,
             IsDeleted = data.IsDeleted,
             DateAdd = data.DateAdd,
             DateMod = data.DateMod,

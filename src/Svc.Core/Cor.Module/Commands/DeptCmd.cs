@@ -42,6 +42,10 @@ public class AddDeptHandler : IRequestHandler<AddDeptCmd, DeptDto>
                 NameAm = request.AddDto.NameAm,
                 DeptStat = "Active", // Default status
                 BranchId = request.AddDto.BranchId,
+                ManagerName = request.AddDto.ManagerName,
+                Description = request.AddDto.Description,
+                Phone = request.AddDto.Phone,
+                Email = request.AddDto.Email,
                 DateAdd = DateTime.UtcNow,
                 DateMod = null
             };
@@ -68,6 +72,10 @@ public class AddDeptHandler : IRequestHandler<AddDeptCmd, DeptDto>
                 NameAm = department.NameAm,
                 BranchId = department.BranchId,
                 DeptStat = department.DeptStat,
+                ManagerName = department.ManagerName,
+                Description = department.Description,
+                Phone = department.Phone,
+                Email = department.Email,
                 DateAdd = department.DateAdd,
                 DateMod = department.DateMod
             };
@@ -115,6 +123,10 @@ public class ModDeptHandler : IRequestHandler<ModDeptCmd, DeptDto>
             department.NameAm = request.ModDto.NameAm;
             department.BranchId = request.ModDto.BranchId;
             department.DeptStat = request.ModDto.DeptStat ?? department.DeptStat;
+            department.ManagerName = request.ModDto.ManagerName ?? department.ManagerName;
+            department.Description = request.ModDto.Description ?? department.Description;
+            department.Phone = request.ModDto.Phone ?? department.Phone;
+            department.Email = request.ModDto.Email ?? department.Email;
             department.DateMod = DateTime.UtcNow;
 
             await _uow.Update(department);
@@ -139,6 +151,10 @@ public class ModDeptHandler : IRequestHandler<ModDeptCmd, DeptDto>
                 NameAm = department.NameAm,
                 BranchId = department.BranchId,
                 DeptStat = department.DeptStat,
+                ManagerName = department.ManagerName,
+                Description = department.Description,
+                Phone = department.Phone,
+                Email = department.Email,
                 DateAdd = department.DateAdd,
                 DateMod = department.DateMod
             };
