@@ -18,6 +18,53 @@ public class HrmProService : HrmProfileService.HrmProfileServiceBase
         return res;
     }
 
+    // Returns Id + full name (+ Amharic) + code for every employee. Consumed by the
+    // Leave service (e.g. leave history/report) to resolve EmployeeId -> name/code,
+    // since employee identity lives in this service's DB, not the Leave DB.
+    // Previously not overridden, so gRPC returned Unimplemented.
+    public override async Task<HrmProResCodeList> GetEmpCodeList(HrmProListRqst request, ServerCallContext context)
+    {
+        var res = new HrmProResCodeList();
+        var response = (await _med.Send(new EmpAllAdminQry())).ToList();
+
+        foreach (var dbItem in response)
+        {
+            res.Res.Add(new HrmProResCode
+            {
+                Id = dbItem.Id.ToString(),
+                Name = dbItem.EmpFullName ?? "",
+                NameAm = dbItem.EmpFullNameAm ?? "",
+                Code = dbItem.Code ?? ""
+            });
+        }
+
+        return res;
+    }
+
+    // Full basic info for one employee. Consumed by the Leave service (e.g. leave
+    // request detail). Previously not overridden -> gRPC returned Unimplemented.
+    public override async Task<EmpBasicInfoRes> GetEmpBasicInfo(HrmProRqst request, ServerCallContext context)
+    {
+        var res = new EmpBasicInfoRes();
+        var e = await _med.Send(new EmployeeByIdQry { Id = Guid.Parse(request.Id) });
+        if (e == null) return res;
+
+        res.Id = e.Id.ToString();
+        res.EmpFullName = e.EmpFullName ?? "";
+        res.EmpFullNameAm = e.EmpFullNameAm ?? "";
+        res.Code = e.Code ?? "";
+        res.Gender = e.Gender ?? "";
+        res.EmpState = e.EmpState ?? "";
+        res.Branch = e.Branch ?? "";
+        res.Department = e.Department ?? "";
+        res.Position = e.Position ?? "";
+        res.JobGrade = e.JobGrade ?? "";
+        res.EmpType = e.EmpType ?? "";
+        res.EmpNature = e.EmpNature ?? "";
+        res.WorkArr = e.WorkArr ?? "";
+        return res;
+    }
+
     public override async Task<HrmProRes> GetEmp(HrmProRqst request, ServerCallContext context)
     {
         var res = new HrmProRes();
