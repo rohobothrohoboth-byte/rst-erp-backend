@@ -10,7 +10,7 @@ public static class CoreModuleSeeder
         return new List<PerMenuSeedDto>
         {
             new() { ModKey = "mod.core", Key = "core.db", Label = "Dashboard", Path = "/core", Icon = "LayoutDashboard", ParKey = "", IsChild = false, Order = 1 },
-            new() { ModKey = "mod.core", Key = "core.company", Label = "Companies", Path = "/core/company", Icon = "Building", ParKey = "", IsChild = false, Order = 2 },
+            new() { ModKey = "mod.core", Key = "core.company", Label = "Company", Path = "/core/company", Icon = "Building", ParKey = "", IsChild = false, Order = 2 },
             new() { ModKey = "mod.core", Key = "core.branch", Label = "Branches", Path = "/core/branch", Icon = "MapPin", ParKey = "", IsChild = false, Order = 3 },
             new() { ModKey = "mod.core", Key = "core.dept", Label = "Departments", Path = "/core/department", Icon = "Network", ParKey = "", IsChild = false, Order = 4 },
             new() { ModKey = "mod.core", Key = "core.fiscal", Label = "Fiscal Year", Path = "/core/fiscal-year", Icon = "Calendar", ParKey = "", IsChild = false, Order = 5 },

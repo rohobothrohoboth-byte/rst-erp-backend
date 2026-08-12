@@ -41,6 +41,11 @@ public class AddBranchHandler : IRequestHandler<AddBranchCmd, BranchDto>
             BranchType = request.AddDto.BranchType,
             BranchStat = request.AddDto.BranchStat,
             CompId = request.AddDto.CompId,
+            Phone = request.AddDto.Phone,
+            Email = request.AddDto.Email,
+            Address = request.AddDto.Address,
+            City = request.AddDto.City,
+            ManagerName = request.AddDto.ManagerName,
             DateAdd = DateTime.UtcNow
         };
 
@@ -82,6 +87,11 @@ public class AddBranchHandler : IRequestHandler<AddBranchCmd, BranchDto>
             BranchType = branch.BranchType,
             BranchStat = branch.BranchStat,
             CompId = branch.CompId,
+            Phone = branch.Phone,
+            Email = branch.Email,
+            Address = branch.Address,
+            City = branch.City,
+            ManagerName = branch.ManagerName,
             IsActive = true,
             IsDeleted = false,
             DateAdd = branch.DateAdd,
@@ -121,6 +131,11 @@ public class ModBranchHandler : IRequestHandler<ModBranchCmd, BranchDto>
         branch.Location = request.ModDto.Location;
         branch.BranchType = request.ModDto.BranchType;
         branch.BranchStat = request.ModDto.BranchStat;
+        branch.Phone = request.ModDto.Phone ?? branch.Phone;
+        branch.Email = request.ModDto.Email ?? branch.Email;
+        branch.Address = request.ModDto.Address ?? branch.Address;
+        branch.City = request.ModDto.City ?? branch.City;
+        branch.ManagerName = request.ModDto.ManagerName ?? branch.ManagerName;
         branch.DateMod = DateTime.UtcNow;
 
         // Update Code if provided
@@ -161,6 +176,11 @@ public class ModBranchHandler : IRequestHandler<ModBranchCmd, BranchDto>
             BranchType = branch.BranchType,
             BranchStat = branch.BranchStat,
             CompId = branch.CompId,
+            Phone = branch.Phone,
+            Email = branch.Email,
+            Address = branch.Address,
+            City = branch.City,
+            ManagerName = branch.ManagerName,
             IsActive = true,
             IsDeleted = false,
             DateAdd = branch.DateAdd,

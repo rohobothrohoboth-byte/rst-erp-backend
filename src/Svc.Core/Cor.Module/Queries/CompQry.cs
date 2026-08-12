@@ -22,7 +22,7 @@ public class GetCompsHandler : IRequestHandler<AllCompsQry, List<CompListDto>>
         const string c = "c";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.TaxId!, x => x.Phone!, x => x.Email!, x => x.Address!, x => x.Website!, x => x.LogoUrl!, x => x.Mission!, x => x.Vision!, x => x.Values!, x => x.Structure!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectRaw("COUNT(b.\"Id\") AS \"CountBra\"")
             .From<Company>(c)
             .LeftJoin<Company, Branch>(c, b, x => x.Id, x => x.CompId)
@@ -51,7 +51,7 @@ public class GetCompByIdHandler : IRequestHandler<CompByIdQry, CompListDto?>
         const string c = "c";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Company>(c, x => x.Id, x => x.Name, x => x.NameAm, x => x.TaxId!, x => x.Phone!, x => x.Email!, x => x.Address!, x => x.Website!, x => x.LogoUrl!, x => x.Mission!, x => x.Vision!, x => x.Values!, x => x.Structure!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectRaw("COUNT(b.\"Id\") AS \"CountBra\"")
             .From<Company>(c)
             .LeftJoin<Company, Branch>(c, b, x => x.Id, x => x.CompId)

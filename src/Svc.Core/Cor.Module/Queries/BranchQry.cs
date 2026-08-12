@@ -22,7 +22,7 @@ public class AllBranchesHandler : IRequestHandler<AllBranchesQry, List<BranchLis
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.Phone!, x => x.Email!, x => x.Address!, x => x.City!, x => x.ManagerName!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
             .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
             .From<Branch>(v)
@@ -54,7 +54,7 @@ public class BranchByIdHandler : IRequestHandler<BranchByIdQry, BranchListDto?>
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.Phone!, x => x.Email!, x => x.Address!, x => x.City!, x => x.ManagerName!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
             .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
             .From<Branch>(v)
@@ -83,7 +83,7 @@ public class BranchByCompHandler : IRequestHandler<BranchByCompQry, List<BranchL
         const string v = "v";
         const string c = "c";
         var qb = new QueryBuilder()
-            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Branch>(v, x => x.Id, x => x.Name, x => x.NameAm, x => x.Code, x => x.CompId, x => x.Location, x => x.OpenDate, x => x.BranchType, x => x.BranchStat, x => x.Phone!, x => x.Email!, x => x.Address!, x => x.City!, x => x.ManagerName!, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<Company, BranchListDto>(c, x => x.Name, d => d.Comp)
             .SelectAs<Company, BranchListDto>(c, x => x.NameAm, d => d.CompAm)
             .From<Branch>(v)
