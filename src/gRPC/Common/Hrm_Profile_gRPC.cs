@@ -50,18 +50,21 @@ public class HrmProfileClient : IHrmProfileClient
    }
       public async Task<HrmProResCodeList> GetEmpCodeList(CancellationToken ct = default)
         {
-            using var channel = GrpcChannel.ForAddress(_servUrl);
-            var client = new HrmProfileService.HrmProfileServiceClient(channel);
+            // Reuse the shared _channel, which is configured to accept the dev
+            // certificate. Creating a new GrpcChannel.ForAddress(_servUrl) here (as
+            // before) used default TLS validation and failed with
+            // RemoteCertificateNameMismatch against the self-signed dev cert.
+            var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            return await client.GetEmpCodeListAsync(req);
+            return await client.GetEmpCodeListAsync(req, cancellationToken: ct);
         }
 
  public async Task<EmpBasicInfoRes> GetEmpBasicInfo(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new HrmProfileService.HrmProfileServiceClient(channel);
+        // Reuse the shared _channel (dev-cert tolerant) instead of a default channel.
+        var client = new HrmProfileService.HrmProfileServiceClient(_channel);
         var req = new HrmProRqst { Id = id };
-        return await client.GetEmpBasicInfoAsync(req);
+        return await client.GetEmpBasicInfoAsync(req, cancellationToken: ct);
     }
     public async Task<HrmProResCode> GetEmpCode(string id, CancellationToken ct = default)
     {
