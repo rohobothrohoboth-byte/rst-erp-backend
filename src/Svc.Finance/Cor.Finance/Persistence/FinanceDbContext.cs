@@ -24,6 +24,10 @@ public class FinanceDbContext : DbContext
     public DbSet<JournalLine> JournalLines { get; set; }
     public DbSet<AccountCategory> AccountCategories { get; set; }
 
+    public DbSet<AccountSubtype> AccountSubtypes { get; set; }
+    public DbSet<AccountType> AccountTypes { get; set; }
+
+
     // ============================================================
     // INVOICES (AP & AR)
     // ============================================================
