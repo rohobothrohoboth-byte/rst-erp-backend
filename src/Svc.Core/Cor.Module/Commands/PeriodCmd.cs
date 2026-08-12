@@ -33,6 +33,7 @@ public class AddPeriodCmdHandler : IRequestHandler<AddPeriodCmd, PeriodListDto>
                 DateEnd = request.AddDto.DateEnd,
                 IsActive = BoolToStr.EnumToString(YesNo.Yes),
                 Quarter = request.AddDto.Quarter,
+                PeriodType = request.AddDto.PeriodType,
                 FiscalYearId = request.AddDto.FiscalYearId
             };
             await _uow.Add(period, ct);
@@ -72,6 +73,7 @@ public class ModPeriodCmdHandler : IRequestHandler<ModPeriodCmd, PeriodListDto>
             oldData.DateEnd = request.ModDto.DateEnd;
             oldData.IsActive = request.ModDto.IsActive;
             oldData.Quarter = request.ModDto.Quarter;
+            oldData.PeriodType = request.ModDto.PeriodType ?? oldData.PeriodType;
             oldData.FiscalYearId = request.ModDto.FiscalYearId;
             oldData.SetRowVersion(uint.Parse(request.ModDto.RowVersion));
             await _uow.Update(oldData);
