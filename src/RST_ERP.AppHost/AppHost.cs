@@ -35,6 +35,8 @@ var crmDb = postgres.AddDatabase("crmDb", "core.CRMDbCon");
 var procurementDb = postgres.AddDatabase("procurementDb", "core.ProcurementDb");
 var inventoryDb = postgres.AddDatabase("inventorydb","core.InventoryDb");
 var planDevDbCon = postgres.AddDatabase("planDevDbCon","core.PlanDevDb");
+var trainingDb = postgres.AddDatabase("trainingDb", "HRM.TrainingDb");
+var performanceDb = postgres.AddDatabase("performanceDb", "HRM.PerformanceDb");
 
 // ============= SERVICES WITH FIXED PORTS =============
 
@@ -148,6 +150,24 @@ builder.AddProject<Projects.Svc_HRM_Attendance>("attendance")
     .WithReference(rabbitmq)
     .WithReference(redis)
     .WithHttpsEndpoint(port: 7011, name: "https")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+    .WithEnvironment("ServiceHost", localIp);
+
+// ✅ Training
+builder.AddProject<Projects.Svc_HRM_Training>("training")
+    .WithReference(rabbitmq)
+    .WithReference(redis)
+    .WithReference(trainingDb)
+    .WithHttpsEndpoint(port: 5007, name: "https")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
+    .WithEnvironment("ServiceHost", localIp);
+
+// ✅ Performance
+builder.AddProject<Projects.Svc_HRM_Performance>("performance")
+    .WithReference(rabbitmq)
+    .WithReference(redis)
+    .WithReference(performanceDb)
+    .WithHttpsEndpoint(port: 5005, name: "https")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
     .WithEnvironment("ServiceHost", localIp);
 

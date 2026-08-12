@@ -66,15 +66,20 @@ public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<MyProOve
         if (row is null) { return null; }
 
         var serStr = row.EmploymentDate.FullServDur();
+        // NOTE: Tenure is real (from EmploymentDate). Performance, Training and
+        // Attendance are owned by their own services (Svc.HRM.Performance /
+        // Svc.HRM.Training / Svc.HRM.Attendance); until this handler aggregates
+        // them via cross-service calls we return honest neutral values instead of
+        // hardcoded fake data (previously "Sarah Johnson", 4.5/5, 78%, "May 2026").
         return new MyProOverview
         {
             Tenure = serStr,
-            PerStr = $"{4.5} / {5}".Trim(),
-            Training = "2",
-            AttendPer = 78.0,
-            AttendMonth = "May 2026",
-            RepToName = "Sarah Johnson",
-            RepToPos = "Team Lead"
+            PerStr = "N/A",
+            Training = "0",
+            AttendPer = 0.0,
+            AttendMonth = DateTime.UtcNow.ToString("MMMM yyyy"),
+            RepToName = "",
+            RepToPos = ""
         };
     }
 }
