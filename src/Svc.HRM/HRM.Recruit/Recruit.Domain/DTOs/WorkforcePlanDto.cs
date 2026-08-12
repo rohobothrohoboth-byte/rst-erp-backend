@@ -43,6 +43,7 @@ public class WorkforcePlanListDto : BaseDto
 
 public class WorkforcePlanAddDto
 {
+    public Guid? DepartmentId { get; set; } // optional: if sent, skips the Profile gRPC lookup
     [JsonIgnore]
     public Guid RequistionById { get; set; } // HRM.Profile.Employee
 
