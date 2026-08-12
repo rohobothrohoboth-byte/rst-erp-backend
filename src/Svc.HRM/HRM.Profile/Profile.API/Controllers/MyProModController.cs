@@ -55,7 +55,7 @@ public class MyProModController(IMediator med) : ControllerBase
 
         modDto.Id = id;
         var response = await med.Send(new MyFinanceModCmd { ModDto = modDto });
-        return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Biographical Info successfully updated."));
+        return Ok(ApiResponse<object>.Ok(response, "EMPLOYEE'S Financial Info successfully updated."));
     }
 
     [PerAuth("hr.emp.profile.mod")]

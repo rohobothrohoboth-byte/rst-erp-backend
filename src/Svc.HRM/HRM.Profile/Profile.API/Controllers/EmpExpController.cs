@@ -93,7 +93,7 @@ public class EmpExpController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
         await med.Send(new EmpExpRvwCmd { Dto = dto });
-        return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIANCE successfully REVIEWED."));
+        return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIENCE successfully REVIEWED."));
     }
 
     [PerAuth("hr.emp.mod")]
@@ -110,7 +110,7 @@ public class EmpExpController(IMediator med) : ControllerBase
             throw new ValException(errors);
         }
         await med.Send(new EmpExpRvwAllCmd { Dto = dto });
-        return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIANCES successfully REVIEWED."));
+        return Ok(ApiResponse<object>.Ok(null!, "Selected EMPLOYEE'S EXPERIENCES successfully REVIEWED."));
     }
 
     [PerAuth("hr.emp.mod")]
