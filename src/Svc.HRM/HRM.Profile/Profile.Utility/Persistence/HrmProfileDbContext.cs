@@ -191,6 +191,11 @@ public class HrmProfileDbContext : DbContext
     public DbSet<FileMetaData> FileMetaData { get; set; }
     public DbSet<Person> Person { get; set; }
 
+    // ? Employee Lifecycle Entities
+    public DbSet<EmployeeContract> EmployeeContract { get; set; }
+    public DbSet<EmployeePromotion> EmployeePromotion { get; set; }
+    public DbSet<EmployeeTransfer> EmployeeTransfer { get; set; }
+
     // ? NEW Local Copy Entities
     public DbSet<LocalCompany> LocalCompanies { get; set; }
     public DbSet<LocalBranch> LocalBranches { get; set; }
