@@ -59,6 +59,17 @@ public class EmpProController(IMediator med) : ControllerBase
     }
 
     [PerAuth("hr.emp.profile.view")]
+    [HttpGet("GetGuarantorFile/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetGuarantorFile(Guid id)
+    {
+        var res = await med.Send(new EmpGuarantorFileQry { Id = id });
+        if (res == null) { return Ok(ApiResponse<object>.Fail("Guarantor file NOT FOUND.", null, 404)); }
+        return File(res.Data, res.ContentType, res.FileName, enableRangeProcessing: true);
+    }
+
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProfileInfo/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
