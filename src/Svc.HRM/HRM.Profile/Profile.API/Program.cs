@@ -21,6 +21,7 @@ using StackExchange.Redis;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -454,7 +455,25 @@ if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret
 Console.WriteLine($"🔑 JWT Issuer: {jwtIssuer}");
 Console.WriteLine($"🔑 JWT Audience: {jwtAudience}");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// Support BOTH browser JWTs (Authorization: Bearer) AND trusted internal
+// service-to-service calls (X-API-Key). A policy scheme forwards each request to
+// the ApiKey handler when the X-API-Key header is present, otherwise to JWT. This
+// lets the Auth initial-sync (and other services) read employee data without a
+// user token, while [PerAuth] still protects browser requests.
+const string jwtOrApiKeyScheme = "JWT_OR_APIKEY";
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = jwtOrApiKeyScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddPolicyScheme(jwtOrApiKeyScheme, "JWT or ApiKey", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+            context.Request.Headers.ContainsKey("X-API-Key")
+                ? InternalApiKeyAuthHandler.SchemeName
+                : JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = false;
@@ -485,7 +504,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30)
         };
-    });
+    })
+    .AddScheme<AuthenticationSchemeOptions, InternalApiKeyAuthHandler>(
+        InternalApiKeyAuthHandler.SchemeName, _ => { });
 
 builder.Services.AddAuthorization();
 

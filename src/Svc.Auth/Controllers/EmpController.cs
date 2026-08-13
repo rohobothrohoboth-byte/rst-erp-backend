@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Svc.Auth.Queries;
 using Svc.Auth.Models.Dtos;
+using Svc.Auth.Services;
 
 namespace Svc.Auth.Controllers;
 
@@ -23,11 +24,30 @@ public class EmpController : ControllerBase
 {
     private readonly IMediator _med;
     private readonly IConfiguration _configuration;
+    private readonly IHrmProApiService _hrmPro;
 
-    public EmpController(IMediator med, IConfiguration configuration)
+    public EmpController(IMediator med, IConfiguration configuration, IHrmProApiService hrmPro)
     {
         _med = med;
         _configuration = configuration;
+        _hrmPro = hrmPro;
+    }
+
+    // When an employee is not present in the Auth local-copy table (e.g. it hasn't
+    // been synced yet), fall back to the HRM Profile service as the source of truth.
+    private async Task<IActionResult> EmployeeFromProfileOrNotFound(Guid id)
+    {
+        try
+        {
+            var fromProfile = await _hrmPro.GetEmployeeAsync(id);
+            if (fromProfile != null)
+                return Ok(ApiResponse<object>.Ok(fromProfile, "Employee retrieved from HRM Profile."));
+        }
+        catch
+        {
+            // fall through to 404 below
+        }
+        return NotFound(ApiResponse<object>.Error($"Employee not found for ID: {id}"));
     }
 
     [PerAuth("hr.emp.view|hr.emp.list.view|core.users.view|hr.db.view")]
@@ -232,7 +252,7 @@ public class EmpController : ControllerBase
 
         if (employee == null)
         {
-            return NotFound(ApiResponse<object>.Error($"Employee not found for ID: {id}"));
+            return await EmployeeFromProfileOrNotFound(id);
         }
 
         return Ok(ApiResponse<object>.Ok(employee, "Employee retrieved successfully."));
@@ -291,7 +311,7 @@ public class EmpController : ControllerBase
 
         if (employee == null)
         {
-            return NotFound(ApiResponse<object>.Error($"Employee not found for ID: {id}"));
+            return await EmployeeFromProfileOrNotFound(id);
         }
 
         return Ok(ApiResponse<object>.Ok(employee, "Employee retrieved successfully."));
