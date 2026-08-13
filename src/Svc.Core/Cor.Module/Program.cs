@@ -15,6 +15,10 @@ using Cor.Module.Authentication;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization; // ✅ ይህን ይጨምሩ
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -388,11 +392,41 @@ builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
 builder.Services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>(); // ✅ Singleton ሳይሆን Scoped
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
-// 4. Authentication
+// 4. Authentication - support BOTH browser JWTs (Authorization: Bearer) AND
+// internal service-to-service API keys (X-API-Key). A policy scheme forwards each
+// request to the ApiKey handler when the X-API-Key header is present, otherwise to
+// JWT. Previously only "ApiKey" was registered, so browser requests always 401'd.
+var jwtSecret = Common.JwtCons.SecretKey;
+if (!string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+    jwtSecret = builder.Configuration["Jwt:SecretKey"]!;
+
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = "ApiKey";
-    options.DefaultChallengeScheme = "ApiKey";
+    options.DefaultScheme = "JWT_OR_APIKEY";
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddPolicyScheme("JWT_OR_APIKEY", "JWT or ApiKey", options =>
+{
+    options.ForwardDefaultSelector = context =>
+        context.Request.Headers.ContainsKey("X-API-Key")
+            ? "ApiKey"
+            : JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = Common.JwtCons.Issuer,
+        ValidateAudience = true,
+        ValidAudience = Common.JwtCons.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
 })
 .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
 

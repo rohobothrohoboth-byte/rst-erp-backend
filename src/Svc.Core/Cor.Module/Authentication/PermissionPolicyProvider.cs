@@ -108,6 +108,32 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
                    return true;
                }
 
+               // 5. Browser JWT users: privileged-role bypass (mirrors the shared
+               // PerAuthHandler so admins are never locked out), then fine-grained
+               // "ph" permission-bit check using the shared PermissionMap.
+               var privilegedRoles = new[] { "Admin", "admin", "super_admin", "SuperAdmin", "superadmin" };
+               if (Array.Exists(privilegedRoles, r => context.User.IsInRole(r)))
+               {
+                   _logger.LogInformation($"✅✅✅ PRIVILEGED ROLE - GRANTING: {permission}");
+                   return true;
+               }
+
+               var ph = context.User.FindFirst("ph")?.Value;
+               if (!string.IsNullOrEmpty(ph) && Common.PermissionMap.IndexMap.TryGetValue(permission, out var bitIndex))
+               {
+                   try
+                   {
+                       var bytes = Convert.FromBase64String(ph);
+                       var byteIndex = bitIndex / 8;
+                       if (byteIndex < bytes.Length && (bytes[byteIndex] & (1 << (bitIndex % 8))) != 0)
+                       {
+                           _logger.LogInformation($"✅✅✅ PERMISSION GRANTED FROM JWT ph BITS: {permission}");
+                           return true;
+                       }
+                   }
+                   catch { /* malformed ph claim -> fall through to deny */ }
+               }
+
                _logger.LogWarning($"❌❌❌ PERMISSION DENIED for: {permission}");
                return false;
            })
