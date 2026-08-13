@@ -39,6 +39,7 @@ public class JgStepController : ControllerBase
     /// <summary>
     /// End point to get list of ALL Job Grade Steps
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJgSteps")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgSteps()
@@ -59,6 +60,7 @@ public class JgStepController : ControllerBase
     /// <summary>
     /// End point to get list of Job Grade Steps by JobGradeId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJgStepsByJobGrade/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgStepsByJobGrade(Guid id)
@@ -78,6 +80,7 @@ public class JgStepController : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetJgStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

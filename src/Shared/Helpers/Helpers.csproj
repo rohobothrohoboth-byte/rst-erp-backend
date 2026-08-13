@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
+		<!-- Needed for the shared ApiKey authentication handler + audit middleware -->
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Dapper" />
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="MediatR" />

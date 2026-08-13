@@ -21,6 +21,7 @@ namespace Cor.HRMM.Controllers;
 
 public class BenefitSetController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllBenefitSet")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBenefitSet()
@@ -29,6 +30,7 @@ public class BenefitSetController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetBenefitSet/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

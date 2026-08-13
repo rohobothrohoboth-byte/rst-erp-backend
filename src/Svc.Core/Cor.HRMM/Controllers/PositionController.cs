@@ -35,6 +35,7 @@ public class PositionController : ControllerBase
         _logger = logger;
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPosition")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPosition()
@@ -54,6 +55,7 @@ public class PositionController : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPosition/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

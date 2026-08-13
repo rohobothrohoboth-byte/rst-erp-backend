@@ -36,6 +36,7 @@ public class JobGradeController : ControllerBase
         _logger = logger;
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJobGrade")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobGrade()
@@ -53,6 +54,7 @@ public class JobGradeController : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetJobGrade/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

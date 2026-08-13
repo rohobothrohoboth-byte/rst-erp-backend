@@ -15,7 +15,9 @@ using Cor.HRMM.Repos;
 using Shared.Helpers.Extensions;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using Cor.HRMM.Authentication;
+using Shared.Helpers.ExternalAccess;
+using Shared.Helpers.Audit;
+using Cor.HRMM.Persistence;
 using Cor.HRMM.Middleware;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -427,14 +429,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============= API KEY AUTHENTICATION =============
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+// ============= API KEY AUTHENTICATION (shared) =============
+builder.Services.AddExternalSystemAccess<coreHRMMDbContext>(builder.Configuration);
+// ============= AUDIT (shared) =============
+builder.Services.AddSharedAudit<coreHRMMDbContext>();
 builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
 
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============= BUILDER EXTENSIONS =============
 builder.AddApiServices()
@@ -463,6 +465,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSharedAudit();
 app.MapControllers();
 
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

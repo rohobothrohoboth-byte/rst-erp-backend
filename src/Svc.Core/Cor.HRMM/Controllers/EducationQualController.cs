@@ -20,6 +20,7 @@ namespace Cor.HRMM.Controllers;
 
 public class EducationQualController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllEducationQual")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEducationQual()
@@ -28,6 +29,7 @@ public class EducationQualController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetEducationQual/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
