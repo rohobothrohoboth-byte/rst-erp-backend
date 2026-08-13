@@ -199,7 +199,11 @@ public class OfferRespondHandler : IRequestHandler<OfferRespondCmd, OfferListDto
     private readonly IUnitOfWork _uow;
     private readonly IMediator _med;
     private readonly IRecruitNotificationService _notify;
-    public OfferRespondHandler(IUnitOfWork uow, IMediator med, IRecruitNotificationService notify) { _uow = uow; _med = med; _notify = notify; }
+    private readonly Recruit.App.Services.IFinanceBudgetClient _budget;
+    public OfferRespondHandler(IUnitOfWork uow, IMediator med, IRecruitNotificationService notify, Recruit.App.Services.IFinanceBudgetClient budget)
+    {
+        _uow = uow; _med = med; _notify = notify; _budget = budget;
+    }
 
     public async Task<OfferListDto> Handle(OfferRespondCmd request, CancellationToken ct)
     {
@@ -226,6 +230,30 @@ public class OfferRespondHandler : IRequestHandler<OfferRespondCmd, OfferListDto
                 }
             }
             await _uow.Commit(ct);
+
+            // Phase 3: when a candidate accepts, consume (spend) that hire's salary from the
+            // workforce plan's Finance reservation: committed -> spent. Best-effort so a Finance
+            // hiccup never blocks the acceptance itself.
+            if (accepted && offer.Salary > 0m)
+            {
+                try
+                {
+                    var posting = await _uow.Set<JobPosting>().FirstOrDefaultAsync(x => x.Id == offer.JobPostingId && !x.IsDeleted, ct);
+                    if (posting != null)
+                    {
+                        var req = await _uow.Set<JobRequisition>().FirstOrDefaultAsync(x => x.Id == posting.JobReqId && !x.IsDeleted, ct);
+                        if (req != null && req.WorkforcePlanId != Guid.Empty)
+                        {
+                            var plan = await _uow.Set<WorkforcePlan>().FirstOrDefaultAsync(x => x.Id == req.WorkforcePlanId && !x.IsDeleted, ct);
+                            if (plan?.BudgetId != null && plan.BudgetId != Guid.Empty)
+                            {
+                                await _budget.ConsumeAsync(plan.Id, "WorkforcePlan", offer.Salary, ct);
+                            }
+                        }
+                    }
+                }
+                catch { /* best-effort budget deduction */ }
+            }
 
             try
             {

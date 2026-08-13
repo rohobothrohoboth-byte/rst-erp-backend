@@ -42,6 +42,25 @@ public class BudgetController : BaseApiController
     }
 
     /// <summary>
+    /// Get all budgets (optionally filtered by budget type, e.g. Personnel).
+    /// </summary>
+    [HttpGet("all")]
+    [ProducesResponseType(typeof(List<BudgetDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] string? budgetType = null)
+    {
+        try
+        {
+            var query = new GetAllBudgetsQuery { BudgetType = budgetType };
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex, nameof(GetAll));
+        }
+    }
+
+    /// <summary>
     /// Get budget by ID
     /// </summary>
     [HttpGet("{id}")]

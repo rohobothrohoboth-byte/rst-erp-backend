@@ -29,3 +29,10 @@ public class GetBudgetByProjectQuery : IRequest<BudgetDto>
 {
     public Guid ProjectId { get; set; }
 }
+
+// Cross-project listing so consumers (e.g. Recruitment workforce planning) can pick a
+// planned budget as the source that feeds the Finance allocation.
+public class GetAllBudgetsQuery : IRequest<List<BudgetDto>>
+{
+    public string? BudgetType { get; set; }
+}

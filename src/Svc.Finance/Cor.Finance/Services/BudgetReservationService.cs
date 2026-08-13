@@ -125,21 +125,39 @@ public class BudgetReservationService : IBudgetReservationService
         var reservations = await _db.BudgetReservations
             .Where(r => r.ReferenceId == req.ReferenceId && r.ReferenceType == req.ReferenceType
                         && r.Status == "Active" && !r.IsDeleted)
+            .OrderBy(r => r.DateAdd)
             .ToListAsync(ct);
         if (reservations.Count == 0) { return; }
 
+        // Partial consumption: move `amount` (e.g. one hire's salary) from committed -> spent,
+        // reducing the reservation. When it reaches zero it's fully Consumed. Null amount = all.
+        decimal? remainingToConsume = req.Amount;
         foreach (var r in reservations)
         {
-            var consume = req.Amount ?? r.Amount;
             var budget = await _db.Budgets.FirstOrDefaultAsync(b => b.Id == r.BudgetId && !b.IsDeleted, ct);
-            if (budget != null)
+            decimal consume;
+            if (remainingToConsume == null)
             {
-                budget.SpentAmount += consume;      // move committed -> spent
+                consume = r.Amount;
+                r.Amount = 0m;
+                r.Status = "Consumed";
+            }
+            else
+            {
+                consume = Math.Min(remainingToConsume.Value, r.Amount);
+                r.Amount -= consume;
+                if (r.Amount <= 0m) { r.Status = "Consumed"; }
+                remainingToConsume -= consume;
+            }
+
+            if (budget != null && consume > 0m)
+            {
+                budget.SpentAmount += consume;      // committed -> spent
                 budget.DateMod = DateTime.UtcNow;
             }
-            r.Status = "Consumed";
-            r.Amount = consume;
             r.DateMod = DateTime.UtcNow;
+
+            if (remainingToConsume != null && remainingToConsume <= 0m) { break; }
         }
         await _db.SaveChangesAsync(ct);
     }

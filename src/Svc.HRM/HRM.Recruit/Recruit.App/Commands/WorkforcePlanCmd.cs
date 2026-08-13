@@ -71,7 +71,8 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
                 BudgetCurrency = string.IsNullOrEmpty(request.AddDto.BudgetCurrency)
                     ? CurrencyConstants.ETB
                     : request.AddDto.BudgetCurrency,                              // ? ADDED
-                BudgetId = request.AddDto.BudgetId
+                BudgetId = request.AddDto.BudgetId,
+                PlanDevBudgetId = request.AddDto.PlanDevBudgetId
             };
             await _uow.Add(data, ct);
             await _uow.Commit(ct);
