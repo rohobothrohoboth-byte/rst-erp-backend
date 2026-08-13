@@ -59,6 +59,7 @@ public class FinanceDbContext : DbContext
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BudgetCode> BudgetCodes { get; set; }
     public DbSet<BudgetControl> BudgetControls { get; set; }
+    public DbSet<BudgetReservation> BudgetReservations { get; set; }
 
     // ============================================================
     // BANK & CASH

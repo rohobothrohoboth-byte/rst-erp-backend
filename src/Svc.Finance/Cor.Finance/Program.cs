@@ -353,6 +353,7 @@ builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 
 // ============= AGGREGATE SERVICE =============
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<Cor.Finance.Services.IBudgetReservationService, Cor.Finance.Services.BudgetReservationService>();
 builder.Services.AddScoped<CachedReferenceDataService>();
 builder.Services.AddHostedService<AggregateService>();
 
