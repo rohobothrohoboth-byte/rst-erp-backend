@@ -41,7 +41,9 @@ public class HrmProfileClient : IHrmProfileClient
        _servUrl = config["ServiceUrls:HrmProfileApi"]
            ?? config["ServiceUrls:HrmProApi"]
            ?? config["HrmProUrl"]
-           ?? throw new InvalidOperationException("HRM Profile Service Address not configured");
+           ?? "https://localhost:7004";
+       // Inter-service gRPC is same-host: connect over loopback, not the LAN IP.
+       _servUrl = GrpcTarget.Resolve(config, _servUrl);
 
        _logger = logger;
        _logger?.LogInformation($"🔗 Connecting to HRM Profile at: {_servUrl}");
@@ -51,7 +53,7 @@ public class HrmProfileClient : IHrmProfileClient
            // Bound the connection attempt so an unreachable Profile service fails fast.
            HttpHandler = new SocketsHttpHandler
            {
-               ConnectTimeout = TimeSpan.FromSeconds(2),
+               ConnectTimeout = TimeSpan.FromSeconds(1),
                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                {
                    RemoteCertificateValidationCallback = (_, _, _, _) => true

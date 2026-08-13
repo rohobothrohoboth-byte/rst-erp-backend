@@ -54,6 +54,8 @@ public class CorModClient : ICorModClient
             ?? config["CorModUrl"]
             ?? config["CorModuleUrl"]
             ?? "https://localhost:7002";
+        // Inter-service gRPC is same-host: connect over loopback, not the LAN IP.
+        _servUrl = GrpcTarget.Resolve(config, _servUrl);
         _logger = logger;
 
         // ? Create a single channel that will be reused
@@ -63,7 +65,7 @@ public class CorModClient : ICorModClient
             // (~5s) instead of hanging the caller until its HTTP timeout.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(2),
+                ConnectTimeout = TimeSpan.FromSeconds(1),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -84,7 +86,7 @@ public class CorModClient : ICorModClient
             // (~5s) instead of hanging the caller until its HTTP timeout.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(2),
+                ConnectTimeout = TimeSpan.FromSeconds(1),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true

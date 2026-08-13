@@ -40,6 +40,8 @@ public class CorHrmmClient : ICorHrmmClient
             ?? config["ServiceUrls:CorHrmmApi"]
             ?? config["CorHrmmUrl"]
             ?? "https://localhost:7001";
+        // Inter-service gRPC is same-host: connect over loopback, not the LAN IP.
+        _servUrl = GrpcTarget.Resolve(config, _servUrl);
         _logger = logger;
 
         // ? Create a single channel that will be reused
@@ -48,7 +50,7 @@ public class CorHrmmClient : ICorHrmmClient
             // Bound the connection attempt so an unreachable Core HRMM fails fast.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(2),
+                ConnectTimeout = TimeSpan.FromSeconds(1),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -67,7 +69,7 @@ public class CorHrmmClient : ICorHrmmClient
             // Bound the connection attempt so an unreachable Core HRMM fails fast.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(2),
+                ConnectTimeout = TimeSpan.FromSeconds(1),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
