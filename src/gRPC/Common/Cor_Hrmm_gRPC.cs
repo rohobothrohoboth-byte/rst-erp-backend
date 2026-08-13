@@ -204,7 +204,7 @@ public class CorHrmmClient : ICorHrmmClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetPosReq for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new PosReqRes();
         }
     }
 
@@ -219,7 +219,7 @@ public class CorHrmmClient : ICorHrmmClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetJgStepSalary for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new JgStepSalary();
         }
     }
 
@@ -234,7 +234,7 @@ public class CorHrmmClient : ICorHrmmClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetSalaryJgs for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new SalaryJgs();
         }
     }
 }

@@ -128,13 +128,17 @@ public class JobReqDetailHandler : IRequestHandler<JobReqDetailQry, JobReqDetail
         var data = await _dapper.QueryFirstOrDefaultAsync<JobReqDetailDto>(sql, parameters, ct);
         if (data == null) return null;
 
-        var jgsTask = _corHrmm.GetJgStep(data.JgStepId.ToString(), ct);
-        var posTask = _corHrmm.GetPosition(data.PositionId.ToString(), ct);
+        var jgsTask = _corHrmm.GetListJgStep(ct);
+        var posTask = _corHrmm.GetListPosition(ct);
         await Task.WhenAll(jgsTask, posTask);
+        var jgsDict = jgsTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+        jgsDict.TryGetValue(data.JgStepId, out var jgs);
+        posDict.TryGetValue(data.PositionId, out var pos);
 
         data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
-        data.Position = posTask.Result.Res?.Name ?? "";
-        data.JgStep = jgsTask.Result.Res?.Name ?? "";
+        data.Position = pos?.Name ?? "";
+        data.JgStep = jgs?.Name ?? "";
         data.RowVersion = data.xmin.ToString();
 
         return data;
@@ -163,11 +167,13 @@ public class JobReqByIdHandler : IRequestHandler<JobReqByIdQry, JobReqListDto?>
         var data = await _dapper.QueryFirstOrDefaultAsync<JobReqListDto>(sql, parameters, ct);
         if (data == null) return null;
 
-        var jgsTask = _corHrmm.GetJgStep(data.JgStepId.ToString(), ct);
-        var posTask = _corHrmm.GetPosition(data.PositionId.ToString(), ct);
+        var jgsTask = _corHrmm.GetListJgStep(ct);
+        var posTask = _corHrmm.GetListPosition(ct);
         await Task.WhenAll(jgsTask, posTask);
-        var jgs = jgsTask.Result.Res;
-        var pos = posTask.Result.Res;
+        var jgsDict = jgsTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var posDict = posTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+        jgsDict.TryGetValue(data.JgStepId, out var jgs);
+        posDict.TryGetValue(data.PositionId, out var pos);
 
         data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
         data.Position = pos?.Name ?? "";

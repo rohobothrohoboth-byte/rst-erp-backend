@@ -147,7 +147,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListFiscalYear: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleListRes();
         }
     }
 
@@ -162,7 +162,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetFiscalYear for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleRes();
         }
     }
 
@@ -177,7 +177,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetFiscYearDesc for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new ActFiscalYear();
         }
     }
 
@@ -192,7 +192,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetActiveFiscal: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new ActFiscalYear();
         }
     }
 
@@ -207,7 +207,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListHoDay: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HoDayListRes();
         }
     }
 
@@ -222,7 +222,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetHoDay for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HoDayRes();
         }
     }
 
@@ -282,7 +282,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListDbc: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new DbcListRes();
         }
     }
 
@@ -378,7 +378,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetDbc for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new DbcRes();
         }
     }
 }

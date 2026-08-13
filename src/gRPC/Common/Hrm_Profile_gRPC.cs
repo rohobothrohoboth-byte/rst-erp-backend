@@ -97,7 +97,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpCode for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmProResCode();
         }
     }
  public async Task<HrmProListRes> GetEmpNameList(CancellationToken ct = default)
@@ -110,21 +110,27 @@ public class HrmProfileClient : IHrmProfileClient
      catch (RpcException ex)
      {
          _logger?.LogError(ex, "gRPC error in GetEmpNameList: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-         throw;
+         return new HrmProListRes();
      }
  }
+    private static bool IsEmptyId(string? id) =>
+        string.IsNullOrEmpty(id) || id == "00000000-0000-0000-0000-000000000000" || id == Guid.Empty.ToString();
+
     public async Task<HrmProRes> GetEmp(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new HrmProRes(); }
         try
         {
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProRqst { Id = id };
-            return await client.GetEmpAsync(req, cancellationToken: ct);
+            // Pass CancellationToken.None + a hard deadline so a slow call is bounded here and a
+            // client-cancellation can't trigger a retry/backoff storm from an outer policy.
+            return await client.GetEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(2), cancellationToken: CancellationToken.None);
         }
-        catch (RpcException ex)
+        catch (Exception ex)
         {
-            _logger?.LogError(ex, "gRPC error in GetEmp for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            _logger?.LogError(ex, "gRPC error in GetEmp for ID: {Id}", id);
+            return new HrmProRes();
         }
     }
 
@@ -160,7 +166,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetPosEmp for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new EmpPosRes();
         }
     }
 
@@ -175,7 +181,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmpPolicy: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmProListPlcy();
         }
     }
 
@@ -190,7 +196,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpPolicy for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmEmpPlcy();
         }
     }
 
@@ -205,7 +211,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpId for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmEmpId();
         }
     }
 
@@ -220,7 +226,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmpId: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmListEmpId();
         }
     }
 
@@ -235,7 +241,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetAdminEmpList: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new AdminEmpList();
         }
     }
 

@@ -132,16 +132,24 @@ public class WorkforcePlanByIdHandler : IRequestHandler<WorkforcePlanByIdQry, Wo
         var data = await _dapper.QueryFirstOrDefaultAsync<WorkforcePlanListDto>(sql, parameters, ct);
         if (data == null) return null;
 
-        var deptTask = _corMod.GetDept(data.DepartmentId.ToString(), ct);
-        var empTask = _hrmProfile.GetEmp(data.RequistionById.ToString(), ct);
-        await Task.WhenAll(empTask, deptTask);
-        var dept = deptTask.Result.Res;
-        var emp = empTask.Result.Res;
+        // Resolve names from the cached list lookups (bounded + cached) instead of per-item
+        // gRPC calls, which previously hung/retried for tens of seconds when a dependency was slow.
+        var deptTask = _corMod.GetListDept(ct);
+        var empTask = _hrmProfile.GetListEmp(ct);
+        var perTask = _corMod.GetListPeriod(ct);
+        await Task.WhenAll(deptTask, empTask, perTask);
+
+        var deptDict = deptTask.Result.Res.ToDictionary(d => Guid.Parse(d.Id));
+        var empDict = empTask.Result.Res.ToDictionary(j => Guid.Parse(j.Id));
+        var perDict = perTask.Result.Res.ToDictionary(p => Guid.Parse(p.Id));
+
+        deptDict.TryGetValue(data.DepartmentId, out var dept);
+        empDict.TryGetValue(data.RequistionById, out var emp);
         var per = "";
         if (data.PeriodId.HasValue)
         {
-            var perTask = await _corMod.GetPeriod(data.PeriodId!.ToString(), ct);
-            per = perTask?.Name ?? "";
+            perDict.TryGetValue((Guid)data.PeriodId, out var per2);
+            per = per2?.Name ?? "";
         }
 
         data.Department = dept?.Name ?? "";
