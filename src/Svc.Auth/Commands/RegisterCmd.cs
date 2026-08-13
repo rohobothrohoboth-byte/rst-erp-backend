@@ -4,6 +4,7 @@ using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Svc.Auth.Interfaces;
@@ -272,15 +273,18 @@ public class RegStep2Handler : IRequestHandler<RegStep2Cmd, RegRes?>
     private readonly UserManager<AppUser> _userManager;
     private readonly AuthDbContext _dbContext;
     private readonly ILogger<RegStep2Handler> _logger;
+    private readonly IMemoryCache _cache;
 
     public RegStep2Handler(
         UserManager<AppUser> userManager,
         AuthDbContext dbContext,
-        ILogger<RegStep2Handler> logger)
+        ILogger<RegStep2Handler> logger,
+        IMemoryCache cache)
     {
         _userManager = userManager;
         _dbContext = dbContext;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<RegRes?> Handle(RegStep2Cmd request, CancellationToken ct)
@@ -339,6 +343,10 @@ public class RegStep2Handler : IRequestHandler<RegStep2Cmd, RegRes?>
                 await _dbContext.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
 
+                // Invalidate the cached sidebar structure so a freshly-created user
+                // sees their assigned menus immediately (no edit-and-save required).
+                _cache.Remove($"menu_structure_{request.Reg.UserId}");
+
                 _logger.LogInformation("Menu permissions saved for user: {UserId}", request.Reg.UserId);
 
                 return RegRes.Success(userId, "Menu permissions saved successfully");
@@ -358,15 +366,18 @@ public class RegStep3Handler : IRequestHandler<RegStep3Cmd, RegRes?>
     private readonly UserManager<AppUser> _userManager;
     private readonly AuthDbContext _dbContext;
     private readonly ILogger<RegStep3Handler> _logger;
+    private readonly IMemoryCache _cache;
 
     public RegStep3Handler(
         UserManager<AppUser> userManager,
         AuthDbContext dbContext,
-        ILogger<RegStep3Handler> logger)
+        ILogger<RegStep3Handler> logger,
+        IMemoryCache cache)
     {
         _userManager = userManager;
         _dbContext = dbContext;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<RegRes?> Handle(RegStep3Cmd request, CancellationToken ct)
@@ -424,6 +435,9 @@ public class RegStep3Handler : IRequestHandler<RegStep3Cmd, RegRes?>
 
                 await _dbContext.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
+
+                // Invalidate cached sidebar structure so new permissions apply at once.
+                _cache.Remove($"menu_structure_{request.Reg.UserId}");
 
                 _logger.LogInformation("API permissions saved for user: {UserId}", request.Reg.UserId);
 
