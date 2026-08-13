@@ -29,6 +29,20 @@ public sealed class PerAuthHandler : AuthorizationHandler<PerReq>
             return Task.CompletedTask;
         }
 
+        // External systems authenticate via the ApiKey scheme (read-only, already
+        // gated by the per-system endpoint allow-list at authentication time). They
+        // carry no "ph" permission claim, so treat a valid ApiKey identity as
+        // authorized here. This lets endpoints shared by internal (Bearer) and
+        // external (ApiKey) callers add [PerAuth] for internal enforcement WITHOUT
+        // blocking external read access.
+        if (string.Equals(context.User.Identity?.AuthenticationType, "ApiKey", StringComparison.OrdinalIgnoreCase)
+            || context.User.HasClaim(c =>
+                c.Type == System.Security.Claims.ClaimTypes.AuthenticationMethod && c.Value == "ApiKey"))
+        {
+            context.Succeed(requirement);
+            return Task.CompletedTask;
+        }
+
         var hash = context.User.FindFirst("ph")?.Value;
 
         if (string.IsNullOrEmpty(hash)) { return Task.CompletedTask; }
