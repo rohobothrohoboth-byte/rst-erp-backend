@@ -54,6 +54,17 @@ public class JobReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.requisition.view")]
+    [HttpGet("GetJobReqDetail/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetJobReqDetail(Guid id)
+    {
+        var response = await med.Send(new JobReqDetailQry { Id = id });
+        if (response == null) { throw new DomainException($"JOB REQUISITION with id [{id}] NOT FOUND."); }
+        return Ok(ApiResponse<object>.Ok(response));
+    }
+
     [PerAuth("hr.recruit.requisition.manage")]
     [HttpPost("AddJobReq")]
     [ProducesResponseType(StatusCodes.Status201Created)]

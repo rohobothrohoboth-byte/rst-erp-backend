@@ -49,6 +49,39 @@ public class JobReqListDto : BaseDto
     public string StartDateStr => $"{StartDate:MMMM dd, yyyy}";
 }
 
+// Full detail for editing a requisition (exposes the ids + JobDec fields the list DTO hides).
+public class JobReqDetailDto
+{
+    public Guid Id { get; set; }
+    public string ReqNumber { get; set; } = default!;
+    public string ReqReason { get; set; } = default!;
+    public int ReqQuantity { get; set; }
+    public string BudgetCode { get; set; } = default!;
+    public DateTime StartDate { get; set; }
+    public Guid PositionId { get; set; } // Cor.HRMM.Position
+    public Guid JgStepId { get; set; }   // Cor.HRMM.JgStep
+    public Guid JobDecId { get; set; }
+    public string Position { get; set; } = default!;
+    public string JgStep { get; set; } = default!;
+    public string StatusStr { get; set; } = default!;
+    public string RowVersion { get; set; } = default!;
+
+    // JobDec
+    public string KeyRespo { get; set; } = default!;
+    public string Desc { get; set; } = default!;
+    public string ReqQual { get; set; } = default!;
+    public string KeySkills { get; set; } = default!;
+    public string WorkLocation { get; set; } = default!;
+    public string PreGender { get; set; } = default!; // enum.Gender
+    public string EmpNature { get; set; } = default!; // enum.EmpNature
+    public string WorkArr { get; set; } = default!;   // enum.WorkArrangement
+
+    [JsonIgnore]
+    public string Status { get; set; } = default!;
+    [JsonIgnore]
+    public uint xmin { get; set; }
+}
+
 public class JobReqAddDto
 {
     public string ReqReason { get; set; } = default!;

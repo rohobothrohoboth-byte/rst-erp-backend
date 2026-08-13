@@ -28,6 +28,9 @@ public class OfferListDto
 public class OfferAddDto
 {
     public Guid ApplicantId { get; set; }
+    // Preferred: the job application to make the offer for. When provided, the applicant
+    // and posting are derived from it (works for internal applicants too).
+    public Guid JobApplicationId { get; set; }
     public Guid JobPostingId { get; set; }
     public decimal Salary { get; set; }
     public string Currency { get; set; } = "ETB";

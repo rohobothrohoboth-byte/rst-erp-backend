@@ -11,6 +11,7 @@ namespace Recruit.App.Queries;
 public class JobReqAllQry : IRequest<List<JobReqListDto>> { }
 public class JobReqAllByWfpIdQry : IRequest<List<WfpJobReqListDto>> { public Guid Id { get; set; } }
 public class JobReqByIdQry : IRequest<JobReqListDto?> { public Guid Id { get; set; } }
+public class JobReqDetailQry : IRequest<JobReqDetailDto?> { public Guid Id { get; set; } }
 
 
 
@@ -99,6 +100,44 @@ public class JobReqAllByWfpIdHandler : IRequestHandler<JobReqAllByWfpIdQry, List
         }
 
         return list;
+    }
+}
+
+public class JobReqDetailHandler : IRequestHandler<JobReqDetailQry, JobReqDetailDto?>
+{
+    private readonly IDapperHelper _dapper;
+    private readonly ICorHrmmClient _corHrmm;
+    public JobReqDetailHandler(IDapperHelper dapper, ICorHrmmClient corHrmm)
+    {
+        _dapper = dapper;
+        _corHrmm = corHrmm;
+    }
+    public async Task<JobReqDetailDto?> Handle(JobReqDetailQry request, CancellationToken ct)
+    {
+        const string e = "e";
+        const string jd = "jd";
+        var qb = new QueryBuilder()
+            .Select<JobRequisition>(e, x => x.Id, x => x.JobDecId, x => x.ReqNumber, x => x.ReqReason, x => x.ReqQuantity, x => x.BudgetCode, x => x.Status, x => x.StartDate, x => x.PositionId, x => x.JgStepId, x => x.xmin)
+            .Select<JobDec>(jd, x => x.KeyRespo, x => x.Desc, x => x.ReqQual, x => x.KeySkills, x => x.WorkLocation, x => x.PreGender, x => x.EmpNature, x => x.WorkArr)
+            .From<JobRequisition>(e)
+            .Join<JobRequisition, JobDec>(e, jd, x => x.JobDecId, x => x.Id)
+            .Where<JobRequisition>(e, x => x.Id == request.Id)
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+        var data = await _dapper.QueryFirstOrDefaultAsync<JobReqDetailDto>(sql, parameters, ct);
+        if (data == null) return null;
+
+        var jgsTask = _corHrmm.GetJgStep(data.JgStepId.ToString(), ct);
+        var posTask = _corHrmm.GetPosition(data.PositionId.ToString(), ct);
+        await Task.WhenAll(jgsTask, posTask);
+
+        data.StatusStr = MyEnumHelper.FormatEnum<ReqStatus>(data.Status);
+        data.Position = posTask.Result.Res?.Name ?? "";
+        data.JgStep = jgsTask.Result.Res?.Name ?? "";
+        data.RowVersion = data.xmin.ToString();
+
+        return data;
     }
 }
 

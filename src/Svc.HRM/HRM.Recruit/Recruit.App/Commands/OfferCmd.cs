@@ -24,15 +24,30 @@ public class OfferAddHandler : IRequestHandler<OfferAddCmd, OfferListDto>
     public async Task<OfferListDto> Handle(OfferAddCmd request, CancellationToken ct)
     {
         var d = request.AddDto;
-        if (d.ApplicantId == Guid.Empty) throw new DomainException("Applicant is required.");
-        if (d.JobPostingId == Guid.Empty) throw new DomainException("Job posting is required.");
 
         await _uow.Begin(ct);
         try
         {
-            // Link to the applicant's application for this posting (if one exists).
-            var app = await _uow.Set<JobApplication>()
-                .FirstOrDefaultAsync(x => x.ApplicantId == d.ApplicantId && x.JobPostingId == d.JobPostingId && !x.IsDeleted, ct);
+            // Resolve the application. Prefer an explicit JobApplicationId (works for both
+            // internal and external applicants); otherwise fall back to applicant + posting.
+            JobApplication? app = null;
+            if (d.JobApplicationId != Guid.Empty)
+            {
+                app = await _uow.Set<JobApplication>()
+                    .FirstOrDefaultAsync(x => x.Id == d.JobApplicationId && !x.IsDeleted, ct);
+            }
+            else if (d.ApplicantId != Guid.Empty && d.JobPostingId != Guid.Empty)
+            {
+                app = await _uow.Set<JobApplication>()
+                    .FirstOrDefaultAsync(x => x.ApplicantId == d.ApplicantId && x.JobPostingId == d.JobPostingId && !x.IsDeleted, ct);
+            }
+
+            var applicantId = d.ApplicantId != Guid.Empty ? d.ApplicantId : (app?.ApplicantId ?? Guid.Empty);
+            var jobPostingId = d.JobPostingId != Guid.Empty ? d.JobPostingId : (app?.JobPostingId ?? Guid.Empty);
+
+            if (app == null && applicantId == Guid.Empty)
+                throw new DomainException("Applicant or job application is required.");
+            if (jobPostingId == Guid.Empty) throw new DomainException("Job posting is required.");
 
             var offer = new JobOffer
             {
@@ -41,8 +56,8 @@ public class OfferAddHandler : IRequestHandler<OfferAddCmd, OfferListDto>
                 OfferDate = DateTime.UtcNow,
                 ExpirationDate = EnsureUtc(d.ExpiryDate),
                 OfferDocument = string.Empty,
-                ApplicantId = d.ApplicantId,
-                JobPostingId = d.JobPostingId,
+                ApplicantId = applicantId,
+                JobPostingId = jobPostingId,
                 JobApplicationId = app?.Id ?? Guid.Empty,
                 Salary = d.Salary,
                 Currency = string.IsNullOrWhiteSpace(d.Currency) ? "ETB" : d.Currency,
