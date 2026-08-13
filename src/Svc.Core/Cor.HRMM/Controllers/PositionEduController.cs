@@ -23,6 +23,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Position Education by PositionId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPositionEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionEdu(Guid id)
@@ -31,6 +32,7 @@ public class PositionEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPositionEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

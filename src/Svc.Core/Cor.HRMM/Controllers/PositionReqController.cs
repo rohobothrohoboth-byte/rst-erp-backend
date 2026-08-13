@@ -24,6 +24,7 @@ public class PositionReqController(IMediator med) : ControllerBase
     /// <summary>
     /// ✅ GET ALL Position Requirements (No ID required)
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllPositionRequirements()
@@ -35,6 +36,7 @@ public class PositionReqController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Position Requirement by PositionId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPositionReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionReq(Guid id)
@@ -43,6 +45,7 @@ public class PositionReqController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPositionReq/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

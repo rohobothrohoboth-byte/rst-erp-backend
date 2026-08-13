@@ -23,6 +23,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Position Benefits by PositionId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPositionBenefit/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionBenefit(Guid id)
@@ -31,6 +32,7 @@ public class PositionBenefitController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
     
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPositionBenefit/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
