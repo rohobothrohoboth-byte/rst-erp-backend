@@ -20,7 +20,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class ReviewController(IMediator med) : ControllerBase
 {
-    [PerAuth("hr.recruit.applicant.manage")]
+    [PerAuth("hr.recruit.workforce.manage")]
     [HttpPost("WoFoPl")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -41,7 +41,7 @@ public class ReviewController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected WORKFORCE PLAN successfully REVIEWED."));
     }
 
-    [PerAuth("hr.recruit.applicant.manage")]
+    [PerAuth("hr.recruit.requisition.manage")]
     [HttpPost("JobReq")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -62,7 +62,7 @@ public class ReviewController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected JOB REQUISITION successfully REVIEWED."));
     }
 
-    [PerAuth("hr.recruit.applicant.manage")]
+    [PerAuth("hr.recruit.requisition.manage")]
     [HttpPost("JobReqAll")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
