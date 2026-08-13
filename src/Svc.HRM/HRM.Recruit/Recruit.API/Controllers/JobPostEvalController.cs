@@ -4,6 +4,7 @@ using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Recruit.App.Commands;
+using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
 using System.Security.Claims;
 
@@ -54,7 +55,15 @@ public class JobPostEvalController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"EVALUATION Successfully submitted for JOB APPLICATION."));
     }
 
-
-
-
+    [PerAuth("hr.recruit.evaluation.view")]
+    [HttpGet("GetProgress/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProgress(Guid id)
+    {
+        var res = await med.Send(new JobAppEvalProgressQry { JobAppId = id });
+        return res == null
+            ? Ok(ApiResponse<object>.Fail("JOB APPLICATION NOT FOUND.", null, 404))
+            : Ok(ApiResponse<object>.Ok(res));
+    }
 }
