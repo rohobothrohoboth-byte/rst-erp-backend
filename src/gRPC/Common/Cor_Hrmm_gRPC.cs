@@ -39,9 +39,14 @@ public class CorHrmmClient : ICorHrmmClient
         // ? Create a single channel that will be reused
         _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
         {
-            HttpHandler = new HttpClientHandler
+            // Bound the connection attempt so an unreachable Core HRMM fails fast.
+            HttpHandler = new SocketsHttpHandler
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true
+                }
             }
         });
     }
@@ -53,9 +58,14 @@ public class CorHrmmClient : ICorHrmmClient
 
         _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
         {
-            HttpHandler = new HttpClientHandler
+            // Bound the connection attempt so an unreachable Core HRMM fails fast.
+            HttpHandler = new SocketsHttpHandler
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true
+                }
             }
         });
     }
@@ -66,12 +76,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListJgStepAsync(req, cancellationToken: ct);
+            return await client.GetListJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListJgStep: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmListRes();
         }
     }
 
@@ -81,12 +91,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetJgStepAsync(req, cancellationToken: ct);
+            return await client.GetJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetJgStep for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmRes();
         }
     }
 
@@ -96,12 +106,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListJobGradeAsync(req, cancellationToken: ct);
+            return await client.GetListJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListJobGrade: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmListRes();
         }
     }
 
@@ -111,12 +121,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetJobGradeAsync(req, cancellationToken: ct);
+            return await client.GetJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetJobGrade for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmRes();
         }
     }
 
@@ -126,12 +136,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListPositionAsync(req, cancellationToken: ct);
+            return await client.GetListPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListPosition: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmListRes();
         }
     }
 
@@ -141,12 +151,12 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetPositionAsync(req, cancellationToken: ct);
+            return await client.GetPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetPosition for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorHrmmRes();
         }
     }
 

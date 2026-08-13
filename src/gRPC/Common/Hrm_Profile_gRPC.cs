@@ -42,9 +42,14 @@ public class HrmProfileClient : IHrmProfileClient
 
        _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
        {
-           HttpHandler = new HttpClientHandler
+           // Bound the connection attempt so an unreachable Profile service fails fast.
+           HttpHandler = new SocketsHttpHandler
            {
-               ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+               ConnectTimeout = TimeSpan.FromSeconds(5),
+               SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+               {
+                   RemoteCertificateValidationCallback = (_, _, _, _) => true
+               }
            }
        });
    }
@@ -61,10 +66,17 @@ public class HrmProfileClient : IHrmProfileClient
 
  public async Task<EmpBasicInfoRes> GetEmpBasicInfo(string id, CancellationToken ct = default)
     {
-        // Reuse the shared _channel (dev-cert tolerant) instead of a default channel.
-        var client = new HrmProfileService.HrmProfileServiceClient(_channel);
-        var req = new HrmProRqst { Id = id };
-        return await client.GetEmpBasicInfoAsync(req, cancellationToken: ct);
+        try
+        {
+            var client = new HrmProfileService.HrmProfileServiceClient(_channel);
+            var req = new HrmProRqst { Id = id };
+            return await client.GetEmpBasicInfoAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetEmpBasicInfo for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            return new EmpBasicInfoRes();
+        }
     }
     public async Task<HrmProResCode> GetEmpCode(string id, CancellationToken ct = default)
     {
@@ -114,12 +126,12 @@ public class HrmProfileClient : IHrmProfileClient
         {
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            return await client.GetListEmpAsync(req, cancellationToken: ct);
+            return await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmp: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmProListRes();
         }
     }
 

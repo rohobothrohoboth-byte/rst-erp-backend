@@ -51,9 +51,15 @@ public class CorModClient : ICorModClient
         // ? Create a single channel that will be reused
         _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
         {
-            HttpHandler = new HttpClientHandler
+            // Bound the connection attempt so an unreachable Core Module fails fast
+            // (~5s) instead of hanging the caller until its HTTP timeout.
+            HttpHandler = new SocketsHttpHandler
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true
+                }
             }
         });
     }
@@ -66,9 +72,15 @@ public class CorModClient : ICorModClient
 
         _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
         {
-            HttpHandler = new HttpClientHandler
+            // Bound the connection attempt so an unreachable Core Module fails fast
+            // (~5s) instead of hanging the caller until its HTTP timeout.
+            HttpHandler = new SocketsHttpHandler
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                ConnectTimeout = TimeSpan.FromSeconds(5),
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true
+                }
             }
         });
     }
@@ -79,7 +91,7 @@ public class CorModClient : ICorModClient
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListDeptAsync(req, cancellationToken: ct);
+            return await client.GetListDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -94,7 +106,7 @@ public class CorModClient : ICorModClient
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetDeptAsync(req, cancellationToken: ct);
+            return await client.GetDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -199,12 +211,12 @@ public class CorModClient : ICorModClient
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListPeriodAsync(req, cancellationToken: ct);
+            return await client.GetListPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListPeriod: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new PeriodListRes();
         }
     }
 
@@ -223,12 +235,12 @@ public class CorModClient : ICorModClient
       {
           var client = new CorModuleService.CorModuleServiceClient(_channel);
           var req = new CorModuleRqst { Id = id };
-          return await client.GetPeriodAsync(req, cancellationToken: ct);
+          return await client.GetPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
       }
       catch (RpcException ex)
       {
           _logger?.LogError(ex, "gRPC error in GetPeriod for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-          throw;
+          return new PeriodRes { Name = "N/A" };
       }
   }
 
@@ -254,7 +266,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetBranchAsync(req, cancellationToken: ct);
+            return await client.GetBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -270,7 +282,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListBranchAsync(req, cancellationToken: ct);
+            return await client.GetListBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -287,7 +299,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetCompanyAsync(req, cancellationToken: ct);
+            return await client.GetCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -303,7 +315,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListCompanyAsync(req, cancellationToken: ct);
+            return await client.GetListCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
