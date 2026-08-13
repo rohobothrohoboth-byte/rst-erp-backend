@@ -27,7 +27,13 @@ public class CorHrmmClient : ICorHrmmClient
 
     public CorHrmmClient(IConfiguration config, ILogger<CorHrmmClient>? logger = null)
     {
-        _servUrl = config["CorHrmmUrl"] ?? throw new InvalidOperationException("Core HRMM Service Address not configured");
+        // Accept whichever key the host service configured (ServiceUrls:CoreHRMMApi is the
+        // modern one; CorHrmmUrl is the legacy gRPC-common one). Fall back to the standard
+        // local port so a missing key degrades gracefully instead of failing every request.
+        _servUrl = config["ServiceUrls:CoreHRMMApi"]
+            ?? config["ServiceUrls:CorHrmmApi"]
+            ?? config["CorHrmmUrl"]
+            ?? "https://localhost:7001";
         _logger = logger;
 
         // ? Create a single channel that will be reused

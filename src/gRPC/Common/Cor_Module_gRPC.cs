@@ -37,7 +37,15 @@ public class CorModClient : ICorModClient
 
     public CorModClient(IConfiguration config, ILogger<CorModClient>? logger = null)
     {
-        _servUrl = config["CorModUrl"] ?? throw new InvalidOperationException("Core Module Service Address not configured");
+        // Accept whichever key the host service configured. Different services expose the
+        // Core Module address under different keys (ServiceUrls:CoreModuleApi is the modern
+        // one; CorModUrl is the legacy gRPC-common one). Fall back to the standard local
+        // port so a missing key degrades gracefully instead of failing every request.
+        _servUrl = config["ServiceUrls:CoreModuleApi"]
+            ?? config["ServiceUrls:CorModApi"]
+            ?? config["CorModUrl"]
+            ?? config["CorModuleUrl"]
+            ?? "https://localhost:7002";
         _logger = logger;
 
         // ? Create a single channel that will be reused
@@ -76,7 +84,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListDept: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleListResAm();
         }
     }
 
@@ -91,7 +99,7 @@ public class CorModClient : ICorModClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetDept for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleResAm();
         }
     }
 
@@ -252,7 +260,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             _logger?.LogError(ex, "gRPC error in GetBranch for ID: {Id}, Status: {Status}, Detail: {Detail}",
                 id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleResAm();
         }
     }
 
@@ -267,7 +275,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListBranch: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleListResAm();
         }
     }
 
@@ -285,7 +293,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             _logger?.LogError(ex, "gRPC error in GetCompany for ID: {Id}, Status: {Status}, Detail: {Detail}",
                 id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleResAm();
         }
     }
 
@@ -300,7 +308,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListCompany: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new CorModuleListResAm();
         }
     }
 

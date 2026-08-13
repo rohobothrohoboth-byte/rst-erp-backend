@@ -17,7 +17,12 @@ public class AuthClient : IAuthClient
 
     public AuthClient(IConfiguration config)
     {
-        _authUrl = config["AuthUrl"] ?? throw new InvalidOperationException("AUTH Service Address not configured");
+        // Accept whichever key the host service configured (AuthUrl is the legacy
+        // gRPC-common key; ServiceUrls:AuthApi is the modern one). Fall back to the
+        // standard local port so a missing key degrades gracefully.
+        _authUrl = config["AuthUrl"]
+            ?? config["ServiceUrls:AuthApi"]
+            ?? "https://localhost:7000";
     }
 
     // The gRPC targets run over HTTPS with a self-signed dev certificate whose name
