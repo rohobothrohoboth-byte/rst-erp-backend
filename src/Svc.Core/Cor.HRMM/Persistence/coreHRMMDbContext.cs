@@ -131,6 +131,7 @@ public class coreHRMMDbContext : DbContext
     public DbSet<LocalDepartment> LocalDepartments { get; set; }
 
 public DbSet<ExternalSystem> ExternalSystems { get; set; }
+public DbSet<Shared.Helpers.Audit.AuditLog> AuditLogs { get; set; }
      public DbSet<ApiKey> ApiKeys { get; set; }
      public DbSet<ApiKeyLog> ApiKeyLogs { get; set; }
 }

@@ -16,6 +16,7 @@ using Shared.Helpers.Extensions;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Shared.Helpers.ExternalAccess;
+using Shared.Helpers.Audit;
 using Cor.HRMM.Persistence;
 using Cor.HRMM.Middleware;
 using System.Net;
@@ -430,6 +431,8 @@ builder.Services.AddCors(options =>
 
 // ============= API KEY AUTHENTICATION (shared) =============
 builder.Services.AddExternalSystemAccess<coreHRMMDbContext>(builder.Configuration);
+// ============= AUDIT (shared) =============
+builder.Services.AddSharedAudit<coreHRMMDbContext>();
 builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
 
 builder.Services.AddAuthentication()
@@ -462,6 +465,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSharedAudit();
 app.MapControllers();
 
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
