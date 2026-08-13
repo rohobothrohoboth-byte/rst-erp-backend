@@ -1,6 +1,7 @@
 ﻿using Contracts;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -28,9 +29,14 @@ public class HrmProfileClient : IHrmProfileClient
     private readonly string _servUrl;
     private readonly ILogger<HrmProfileClient>? _logger;
     private readonly GrpcChannel _channel;
+    private readonly IMemoryCache? _cache;
 
-   public HrmProfileClient(IConfiguration config, ILogger<HrmProfileClient>? logger = null)
+    private static readonly TimeSpan OkTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan FailTtl = TimeSpan.FromSeconds(8);
+
+   public HrmProfileClient(IConfiguration config, ILogger<HrmProfileClient>? logger = null, IMemoryCache? cache = null)
    {
+       _cache = cache;
        // ✅ Try multiple keys
        _servUrl = config["ServiceUrls:HrmProfileApi"]
            ?? config["ServiceUrls:HrmProApi"]
@@ -124,14 +130,20 @@ public class HrmProfileClient : IHrmProfileClient
     {
         try
         {
+            const string key = "hrmpro:list:emp";
+            if (_cache != null && _cache.TryGetValue(key, out HrmProListRes? c) && c != null) return c;
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            return await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmp: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new HrmProListRes();
+            var empty = new HrmProListRes();
+            _cache?.Set("hrmpro:list:emp", empty, FailTtl);
+            return empty;
         }
     }
 

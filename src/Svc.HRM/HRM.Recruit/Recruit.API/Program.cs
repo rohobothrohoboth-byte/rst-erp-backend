@@ -172,6 +172,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Backing store for the gRPC master-data caches (departments/positions/employees/…),
+// so recruitment lists don't hit Core Module/HRMM/Profile on every request.
+builder.Services.AddMemoryCache();
+
 // ================================================================
 // ✅ CORS CONFIGURATION
 // ================================================================

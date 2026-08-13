@@ -1,6 +1,7 @@
 ﻿using Contracts;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -34,9 +35,16 @@ public class CorModClient : ICorModClient
     private readonly string _servUrl;
     private readonly ILogger<CorModClient>? _logger;
     private readonly GrpcChannel _channel;
+    private readonly IMemoryCache? _cache;
 
-    public CorModClient(IConfiguration config, ILogger<CorModClient>? logger = null)
+    // Master-data lists change rarely; cache successful results for a minute and cache a
+    // failure briefly so a down Core Module isn't retried on every single request.
+    private static readonly TimeSpan OkTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan FailTtl = TimeSpan.FromSeconds(8);
+
+    public CorModClient(IConfiguration config, ILogger<CorModClient>? logger = null, IMemoryCache? cache = null)
     {
+        _cache = cache;
         // Accept whichever key the host service configured. Different services expose the
         // Core Module address under different keys (ServiceUrls:CoreModuleApi is the modern
         // one; CorModUrl is the legacy gRPC-common one). Fall back to the standard local
@@ -91,16 +99,22 @@ public class CorModClient : ICorModClient
 
     public async Task<CorModuleListResAm> GetListDept(CancellationToken ct = default)
     {
+        const string key = "cormod:list:dept";
+        if (_cache != null && _cache.TryGetValue(key, out CorModuleListResAm? c) && c != null) return c;
         try
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListDept: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorModuleListResAm();
+            var empty = new CorModuleListResAm();
+            _cache?.Set(key, empty, FailTtl);
+            return empty;
         }
     }
 
@@ -214,14 +228,20 @@ public class CorModClient : ICorModClient
     {
         try
         {
+            const string key = "cormod:list:period";
+            if (_cache != null && _cache.TryGetValue(key, out PeriodListRes? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListPeriod: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new PeriodListRes();
+            var empty = new PeriodListRes();
+            _cache?.Set("cormod:list:period", empty, FailTtl);
+            return empty;
         }
     }
 
@@ -286,14 +306,20 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
     {
         try
         {
+            const string key = "cormod:list:branch";
+            if (_cache != null && _cache.TryGetValue(key, out CorModuleListResAm? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListBranch: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorModuleListResAm();
+            var empty = new CorModuleListResAm();
+            _cache?.Set("cormod:list:branch", empty, FailTtl);
+            return empty;
         }
     }
 
@@ -320,14 +346,20 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
     {
         try
         {
+            const string key = "cormod:list:company";
+            if (_cache != null && _cache.TryGetValue(key, out CorModuleListResAm? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            return await client.GetListCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListCompany: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorModuleListResAm();
+            var empty = new CorModuleListResAm();
+            _cache?.Set("cormod:list:company", empty, FailTtl);
+            return empty;
         }
     }
 

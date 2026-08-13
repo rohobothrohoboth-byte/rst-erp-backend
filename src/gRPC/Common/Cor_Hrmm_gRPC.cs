@@ -1,6 +1,7 @@
 using Contracts;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -24,9 +25,14 @@ public class CorHrmmClient : ICorHrmmClient
     private readonly string _servUrl;
     private readonly ILogger<CorHrmmClient>? _logger;
     private readonly GrpcChannel _channel;
+    private readonly IMemoryCache? _cache;
 
-    public CorHrmmClient(IConfiguration config, ILogger<CorHrmmClient>? logger = null)
+    private static readonly TimeSpan OkTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan FailTtl = TimeSpan.FromSeconds(8);
+
+    public CorHrmmClient(IConfiguration config, ILogger<CorHrmmClient>? logger = null, IMemoryCache? cache = null)
     {
+        _cache = cache;
         // Accept whichever key the host service configured (ServiceUrls:CoreHRMMApi is the
         // modern one; CorHrmmUrl is the legacy gRPC-common one). Fall back to the standard
         // local port so a missing key degrades gracefully instead of failing every request.
@@ -78,14 +84,20 @@ public class CorHrmmClient : ICorHrmmClient
     {
         try
         {
+            const string key = "corhrmm:list:jgstep";
+            if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListJgStep: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorHrmmListRes();
+            var empty = new CorHrmmListRes();
+            _cache?.Set("corhrmm:list:jgstep", empty, FailTtl);
+            return empty;
         }
     }
 
@@ -109,14 +121,20 @@ public class CorHrmmClient : ICorHrmmClient
     {
         try
         {
+            const string key = "corhrmm:list:jobgrade";
+            if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListJobGrade: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorHrmmListRes();
+            var empty = new CorHrmmListRes();
+            _cache?.Set("corhrmm:list:jobgrade", empty, FailTtl);
+            return empty;
         }
     }
 
@@ -140,14 +158,20 @@ public class CorHrmmClient : ICorHrmmClient
     {
         try
         {
+            const string key = "corhrmm:list:position";
+            if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            return await client.GetListPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListPosition: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            return new CorHrmmListRes();
+            var empty = new CorHrmmListRes();
+            _cache?.Set("corhrmm:list:position", empty, FailTtl);
+            return empty;
         }
     }
 
