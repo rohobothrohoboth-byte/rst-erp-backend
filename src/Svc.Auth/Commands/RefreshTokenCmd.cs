@@ -47,23 +47,19 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
                 throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
         }
 
-        await _uow.Begin(ct);
-        try
-        {
-            var newRefresh = await _tokenService.RefreshToken(user, ct);
-            await _uow.Commit(ct);
+        // Do NOT open a manual transaction here: the DbContext uses the Npgsql
+        // retrying execution strategy, which forbids user-initiated transactions
+        // that span queries (RefreshToken reads roles + stages the token rows).
+        // A single SaveChangesAsync persists the revoke + new-token inserts
+        // atomically and is retry-safe.
+        var newRefresh = await _tokenService.RefreshToken(user, ct);
+        await _uow.SaveChangesAsync(ct);
 
-            return new LoginResDto
-            {
-                AccessToken = newRefresh.AccessToken,
-                RefreshToken = newRefresh.RefreshToken,
-                ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
-            };
-        }
-        catch
+        return new LoginResDto
         {
-            await _uow.Rollback(ct);
-            throw;
-        }
+            AccessToken = newRefresh.AccessToken,
+            RefreshToken = newRefresh.RefreshToken,
+            ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
+        };
     }
 }
