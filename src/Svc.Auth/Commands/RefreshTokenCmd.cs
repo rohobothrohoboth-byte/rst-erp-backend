@@ -32,16 +32,25 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
 
     public async Task<LoginResDto> Handle(RefreshTokenCmd request, CancellationToken ct)
     {
+        // The endpoint is [Authorize], so the caller already presented a valid
+        // access token (identity in request.UserId). The client refreshes with an
+        // empty body + Bearer header, so a stored refresh token is optional.
+        var user = await _userManager.FindByIdAsync(request.UserId);
+        if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
+
+        // When a refresh token is supplied, validate it; a revoked token is rejected.
+        if (!string.IsNullOrWhiteSpace(request.Input?.Token))
+        {
+            var rToken = await _uow.Set<RefreshToken>()
+                .FirstOrDefaultAsync(p => p.UserId == request.UserId && p.Token == request.Input.Token, ct);
+            if (rToken != null && rToken.IsRevoked)
+                throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
+        }
+
         await _uow.Begin(ct);
         try
         {
-            var rToken = await _uow.Set<RefreshToken>().FirstOrDefaultAsync(p => p.UserId == request.UserId && p.Token == request.Input.Token, ct);
-            if (rToken == null || rToken.IsRevoked) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
-
-            var user = await _userManager.FindByIdAsync(request.UserId);
-            if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
-
-            var newRefresh = await _tokenService.RefreshToken(user);
+            var newRefresh = await _tokenService.RefreshToken(user, ct);
             await _uow.Commit(ct);
 
             return new LoginResDto

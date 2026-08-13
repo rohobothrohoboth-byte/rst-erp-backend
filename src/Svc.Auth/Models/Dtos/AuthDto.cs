@@ -34,7 +34,10 @@ public class TokenDto
 
 public class RefreshTokenDto
 {
-    public string Token { get; set; } = default!;
+    // Optional. The client refreshes using its (still-valid) access token in the
+    // Authorization header, so the body may be empty. When a stored refresh token
+    // is supplied it is validated; otherwise the authenticated identity is used.
+    public string? Token { get; set; }
 }
 
 public class NameList

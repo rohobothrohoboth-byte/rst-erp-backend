@@ -34,6 +34,10 @@ public class LoginResponseDto
     public string? PositionName { get; set; }
     public string? JobGradeId { get; set; }
     public string? JobGradeName { get; set; }
+
+    // Absolute UTC time at which the access token expires. The client uses this
+    // to schedule token refresh and to set cookie/localStorage lifetimes.
+    public DateTime ExpiresDate { get; set; }
 }
 
 
