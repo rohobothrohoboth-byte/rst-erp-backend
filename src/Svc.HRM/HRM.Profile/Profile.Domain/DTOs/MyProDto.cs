@@ -16,6 +16,21 @@ public class EmpPhotoRes
     public string Photo { get; set; } = default!;
 }
 
+// Generic employee image (stamp / signature) response: metadata + base64 image.
+public class EmpImageRes
+{
+    [JsonIgnore]
+    public byte[]? ImageBinary { get; init; }
+    [JsonIgnore]
+    public long FileSize { get; set; } = default!;
+
+    public Guid Id { get; set; }
+    public string FileName { get; set; } = default!;
+    public string ContentType { get; set; } = default!;
+    public string Size { get; set; } = default!;
+    public string Image { get; set; } = default!;
+}
+
 public class MyProInfo
 {
     public string FullName { get; set; } = default!;

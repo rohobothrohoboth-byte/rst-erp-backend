@@ -39,6 +39,26 @@ public class EmpProController(IMediator med) : ControllerBase
     }
 
     [PerAuth("hr.emp.profile.view")]
+    [HttpGet("GetEmpStamp/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEmpStamp(Guid id)
+    {
+        var response = await med.Send(new EmpStampQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Stamp NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [PerAuth("hr.emp.profile.view")]
+    [HttpGet("GetEmpSign/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetEmpSign(Guid id)
+    {
+        var response = await med.Send(new EmpSignQry { Id = id });
+        return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Signature NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
+    }
+
+    [PerAuth("hr.emp.profile.view")]
     [HttpGet("GetProfileInfo/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
