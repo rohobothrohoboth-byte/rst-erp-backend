@@ -47,13 +47,18 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
                 throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
         }
 
-        // Do NOT open a manual transaction here: the DbContext uses the Npgsql
-        // retrying execution strategy, which forbids user-initiated transactions
-        // that span queries (RefreshToken reads roles + stages the token rows).
-        // A single SaveChangesAsync persists the revoke + new-token inserts
-        // atomically and is retry-safe.
-        var newRefresh = await _tokenService.RefreshToken(user, ct);
-        await _uow.SaveChangesAsync(ct);
+        // Use ExecuteInTransactionAsync (which wraps the Npgsql retrying execution
+        // strategy around BeginTransaction + SaveChanges + Commit). A raw manual
+        // transaction is rejected by the retry strategy, and a bare SaveChangesAsync
+        // trips the ProcessID logging once EF closes the auto-opened connection.
+        TokenDto? newRefresh = null;
+        await _uow.ExecuteInTransactionAsync(async () =>
+        {
+            newRefresh = await _tokenService.RefreshToken(user, ct);
+        }, ct);
+
+        if (newRefresh is null)
+            throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
 
         return new LoginResDto
         {
