@@ -22,7 +22,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Cor.Inventory.HealthChecks;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Cor.Inventory.Authentication; // ✅ Add this for API Key authentication
+using Shared.Helpers.ExternalAccess;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -298,14 +298,12 @@ builder.Services.AddScoped<IValuationService, ValuationService>();
 builder.Services.AddScoped<IInvAnalyticsService, InvAnalyticsService>();
 builder.Services.AddScoped<IInvDashboardService, InvDashboardService>();
 
-// ✅ Register API Key Services
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
+// ✅ Register API Key Services (shared)
+builder.Services.AddExternalSystemAccess<InventoryDbContext>(builder.Configuration);
 
-// Add API Key authentication scheme
+// Add API Key authentication scheme (shared)
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()

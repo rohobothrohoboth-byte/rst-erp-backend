@@ -37,7 +37,7 @@ using Cor.Finance.Models.Entities.Aggregates;
 using Shared.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
-using Cor.Finance.Authentication;
+using Shared.Helpers.ExternalAccess;
 using Microsoft.AspNetCore.Authorization;
 using Polly;
 using Polly.Extensions.Http;
@@ -468,15 +468,13 @@ builder.Services.AddCors(options =>
 // ✅ API KEY AUTHENTICATION
 // ============================================================
 
-// Register API Key services
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+// Register API Key services (shared)
+builder.Services.AddExternalSystemAccess<FinanceDbContext>(builder.Configuration);
 builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
 
-// Add API Key authentication scheme
+// Add API Key authentication scheme (shared)
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============================================================
 // ✅ JWT AUTHENTICATION (ONLY ONCE)

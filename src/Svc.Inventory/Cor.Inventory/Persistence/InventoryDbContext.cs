@@ -1,4 +1,5 @@
 using Cor.Inventory.Models.Entities;
+using Shared.Helpers.ExternalAccess;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cor.Inventory.Persistence;

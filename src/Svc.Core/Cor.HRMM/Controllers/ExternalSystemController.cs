@@ -8,6 +8,7 @@ using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Cor.HRMM.Services;
+using Shared.Helpers.ExternalAccess;
 using Cor.HRMM.Models.Entities;
 namespace Cor.HRMM.Controllers;
 
