@@ -54,7 +54,8 @@ public class BudgetReservationService : IBudgetReservationService
             ?? throw new InvalidOperationException($"Budget {req.BudgetId} not found.");
 
         // Idempotent: reuse an existing active reservation for this reference.
-        var existing = await _db.BudgetReservations.FirstOrDefaultAsync(
+        // AsTracking so the update path below actually persists (context defaults to NoTracking).
+        var existing = await _db.BudgetReservations.AsTracking().FirstOrDefaultAsync(
             r => r.BudgetId == req.BudgetId && r.ReferenceId == req.ReferenceId
                  && r.ReferenceType == req.ReferenceType && r.Status == "Active" && !r.IsDeleted, ct);
 
@@ -108,7 +109,7 @@ public class BudgetReservationService : IBudgetReservationService
 
     public async Task ReleaseAsync(BudgetReleaseRequest req, CancellationToken ct = default)
     {
-        var reservations = await _db.BudgetReservations
+        var reservations = await _db.BudgetReservations.AsTracking()
             .Where(r => r.ReferenceId == req.ReferenceId && r.ReferenceType == req.ReferenceType
                         && r.Status == "Active" && !r.IsDeleted)
             .ToListAsync(ct);
@@ -122,7 +123,7 @@ public class BudgetReservationService : IBudgetReservationService
 
     public async Task ConsumeAsync(BudgetConsumeRequest req, CancellationToken ct = default)
     {
-        var reservations = await _db.BudgetReservations
+        var reservations = await _db.BudgetReservations.AsTracking()
             .Where(r => r.ReferenceId == req.ReferenceId && r.ReferenceType == req.ReferenceType
                         && r.Status == "Active" && !r.IsDeleted)
             .OrderBy(r => r.DateAdd)
@@ -134,7 +135,7 @@ public class BudgetReservationService : IBudgetReservationService
         decimal? remainingToConsume = req.Amount;
         foreach (var r in reservations)
         {
-            var budget = await _db.Budgets.FirstOrDefaultAsync(b => b.Id == r.BudgetId && !b.IsDeleted, ct);
+            var budget = await _db.Budgets.AsTracking().FirstOrDefaultAsync(b => b.Id == r.BudgetId && !b.IsDeleted, ct);
             decimal consume;
             if (remainingToConsume == null)
             {
