@@ -45,6 +45,7 @@ public class AddCompHandler : IRequestHandler<AddCompCmd, CompDto>
                 Address = request.AddDto.Address,
                 Website = request.AddDto.Website,
                 LogoUrl = request.AddDto.LogoUrl,
+                StampUrl = request.AddDto.StampUrl,
                 Motto = request.AddDto.Motto,
                 Mission = request.AddDto.Mission,
                 Vision = request.AddDto.Vision,
@@ -84,6 +85,7 @@ public class AddCompHandler : IRequestHandler<AddCompCmd, CompDto>
                 Address = company.Address,
                 Website = company.Website,
                 LogoUrl = company.LogoUrl,
+                StampUrl = company.StampUrl,
                 Motto = company.Motto,
                 Mission = company.Mission,
                 Vision = company.Vision,
@@ -141,6 +143,7 @@ public class ModCompHandler : IRequestHandler<ModCompCmd, CompDto>
             company.Address = request.ModDto.Address ?? company.Address;
             company.Website = request.ModDto.Website ?? company.Website;
             company.LogoUrl = request.ModDto.LogoUrl ?? company.LogoUrl;
+            company.StampUrl = request.ModDto.StampUrl ?? company.StampUrl;
             company.Motto = request.ModDto.Motto ?? company.Motto;
             company.Mission = request.ModDto.Mission ?? company.Mission;
             company.Vision = request.ModDto.Vision ?? company.Vision;
@@ -178,6 +181,7 @@ public class ModCompHandler : IRequestHandler<ModCompCmd, CompDto>
                 Address = company.Address,
                 Website = company.Website,
                 LogoUrl = company.LogoUrl,
+                StampUrl = company.StampUrl,
                 Motto = company.Motto,
                 Mission = company.Mission,
                 Vision = company.Vision,

@@ -31,6 +31,8 @@ public class SetupCompanyDto
     public string? Address { get; set; }
     public string? Website { get; set; }
     public string? LogoUrl { get; set; }
+    public string? StampUrl { get; set; }
+    public string? Motto { get; set; }
     public string? Mission { get; set; }
     public string? Vision { get; set; }
     public string? Values { get; set; }
@@ -388,8 +390,8 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     private async Task<Guid> CreateCompany(SetupCompanyDto dto, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
         const string sql = @"
-            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""Website"", ""LogoUrl"", ""Mission"", ""Vision"", ""Values"", ""Structure"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, @Website, @LogoUrl, @Mission, @Vision, @Values, @Structure, NOW(), false)";
+            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""Website"", ""LogoUrl"", ""StampUrl"", ""Motto"", ""Mission"", ""Vision"", ""Values"", ""Structure"", ""DateAdd"", ""IsDeleted"")
+            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, @Website, @LogoUrl, @StampUrl, @Motto, @Mission, @Vision, @Values, @Structure, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         await connection.ExecuteAsync(sql, new
@@ -403,6 +405,8 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             dto.Address,
             dto.Website,
             dto.LogoUrl,
+            dto.StampUrl,
+            dto.Motto,
             dto.Mission,
             dto.Vision,
             dto.Values,

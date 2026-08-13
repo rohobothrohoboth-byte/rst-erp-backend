@@ -11,6 +11,8 @@ public class Company : BaseEntity
         public string? Address { get; set; }
         public string? Website { get; set; }
         public string? LogoUrl { get; set; }
+        // Official company stamp/seal image, used on printed reports and letters.
+        public string? StampUrl { get; set; }
 
         // Organization identity / profile
         public string? Motto { get; set; }

@@ -64,6 +64,15 @@ public class ProOverviewJoin
 {
     public Guid Id { get; init; }
     public DateTime EmploymentDate { get; set; } = DateTime.UtcNow;
+    public Guid? ReportsToId { get; init; }
+}
+
+public class MgrJoin
+{
+    public string FirstName { get; init; } = default!;
+    public string MiddleName { get; init; } = default!;
+    public string LastName { get; init; } = default!;
+    public Guid PositionId { get; init; }
 }
 
 public class ProInfoJoin

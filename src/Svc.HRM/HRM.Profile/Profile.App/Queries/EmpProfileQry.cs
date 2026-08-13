@@ -48,14 +48,14 @@ public class ProInfoHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IReq
     }
 }
 
-public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<MyProOverviewQry, MyProOverview?>
+public class ProOverviewHandler(IDapperHelper dapper, ICorHrmmClient corHrmm) : IRequestHandler<MyProOverviewQry, MyProOverview?>
 {
     public async Task<MyProOverview?> Handle(MyProOverviewQry request, CancellationToken ct)
     {
         const string e = "e";
         const string p = "p";
         var qb = new QueryBuilder()
-            .Select<Employee>(e, x => x.EmploymentDate)
+            .Select<Employee>(e, x => x.EmploymentDate, x => x.ReportsToId!)
             .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName, x => x.FirstNameAm, x => x.MiddleNameAm, x => x.LastNameAm)
             .From<Employee>(e)
             .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
@@ -66,11 +66,41 @@ public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<MyProOve
         if (row is null) { return null; }
 
         var serStr = row.EmploymentDate.FullServDur();
-        // NOTE: Tenure is real (from EmploymentDate). Performance, Training and
-        // Attendance are owned by their own services (Svc.HRM.Performance /
-        // Svc.HRM.Training / Svc.HRM.Attendance); until this handler aggregates
-        // them via cross-service calls we return honest neutral values instead of
-        // hardcoded fake data (previously "Sarah Johnson", 4.5/5, 78%, "May 2026").
+
+        // Resolve the direct manager (Reports To) from ReportsToId, when set.
+        var repToName = "";
+        var repToPos = "";
+        if (row.ReportsToId is Guid mgrId && mgrId != Guid.Empty)
+        {
+            try
+            {
+                var mqb = new QueryBuilder()
+                    .Select<Employee>(e, x => x.PositionId)
+                    .Select<Person>(p, x => x.FirstName, x => x.MiddleName, x => x.LastName)
+                    .From<Employee>(e)
+                    .Join<Employee, Person>(e, p, x => x.PersonId, x => x.Id)
+                    .Where<Employee>(e, x => x.Id == mgrId)
+                    .Limit(1);
+                var (msql, mparams) = mqb.Build();
+                var mgr = await dapper.QueryFirstOrDefaultAsync<MgrJoin>(msql, mparams, ct);
+                if (mgr is not null)
+                {
+                    repToName = $"{mgr.FirstName} {mgr.MiddleName} {mgr.LastName}".Replace("  ", " ").Trim();
+                    try
+                    {
+                        var pos = await corHrmm.GetPosition(mgr.PositionId.ToString(), ct);
+                        repToPos = pos.Res?.Name ?? "";
+                    }
+                    catch { /* position service unavailable - leave blank */ }
+                }
+            }
+            catch { /* best-effort manager resolution */ }
+        }
+
+        // NOTE: Tenure and Reports-To are real. Performance, Training and Attendance
+        // are owned by their own services (Svc.HRM.Performance / Svc.HRM.Training /
+        // Svc.HRM.Attendance) and are aggregated on the client from those APIs; this
+        // handler returns honest neutral defaults for them.
         return new MyProOverview
         {
             Tenure = serStr,
@@ -78,8 +108,8 @@ public class ProOverviewHandler(IDapperHelper dapper) : IRequestHandler<MyProOve
             Training = "0",
             AttendPer = 0.0,
             AttendMonth = DateTime.UtcNow.ToString("MMMM yyyy"),
-            RepToName = "",
-            RepToPos = ""
+            RepToName = repToName,
+            RepToPos = repToPos
         };
     }
 }
