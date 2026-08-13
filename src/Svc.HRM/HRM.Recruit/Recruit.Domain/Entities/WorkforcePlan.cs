@@ -44,6 +44,7 @@ public class WorkforcePlan : BaseEntity
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; } = CurrencyConstants.ETB;
+    public Guid? BudgetId { get; set; } // Cor.Finance.Budget (the allocated budget to encumber against)
 
     //******************************************//
 

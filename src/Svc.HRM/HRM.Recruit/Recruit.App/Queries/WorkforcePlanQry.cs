@@ -54,6 +54,7 @@ public class WorkforcePlanAllHandler : IRequestHandler<WorkforcePlanAllQry, List
                 x => x.RequistionById,
                 x => x.Budget!,
                 x => x.BudgetCurrency!,
+                x => x.BudgetId!,
                 x => x.DateAdd,
                 x => x.DateMod!,
                 x => x.xmin)
@@ -120,7 +121,8 @@ public class WorkforcePlanByIdHandler : IRequestHandler<WorkforcePlanByIdQry, Wo
                 x => x.PeriodId!,
                 x => x.RequistionById,
                 x => x.Budget!,           // ? ADDED
-                x => x.BudgetCurrency!,   // ? ADDED
+                x => x.BudgetCurrency!,
+                x => x.BudgetId!,   // ? ADDED
                 x => x.DateAdd,
                 x => x.DateMod!,
                 x => x.xmin)

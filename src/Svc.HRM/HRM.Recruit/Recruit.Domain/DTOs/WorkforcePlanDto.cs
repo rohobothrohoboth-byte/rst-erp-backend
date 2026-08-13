@@ -31,6 +31,7 @@ public class WorkforcePlanListDto : BaseDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; }
 
     // ? Computed properties for formatted display
     public string BudgetFormatted => Budget.HasValue
@@ -57,6 +58,7 @@ public class WorkforcePlanAddDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; } // Cor.Finance.Budget to encumber against
 }
 
 public class WorkforcePlanModDto
@@ -72,4 +74,5 @@ public class WorkforcePlanModDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; }
 }
