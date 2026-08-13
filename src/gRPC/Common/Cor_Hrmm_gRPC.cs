@@ -90,7 +90,7 @@ public class CorHrmmClient : ICorHrmmClient
             if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            var res = await client.GetListJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListJgStepAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -110,7 +110,7 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetJgStepAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetJgStepAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -127,7 +127,7 @@ public class CorHrmmClient : ICorHrmmClient
             if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            var res = await client.GetListJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListJobGradeAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -147,7 +147,7 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetJobGradeAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetJobGradeAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -164,7 +164,7 @@ public class CorHrmmClient : ICorHrmmClient
             if (_cache != null && _cache.TryGetValue(key, out CorHrmmListRes? c) && c != null) return c;
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmListRqst();
-            var res = await client.GetListPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListPositionAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -184,7 +184,7 @@ public class CorHrmmClient : ICorHrmmClient
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
             var req = new CorHrmmRqst { Id = id };
-            return await client.GetPositionAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetPositionAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {

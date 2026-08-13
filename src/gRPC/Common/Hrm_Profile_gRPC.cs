@@ -78,7 +78,7 @@ public class HrmProfileClient : IHrmProfileClient
         {
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProRqst { Id = id };
-            return await client.GetEmpBasicInfoAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetEmpBasicInfoAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -125,7 +125,7 @@ public class HrmProfileClient : IHrmProfileClient
             var req = new HrmProRqst { Id = id };
             // Pass CancellationToken.None + a hard deadline so a slow call is bounded here and a
             // client-cancellation can't trigger a retry/backoff storm from an outer policy.
-            return await client.GetEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(2), cancellationToken: CancellationToken.None);
+            return await client.GetEmpAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -142,7 +142,7 @@ public class HrmProfileClient : IHrmProfileClient
             if (_cache != null && _cache.TryGetValue(key, out HrmProListRes? c) && c != null) return c;
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            var res = await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }

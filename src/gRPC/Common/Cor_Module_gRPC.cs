@@ -107,7 +107,7 @@ public class CorModClient : ICorModClient
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            var res = await client.GetListDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListDeptAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -127,7 +127,7 @@ public class CorModClient : ICorModClient
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetDeptAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetDeptAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -234,7 +234,7 @@ public class CorModClient : ICorModClient
             if (_cache != null && _cache.TryGetValue(key, out PeriodListRes? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            var res = await client.GetListPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListPeriodAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -262,7 +262,7 @@ public class CorModClient : ICorModClient
       {
           var client = new CorModuleService.CorModuleServiceClient(_channel);
           var req = new CorModuleRqst { Id = id };
-          return await client.GetPeriodAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+          return await client.GetPeriodAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
       }
       catch (RpcException ex)
       {
@@ -294,7 +294,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetBranchAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -312,7 +312,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
             if (_cache != null && _cache.TryGetValue(key, out CorModuleListResAm? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            var res = await client.GetListBranchAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListBranchAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
@@ -334,7 +334,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleRqst { Id = id };
-            return await client.GetCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            return await client.GetCompanyAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
         }
         catch (RpcException ex)
         {
@@ -352,7 +352,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
             if (_cache != null && _cache.TryGetValue(key, out CorModuleListResAm? c) && c != null) return c;
             var client = new CorModuleService.CorModuleServiceClient(_channel);
             var req = new CorModuleListRqst();
-            var res = await client.GetListCompanyAsync(req, deadline: DateTime.UtcNow.AddSeconds(6), cancellationToken: ct);
+            var res = await client.GetListCompanyAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
             _cache?.Set(key, res, OkTtl);
             return res;
         }
