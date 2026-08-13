@@ -11,7 +11,7 @@ public class HrmProfileDbContextFactory : IDesignTimeDbContextFactory<HrmProfile
     {
         var connectionString =
             Environment.GetEnvironmentVariable("ConnectionStrings__HRMProDbCon")
-            ?? "Host=localhost;Port=5432;Database=HRM.ProfileDb;Username=postgres;Password=root";
+            ?? "Host=localhost;Port=5432;Database=HRM.Pro;Username=postgres;Password=root";
 
         var options = new DbContextOptionsBuilder<HrmProfileDbContext>()
             .UseNpgsql(connectionString)

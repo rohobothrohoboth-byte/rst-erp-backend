@@ -36,6 +36,7 @@
     <ProjectReference Include="..\Svc.HRM\Svc.HRM.Training\Svc.HRM.Training.csproj" />
     <ProjectReference Include="..\Svc.HRM\Svc.HRM.Performance\Svc.HRM.Performance.csproj" />
 
+
     <!-- ? Add File Management Service -->
     <ProjectReference Include="..\Svc.FileManagement\Cor.FileManagement\Cor.FileManagement.csproj" />
     <ProjectReference Include="..\Svc.Procurement\Cor.Procurement\Cor.Procurement.csproj" />

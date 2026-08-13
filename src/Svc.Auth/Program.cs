@@ -17,7 +17,7 @@ using StackExchange.Redis;
 using Svc.Auth.Commands;
 using System.Net;
 using Shared.Helpers;
-
+using Polly.Timeout;
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================
@@ -115,11 +115,11 @@ var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
 var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
 var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
 var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");*/
-var CorModUrl = "https://192.168.1.7:7002";
-var CorHrmmUrl = "https://192.168.1.7:7001";
-var hrmProUrl = "https://192.168.1.7:7004";
-var financeApiUrl = "https://192.168.1.7:7008";
-var gatewayApiUrl = "https://192.168.1.7:5000";
+var CorModUrl = "https://192.168.1.6:7002";
+var CorHrmmUrl = "https://192.168.1.6:7001";
+var hrmProUrl = "https://192.168.1.6:7004";
+var financeApiUrl = "https://192.168.1.6:7008";
+var gatewayApiUrl = "https://192.168.1.6:5000";
 
 // ============= API KEYS =============
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -239,7 +239,7 @@ var sslHandler = new HttpClientHandler
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(client =>
 {
     client.BaseAddress = new Uri(CorModUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
@@ -251,7 +251,7 @@ builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(clie
 builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =>
 {
     client.BaseAddress = new Uri(CorHrmmUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", hrmmApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
@@ -263,7 +263,7 @@ builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =
 builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
 {
     client.BaseAddress = new Uri(hrmProUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", profileApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
@@ -275,6 +275,7 @@ builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
 var retryPolicy = Policy<HttpResponseMessage>
     .Handle<HttpRequestException>()
     .OrResult(r => !r.IsSuccessStatusCode)
+    .Or<TimeoutRejectedException>()
     .RetryAsync(3, onRetry: (outcome, retryCount, context) =>
     {
         Log.Warning("⚠️ Retry {RetryCount} for API call. Error: {Error}",
@@ -284,9 +285,10 @@ var retryPolicy = Policy<HttpResponseMessage>
 var circuitBreakerPolicy = Policy<HttpResponseMessage>
     .Handle<HttpRequestException>()
     .OrResult(r => r.StatusCode == HttpStatusCode.ServiceUnavailable)
+     .Or<TimeoutRejectedException>()
     .CircuitBreakerAsync(
         handledEventsAllowedBeforeBreaking: 3,
-        durationOfBreak: TimeSpan.FromSeconds(30));
+        durationOfBreak: TimeSpan.FromSeconds(60));
 
 // Apply policies to all HTTP clients
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>()

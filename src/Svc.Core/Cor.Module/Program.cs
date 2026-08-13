@@ -1,5 +1,6 @@
 using Cor.Module.gRPCService;
 using Cor.Module.Middlewares;
+using Cor.Module.HealthChecks;
 using Scalar.AspNetCore;
 using Serilog;
 using Cor.Module.Services;
@@ -10,6 +11,11 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Shared.Helpers.Extensions;
 using System.Net;
 using Shared.Helpers;
+using Cor.Module.Authentication;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization; // ✅ ይህን ይጨምሩ
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -261,9 +267,6 @@ var sslHandler = new HttpClientHandler
 
 // ============= REGISTER HTTP CLIENTS =============
 
-// ✅ Core HRMM API Client
-
-
 // ✅ Auth API Client
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
@@ -275,9 +278,6 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 })
 .ConfigurePrimaryHttpMessageHandler(() => sslHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
-
-// ✅ HRM Pro API Client
-
 
 // ============= RABBITMQ REGISTRATION =============
 var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
@@ -310,6 +310,26 @@ builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{CorHrmmUrl}/health"), "Core HRMM API")
     .AddUrlGroup(new Uri($"{authUrl}/health"), "Auth API")
     .AddUrlGroup(new Uri($"{hrmProUrl}/health"), "HRM Pro API");
+
+// ============= RATE LIMITING =============
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("Fixed", opt =>
+    {
+        opt.Window = TimeSpan.FromSeconds(10);
+        opt.PermitLimit = 100;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+
+    options.AddFixedWindowLimiter("Write", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 30;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+});
 
 // ================================================================
 // ✅ CORS CONFIGURATION
@@ -353,18 +373,56 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ============= API KEY AUTHENTICATION =============
+// ============= API KEY AUTHENTICATION & AUTHORIZATION =============
+
+// 1. Configuration
+builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
+
+// 2. Services - ሁሉም Scoped
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
+
+// 3. Authorization Components - ሁሉም Scoped
+builder.Services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>(); // ✅ Singleton ሳይሆን Scoped
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+// 4. Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "ApiKey";
+    options.DefaultChallengeScheme = "ApiKey";
+})
+.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+
+// 5. Authorization
+builder.Services.AddAuthorization();
+
+
 // ============= BUILDER EXTENSIONS =============
 builder.AddApiServices()
     .AddErrorHandling()
-    .AddSwaggerService()
-    .AddAuthService();
+    .AddSwaggerService();
+
+// ❌ AddAuthService ን አይጥሩ - ይህ የAuth Service ነው
+// .AddAuthService();
 
 var app = builder.Build();
 
+// ============= MIDDLEWARE ORDER (ጠቃሚ) =============
+app.UseMiddleware<ApiKeyRateLimiterMiddleware>();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseRateLimiter();
+app.UseCors("AllowAll");
+
+// ✅ የሚከተሉትን በትክክለኛው ቅደም ተከተል ያድርጉ
+app.UseAuthentication();  // ✅ መጀመሪያ
+app.UseAuthorization();   // ✅ ከዚያ
+
 app.MapGrpcService<CorModListService>();
 
 if (app.Environment.IsDevelopment())
@@ -374,10 +432,28 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigration();
 }
 
-app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
+
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.ToString()
+            }),
+            totalDuration = report.TotalDuration.ToString()
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
 
 Console.WriteLine($"\n✅ Core Module Service starting on https://0.0.0.0:{coreModulePort}");
 Console.WriteLine($"🔗 Core HRMM URL: {CorHrmmUrl}");

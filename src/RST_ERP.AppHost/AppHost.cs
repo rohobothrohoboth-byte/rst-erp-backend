@@ -41,7 +41,7 @@ var performanceDb = postgres.AddDatabase("performanceDb", "HRM.PerformanceDb");
 // ============= SERVICES WITH FIXED PORTS =============
 
 // ✅ Get the local IP address
-var localIp = "192.168.1.7"; // Updated to match your config
+var localIp = "192.168.1.6"; // Updated to match your config
 var useHttps = true;
 
 // Helper function to get service URL
@@ -155,8 +155,8 @@ builder.AddProject<Projects.Svc_HRM_Attendance>("attendance")
 
 // ✅ Training
 builder.AddProject<Projects.Svc_HRM_Training>("training")
-    .WithReference(rabbitmq)
-    .WithReference(redis)
+  //  .WithReference(rabbitmq)
+   // .WithReference(redis)
     .WithReference(trainingDb)
     .WithHttpsEndpoint(port: 5007, name: "https")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
@@ -164,8 +164,8 @@ builder.AddProject<Projects.Svc_HRM_Training>("training")
 
 // ✅ Performance
 builder.AddProject<Projects.Svc_HRM_Performance>("performance")
-    .WithReference(rabbitmq)
-    .WithReference(redis)
+   // .WithReference(rabbitmq)
+  //  .WithReference(redis)
     .WithReference(performanceDb)
     .WithHttpsEndpoint(port: 5005, name: "https")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")

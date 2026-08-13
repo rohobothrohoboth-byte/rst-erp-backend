@@ -59,4 +59,7 @@ public class CoreModuleDbContext : DbContext
     public DbSet<FiscalYear> FiscalYear { get; set; }
     public DbSet<Period> Period { get; set; }
     public DbSet<Holiday> Holiday { get; set; }
+    public DbSet<ExternalSystem> ExternalSystems { get; set; }
+         public DbSet<ApiKey> ApiKeys { get; set; }
+         public DbSet<ApiKeyLog> ApiKeyLogs { get; set; }
 }

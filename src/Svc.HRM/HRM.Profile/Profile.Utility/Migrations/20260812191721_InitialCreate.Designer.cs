@@ -12,8 +12,8 @@ using Profile.Utility.Persistence;
 namespace Profile.Utility.Migrations
 {
     [DbContext(typeof(HrmProfileDbContext))]
-    [Migration("20260812093848_AddEmployeeReportsTo")]
-    partial class AddEmployeeReportsTo
+    [Migration("20260812191721_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

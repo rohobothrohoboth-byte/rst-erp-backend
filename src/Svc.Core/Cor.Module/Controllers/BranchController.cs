@@ -17,13 +17,17 @@ namespace Cor.Module.Controllers;
 [ApiController]
 [Route("api/core/module/v{version:apiVersion}/Branch")]
 [ApiVersion("1.0")]
-public class BranchController(IMediator med) : ControllerBase
+public class BranchController(IMediator med, ILogger<BranchController> logger) : ControllerBase
 {
+
+
+
     [PerAuth("core.branch.view")]
     [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranch()
     {
+        logger.LogInformation("🔍 AllBranch endpoint called");
         var response = await med.Send(new AllBranchesQry());
         //return Ok(response);
         return Ok(ApiResponse<object>.Ok(response));

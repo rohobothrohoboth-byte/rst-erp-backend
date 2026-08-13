@@ -101,17 +101,20 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     private readonly RoleManager<AppRole> _roleManager;
     private readonly IUnitOfWork _uow;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<CompleteSetupHandler> _logger;
 
     public CompleteSetupHandler(
         UserManager<AppUser> userManager,
         RoleManager<AppRole> roleManager,
         IUnitOfWork uow,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<CompleteSetupHandler> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _uow = uow;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<SetupResultDto> Handle(CompleteSetupCmd request, CancellationToken ct)
@@ -119,12 +122,10 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         var result = new SetupResultDto();
         var details = new List<string>();
 
-        // Foreign-database connections/transactions. Setup writes to four separate
-        // databases (Auth via the unit of work, plus Core Module, HRMM and Profile).
-        // We keep one transaction per foreign DB so all writes commit together — or
-        // roll back together — instead of auto-committing statement by statement.
-        NpgsqlConnection? coreConn = null, hrmmConn = null, profConn = null;
-        NpgsqlTransaction? coreTx = null, hrmmTx = null, profTx = null;
+        // ✅ Create separate connections for each database
+        await using var coreConn = new NpgsqlConnection(_configuration.GetConnectionString("CorModuleDbCon"));
+        await using var hrmmConn = new NpgsqlConnection(_configuration.GetConnectionString("coreHRMMDbCon"));
+        await using var profConn = new NpgsqlConnection(_configuration.GetConnectionString("HRMProDbCon"));
 
         try
         {
@@ -132,18 +133,19 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             ValidateConnectionStrings();
             details.Add("✅ Connection strings validated");
 
-            // ✅ Start transactions (Auth + one per foreign database)
-            await _uow.Begin(ct);
-
-            coreConn = new NpgsqlConnection(_configuration.GetConnectionString("CorModuleDbCon"));
-            hrmmConn = new NpgsqlConnection(_configuration.GetConnectionString("coreHRMMDbCon"));
-            profConn = new NpgsqlConnection(_configuration.GetConnectionString("HRMProDbCon"));
+            // ✅ Open connections
             await coreConn.OpenAsync(ct);
             await hrmmConn.OpenAsync(ct);
             await profConn.OpenAsync(ct);
-            coreTx = await coreConn.BeginTransactionAsync(ct);
-            hrmmTx = await hrmmConn.BeginTransactionAsync(ct);
-            profTx = await profConn.BeginTransactionAsync(ct);
+            details.Add("✅ Connections opened");
+
+            // ✅ Start transactions for each database
+            await using var coreTx = await coreConn.BeginTransactionAsync(ct);
+            await using var hrmmTx = await hrmmConn.BeginTransactionAsync(ct);
+            await using var profTx = await profConn.BeginTransactionAsync(ct);
+
+            // ✅ Start Auth transaction
+            await _uow.Begin(ct);
             details.Add("✅ Transactions started");
 
             // ============ CLEAN EXISTING DATA ============
@@ -227,48 +229,46 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             await AssignAllPermissionsToAdmin(userId, ct);
             details.Add("✅ Permissions assigned to admin");
 
-            // ✅ Commit all changes — foreign databases first, then the Auth unit of
-            // work last (the admin user only persists once the Auth transaction commits).
+            // ✅ Commit all transactions
             await coreTx.CommitAsync(ct);
             await hrmmTx.CommitAsync(ct);
             await profTx.CommitAsync(ct);
             await _uow.Commit(ct);
-            details.Add("✅ Transactions committed");
+            details.Add("✅ All transactions committed successfully");
 
             result.Success = true;
             result.Message = "System setup completed successfully!";
             result.Details = details;
+
+            _logger.LogInformation("System setup completed successfully. CompanyId: {CompanyId}, AdminUserId: {AdminUserId}",
+                companyId, userId);
+
             return result;
         }
         catch (Exception ex)
         {
-            // ✅ Roll back everything on any error
-            try { await _uow.Rollback(ct); } catch { }
-            try { if (coreTx != null) await coreTx.RollbackAsync(ct); } catch { }
-            try { if (hrmmTx != null) await hrmmTx.RollbackAsync(ct); } catch { }
-            try { if (profTx != null) await profTx.RollbackAsync(ct); } catch { }
-
+            // ✅ Rollback everything on error
             details.Add($"❌ ERROR: {ex.Message}");
             if (ex.InnerException != null)
             {
                 details.Add($"Inner Error: {ex.InnerException.Message}");
             }
 
+            _logger.LogError(ex, "Setup failed");
+
+            try { await _uow.Rollback(ct); } catch { }
+
+            // Rollbacks will happen automatically when transactions are disposed
+
             result.Success = false;
             result.Message = $"Setup failed: {ex.Message}";
             result.Details = details;
 
+           // throw new DomainException($"Setup failed: {ex.Message}", ex.ToString());
+           // throw new DomainException($"Setup failed: {ex.Message}", ex);
             throw new DomainException($"Setup failed: {ex.Message}");
         }
-        finally
-        {
-            if (coreTx != null) await coreTx.DisposeAsync();
-            if (hrmmTx != null) await hrmmTx.DisposeAsync();
-            if (profTx != null) await profTx.DisposeAsync();
-            if (coreConn != null) await coreConn.DisposeAsync();
-            if (hrmmConn != null) await hrmmConn.DisposeAsync();
-            if (profConn != null) await profConn.DisposeAsync();
-        }
+        // Connections and transactions are automatically disposed via await using
     }
 
     // ============ VALIDATE CONNECTION STRINGS ============
@@ -295,7 +295,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
                 using var connection = new NpgsqlConnection(connString);
                 connection.Open();
                 connection.Close();
-                Console.WriteLine($"✅ Connection '{key}' validated successfully.");
+                _logger.LogInformation("✅ Connection '{Key}' validated successfully.", key);
             }
             catch (Exception ex)
             {
@@ -311,8 +311,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         NpgsqlConnection profConn, NpgsqlTransaction profTx,
         CancellationToken ct)
     {
-        // Auth DB: wiped on its own connection. This clean is intentional on (re)setup;
-        // the identity/permission rows are re-created below within the Auth unit of work.
+        // Auth DB: wiped on its own connection
         var authConnectionString = _configuration.GetConnectionString("authMgrCon");
         if (string.IsNullOrEmpty(authConnectionString))
             throw new DomainException("authMgrCon connection string is not configured");
@@ -331,13 +330,13 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             ");
         }
 
-        // Profile DB (inside the shared transaction)
+        // Profile DB
         await profConn.ExecuteAsync(@"
             DELETE FROM ""Employee"";
             DELETE FROM ""Person"";
         ", transaction: profTx);
 
-        // HRMM DB (inside the shared transaction)
+        // HRMM DB
         await hrmmConn.ExecuteAsync(@"DELETE FROM ""JgStep"";", transaction: hrmmTx);
         await hrmmConn.ExecuteAsync(@"DELETE FROM ""Position"";", transaction: hrmmTx);
         await hrmmConn.ExecuteAsync(@"
@@ -348,7 +347,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         ", transaction: hrmmTx);
         await hrmmConn.ExecuteAsync(@"DELETE FROM ""JobGrade"";", transaction: hrmmTx);
 
-        // Core Module DB (inside the shared transaction)
+        // Core Module DB
         await coreConn.ExecuteAsync(@"DELETE FROM ""Department"";", transaction: coreTx);
         await coreConn.ExecuteAsync(@"DELETE FROM ""Branch"";", transaction: coreTx);
         await coreConn.ExecuteAsync(@"DELETE FROM ""Company"";", transaction: coreTx);
@@ -614,7 +613,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         return Guid.Parse(user.Id);
     }
 
-    // ============ SEED PERMISSIONS (FIXED) ============
+    // ============ SEED PERMISSIONS ============
     private async Task SeedPermissions(CancellationToken ct)
     {
         try
@@ -642,7 +641,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!moduleDict.TryGetValue(menuDto.ModKey, out var moduleId))
                 {
-                    Console.WriteLine($"⚠️ Module '{menuDto.ModKey}' not found for parent menu '{menuDto.Key}'. Skipping...");
+                    _logger.LogWarning("Module '{ModKey}' not found for parent menu '{Key}'. Skipping...", menuDto.ModKey, menuDto.Key);
                     continue;
                 }
 
@@ -673,7 +672,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!moduleDict.TryGetValue(menuDto.ModKey, out var moduleId))
                 {
-                    Console.WriteLine($"⚠️ Module '{menuDto.ModKey}' not found for child menu '{menuDto.Key}'. Skipping...");
+                    _logger.LogWarning("Module '{ModKey}' not found for child menu '{Key}'. Skipping...", menuDto.ModKey, menuDto.Key);
                     continue;
                 }
 
@@ -691,7 +690,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
                     }
                     else
                     {
-                        Console.WriteLine($"⚠️ Parent menu '{menuDto.ParKey}' not found for child menu '{menuDto.Key}'. Skipping...");
+                        _logger.LogWarning("Parent menu '{ParKey}' not found for child menu '{Key}'. Skipping...", menuDto.ParKey, menuDto.Key);
                         continue;
                     }
                 }
@@ -722,7 +721,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!menuDict.TryGetValue(permDto.MenuKey, out var menuId))
                 {
-                    Console.WriteLine($"⚠️ Menu '{permDto.MenuKey}' not found for permission '{permDto.Key}'. Skipping...");
+                    _logger.LogWarning("Menu '{MenuKey}' not found for permission '{Key}'. Skipping...", permDto.MenuKey, permDto.Key);
                     continue;
                 }
 
@@ -739,15 +738,12 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             }
             await _uow.SaveChangesAsync(ct);
 
-            Console.WriteLine($"✅ Seeded {modules.Count()} modules, {menuDtos.Count} menus, and {permissionCount} permissions");
+            _logger.LogInformation("Seeded {ModuleCount} modules, {MenuCount} menus, and {PermissionCount} permissions",
+                modules.Count(), menuDtos.Count, permissionCount);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error in SeedPermissions: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-            }
+            _logger.LogError(ex, "Error in SeedPermissions");
             throw;
         }
     }
@@ -797,6 +793,6 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         }
 
         await _uow.SaveChangesAsync(ct);
-        Console.WriteLine($"✅ All permissions assigned to admin user: {userId}");
+        _logger.LogInformation("All permissions assigned to admin user: {UserId}", userId);
     }
 }
