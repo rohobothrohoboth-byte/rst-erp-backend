@@ -45,7 +45,7 @@ public class HrmProfileClient : IHrmProfileClient
            // Bound the connection attempt so an unreachable Profile service fails fast.
            HttpHandler = new SocketsHttpHandler
            {
-               ConnectTimeout = TimeSpan.FromSeconds(5),
+               ConnectTimeout = TimeSpan.FromSeconds(2),
                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                {
                    RemoteCertificateValidationCallback = (_, _, _, _) => true

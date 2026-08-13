@@ -42,7 +42,7 @@ public class CorHrmmClient : ICorHrmmClient
             // Bound the connection attempt so an unreachable Core HRMM fails fast.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(5),
+                ConnectTimeout = TimeSpan.FromSeconds(2),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -61,7 +61,7 @@ public class CorHrmmClient : ICorHrmmClient
             // Bound the connection attempt so an unreachable Core HRMM fails fast.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(5),
+                ConnectTimeout = TimeSpan.FromSeconds(2),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -69,6 +69,10 @@ public class CorHrmmClient : ICorHrmmClient
             }
         });
     }
+
+    // Avoid a pointless (and potentially slow) round-trip when the id is empty/all-zeros.
+    private static bool IsEmptyId(string? id) =>
+        string.IsNullOrEmpty(id) || id == "00000000-0000-0000-0000-000000000000" || id == Guid.Empty.ToString();
 
     public async Task<CorHrmmListRes> GetListJgStep(CancellationToken ct = default)
     {
@@ -87,6 +91,7 @@ public class CorHrmmClient : ICorHrmmClient
 
     public async Task<CorHrmmRes> GetJgStep(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorHrmmRes(); }
         try
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
@@ -117,6 +122,7 @@ public class CorHrmmClient : ICorHrmmClient
 
     public async Task<CorHrmmRes> GetJobGrade(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorHrmmRes(); }
         try
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);
@@ -147,6 +153,7 @@ public class CorHrmmClient : ICorHrmmClient
 
     public async Task<CorHrmmRes> GetPosition(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorHrmmRes(); }
         try
         {
             var client = new CorHrmmService.CorHrmmServiceClient(_channel);

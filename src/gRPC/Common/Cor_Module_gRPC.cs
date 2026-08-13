@@ -55,7 +55,7 @@ public class CorModClient : ICorModClient
             // (~5s) instead of hanging the caller until its HTTP timeout.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(5),
+                ConnectTimeout = TimeSpan.FromSeconds(2),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -76,7 +76,7 @@ public class CorModClient : ICorModClient
             // (~5s) instead of hanging the caller until its HTTP timeout.
             HttpHandler = new SocketsHttpHandler
             {
-                ConnectTimeout = TimeSpan.FromSeconds(5),
+                ConnectTimeout = TimeSpan.FromSeconds(2),
                 SslOptions = new System.Net.Security.SslClientAuthenticationOptions
                 {
                     RemoteCertificateValidationCallback = (_, _, _, _) => true
@@ -84,6 +84,10 @@ public class CorModClient : ICorModClient
             }
         });
     }
+
+    // Avoid a pointless (and potentially slow) round-trip when the id is empty/all-zeros.
+    private static bool IsEmptyId(string? id) =>
+        string.IsNullOrEmpty(id) || id == "00000000-0000-0000-0000-000000000000" || id == Guid.Empty.ToString();
 
     public async Task<CorModuleListResAm> GetListDept(CancellationToken ct = default)
     {
@@ -102,6 +106,7 @@ public class CorModClient : ICorModClient
 
     public async Task<CorModuleResAm> GetDept(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorModuleResAm(); }
         try
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
@@ -262,6 +267,7 @@ public class CorModClient : ICorModClient
 
 public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorModuleResAm(); }
         try
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);
@@ -295,6 +301,7 @@ public async Task<CorModuleResAm> GetBranch(string id, CancellationToken ct = de
 
     public async Task<CorModuleResAm> GetCompany(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new CorModuleResAm(); }
         try
         {
             var client = new CorModuleService.CorModuleServiceClient(_channel);

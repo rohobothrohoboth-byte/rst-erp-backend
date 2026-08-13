@@ -205,11 +205,13 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            policy.WithOrigins(resolvedOrigins)
+            // Reflect the caller's origin so any LAN host/IP works (self-hosted setup),
+            // while still permitting credentials (AllowAnyOrigin cannot be combined with them).
+            policy.SetIsOriginAllowed(_ => true)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-            Console.WriteLine($"✅ CORS: Allowed origins: {string.Join(", ", resolvedOrigins)}");
+            Console.WriteLine($"✅ CORS: reflecting request origin (configured: {string.Join(", ", resolvedOrigins)})");
         }
     });
 });

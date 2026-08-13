@@ -25,7 +25,10 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
         builder.AddServiceDefaults();
-        builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.WithOrigins("http://localhost:1211").AllowAnyMethod().AllowAnyHeader().AllowCredentials(); }); });
+        // Reflect the caller's origin (works with AllowCredentials, unlike AllowAnyOrigin) so
+        // the app works from any LAN host/IP in a self-hosted setup. This policy is registered
+        // after the one in Program.cs, so it is the effective "AllowAll" policy.
+        builder.Services.AddCors(options => { options.AddPolicy("AllowAll", policy => { policy.SetIsOriginAllowed(_ => true).AllowAnyMethod().AllowAnyHeader().AllowCredentials(); }); });
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddControllers();
         builder.Services.AddApiVersioning(option =>
