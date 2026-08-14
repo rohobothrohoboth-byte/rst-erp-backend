@@ -1,0 +1,23 @@
+// Persistence/ProjectDbContextReadOnlyFactory.cs
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+
+namespace Cor.ProjectManagement.Persistence
+{
+    public class ProjectDbContextReadOnlyFactory : IDesignTimeDbContextFactory<ProjectDbContextReadOnly>
+    {
+        public ProjectDbContextReadOnly CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<ProjectDbContextReadOnly>();
+
+            var connectionString = "Host=localhost;Port=5432;Database=core.ProjectManagementDb;Username=postgres;Password=root;Include Error Detail=true";
+
+            optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsAssembly(typeof(ProjectDbContext).Assembly.FullName);
+            });
+
+            return new ProjectDbContextReadOnly(optionsBuilder.Options);
+        }
+    }
+}

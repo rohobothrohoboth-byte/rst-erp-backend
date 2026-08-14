@@ -18,6 +18,8 @@
 		<Protobuf Include="..\Contracts\hrmProfile.proto" GrpcServices="Both" />
 		<Protobuf Include="..\Contracts\finance.proto" GrpcServices="Both" />  <!-- ? ADD THIS -->
 		<Protobuf Include="..\Contracts\crm.proto" GrpcServices="Both" />  <!-- ? ADD THIS -->
+		<Protobuf Include="..\Contracts\project.proto" GrpcServices="Both" />  <!-- ? ADD THIS -->
+
 	</ItemGroup>
 
    </Project>
