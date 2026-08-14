@@ -4,7 +4,6 @@ using Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Svc.Auth.Models.Entities;
-using Svc.Auth.Queries;
 
 namespace Svc.Auth.Controllers;
 
@@ -15,29 +14,18 @@ public sealed class RoleAdminController : ControllerBase
 {
     private const string PermissionClaimType = "erp:permission";
     private readonly RoleManager<AppRole> _roles;
-    private readonly IMediator _med;
 
-    public RoleAdminController(RoleManager<AppRole> roles, IMediator med)
-    {
-        _roles = roles;
-        _med = med;
-    }
+    public RoleAdminController(RoleManager<AppRole> roles) => _roles = roles;
 
     [HttpPost("AddRole")]
     public async Task<IActionResult> AddRole([FromBody] RoleWriteDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            throw new DomainException("Role name is required.");
-
+        if (string.IsNullOrWhiteSpace(dto.Name)) throw new DomainException("Role name is required.");
         var normalized = dto.Name.Trim();
-        if (await _roles.FindByNameAsync(normalized) != null)
-            throw new DomainException($"Role [{normalized}] already exists.");
-
+        if (await _roles.FindByNameAsync(normalized) != null) throw new DomainException($"Role [{normalized}] already exists.");
         var role = new AppRole { Name = normalized, Desc = dto.Description?.Trim() ?? string.Empty };
         var result = await _roles.CreateAsync(role);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors.Select(e => e.Description));
-
+        if (!result.Succeeded) return BadRequest(result.Errors.Select(e => e.Description));
         return Ok(ApiResponse<object>.Ok(new { Id = role.Id, Role = role.Name, Description = role.Desc }, "Role created successfully."));
     }
 
@@ -45,22 +33,14 @@ public sealed class RoleAdminController : ControllerBase
     public async Task<IActionResult> ModRole(string id, [FromBody] RoleWriteDto dto)
     {
         var role = await _roles.FindByIdAsync(id);
-        if (role == null)
-            throw new DomainException($"ROLE with id [{id}] NOT FOUND.");
-
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            throw new DomainException("Role name is required.");
-
+        if (role == null) throw new DomainException($"ROLE with id [{id}] NOT FOUND.");
+        if (string.IsNullOrWhiteSpace(dto.Name)) throw new DomainException("Role name is required.");
         var duplicate = await _roles.FindByNameAsync(dto.Name.Trim());
-        if (duplicate != null && duplicate.Id != role.Id)
-            throw new DomainException($"Role [{dto.Name.Trim()}] already exists.");
-
+        if (duplicate != null && duplicate.Id != role.Id) throw new DomainException($"Role [{dto.Name.Trim()}] already exists.");
         role.Name = dto.Name.Trim();
         role.Desc = dto.Description?.Trim() ?? string.Empty;
         var result = await _roles.UpdateAsync(role);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors.Select(e => e.Description));
-
+        if (!result.Succeeded) return BadRequest(result.Errors.Select(e => e.Description));
         return Ok(ApiResponse<object>.Ok(new { Id = role.Id, Role = role.Name, Description = role.Desc }, "Role updated successfully."));
     }
 
@@ -68,15 +48,10 @@ public sealed class RoleAdminController : ControllerBase
     public async Task<IActionResult> DelRole(string id)
     {
         var role = await _roles.FindByIdAsync(id);
-        if (role == null)
-            throw new DomainException($"ROLE with id [{id}] NOT FOUND.");
-        if (string.Equals(role.Name, "admin", StringComparison.OrdinalIgnoreCase))
-            throw new DomainException("The system administrator role cannot be deleted.");
-
+        if (role == null) throw new DomainException($"ROLE with id [{id}] NOT FOUND.");
+        if (string.Equals(role.Name, "admin", StringComparison.OrdinalIgnoreCase)) throw new DomainException("The system administrator role cannot be deleted.");
         var result = await _roles.DeleteAsync(role);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors.Select(e => e.Description));
-
+        if (!result.Succeeded) return BadRequest(result.Errors.Select(e => e.Description));
         return Ok(ApiResponse<object>.Ok(null, "Role deleted successfully."));
     }
 
@@ -84,14 +59,10 @@ public sealed class RoleAdminController : ControllerBase
     public async Task<IActionResult> GetRolePermissions(string roleId)
     {
         var role = await _roles.FindByIdAsync(roleId);
-        if (role == null)
-            throw new DomainException($"ROLE with id [{roleId}] NOT FOUND.");
-
+        if (role == null) throw new DomainException($"ROLE with id [{roleId}] NOT FOUND.");
         var claims = await _roles.GetClaimsAsync(role);
         var values = claims.Where(c => c.Type == PermissionClaimType).Select(c => c.Value).ToList();
-
-        return Ok(ApiResponse<object>.Ok(new
-        {
+        return Ok(ApiResponse<object>.Ok(new {
             RoleId = role.Id,
             RoleName = role.Name,
             Modules = values.Where(v => v.StartsWith("module:")).Select(v => v[7..]).ToList(),
@@ -104,25 +75,18 @@ public sealed class RoleAdminController : ControllerBase
     public async Task<IActionResult> SaveRolePermissions([FromBody] SaveRolePermissionsDto dto)
     {
         var role = await _roles.FindByIdAsync(dto.RoleId);
-        if (role == null)
-            throw new DomainException($"ROLE with id [{dto.RoleId}] NOT FOUND.");
-
+        if (role == null) throw new DomainException($"ROLE with id [{dto.RoleId}] NOT FOUND.");
         var claims = await _roles.GetClaimsAsync(role);
-        foreach (var claim in claims.Where(c => c.Type == PermissionClaimType).ToList())
-            await _roles.RemoveClaimAsync(role, claim);
-
+        foreach (var claim in claims.Where(c => c.Type == PermissionClaimType).ToList()) await _roles.RemoveClaimAsync(role, claim);
         var values = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var id in dto.ModuleIds ?? []) if (Guid.TryParse(id, out _)) values.Add($"module:{id}");
         foreach (var id in dto.MenuIds ?? []) if (Guid.TryParse(id, out _)) values.Add($"menu:{id}");
         foreach (var id in dto.ApiActionIds ?? []) if (Guid.TryParse(id, out _)) values.Add($"api:{id}");
-
         foreach (var value in values)
         {
             var result = await _roles.AddClaimAsync(role, new Claim(PermissionClaimType, value));
-            if (!result.Succeeded)
-                return BadRequest(result.Errors.Select(e => e.Description));
+            if (!result.Succeeded) return BadRequest(result.Errors.Select(e => e.Description));
         }
-
         return Ok(ApiResponse<object>.Ok(new { RoleId = role.Id, Count = values.Count }, "Role permissions saved successfully."));
     }
 
