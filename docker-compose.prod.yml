@@ -56,7 +56,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============ MESSAGE BROKER ============
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq_prod
@@ -73,11 +72,10 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============ CACHE ============
   redis:
     image: redis:alpine
     container_name: redis_prod
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
     healthcheck:
@@ -86,7 +84,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============ SERVICES ============
   core_api:
     build:
       context: .
@@ -100,6 +97,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - core_backup_data:/app/backups
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__CorModuleDbCon=Host=core_db;Port=5432;Database=core.Module;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
@@ -165,7 +164,6 @@ services:
       - ServiceUrls__CoreHRMMApi=http://core_hrmm_api
       - ServiceUrls__HRMProApi=http://hrm_pro_api
 
-  # ============ API GATEWAY ============
   gateway:
     build:
       context: .
@@ -186,3 +184,4 @@ volumes:
   auth_db_data:
   core_db_data:
   hrm_db_data:
+  core_backup_data:
