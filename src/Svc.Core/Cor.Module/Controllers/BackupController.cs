@@ -7,7 +7,7 @@ using Npgsql;
 namespace Cor.Module.Controllers;
 
 [ApiController]
-[Route("api/core/v{version:apiVersion}/Backup")]
+[Route("api/core/module/v{version:apiVersion}/Backup")]
 [ApiVersion("1.0")]
 [Authorize(Roles = "admin,System Administrator")]
 public sealed class BackupController : ControllerBase
