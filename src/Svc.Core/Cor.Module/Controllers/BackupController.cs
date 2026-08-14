@@ -41,7 +41,14 @@ public sealed class BackupController : ControllerBase
     {
         if (file == null || file.Length == 0) return BadRequest("Backup file is required."); if (!Path.GetExtension(file.FileName).Equals(".dump", StringComparison.OrdinalIgnoreCase)) return BadRequest("Only PostgreSQL .dump files are supported.");
         Directory.CreateDirectory(RootPath); var safeName = $"uploaded-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.dump"; var path = Path.Combine(RootPath, safeName); await using var stream = System.IO.File.Create(path); await file.CopyToAsync(stream, ct);
-        return Ok(new { id = safeName, name = safeName, status = "Uploaded", createdAt = File.GetCreationTimeUtc(path), sizeBytes = file.Length });
+        return Ok(new
+        {
+            id = safeName,
+            name = safeName,
+            status = "Uploaded",
+            createdAt = System.IO.File.GetCreationTimeUtc(path),
+            sizeBytes = file.Length
+        });
     }
 
     [HttpPost("Restore/{fileName}")]
@@ -60,6 +67,20 @@ public sealed class BackupController : ControllerBase
     private static string BuildDumpArguments(NpgsqlConnectionStringBuilder c, string output) => $"--format=custom --no-owner --no-privileges --host=\"{c.Host}\" --port={c.Port} --username=\"{c.Username}\" --dbname=\"{c.Database}\" --file=\"{output}\"";
     private static string BuildRestoreArguments(NpgsqlConnectionStringBuilder c, string input) => $"--clean --if-exists --no-owner --no-privileges --host=\"{c.Host}\" --port={c.Port} --username=\"{c.Username}\" --dbname=\"{c.Database}\" \"{input}\"";
     private static async Task RunPgTool(string executable, string arguments, string? password, CancellationToken ct) { var psi = new ProcessStartInfo { FileName = executable, Arguments = arguments, RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true }; if (!string.IsNullOrEmpty(password)) psi.Environment["PGPASSWORD"] = password; using var process = new Process { StartInfo = psi }; process.Start(); var stdout = process.StandardOutput.ReadToEndAsync(ct); var stderr = process.StandardError.ReadToEndAsync(ct); await process.WaitForExitAsync(ct); var error = await stderr; if (process.ExitCode != 0) throw new InvalidOperationException($"PostgreSQL backup operation failed: {error.Trim()}"); await stdout; }
-    private void ApplyRetention() { var cutoff = DateTime.UtcNow.AddDays(-RetentionDays); foreach (var file in Directory.EnumerateFiles(RootPath, "*.dump")) if (File.GetCreationTimeUtc(file) < cutoff) try { System.IO.File.Delete(file); } catch (Exception ex) { _logger.LogWarning(ex, "Unable to remove expired backup {File}", file); } }
+    private void ApplyRetention()
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-RetentionDays);
+
+        foreach (var file in Directory.EnumerateFiles(RootPath, "*.dump"))
+            if (System.IO.File.GetCreationTimeUtc(file) < cutoff)
+                try
+                {
+                    System.IO.File.Delete(file);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Unable to remove expired backup {File}", file);
+                }
+    }
     private sealed record BackupItem(string Id, string Name, long SizeBytes, DateTime CreatedAt, string Status);
 }

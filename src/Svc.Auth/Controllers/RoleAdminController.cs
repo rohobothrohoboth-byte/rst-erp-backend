@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Asp.Versioning;
+using MediatR;
 using Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
