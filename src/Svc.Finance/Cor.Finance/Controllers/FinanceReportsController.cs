@@ -22,13 +22,17 @@ public class FinanceReportsController : BaseApiController
     [HttpGet("GeneralLedger")]
     [PerAuth("fnm.gl.journal.view")]
     public async Task<IActionResult> GetGeneralLedger(
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] Guid? periodId = null,
         [FromQuery] Guid? accountId = null,
         [FromQuery] Guid? branchId = null)
     {
-        if (endDate < startDate)
-            return HandleBadRequest("EndDate must be greater than or equal to StartDate");
+        if (!periodId.HasValue && (!startDate.HasValue || !endDate.HasValue))
+            return HandleBadRequest("Provide periodId or both startDate and endDate.");
+
+        if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
+            return HandleBadRequest("EndDate must be greater than or equal to StartDate.");
 
         try
         {
@@ -36,6 +40,7 @@ public class FinanceReportsController : BaseApiController
             {
                 StartDate = startDate,
                 EndDate = endDate,
+                PeriodId = periodId,
                 AccountId = accountId,
                 BranchId = branchId
             });
@@ -46,6 +51,10 @@ public class FinanceReportsController : BaseApiController
         {
             return NotFound(new { success = false, message = ex.Message });
         }
+        catch (ArgumentException ex)
+        {
+            return HandleBadRequest(ex.Message);
+        }
         catch (Exception ex)
         {
             return HandleException(ex, "GetGeneralLedger");
@@ -55,18 +64,33 @@ public class FinanceReportsController : BaseApiController
     [HttpGet("TrialBalance")]
     [PerAuth("fnm.gl.journal.view")]
     public async Task<IActionResult> GetTrialBalance(
-        [FromQuery] DateTime asOfDate,
-        [FromQuery] Guid? branchId = null)
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] Guid? asOfDate = null,
+        [FromQuery] Guid? periodId = null,
+        [FromQuery] Guid? branchId = null,
+        [FromQuery] bool includeZeroBalances = false)
     {
         try
         {
             var result = await Mediator.Send(new GetTrialBalanceQry
             {
-                AsOfDate = asOfDate,
-                BranchId = branchId
+                StartDate = startDate,
+                EndDate = endDate,
+                BranchId = branchId,
+                PeriodId = periodId,
+                IncludeZeroBalances = includeZeroBalances
             });
 
             return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { success = false, message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return HandleBadRequest(ex.Message);
         }
         catch (Exception ex)
         {
