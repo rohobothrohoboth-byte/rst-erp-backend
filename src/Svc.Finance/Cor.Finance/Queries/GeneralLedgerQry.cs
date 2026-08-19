@@ -1,16 +1,16 @@
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Persistence;
+using Cor.Finance.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Cor.Finance.Models.Entities;
-
 
 namespace Cor.Finance.Queries;
 
 public class GetGeneralLedgerQry : IRequest<GeneralLedgerDto>
 {
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public Guid? PeriodId { get; set; }
     public Guid? AccountId { get; set; }
     public Guid? BranchId { get; set; }
 }
@@ -19,161 +19,157 @@ public class GetGeneralLedgerHandler : IRequestHandler<GetGeneralLedgerQry, Gene
 {
     private readonly FinanceDbContext _context;
 
-    public GetGeneralLedgerHandler(FinanceDbContext context)
-    {
-        _context = context;
-    }
+    public GetGeneralLedgerHandler(FinanceDbContext context) => _context = context;
 
     public async Task<GeneralLedgerDto> Handle(GetGeneralLedgerQry request, CancellationToken ct)
     {
-        var startDateUtc = EnsureUtc(request.StartDate);
-        var endDateUtc = EnsureUtc(request.EndDate).Date.AddDays(1).AddTicks(-1);
+        var period = request.PeriodId.HasValue
+            ? await _context.FinancialPeriods
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.PeriodId.Value && !x.IsDeleted, ct)
+            : null;
 
-        // Get the account if specified
-        ChartOfAccounts? account = null;
-        if (request.AccountId.HasValue)
-        {
-            account = await _context.ChartOfAccounts
-                .FirstOrDefaultAsync(x => x.Id == request.AccountId.Value && !x.IsDeleted, ct);
-        }
+        if (request.PeriodId.HasValue && period == null)
+            throw new KeyNotFoundException($"Financial period {request.PeriodId.Value} was not found.");
 
-        // Get journal entries in the date range
-        var query = _context.JournalEntries
-            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate >= startDateUtc && x.EntryDate <= endDateUtc);
+        var startDate = period?.StartDate
+            ?? request.StartDate
+            ?? throw new ArgumentException("A periodId or startDate/endDate is required.");
+
+        var endDate = period?.EndDate
+            ?? request.EndDate
+            ?? throw new ArgumentException("A periodId or startDate/endDate is required.");
+
+        if (endDate < startDate)
+            throw new ArgumentException("EndDate must be greater than or equal to StartDate.");
+
+        var service = new AccountingReportService(_context);
+        var snapshots = await service.GetAccountSnapshotsAsync(
+            startDate,
+            endDate,
+            request.BranchId,
+            request.AccountId,
+            ct);
+
+        if (request.AccountId.HasValue && snapshots.Count == 0)
+            throw new KeyNotFoundException($"Account {request.AccountId.Value} was not found.");
+
+        var openingByAccount = snapshots.ToDictionary(x => x.AccountId, x => x.OpeningBalance);
+        var runningByAccount = snapshots.ToDictionary(x => x.AccountId, x => x.OpeningBalance);
+        var accountMetadata = snapshots.ToDictionary(x => x.AccountId);
+
+        var startUtc = AccountingReportService.NormalizeUtc(startDate).Date;
+        var endUtc = AccountingReportService.NormalizeUtc(endDate).Date.AddDays(1).AddTicks(-1);
+
+        var entriesQuery = _context.JournalEntries
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate >= startUtc && x.EntryDate <= endUtc);
 
         if (request.BranchId.HasValue)
-        {
-            query = query.Where(x => x.BranchId == request.BranchId.Value);
-        }
+            entriesQuery = entriesQuery.Where(x => x.BranchId == request.BranchId.Value);
 
-        var entries = await query
+        var entries = await entriesQuery
             .OrderBy(x => x.EntryDate)
+            .ThenBy(x => x.Reference)
+            .Select(x => new EntryRow
+            {
+                Id = x.Id,
+                EntryDate = x.EntryDate,
+                Reference = x.Reference,
+                Description = x.Description
+            })
             .ToListAsync(ct);
 
-        var entryIds = entries.Select(e => e.Id).ToList();
+        var entryIds = entries.Select(x => x.Id).ToList();
+        var lines = entryIds.Count == 0
+            ? new List<LineRow>()
+            : await _context.JournalLines
+                .AsNoTracking()
+                .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted)
+                .Where(x => !request.AccountId.HasValue || x.AccountId == request.AccountId.Value)
+                .Select(x => new LineRow
+                {
+                    JournalEntryId = x.JournalEntryId,
+                    AccountId = x.AccountId,
+                    Direction = x.Direction,
+                    Amount = x.Amount
+                })
+                .ToListAsync(ct);
 
-        // Get journal lines - fix the type issue
-        var linesQuery = _context.JournalLines
-            .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted);
-
-        if (request.AccountId.HasValue)
-        {
-            linesQuery = linesQuery.Where(x => x.AccountId == request.AccountId.Value);
-        }
-
-        var lines = await linesQuery
-            .Include(x => x.Account) // Add Include here instead
-            .ToListAsync(ct);
-
-        // Get opening balance
-        var openingBalance = await GetOpeningBalance(startDateUtc, account?.Id, ct);
-
-        var entriesList = new List<GeneralLedgerEntryDto>();
-        var runningBalance = openingBalance;
+        var result = new List<GeneralLedgerEntryDto>();
 
         foreach (var entry in entries)
         {
-            var entryLines = lines.Where(x => x.JournalEntryId == entry.Id).ToList();
-            var totalDebit = entryLines.Sum(x => x.Direction == "Debit" ? x.Amount : 0);
-            var totalCredit = entryLines.Sum(x => x.Direction == "Credit" ? x.Amount : 0);
+            var entryLines = lines
+                .Where(x => x.JournalEntryId == entry.Id)
+                .GroupBy(x => x.AccountId)
+                .OrderBy(x => accountMetadata.GetValueOrDefault(x.Key)?.AccountCode);
 
-            // Calculate balance based on account type
-            if (account != null)
+            foreach (var group in entryLines)
             {
-                if (account.AccountType == "Asset" || account.AccountType == "Expense")
-                {
-                    runningBalance += totalDebit - totalCredit;
-                }
-                else
-                {
-                    runningBalance += totalCredit - totalDebit;
-                }
-            }
-            else
-            {
-                // For all accounts, show net change
-                runningBalance += totalDebit - totalCredit;
-            }
+                if (!accountMetadata.TryGetValue(group.Key, out var account))
+                    continue;
 
-            entriesList.Add(new GeneralLedgerEntryDto
-            {
-                Date = entry.EntryDate,
-                Reference = entry.Reference,
-                Description = entry.Description,
-                AccountCode = account?.Code ?? "All Accounts",
-                AccountName = account?.Name ?? "All Accounts",
-                Debit = totalDebit,
-                Credit = totalCredit,
-                Balance = runningBalance
-            });
+                var debit = group
+                    .Where(x => string.Equals(x.Direction, "Debit", StringComparison.OrdinalIgnoreCase))
+                    .Sum(x => x.Amount);
+                var credit = group
+                    .Where(x => string.Equals(x.Direction, "Credit", StringComparison.OrdinalIgnoreCase))
+                    .Sum(x => x.Amount);
+
+                var movement = group.Sum(x =>
+                    AccountingReportService.GetSignedMovement(account.NormalBalance, x.Direction, x.Amount));
+
+                var current = runningByAccount.GetValueOrDefault(group.Key) + movement;
+                runningByAccount[group.Key] = current;
+
+                result.Add(new GeneralLedgerEntryDto
+                {
+                    Date = AccountingReportService.NormalizeUtc(entry.EntryDate),
+                    Reference = entry.Reference,
+                    Description = entry.Description,
+                    AccountCode = account.AccountCode,
+                    AccountName = account.AccountName,
+                    Debit = debit,
+                    Credit = credit,
+                    Balance = current
+                });
+            }
         }
 
         return new GeneralLedgerDto
         {
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            Entries = entriesList,
-            OpeningBalance = openingBalance,
-            ClosingBalance = runningBalance,
-            TotalDebits = entriesList.Sum(x => x.Debit),
-            TotalCredits = entriesList.Sum(x => x.Credit)
+            StartDate = startUtc,
+            EndDate = AccountingReportService.NormalizeUtc(endDate).Date,
+            PeriodId = period?.Id,
+            PeriodName = period?.Name,
+            BranchId = request.BranchId,
+            AccountId = request.AccountId,
+            Entries = result,
+            OpeningBalance = request.AccountId.HasValue
+                ? openingByAccount.GetValueOrDefault(request.AccountId.Value)
+                : openingByAccount.Values.Sum(),
+            ClosingBalance = request.AccountId.HasValue
+                ? runningByAccount.GetValueOrDefault(request.AccountId.Value)
+                : runningByAccount.Values.Sum(),
+            TotalDebits = result.Sum(x => x.Debit),
+            TotalCredits = result.Sum(x => x.Credit)
         };
     }
 
-    private async Task<decimal> GetOpeningBalance(DateTime startDateUtc, Guid? accountId, CancellationToken ct)
+    private sealed class EntryRow
     {
-        // Get all journal entries before the start date
-        var query = _context.JournalEntries
-            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate < startDateUtc);
-
-        var entries = await query.ToListAsync(ct);
-        var entryIds = entries.Select(e => e.Id).ToList();
-
-        var linesQuery = _context.JournalLines
-            .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted);
-
-        if (accountId.HasValue)
-        {
-            linesQuery = linesQuery.Where(x => x.AccountId == accountId.Value);
-        }
-
-        var lines = await linesQuery
-            .Include(x => x.Account) // Add Include here
-            .ToListAsync(ct);
-
-        // If specific account, get its opening balance
-        if (accountId.HasValue)
-        {
-            var account = await _context.ChartOfAccounts
-                .FirstOrDefaultAsync(x => x.Id == accountId.Value && !x.IsDeleted, ct);
-
-            if (account != null)
-            {
-                var totalDebit = lines.Where(x => x.Direction == "Debit").Sum(x => x.Amount);
-                var totalCredit = lines.Where(x => x.Direction == "Credit").Sum(x => x.Amount);
-                var openingBalance = account.OpeningBalance ?? 0;
-
-                if (account.AccountType == "Asset" || account.AccountType == "Expense")
-                {
-                    return openingBalance + totalDebit - totalCredit;
-                }
-                else
-                {
-                    return openingBalance + totalCredit - totalDebit;
-                }
-            }
-        }
-
-        // For all accounts, return sum of all balances
-        var debitTotal = lines.Where(x => x.Direction == "Debit").Sum(x => x.Amount);
-        var creditTotal = lines.Where(x => x.Direction == "Credit").Sum(x => x.Amount);
-        return debitTotal - creditTotal;
+        public Guid Id { get; init; }
+        public DateTime EntryDate { get; init; }
+        public string Reference { get; init; } = string.Empty;
+        public string Description { get; init; } = string.Empty;
     }
 
-    private static DateTime EnsureUtc(DateTime dateTime)
+    private sealed class LineRow
     {
-        if (dateTime.Kind == DateTimeKind.Unspecified)
-            return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-        return dateTime.ToUniversalTime();
+        public Guid JournalEntryId { get; init; }
+        public Guid AccountId { get; init; }
+        public string Direction { get; init; } = string.Empty;
+        public decimal Amount { get; init; }
     }
 }

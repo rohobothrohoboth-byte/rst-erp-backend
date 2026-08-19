@@ -1,95 +1,124 @@
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Persistence;
+using Cor.Finance.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Cor.Finance.Models.Entities;
 
 namespace Cor.Finance.Queries;
 
 public class GetTrialBalanceQry : IRequest<TrialBalanceDto>
 {
-    public DateTime AsOfDate { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public DateTime? AsOfDate { get; set; }
+    public Guid? PeriodId { get; set; }
     public Guid? BranchId { get; set; }
+    public bool IncludeZeroBalances { get; set; }
 }
 
 public class GetTrialBalanceHandler : IRequestHandler<GetTrialBalanceQry, TrialBalanceDto>
 {
     private readonly FinanceDbContext _context;
 
-    public GetTrialBalanceHandler(FinanceDbContext context)
-    {
-        _context = context;
-    }
+    public GetTrialBalanceHandler(FinanceDbContext context) => _context = context;
 
     public async Task<TrialBalanceDto> Handle(GetTrialBalanceQry request, CancellationToken ct)
     {
-        var asOfDateUtc = EnsureUtc(request.AsOfDate);
-        var endDateUtc = asOfDateUtc.Date.AddDays(1).AddTicks(-1);
+        var period = request.PeriodId.HasValue
+            ? await _context.FinancialPeriods
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.PeriodId.Value && !x.IsDeleted, ct)
+            : null;
 
-        // Get all accounts
-        var accounts = await _context.ChartOfAccounts
-            .Where(x => !x.IsDeleted && x.IsActive)
-            .ToListAsync(ct);
+        if (request.PeriodId.HasValue && period == null)
+            throw new KeyNotFoundException($"Financial period {request.PeriodId.Value} was not found.");
 
-        // Get all journal entries up to the date
-        var entries = await _context.JournalEntries
-            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate <= endDateUtc)
-            .ToListAsync(ct);
+        var startDate = period?.StartDate
+            ?? request.StartDate
+            ?? request.AsOfDate
+            ?? throw new ArgumentException("A periodId, startDate/endDate, or asOfDate is required.");
 
-        var entryIds = entries.Select(e => e.Id).ToList();
+        var endDate = period?.EndDate
+            ?? request.EndDate
+            ?? request.AsOfDate
+            ?? throw new ArgumentException("A periodId, startDate/endDate, or asOfDate is required.");
 
-        // Get all journal lines
-        var lines = await _context.JournalLines
-            .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted)
-            .Include(x => x.Account)
-            .ToListAsync(ct);
+        if (endDate < startDate)
+            throw new ArgumentException("EndDate must be greater than or equal to StartDate.");
 
-        var trialBalanceLines = new List<TrialBalanceLineDto>();
-        decimal totalDebits = 0;
-        decimal totalCredits = 0;
+        var service = new AccountingReportService(_context);
+        var snapshots = await service.GetAccountSnapshotsAsync(
+            startDate,
+            endDate,
+            request.BranchId,
+            null,
+            ct);
 
-        foreach (var account in accounts)
-        {
-            var accountLines = lines.Where(x => x.AccountId == account.Id).ToList();
-            var debit = accountLines.Sum(x => x.Direction == "Debit" ? x.Amount : 0);
-            var credit = accountLines.Sum(x => x.Direction == "Credit" ? x.Amount : 0);
-            var balance = debit - credit + (account.OpeningBalance ?? 0);
-
-            // Skip zero balance accounts for cleaner report
-            if (balance != 0 || debit != 0 || credit != 0)
+        var lines = snapshots
+            .Where(x => request.IncludeZeroBalances || x.OpeningBalance != 0m || x.PeriodDebits != 0m || x.PeriodCredits != 0m || x.ClosingBalance != 0m)
+            .Select(x =>
             {
-                trialBalanceLines.Add(new TrialBalanceLineDto
-                {
-                    AccountId = account.Id.ToString(),
-                    AccountCode = account.Code,
-                    AccountName = account.Name,
-                    AccountType = account.AccountType,
-                    Debit = debit + (account.AccountType == "Asset" || account.AccountType == "Expense" ? account.OpeningBalance ?? 0 : 0),
-                    Credit = credit + (account.AccountType == "Liability" || account.AccountType == "Equity" || account.AccountType == "Revenue" ? account.OpeningBalance ?? 0 : 0),
-                    Balance = balance
-                });
-            }
-        }
+                var debitNormal = AccountingReportService.IsDebitNormal(x.NormalBalance);
+                var openingDebit = debitNormal
+                    ? Math.Max(x.OpeningBalance, 0m)
+                    : Math.Max(-x.OpeningBalance, 0m);
+                var openingCredit = debitNormal
+                    ? Math.Max(-x.OpeningBalance, 0m)
+                    : Math.Max(x.OpeningBalance, 0m);
+                var closingDebit = debitNormal
+                    ? Math.Max(x.ClosingBalance, 0m)
+                    : Math.Max(-x.ClosingBalance, 0m);
+                var closingCredit = debitNormal
+                    ? Math.Max(-x.ClosingBalance, 0m)
+                    : Math.Max(x.ClosingBalance, 0m);
 
-        totalDebits = trialBalanceLines.Sum(x => x.Debit);
-        totalCredits = trialBalanceLines.Sum(x => x.Credit);
-        var difference = totalDebits - totalCredits;
+                return new TrialBalanceLineDto
+                {
+                    AccountId = x.AccountId.ToString(),
+                    AccountCode = x.AccountCode,
+                    AccountName = x.AccountName,
+                    AccountType = x.AccountType,
+                    NormalBalance = x.NormalBalance,
+                    OpeningDebit = openingDebit,
+                    OpeningCredit = openingCredit,
+                    Debit = x.PeriodDebits,
+                    Credit = x.PeriodCredits,
+                    ClosingDebit = closingDebit,
+                    ClosingCredit = closingCredit,
+                    Balance = x.ClosingBalance
+                };
+            })
+            .OrderBy(x => x.AccountCode)
+            .ToList();
+
+        var totalOpeningDebit = lines.Sum(x => x.OpeningDebit);
+        var totalOpeningCredit = lines.Sum(x => x.OpeningCredit);
+        var totalDebits = lines.Sum(x => x.Debit);
+        var totalCredits = lines.Sum(x => x.Credit);
+        var totalClosingDebit = lines.Sum(x => x.ClosingDebit);
+        var totalClosingCredit = lines.Sum(x => x.ClosingCredit);
+        var difference = totalClosingDebit - totalClosingCredit;
+
+        var normalizedStartDate = AccountingReportService.NormalizeUtc(startDate).Date;
+        var normalizedEndDate = AccountingReportService.NormalizeUtc(endDate).Date;
 
         return new TrialBalanceDto
         {
-            AsOfDate = request.AsOfDate,
-            Lines = trialBalanceLines,
+            AsOfDate = normalizedEndDate,
+            StartDate = normalizedStartDate,
+            EndDate = normalizedEndDate,
+            PeriodId = period?.Id,
+            PeriodName = period?.Name,
+            BranchId = request.BranchId,
+            Lines = lines,
+            TotalOpeningDebit = totalOpeningDebit,
+            TotalOpeningCredit = totalOpeningCredit,
             TotalDebits = totalDebits,
             TotalCredits = totalCredits,
+            TotalClosingDebit = totalClosingDebit,
+            TotalClosingCredit = totalClosingCredit,
             Difference = difference,
             IsBalanced = Math.Abs(difference) < 0.01m
         };
-    }
-
-    private static DateTime EnsureUtc(DateTime dateTime)
-    {
-        if (dateTime.Kind == DateTimeKind.Unspecified)
-            return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-        return dateTime.ToUniversalTime();
     }
 }
