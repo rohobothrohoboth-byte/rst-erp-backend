@@ -66,7 +66,7 @@ public class FinanceReportsController : BaseApiController
     public async Task<IActionResult> GetTrialBalance(
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
-        [FromQuery] Guid? asOfDate = null,
+        [FromQuery] DateTime? asOfDate = null,
         [FromQuery] Guid? periodId = null,
         [FromQuery] Guid? branchId = null,
         [FromQuery] bool includeZeroBalances = false)
@@ -77,6 +77,7 @@ public class FinanceReportsController : BaseApiController
             {
                 StartDate = startDate,
                 EndDate = endDate,
+                AsOfDate = asOfDate,
                 BranchId = branchId,
                 PeriodId = periodId,
                 IncludeZeroBalances = includeZeroBalances
