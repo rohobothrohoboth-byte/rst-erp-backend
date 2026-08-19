@@ -5,7 +5,7 @@ namespace Cor.Finance.Services;
 
 /// <summary>
 /// Single authoritative accounting calculation source for ledger-based reports.
-/// Reports must consume this service instead of rebuilding balances in the UI.
+/// Reports consume this service; the UI does not rebuild accounting balances.
 /// </summary>
 public sealed class AccountingReportService
 {
@@ -42,8 +42,10 @@ public sealed class AccountingReportService
                 Id = x.Id,
                 Code = x.Code,
                 Name = x.Name,
-                AccountType = x.AccountType ?? string.Empty,
-                OpeningBalance = x.OpeningBalance ?? 0m
+                AccountType = x.AccountType,
+                NormalBalance = x.NormalBalance,
+                OpeningBalance = x.OpeningBalance ?? 0m,
+                OpeningBalanceDate = x.OpeningBalanceDate
             })
             .ToListAsync(ct);
 
@@ -63,41 +65,31 @@ public sealed class AccountingReportService
             .Select(x => new EntrySeed { Id = x.Id, EntryDate = x.EntryDate })
             .ToListAsync(ct);
 
-        if (entries.Count == 0)
-        {
-            return accounts.Select(a => new AccountLedgerSnapshot
-            {
-                AccountId = a.Id,
-                AccountCode = a.Code,
-                AccountName = a.Name,
-                AccountType = a.AccountType,
-                OpeningBalance = a.OpeningBalance,
-                PeriodDebits = 0m,
-                PeriodCredits = 0m,
-                ClosingBalance = a.OpeningBalance
-            }).ToList();
-        }
-
-        var entryIds = entries.Select(x => x.Id).ToList();
         var entryDates = entries.ToDictionary(x => x.Id, x => NormalizeUtc(x.EntryDate));
+        var entryIds = entries.Select(x => x.Id).ToList();
 
-        var lines = await _context.JournalLines
-            .AsNoTracking()
-            .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted && accountIds.Contains(x.AccountId))
-            .Select(x => new LineSeed
-            {
-                JournalEntryId = x.JournalEntryId,
-                AccountId = x.AccountId,
-                Direction = x.Direction,
-                Amount = x.Amount
-            })
-            .ToListAsync(ct);
+        var lines = entryIds.Count == 0
+            ? new List<LineSeed>()
+            : await _context.JournalLines
+                .AsNoTracking()
+                .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted && accountIds.Contains(x.AccountId))
+                .Select(x => new LineSeed
+                {
+                    JournalEntryId = x.JournalEntryId,
+                    AccountId = x.AccountId,
+                    Direction = x.Direction,
+                    Amount = x.Amount
+                })
+                .ToListAsync(ct);
 
         var result = new List<AccountLedgerSnapshot>(accounts.Count);
 
         foreach (var account in accounts)
         {
             var accountLines = lines.Where(x => x.AccountId == account.Id);
+            var openingBalance = IsOpeningBalanceEffective(account.OpeningBalanceDate, startUtc)
+                ? account.OpeningBalance
+                : 0m;
 
             decimal openingMovement = 0m;
             decimal periodDebit = 0m;
@@ -109,7 +101,7 @@ public sealed class AccountingReportService
                 if (!entryDates.TryGetValue(line.JournalEntryId, out var entryDate))
                     continue;
 
-                var signed = GetSignedMovement(account.AccountType, line.Direction, line.Amount);
+                var signed = GetSignedMovement(account.NormalBalance, line.Direction, line.Amount);
 
                 if (entryDate < startUtc)
                 {
@@ -126,8 +118,8 @@ public sealed class AccountingReportService
                 }
             }
 
-            var openingBalance = account.OpeningBalance + openingMovement;
-            var closingBalance = openingBalance + periodMovement;
+            var effectiveOpening = openingBalance + openingMovement;
+            var closingBalance = effectiveOpening + periodMovement;
 
             result.Add(new AccountLedgerSnapshot
             {
@@ -135,7 +127,8 @@ public sealed class AccountingReportService
                 AccountCode = account.Code,
                 AccountName = account.Name,
                 AccountType = account.AccountType,
-                OpeningBalance = openingBalance,
+                NormalBalance = account.NormalBalance,
+                OpeningBalance = effectiveOpening,
                 PeriodDebits = periodDebit,
                 PeriodCredits = periodCredit,
                 ClosingBalance = closingBalance
@@ -145,13 +138,12 @@ public sealed class AccountingReportService
         return result;
     }
 
-    public static bool IsDebitNormal(string? accountType) =>
-        string.Equals(accountType, "Asset", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(accountType, "Expense", StringComparison.OrdinalIgnoreCase);
+    public static bool IsDebitNormal(string? normalBalance) =>
+        string.Equals(normalBalance, "Debit", StringComparison.OrdinalIgnoreCase);
 
-    public static decimal GetSignedMovement(string? accountType, string direction, decimal amount)
+    public static decimal GetSignedMovement(string? normalBalance, string direction, decimal amount)
     {
-        var debitNormal = IsDebitNormal(accountType);
+        var debitNormal = IsDebitNormal(normalBalance);
         var isDebit = string.Equals(direction, "Debit", StringComparison.OrdinalIgnoreCase);
 
         return debitNormal
@@ -164,13 +156,18 @@ public sealed class AccountingReportService
             ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
             : value.ToUniversalTime();
 
+    private static bool IsOpeningBalanceEffective(DateTime? openingBalanceDate, DateTime periodStartUtc) =>
+        !openingBalanceDate.HasValue || NormalizeUtc(openingBalanceDate.Value).Date <= periodStartUtc;
+
     private sealed class AccountSeed
     {
         public Guid Id { get; init; }
         public string Code { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
         public string AccountType { get; init; } = string.Empty;
+        public string NormalBalance { get; init; } = "Debit";
         public decimal OpeningBalance { get; init; }
+        public DateTime? OpeningBalanceDate { get; init; }
     }
 
     private sealed class EntrySeed
@@ -194,6 +191,7 @@ public sealed class AccountLedgerSnapshot
     public string AccountCode { get; init; } = string.Empty;
     public string AccountName { get; init; } = string.Empty;
     public string AccountType { get; init; } = string.Empty;
+    public string NormalBalance { get; init; } = "Debit";
     public decimal OpeningBalance { get; init; }
     public decimal PeriodDebits { get; init; }
     public decimal PeriodCredits { get; init; }
