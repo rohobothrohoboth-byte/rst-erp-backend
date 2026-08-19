@@ -20,7 +20,7 @@ public class NotificationBackgroundService : BackgroundService
     {
         _services = services;
         _logger = logger;
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
+        _connectionString = configuration.GetConnectionString("NotificationDb")
             ?? throw new InvalidOperationException("Connection string not found");
     }
 

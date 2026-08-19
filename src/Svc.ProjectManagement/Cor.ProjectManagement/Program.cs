@@ -1,4 +1,4 @@
-// Program.cs - FIXED with Kestrel Configuration
+ // Program.cs - FIXED with Kestrel Configuration
 using Common;
 using MediatR;
 using Shared.Helpers.Services;
@@ -82,16 +82,15 @@ string GetConfig(string key, string? defaultValue = null)
 // ============================================================
 
 // Get port from configuration
-var projectManagementPortString = GetConfig("ServiceUrls:ProjectManagementApi", "https://localhost:7016");
+var projectManagementPortString = GetConfig("ServiceUrls:ProjectManagementApi", "http://projectmanagement");
 var projectManagementPort = new Uri(projectManagementPortString).Port;
 Console.WriteLine($"📡 Project Management Service Port: {projectManagementPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, projectManagementPort, listenOptions =>
-        listenOptions.UseHttps()
-    );
-});
+    options.Listen(IPAddress.Any, projectManagementPort, listenOptions => { }
+    );   // DISABLED
+});*/
 
 // ✅ Configure graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -135,12 +134,12 @@ var financeApiKey = GetConfig("ApiKeys:Finance", "finance_module_secret_key_2024
 var projectManagementApiKey = GetConfig("ApiKeys:ProjectManagement", "project_management_secret_key_2024");
 
 // ============= SERVICE URLS =============
-var corModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
+var corModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
 
 // ============= CORS =============
 var corsOrigins = GetConfig("Cors:AllowedOrigins", "http://localhost:5173,http://localhost:3000")
@@ -293,12 +292,9 @@ builder.Services.AddAuthentication()
     .AddSharedApiKey();
 // ============= AUTHENTICATION =============
 
-
-
 var jwtSecret = JwtCons.SecretKey;
 var jwtIssuer = JwtCons.Issuer;
 var jwtAudience = JwtCons.Audience;
-
 
  if (!string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
  {
@@ -434,3 +430,5 @@ Console.WriteLine($"📡 Port: {projectManagementPort}");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+

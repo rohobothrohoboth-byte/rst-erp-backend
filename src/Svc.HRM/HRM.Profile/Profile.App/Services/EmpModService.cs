@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Profile.App.Interfaces;
 using Profile.Domain.DTOs;
 using Profile.Domain.Entities;
-
+using System.Globalization;
+using Grpc.Core;
 namespace Profile.App.Services;
 
 public interface IEmpModService
@@ -20,41 +21,98 @@ public interface IEmpModService
 
 public class EmpModService(IUnitOfWork _uow, ICorHrmmClient _hrmmClient) : IEmpModService
 {
-    public async Task Salary(ModSalaryDto dto, CancellationToken ct)
-    {
-        var slyTask = await _hrmmClient.GetSalaryJgs((dto.JgStepId).ToString(), ct);
-        var sal = 0.0; var cur = ""; var fre = ""; 
-        if (slyTask.Salary != null)
-        {
-            sal = double.Parse(slyTask.Salary);
-            cur = slyTask.Currency;
-            fre = slyTask.SalaryPayFreq;
-        }
+   public async Task Salary(ModSalaryDto dto, CancellationToken ct)
+   {
+       // ✅ Validate input
+       if (dto == null)
+       {
+           throw new ArgumentNullException(nameof(dto));
+       }
 
-        var empSly = await _uow.Set<EmpSalary>().FirstOrDefaultAsync(x => x.EmployeeId == dto.EmployeeId, ct);
-        if (empSly == null)
-        {
-            var salary = new EmpSalary
-            {
-                BaseSalary = sal,
-                Currency = cur,
-                SalaryPayFreq = fre,
-                EffectiveFrom = dto.EmploymentDate,
-                JgStepId = dto.JgStepId,
-                EmployeeId = dto.EmployeeId
-            };
-            await _uow.Add(salary, ct);
-        }
-        else
-        {
-            empSly.BaseSalary = sal;
-            empSly.Currency = cur;
-            empSly.SalaryPayFreq = fre;
-            empSly.EffectiveFrom = dto.EmploymentDate;
-            empSly.JgStepId = dto.JgStepId;
-            await _uow.Update(empSly);
-        }
-    }
+       if (dto.JgStepId == Guid.Empty)
+       {
+           throw new ArgumentException("JgStepId is required");
+       }
+
+       double sal = 0;
+       string cur = "ETB"; // Default currency
+       string fre = "Monthly"; // Default frequency
+       bool hasSalaryData = false;
+
+       try
+       {
+           var slyTask = await _hrmmClient.GetSalaryJgs(dto.JgStepId.ToString(), ct);
+
+           // ✅ Safe salary parsing
+           if (slyTask != null && !string.IsNullOrEmpty(slyTask.Salary))
+           {
+               if (double.TryParse(slyTask.Salary, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedSal))
+               {
+                   sal = parsedSal;
+                   hasSalaryData = true;
+               }
+               else
+               {
+                   Console.WriteLine($"⚠️ Invalid salary format: '{slyTask.Salary}' for JgStepId: {dto.JgStepId}");
+                   // Use default values instead of throwing
+               }
+
+               // Only update currency and frequency if we have valid data
+               if (hasSalaryData)
+               {
+                   cur = !string.IsNullOrEmpty(slyTask.Currency) ? slyTask.Currency : "ETB";
+                   fre = !string.IsNullOrEmpty(slyTask.SalaryPayFreq) ? slyTask.SalaryPayFreq : "Monthly";
+               }
+           }
+           else
+           {
+               Console.WriteLine($"⚠️ No salary data found for JgStepId: {dto.JgStepId}. Using defaults.");
+           }
+       }
+       catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled || ex.StatusCode == StatusCode.DeadlineExceeded)
+       {
+           Console.WriteLine($"❌ gRPC timeout for salary data (JgStepId: {dto.JgStepId}). Using default values.");
+           // Continue with defaults
+       }
+       catch (RpcException ex)
+       {
+           Console.WriteLine($"❌ gRPC error in Salary: {ex.Message}");
+           // Continue with defaults
+       }
+       catch (Exception ex)
+       {
+           Console.WriteLine($"❌ Error in Salary: {ex.Message}");
+           // Continue with defaults
+       }
+
+       // ✅ Always save the employee salary (with defaults if gRPC failed)
+       var empSly = await _uow.Set<EmpSalary>().FirstOrDefaultAsync(x => x.EmployeeId == dto.EmployeeId, ct);
+
+       if (empSly == null)
+       {
+           var salary = new EmpSalary
+           {
+               BaseSalary = sal,
+               Currency = cur,
+               SalaryPayFreq = fre,
+               EffectiveFrom = dto.EmploymentDate,
+               JgStepId = dto.JgStepId,
+               EmployeeId = dto.EmployeeId
+           };
+           await _uow.Add(salary, ct);
+           Console.WriteLine($"✅ Employee salary saved with {(hasSalaryData ? "retrieved" : "default")} values.");
+       }
+       else
+       {
+           empSly.BaseSalary = sal;
+           empSly.Currency = cur;
+           empSly.SalaryPayFreq = fre;
+           empSly.EffectiveFrom = dto.EmploymentDate;
+           empSly.JgStepId = dto.JgStepId;
+           await _uow.Update(empSly);
+           Console.WriteLine($"✅ Employee salary updated with {(hasSalaryData ? "retrieved" : "default")} values.");
+       }
+   }
 
     public async Task Photo(ModFileDto dto, CancellationToken ct)
     {

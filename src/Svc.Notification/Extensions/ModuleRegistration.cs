@@ -14,7 +14,7 @@ public static class ModuleRegistration
     {
         // Register DbContext
         services.AddDbContext<NotificationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
+            options.UseNpgsql(configuration.GetConnectionString("NotificationDb"),
                 npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(NotificationDbContext).Assembly.FullName)));
 
         // Register Dapper helper (keep for complex queries if needed)

@@ -29,12 +29,11 @@ using Shared.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
 // ✅ Load shared configuration
-// ✅ CORRECT PATH - Goes up 3 levels to reach src/Shared/Helpers/
 var sharedConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "Shared", "Helpers", "appsettings.json");
 if (File.Exists(sharedConfigPath))
 {
@@ -79,68 +78,24 @@ if (updates.Any())
 }
 
 // ✅ Configure Kestrel - Get port from resolved configuration
-var hrmProPortString = builder.Configuration["ServiceUrls:HrmProApi"] ?? "https://localhost:7004";
+var hrmProPortString = builder.Configuration["ServiceUrls:HrmProApi"] ?? "http://hrm-profile";
 var hrmProPort = new Uri(hrmProPortString).Port;
 Console.WriteLine($"📡 HRM Pro Service Port: {hrmProPort}");
 
-// ✅ KESTREL CONFIGURATION
+/*// ✅ KESTREL CONFIGURATION - HTTP ONLY FOR DOCKER
 void ConfigureKestrel(WebApplicationBuilder b)
 {
-    var isProduction = environment == "Production";
-
-    Console.WriteLine($"🔧 Configuring Kestrel for {environment} environment...");
-
+    Console.WriteLine("🔧 Configuring Kestrel for HTTP only (Docker)...");
     b.WebHost.ConfigureKestrel(options =>
     {
-        if (isProduction)
-        {
-            var certPath = b.Configuration["Certificate:Path"] ?? "Certificates/prod-certificate.pfx";
-            var certPassword = b.Configuration["Certificate:Password"] ?? "YourSecurePassword123!";
-
-            if (File.Exists(certPath))
-            {
-                try
-                {
-                    var certificate = new X509Certificate2(certPath, certPassword);
-                    Console.WriteLine("✅ Production certificate loaded");
-                    options.Listen(IPAddress.Any, hrmProPort, listenOptions =>
-                    {
-                        listenOptions.UseHttps(certificate);
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ Error loading certificate: {ex.Message}");
-                    Console.WriteLine("⚠️ Falling back to development certificate");
-                    options.Listen(IPAddress.Any, hrmProPort, listenOptions =>
-                    {
-                        listenOptions.UseHttps();
-                    });
-                }
-            }
-            else
-            {
-                Console.WriteLine("⚠️ Production certificate not found, using development certificate");
-                options.Listen(IPAddress.Any, hrmProPort, listenOptions =>
-                {
-                    listenOptions.UseHttps();
-                });
-            }
-        }
-        else
-        {
-            Console.WriteLine("🔧 Using DEVELOPMENT certificate...");
-            options.Listen(IPAddress.Any, hrmProPort, listenOptions =>
-            {
-                listenOptions.UseHttps();
-            });
-            Console.WriteLine("✅ Development certificate configured");
-        }
-    });
-}
-
+        // ✅ Only HTTP on port 80
+        options.Listen(IPAddress.Any, 80);
+        Console.WriteLine("✅ Kestrel listening on HTTP port 80");
+    });   // DISABLED
+}*/
+/*
 // ✅ Call the configuration
-ConfigureKestrel(builder);
+ConfigureKestrel(builder);*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -158,13 +113,14 @@ string GetConfig(string key, string? defaultValue = null)
     return string.Empty;
 }
 
-// ============= SERVICE URLS =============
-var corModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var corHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+// ============= SERVICE URLS - FIXED =============
+// ✅ USE HTTP AND DOCKER SERVICE NAMES
+var corModUrl = "http://192.168.1.2:7002";
+var corHrmmUrl= "http://192.168.1.2:7001";
+var authUrl = "http://192.168.1.2:7000";
+var hrmProUrl = "http://192.168.1.2:7004";
+var financeApiUrl = "http://192.168.1.2:7008";
+var gatewayApiUrl = "http://192.168.1.2:5000";
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -187,13 +143,13 @@ Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
 Console.WriteLine($"📡 Core HRMM URL: {corHrmmUrl}");
 Console.WriteLine($"📡 Auth URL: {authUrl}");
 
-// ============= DATABASE =============
-// ============= DATABASE CONNECTION WITH POOLING =============
+// ============= DATABASE CONNECTION - FIXED =============
 var dbConnectionString = GetConfig("ConnectionStrings:HRMProDbCon", null);
 
 if (string.IsNullOrEmpty(dbConnectionString))
 {
-    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    // ✅ FIXED: Use "postgres" as default host
+    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "postgres";
     var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
     var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
     var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
@@ -211,13 +167,14 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(EmployeeFilterOptionsQry).Assembly);
 });
 
-// ============= REDIS WITH PROPER DISPOSAL =============
+// ============= REDIS - FIXED =============
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ICachedReferenceService, CachedReferenceService>();
 
+// ✅ FIXED: Use "redis" as default host
 var redisConnectionString = builder.Configuration.GetConnectionString("redis")
     ?? GetConfig("Redis:ConnectionString", null)
-    ?? $"{(Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost")}:{(Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379")},abortConnect=false";
+    ?? $"{(Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis")}:{(Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379")},abortConnect=false";
 
 Console.WriteLine($"🔗 Redis Connection: {redisConnectionString}");
 
@@ -232,7 +189,6 @@ try
         redisConfig.ConnectRetry = 2;
         redisConfig.DefaultDatabase = 0;
 
-        // ✅ Use Lazy<ConnectionMultiplexer> to ensure lazy initialization
         var lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
             ConnectionMultiplexer.Connect(redisConfig));
 
@@ -258,13 +214,10 @@ catch (Exception ex)
     Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
 }
 
-// ============= MODIFIED CACHE WARM-UP WITH RETRY AND DELAYS =============
-
-
-// ============= SSL BYPASS HANDLER =============
-var sslHandler = new HttpClientHandler
+// ============= HTTP CLIENT HANDLER - FIXED =============
+// ✅ Use HTTP handler WITHOUT SSL bypass (not needed for HTTP)
+var httpHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
     MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
@@ -280,7 +233,7 @@ builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(clie
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "HRMProService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(5));
 
 // ✅ Core HRMM API Client
@@ -292,7 +245,7 @@ builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =
     client.DefaultRequestHeaders.Add("X-API-Key", hrmmApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "HRMProService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(5));
 
 // ✅ Auth API Client
@@ -304,7 +257,7 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "HRMProService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(5));
 
 // ============= POLLY RETRY POLICIES =============
@@ -335,34 +288,34 @@ builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>()
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>()
     .AddPolicyHandler(retryPolicy);
 
- // ============= RABBITMQ REGISTRATION =============
-
+// ============= RABBITMQ REGISTRATION - FIXED =============
+// ============ RABBITMQ REGISTRATION =============
 var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
 var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
 var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
 var rabbitMqPassword = GetConfig("RabbitMQ:Password", "guest");
-var rabbitMqVirtualHost = GetConfig("RabbitMQ:VirtualHost", "/");
 
-// ============= RABBITMQ =============
 builder.Services.AddSingleton<IConnectionFactory>(sp =>
 {
+    Console.WriteLine($"🔄 Connecting to RabbitMQ at {rabbitMqHost}:{rabbitMqPort}");
+
     return new ConnectionFactory
     {
         HostName = rabbitMqHost,
         Port = rabbitMqPort,
         UserName = rabbitMqUsername,
         Password = rabbitMqPassword,
-        VirtualHost = rabbitMqVirtualHost,
         AutomaticRecoveryEnabled = true,
         NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
-        DispatchConsumersAsync = true
+        RequestedHeartbeat = TimeSpan.FromSeconds(30),
+        ContinuationTimeout = TimeSpan.FromSeconds(20)
     };
 });
 
-         builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
-         builder.Services.AddHostedService<EventConsumer>();
-         Console.WriteLine("✅ RabbitMQ ENABLED");
 
+builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
+builder.Services.AddHostedService<EventConsumer>();
+Console.WriteLine("✅ RabbitMQ ENABLED");
 
 // ============================================
 // REGISTER gRPC CLIENTS
@@ -372,7 +325,6 @@ builder.Services.AddScoped<IHrmProfileClient>(sp =>
     var logger = sp.GetService<ILogger<HrmProfileClient>>();
     return new HrmProfileClient(hrmProUrl, logger);
 });
-
 
 builder.Services.AddScoped<ICorModClient, CorModClient>();
 builder.Services.AddScoped<ICorHrmmClient>(sp =>
@@ -387,7 +339,6 @@ builder.Services.AddScoped<ICorHrmmClient>(sp =>
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddHostedService<InitialSyncService>();
-
 
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()
@@ -404,7 +355,6 @@ var corsOrigins = GetConfig("Cors:AllowedOrigins", "http://localhost:5173,http:/
     .Select(o => o.Trim())
     .ToArray();
 
-// Resolve {ServiceHost} in CORS origins
 var resolvedOrigins = corsOrigins
     .Select(origin => origin.Replace("{ServiceHost}", serviceHost))
     .ToArray();
@@ -455,11 +405,6 @@ if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret
 Console.WriteLine($"🔑 JWT Issuer: {jwtIssuer}");
 Console.WriteLine($"🔑 JWT Audience: {jwtAudience}");
 
-// Support BOTH browser JWTs (Authorization: Bearer) AND trusted internal
-// service-to-service calls (X-API-Key). A policy scheme forwards each request to
-// the ApiKey handler when the X-API-Key header is present, otherwise to JWT. This
-// lets the Auth initial-sync (and other services) read employee data without a
-// user token, while [PerAuth] still protects browser requests.
 const string jwtOrApiKeyScheme = "JWT_OR_APIKEY";
 
 builder.Services.AddAuthentication(options =>
@@ -522,7 +467,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // ✅ DISABLED FOR DOCKER
 app.MapGrpcService<HrmProService>();
 
 if (app.Environment.IsDevelopment())
@@ -537,11 +482,12 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
+
 _ = Task.Run(async () =>
 {
     try
     {
-        // ✅ Wait for the application to fully start
         await Task.Delay(5000);
 
         using var scope = app.Services.CreateScope();
@@ -551,7 +497,6 @@ _ = Task.Run(async () =>
 
         logger.LogInformation("🔥 Warming up cache...");
 
-        // ✅ Warm up with delays between operations to allow connection pool to recover
         await referenceService.GetReferenceDataAsync(CancellationToken.None);
         logger.LogInformation("✅ Reference data cached");
 
@@ -577,12 +522,12 @@ _ = Task.Run(async () =>
     }
     catch (Exception ex)
     {
-        // ✅ Don't let cache warm-up failure crash the app
         var logger = app.Services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "❌ Cache warm-up failed: {Error}. Service will continue starting.", ex.Message);
     }
 });
-Console.WriteLine($"\n✅ HRM Profile Service starting on https://0.0.0.0:{hrmProPort}");
+
+Console.WriteLine($"\n✅ HRM Profile Service starting on http://0.0.0.0:80");
 Console.WriteLine($"🔗 Auth URL: {authUrl}");
 Console.WriteLine($"🔗 Core Module URL: {corModUrl}");
 Console.WriteLine($"🔗 Core HRMM URL: {corHrmmUrl}");
@@ -636,21 +581,17 @@ public class CacheWarmupService
 
             _logger.LogInformation("🔥 Warming up cache...");
 
-            // Warm up reference data
             await referenceService.GetReferenceDataAsync(CancellationToken.None);
             _logger.LogInformation("✅ Reference data cached");
 
-            // Warm up stats
             var statsQry = new EmployeeStatsQry();
             await mediator.Send(statsQry);
             _logger.LogInformation("✅ Stats cached");
 
-            // Warm up first page of employees
             var paginatedQry = new EmployeePaginatedQry { PageNumber = 1, PageSize = 10 };
             await mediator.Send(paginatedQry);
             _logger.LogInformation("✅ First page employees cached");
 
-            // Warm up filter options
             var filterQry = new EmployeeFilterOptionsQry();
             await mediator.Send(filterQry);
             _logger.LogInformation("✅ Filter options cached");
@@ -663,4 +604,5 @@ public class CacheWarmupService
         }
     }
 }
+
 

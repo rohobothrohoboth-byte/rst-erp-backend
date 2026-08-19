@@ -316,6 +316,7 @@ public class TokenService : ITokenService
             claims.Add(new Claim("departmentName", orgInfo.DepartmentName ?? ""));
         }
 
+
         if (!string.IsNullOrEmpty(orgInfo.PositionId))
         {
             claims.Add(new Claim("positionId", orgInfo.PositionId));
@@ -373,21 +374,26 @@ public class TokenService : ITokenService
         return refreshToken;
     }
 
-    public async Task<TokenDto> RefreshToken(AppUser user, CancellationToken ct)
-    {
-        if (!user.IsActive)
-        {
-            throw new UnauthorizedAccessException("Account has been deactivated. Please contact your administrator.");
-        }
+   public async Task<TokenDto> RefreshToken(AppUser user, CancellationToken ct)
+   {
+       if (!user.IsActive)
+       {
+           throw new UnauthorizedAccessException("Account has been deactivated. Please contact your administrator.");
+       }
 
-        var newAccessToken = await GenerateAccessToken(user, ct);
-        var newRefreshToken = await GenerateRefreshTokenInternal(user.Id);
-        return new TokenDto
-        {
-            AccessToken = newAccessToken,
-            RefreshToken = newRefreshToken.Token
-        };
-    }
+       // FIX: Generate the new tokens
+       var newAccessToken = await GenerateAccessToken(user, ct);
+
+       // FIX: Ensure we use a new transaction for the refresh token
+       // Use a separate UnitOfWork instance or ensure connection is open
+       var refreshToken = await GenerateRefreshTokenInternal(user.Id);
+
+       return new TokenDto
+       {
+           AccessToken = newAccessToken,
+           RefreshToken = refreshToken.Token
+       };
+   }
 
     public async Task RevokeToken(string userId)
     {

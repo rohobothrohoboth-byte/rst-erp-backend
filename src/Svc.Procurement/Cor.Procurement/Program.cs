@@ -79,15 +79,14 @@ if (updates.Any())
 }
 
 // ✅ Configure Kestrel - Get port from resolved configuration
-var procurementPortString = builder.Configuration["ServiceUrls:ProcurementApi"] ?? "https://localhost:7013";
+var procurementPortString = builder.Configuration["ServiceUrls:ProcurementApi"] ?? "http://localhost:7013";  // ← Changed to HTTP
 var procurementPort = new Uri(procurementPortString).Port;
 Console.WriteLine($"📡 Procurement Service Port: {procurementPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, procurementPort, listenOptions => listenOptions.UseHttps());
-});
-
+    options.Listen(IPAddress.Any, procurementPort, listenOptions => { });  // DISABLED  // ✅ Use empty callback
+});*/
 // ✅ Configure graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
 {
@@ -129,13 +128,13 @@ string GetConfig(string key, string? defaultValue = null)
 // ============================================================
 
 // ============= SERVICE URLS =============
-var coreModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var inventoryApiUrl = GetConfig("ServiceUrls:InventoryApi", "https://localhost:7014");
+var coreModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var inventoryApiUrl = GetConfig("ServiceUrls:InventoryApi", "http://inventory");
 
 // ============= DATABASE =============
 var dbConnectionString = GetConfig("ConnectionStrings:DefaultConnection", null);
@@ -325,14 +324,22 @@ builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
 // ============= API CLIENTS =============
 bool isDev = builder.Environment.IsDevelopment();
 
-builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClientHandler
+builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () =>
 {
-    ServerCertificateCustomValidationCallback = isDev
-        ? (sender, cert, chain, sslPolicyErrors) => true
-        : null,
-    UseCookies = false,
-    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-    MaxConnectionsPerServer = 10
+    var handler = new HttpClientHandler
+    {
+        UseCookies = false,
+        AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+        MaxConnectionsPerServer = 10
+    };
+
+    // Conditionally set the certificate validation callback
+    if (builder.Environment.IsDevelopment())
+    {
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+    }
+
+    return handler;
 });
 
 // Core Module API Client
@@ -403,7 +410,6 @@ builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
                 var logger = services.GetRequiredService<ILogger<Program>>();
                 logger.LogWarning($"⏳ Retry {retryAttempt} for HRM Pro API: {outcome.Exception?.Message}");
             }));
-
 
 builder.Services.AddHttpClient<IInventoryApiService, InventoryApiService>(client =>
 {
@@ -580,7 +586,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<AuditLogMiddleware>();
@@ -682,3 +688,5 @@ finally
     Console.WriteLine("Cleaning up resources...");
     await Log.CloseAndFlushAsync();
 }
+
+

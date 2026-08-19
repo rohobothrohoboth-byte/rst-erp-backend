@@ -1,4 +1,4 @@
-// E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Program.cs
+ // E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Program.cs
 
 using Cor.FileManagement.Persistence;
 using Cor.FileManagement.Services;
@@ -90,11 +90,11 @@ var fileApiUrl = builder.Configuration["ServiceUrls:FileApi"] ?? "https://localh
 // Extract port from URL
 var filePort = new Uri(fileApiUrl).Port;
 Console.WriteLine($"📡 File Management Service Port: {filePort}");
-
+/*
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, filePort, listenOptions => listenOptions.UseHttps());
-});
+    options.Listen(IPAddress.Any, 80);  // Force port 80 (HTTP)
+});  // DISABLED*/
 
 // ✅ Add this for graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -398,7 +398,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// // // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker // Disabled for Docker
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -411,3 +411,5 @@ app.MapHealthChecks("/health");
 
 // ============ RUN THE APP ============
 app.Run();
+
+

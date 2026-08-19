@@ -82,3 +82,12 @@ public class CompDto
     public DateTime DateAdd { get; set; }
     public DateTime? DateMod { get; set; }
 }
+
+public class PublicCompanyDto
+    {
+        public string Name { get; set; }
+        public string NameAm { get; set; }
+        public string Motto { get; set; }
+        public string LogoUrl { get; set; }
+        public string StampUrl { get; set; }
+    }

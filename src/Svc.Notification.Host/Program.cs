@@ -68,18 +68,15 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var notificationPortString = builder.Configuration["ServiceUrls:NotificationApi"] ?? "https://localhost:7007";
+// ✅ Configure Kestrel - HTTP Only
+var notificationPortString = builder.Configuration["ServiceUrls:NotificationApi"] ?? "http://notification";
 var notificationPort = new Uri(notificationPortString).Port;
 Console.WriteLine($"📡 Notification Service Port: {notificationPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, notificationPort, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    options.Listen(IPAddress.Any, notificationPort);  // ✅ Clean HTTP only
+});  // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -98,12 +95,12 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -386,8 +383,7 @@ builder.Services.AddHealthChecks()
 // SSL Bypass Handler
 var sslHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
-    MaxConnectionsPerServer = 50,
+        MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
@@ -430,7 +426,7 @@ builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -526,3 +522,5 @@ public class HrmProApiService : IHrmProApiService
         return await _httpClient.GetAsync(endpoint, ct);
     }
 }
+
+

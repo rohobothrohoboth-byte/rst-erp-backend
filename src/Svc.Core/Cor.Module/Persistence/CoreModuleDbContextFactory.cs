@@ -16,7 +16,7 @@ public class CoreModuleDbContextFactory : IDesignTimeDbContextFactory<CoreModule
             .Build();
 
         var connectionString = configuration.GetConnectionString("CorModuleDbCon")
-            ?? "Host=localhost;Port=5432;Database=core.ModuleDb;Username=postgres;Password=root";
+            ?? "Host=localhost;Port=5432;Database=core.Module;Username=postgres;Password=root";
 
         var optionsBuilder = new DbContextOptionsBuilder<CoreModuleDbContext>();
         optionsBuilder.UseNpgsql(connectionString);

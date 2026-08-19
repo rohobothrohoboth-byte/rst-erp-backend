@@ -1,3 +1,4 @@
+
 using Common;
 using System.Text.Json;
 using Cor.PlanDev.Persistence;
@@ -18,6 +19,8 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Cor.PlanDev.HealthChecks;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Npgsql;
+ // ⭐ ADD THIS - MISSING Npgsql using
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,14 +74,15 @@ if (updates.Any())
 }
 
 // Configure Kestrel
-var planDevPortString = builder.Configuration["ServiceUrls:PlanDevApi"] ?? "https://localhost:7015";
+var planDevPortString = builder.Configuration["ServiceUrls:PlanDevApi"] ?? "http://plandev";
 var planDevPort = new Uri(planDevPortString).Port;
 Console.WriteLine($"📡 Plan & Development Service Port: {planDevPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, planDevPort, listenOptions => listenOptions.UseHttps());
+    options.Listen(IPAddress.Any, planDevPort);  // ✅ Use 'planDevPort'
 });
+ // DISABLED*/
 
 // Configure graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -121,27 +125,28 @@ string GetConfig(string key, string? defaultValue = null)
 // ============================================================
 
 // Service URLs
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // ============================================================
-// ✅ DATABASE CONNECTION WITH FALLBACKS
+// ✅ DATABASE CONNECTION WITH FALLBACKS - CORRECTED
 // ============================================================
 
 string dbConnectionString = string.Empty;
-var connectionAttempts = new List<string>();
+
+// Build connection string options with proper fallbacks
+var connectionOptions = new List<(string Host, string Port, string Database, string User, string Password)>();
 
 // Option 1: Try environment variables first (for Aspire)
-var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST");
-var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT");
-var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER");
+var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
 var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB");
+var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "core.PlanDevDb";
 
-if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbPassword))
+if (!string.IsNullOrEmpty(dbPassword))
 {
-    var connString = $"Host={dbHost};Port={dbPort ?? "5432"};Database={dbName ?? "core.PlanDevDb"};Username={dbUser ?? "postgres"};Password={dbPassword};Include Error Detail=true";
-    connectionAttempts.Add(connString);
+    connectionOptions.Add((dbHost, dbPort, dbName, dbUser, dbPassword));
     Console.WriteLine($"✅ Option 1: Using connection string from environment variables");
 }
 
@@ -149,47 +154,87 @@ if (!string.IsNullOrEmpty(dbHost) && !string.IsNullOrEmpty(dbPassword))
 var configConnectionString = builder.Configuration["ConnectionStrings:planDevDbCon"];
 if (!string.IsNullOrEmpty(configConnectionString))
 {
-    connectionAttempts.Add(configConnectionString);
-    Console.WriteLine($"✅ Option 2: Using connection string from appsettings.json");
+    // Parse the connection string to extract values
+    try
+    {
+        var connBuilder = new NpgsqlConnectionStringBuilder(configConnectionString);
+        connectionOptions.Add((connBuilder.Host, connBuilder.Port.ToString(), connBuilder.Database, connBuilder.Username, connBuilder.Password));
+        Console.WriteLine($"✅ Option 2: Using connection string from appsettings.json");
+    }
+    catch
+    {
+        // If parsing fails, add as-is
+        connectionOptions.Add(("localhost", "5432", "core.PlanDevDb", "postgres", "root"));
+        Console.WriteLine($"⚠️ Could not parse appsettings connection string, using defaults");
+    }
 }
 
-// Option 3: Try default values
-var defaultConnString = "Host=localhost;Port=5432;Database=core.PlanDevDb;Username=postgres;Password=root;Include Error Detail=true";
-connectionAttempts.Add(defaultConnString);
-
-// Option 4: Try localhost with default password
-connectionAttempts.Add("Host=localhost;Port=5432;Database=core.PlanDevDb;Username=postgres;Password=postgres;Include Error Detail=true");
-
-// Option 5: Try with no password
-connectionAttempts.Add("Host=localhost;Port=5432;Database=core.PlanDevDb;Username=postgres;Include Error Detail=true");
-
-// Try each connection string
-foreach (var attempt in connectionAttempts.Distinct())
+// Option 3: Try default values (if not already added)
+if (connectionOptions.Count == 0)
 {
-    if (!string.IsNullOrEmpty(dbConnectionString)) break;
+    connectionOptions.Add(("localhost", "5432", "core.PlanDevDb", "postgres", "root"));
+    connectionOptions.Add(("localhost", "5432", "core.PlanDevDb", "postgres", "postgres"));
+    Console.WriteLine($"✅ Option 3: Using default connection strings");
+}
+
+// Try each connection option
+var successfulConnection = false;
+var usedPasswords = new HashSet<string>();
+
+foreach (var option in connectionOptions.Distinct())
+{
+    if (successfulConnection) break;
+
+    // Skip if we've already tried this password
+    if (usedPasswords.Contains(option.Password)) continue;
+    usedPasswords.Add(option.Password);
+
+    var testConnString = $"Host={option.Host};Port={option.Port};Database=postgres;Username={option.User};Password={option.Password};Include Error Detail=true;";
 
     try
     {
-        Console.WriteLine($"\n🔄 Attempting connection with: {attempt.Substring(0, Math.Min(60, attempt.Length))}...");
+        Console.WriteLine($"\n🔄 Testing PostgreSQL connection with user '{option.User}'...");
+        Console.WriteLine($"   Host: {option.Host}:{option.Port}");
+        Console.WriteLine($"   Password: {(string.IsNullOrEmpty(option.Password) ? "(empty)" : "****")}");
 
-        // Test connection with a simple query
-        using var testConn = new Npgsql.NpgsqlConnection(attempt);
+        using var testConn = new NpgsqlConnection(testConnString);
         await testConn.OpenAsync();
-        using var cmd = testConn.CreateCommand();
-        cmd.CommandText = "SELECT 1";
-        await cmd.ExecuteScalarAsync();
 
-        dbConnectionString = attempt;
-        Console.WriteLine($"✅ Connection successful!");
+        // Check if database exists
+        var dbExists = false;
+        using var checkDbCmd = testConn.CreateCommand();
+        checkDbCmd.CommandText = "SELECT 1 FROM pg_database WHERE datname = @dbName";
+        checkDbCmd.Parameters.AddWithValue("@dbName", option.Database);
+        dbExists = (await checkDbCmd.ExecuteScalarAsync()) != null;
 
-        // Extract and log the password (masked)
-        var passwordMatch = System.Text.RegularExpressions.Regex.Match(attempt, "Password=([^;]+)");
-        if (passwordMatch.Success)
+        if (!dbExists)
         {
-            var pwd = passwordMatch.Groups[1].Value;
-            var masked = pwd.Length > 4 ? pwd.Substring(0, 2) + "..." + pwd.Substring(pwd.Length - 2) : "***";
-            Console.WriteLine($"🔑 Using password: {masked}");
+            Console.WriteLine($"📊 Database '{option.Database}' does not exist. Creating it...");
+            using var createDbCmd = testConn.CreateCommand();
+            createDbCmd.CommandText = $"CREATE DATABASE \"{option.Database}\"";
+            await createDbCmd.ExecuteNonQueryAsync();
+            Console.WriteLine($"✅ Database '{option.Database}' created successfully!");
         }
+        else
+        {
+            Console.WriteLine($"✅ Database '{option.Database}' exists.");
+        }
+
+        // Test connection to the actual database
+        var finalConnString = $"Host={option.Host};Port={option.Port};Database={option.Database};Username={option.User};Password={option.Password};Include Error Detail=true;Maximum Pool Size=50;Minimum Pool Size=5;Connection Idle Lifetime=300;Connection Pruning Interval=60;";
+
+        using var finalTest = new NpgsqlConnection(finalConnString);
+        await finalTest.OpenAsync();
+
+        // Test query
+        using var testCmd = finalTest.CreateCommand();
+        testCmd.CommandText = "SELECT 1";
+        await testCmd.ExecuteScalarAsync();
+
+        dbConnectionString = finalConnString;
+        successfulConnection = true;
+        Console.WriteLine($"✅ Connection successful to database '{option.Database}'!");
+        Console.WriteLine($"🔑 Using password: {new string('*', option.Password.Length)}");
     }
     catch (Exception ex)
     {
@@ -198,22 +243,24 @@ foreach (var attempt in connectionAttempts.Distinct())
     }
 }
 
-if (string.IsNullOrEmpty(dbConnectionString))
+if (!successfulConnection || string.IsNullOrEmpty(dbConnectionString))
 {
     Console.WriteLine("\n❌ All connection attempts failed!");
     Console.WriteLine("Please check:");
-    Console.WriteLine("1. PostgreSQL is running");
+    Console.WriteLine("1. PostgreSQL is running and accessible");
     Console.WriteLine("2. The password is correct");
-    Console.WriteLine("3. The database exists");
-    Console.WriteLine("\nTo create the database, run:");
-    Console.WriteLine("  createdb -U postgres core.PlanDevDb");
-    Console.WriteLine("Or connect to PostgreSQL and run:");
-    Console.WriteLine("  CREATE DATABASE \"core.PlanDevDb\";");
+    Console.WriteLine("3. The database exists or can be created");
+    Console.WriteLine("4. PostgreSQL is configured to accept connections");
+
+    Console.WriteLine("\nTo manually create the database, run:");
+    Console.WriteLine("  psql -U postgres -c \"CREATE DATABASE \\\"core.PlanDevDb\\\";\"");
+    Console.WriteLine("\nOr use the default connection string:");
+    Console.WriteLine("  Host=localhost;Port=5432;Database=core.PlanDevDb;Username=postgres;Password=root;Include Error Detail=true");
 
     throw new InvalidOperationException("Could not connect to PostgreSQL");
 }
 
-Console.WriteLine($"\n✅ Final connection string established");
+Console.WriteLine($"\n✅ Connection string established successfully");
 
 // Redis
 var redisConnectionString = builder.Configuration.GetConnectionString("redis")
@@ -354,14 +401,22 @@ builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
 // ============= API CLIENTS =============
 bool isDev = builder.Environment.IsDevelopment();
 
-builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClientHandler
+builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () =>
 {
-    ServerCertificateCustomValidationCallback = isDev
-        ? (sender, cert, chain, sslPolicyErrors) => true
-        : null,
-    UseCookies = false,
-    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-    MaxConnectionsPerServer = 10
+    var handler = new HttpClientHandler
+    {
+        UseCookies = false,
+        AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+        MaxConnectionsPerServer = 10
+    };
+
+    // Conditionally set the certificate validation callback
+    if (builder.Environment.IsDevelopment())
+    {
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+    }
+
+    return handler;
 });
 
 // ============= SERVICES =============
@@ -479,7 +534,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -487,8 +542,16 @@ app.UseAuthorization();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PlanDevDbContext>();
-    await db.Database.MigrateAsync();
-    Console.WriteLine("✅ Database migrations applied successfully");
+    try
+    {
+        await db.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration failed: {ex.Message}");
+        Console.WriteLine("⚠️ Continuing startup - database may need manual migration");
+    }
 }
 
 // Map endpoints
@@ -515,3 +578,5 @@ finally
     Console.WriteLine("Cleaning up resources...");
     await Log.CloseAndFlushAsync();
 }
+
+

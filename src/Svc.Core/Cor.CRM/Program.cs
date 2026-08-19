@@ -1,4 +1,4 @@
-﻿using Cor.CRM.Persistence;
+using Cor.CRM.Persistence;
 using Cor.CRM.Services;
 using Cor.CRM.gRPCService;
 using Microsoft.EntityFrameworkCore;
@@ -24,37 +24,37 @@ using Shared.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
-// ✅ CONFIGURATION LOADING ORDER
+  // ============================================================
+// ? CONFIGURATION LOADING ORDER
 // ============================================================
 
-// ✅ Load shared configuration
+// ? Load shared configuration
 var sharedConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Shared", "Helpers", "appsettings.json");
 if (File.Exists(sharedConfigPath))
 {
     builder.Configuration.AddJsonFile(sharedConfigPath, optional: false, reloadOnChange: true);
-    Console.WriteLine($"✅ Loaded shared configuration from: {sharedConfigPath}");
+    Console.WriteLine($"? Loaded shared configuration from: {sharedConfigPath}");
 }
 else
 {
-    Console.WriteLine($"⚠️ Shared configuration not found at: {sharedConfigPath}");
+    Console.WriteLine($"?? Shared configuration not found at: {sharedConfigPath}");
 }
 
-// ✅ Load service-specific configuration
+// ? Load service-specific configuration
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-// ✅ Load environment-specific configuration
+// ? Load environment-specific configuration
 var environment = builder.Environment.EnvironmentName;
 builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 
-// ✅ Add environment variables (highest priority)
+// ? Add environment variables (highest priority)
 builder.Configuration.AddEnvironmentVariables();
 
-// ✅ Get ServiceHost and resolve placeholders
+// ? Get ServiceHost and resolve placeholders
 var serviceHost = builder.Configuration["ServiceHost"] ?? "localhost";
-Console.WriteLine($"🏠 Service Host: {serviceHost}");
+Console.WriteLine($"?? Service Host: {serviceHost}");
 
-// ✅ Resolve all {ServiceHost} placeholders
+// ? Resolve all {ServiceHost} placeholders
 var configSections = builder.Configuration.AsEnumerable().ToList();
 var updates = new Dictionary<string, string>();
 
@@ -64,7 +64,7 @@ foreach (var kvp in configSections)
     {
         var newValue = kvp.Value.Replace("{ServiceHost}", serviceHost);
         updates[kvp.Key] = newValue;
-        Console.WriteLine($"✅ Resolved {kvp.Key}: {newValue}");
+        Console.WriteLine($"? Resolved {kvp.Key}: {newValue}");
     }
 }
 
@@ -73,18 +73,18 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var crmPortString = builder.Configuration["ServiceUrls:CRMApi"] ?? "https://localhost:7012";
+// ? Configure Kestrel - Get port from resolved configuration
+var crmPortString = builder.Configuration["ServiceUrls:CRMApi"] ?? "http://crm";
 var crmPort = new Uri(crmPortString).Port;
-Console.WriteLine($"📡 CRM Service Port: {crmPort}");
+Console.WriteLine($"?? CRM Service Port: {crmPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(IPAddress.Any, crmPort, listenOptions =>
     {
-        listenOptions.UseHttps();
-    });
-});
+        // HTTPS disabled for Docker;
+    });   // DISABLED
+});*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -103,12 +103,12 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var coreModuleUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var coreModuleUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // ============= API KEYS =============
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -125,12 +125,12 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Host.UseSerilog();
 
-Console.WriteLine("=== 🔍 CRM SERVICE DEBUG CONFIGURATION ===");
+Console.WriteLine("=== ?? CRM SERVICE DEBUG CONFIGURATION ===");
 Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
-Console.WriteLine($"📡 Core Module URL: {coreModuleUrl}");
-Console.WriteLine($"📡 Core HRMM URL: {CorHrmmUrl}");
-Console.WriteLine($"📡 Auth URL: {authUrl}");
-Console.WriteLine($"📡 HRM Pro URL: {hrmProUrl}");
+Console.WriteLine($"?? Core Module URL: {coreModuleUrl}");
+Console.WriteLine($"?? Core HRMM URL: {CorHrmmUrl}");
+Console.WriteLine($"?? Auth URL: {authUrl}");
+Console.WriteLine($"?? HRM Pro URL: {hrmProUrl}");
 
 // ============= ADD SERVICES =============
 builder.Services.AddControllers();
@@ -192,7 +192,7 @@ if (string.IsNullOrEmpty(redisConnectionString))
         redisConnectionString += $",ssl=true";
 }
 
-Console.WriteLine($"🔗 Redis Connection: {redisConnectionString}");
+Console.WriteLine($"?? Redis Connection: {redisConnectionString}");
 
 var redisAvailable = false;
 var workingConnectionString = redisConnectionString;
@@ -210,7 +210,7 @@ foreach (var attempt in connectionAttempts.Distinct())
 
     try
     {
-        Console.WriteLine($"🔄 Attempting Redis connection: {attempt}");
+        Console.WriteLine($"?? Attempting Redis connection: {attempt}");
 
         var config = ConfigurationOptions.Parse(attempt);
         config.ConnectTimeout = 5000;
@@ -226,13 +226,13 @@ foreach (var attempt in connectionAttempts.Distinct())
         if (redisAvailable)
         {
             workingConnectionString = attempt;
-            Console.WriteLine($"✅ Redis connection SUCCESSFUL");
+            Console.WriteLine($"? Redis connection SUCCESSFUL");
             break;
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Redis connection FAILED: {ex.Message}");
+        Console.WriteLine($"? Redis connection FAILED: {ex.Message}");
         redisAvailable = false;
     }
 }
@@ -257,13 +257,13 @@ if (redisAvailable)
         options.InstanceName = "CRM_";
     });
     builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-    Console.WriteLine("✅ Redis Cache ENABLED");
+    Console.WriteLine("? Redis Cache ENABLED");
 }
 else
 {
     builder.Services.AddDistributedMemoryCache();
     builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
-    Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
+    Console.WriteLine("? MemoryCache ENABLED (Redis fallback)");
 }
 
 // ============= RABBITMQ =============
@@ -295,7 +295,7 @@ builder.Services.AddHealthChecks()
     .AddCheck<RedisHealthCheck>("Redis");
 
 // ================================================================
-// ✅ CORS CONFIGURATION
+// ? CORS CONFIGURATION
 // ================================================================
 
 var corsOrigins = GetConfig("Cors:AllowedOrigins", "http://localhost:5173,http://localhost:3000")
@@ -308,7 +308,7 @@ var resolvedOrigins = corsOrigins
     .Select(origin => origin.Replace("{ServiceHost}", serviceHost))
     .ToArray();
 
-Console.WriteLine("🌐 CORS Allowed Origins:");
+Console.WriteLine("?? CORS Allowed Origins:");
 foreach (var origin in resolvedOrigins)
 {
     Console.WriteLine($"   {origin}");
@@ -323,7 +323,7 @@ builder.Services.AddCors(options =>
             policy.AllowAnyOrigin()
                   .AllowAnyMethod()
                   .AllowAnyHeader();
-            Console.WriteLine("⚠️ CORS: AllowAnyOrigin (Development mode)");
+            Console.WriteLine("?? CORS: AllowAnyOrigin (Development mode)");
         }
         else
         {
@@ -331,7 +331,7 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-            Console.WriteLine($"✅ CORS: Allowed origins: {string.Join(", ", resolvedOrigins)}");
+            Console.WriteLine($"? CORS: Allowed origins: {string.Join(", ", resolvedOrigins)}");
         }
     });
 });
@@ -402,6 +402,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 
 // HTTP Clients with resolved URLs
+// For UserClient
 builder.Services.AddHttpClient<IUserClient, UserClient>(client =>
 {
     client.BaseAddress = new Uri(authUrl);
@@ -415,6 +416,7 @@ builder.Services.AddHttpClient<IUserClient, UserClient>(client =>
     return handler;
 });
 
+// For CoreModuleApiService
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(client =>
 {
     client.BaseAddress = new Uri(coreModuleUrl);
@@ -430,6 +432,7 @@ builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(clie
     return handler;
 });
 
+// For CoreHrmmApiService
 builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =>
 {
     client.BaseAddress = new Uri(CorHrmmUrl);
@@ -445,6 +448,7 @@ builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =
     return handler;
 });
 
+// For HrmProApiService
 builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
 {
     client.BaseAddress = new Uri(hrmProUrl);
@@ -489,20 +493,20 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<CrmDbContext>();
     try
     {
-        Log.Information("📦 Checking database migration...");
+        Log.Information("?? Checking database migration...");
         await dbContext.Database.MigrateAsync();
-        Log.Information("✅ Database migration completed successfully.");
+        Log.Information("? Database migration completed successfully.");
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "❌ An error occurred while migrating the database.");
+        Log.Error(ex, "? An error occurred while migrating the database.");
     }
 }
 
 // Permission registry is a static single source of truth in Common.Permissions.All,
-// shared by every service — so [PerAuth] bit indices already match Auth's with no
+// shared by every service � so [PerAuth] bit indices already match Auth's with no
 // runtime fetch required.
-Console.WriteLine($"✅ Permission registry (static) has {PermissionMap.IndexMap.Count} permissions");
+Console.WriteLine($"? Permission registry (static) has {PermissionMap.IndexMap.Count} permissions");
 
 // ============= PIPELINE =============
 if (app.Environment.IsDevelopment())
@@ -514,7 +518,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -523,11 +527,13 @@ app.MapControllers();
 app.MapGrpcService<CrmGrpcService>();
 app.MapHealthChecks("/health");
 
-Console.WriteLine($"\n✅ CRM Service starting on https://0.0.0.0:{crmPort}");
-Console.WriteLine($"🔗 Auth URL: {authUrl}");
-Console.WriteLine($"🔗 Core Module URL: {coreModuleUrl}");
-Console.WriteLine($"🔗 Core HRMM URL: {CorHrmmUrl}");
-Console.WriteLine($"🔗 HRM Pro URL: {hrmProUrl}");
+Console.WriteLine($"\n? CRM Service starting on https://0.0.0.0:{crmPort}");
+Console.WriteLine($"?? Auth URL: {authUrl}");
+Console.WriteLine($"?? Core Module URL: {coreModuleUrl}");
+Console.WriteLine($"?? Core HRMM URL: {CorHrmmUrl}");
+Console.WriteLine($"?? HRM Pro URL: {hrmProUrl}");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+

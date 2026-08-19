@@ -24,7 +24,7 @@ var urlString = builder.Configuration["ServiceUrls:TrainingApi"] ?? "https://loc
 var port = 5007;
 if (int.TryParse(builder.Configuration["TRAINING_PORT"], out var envPort)) { port = envPort; }
 else { var m = System.Text.RegularExpressions.Regex.Match(urlString, @":(\d+)"); if (m.Success && int.TryParse(m.Groups[1].Value, out var p)) { port = p; } }
-builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Any, port, lo => lo.UseHttps()));
+// // builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Any, 80)); // DISABLED // DISABLED - Let ASPNETCORE_URLS handle it  // Force port 80 (HTTP)
 
 // NOTE: read a specific key ("HrmTrainingDb") that intentionally does NOT match the
 // Aspire database resource name ("trainingDb"). Aspire injects ConnectionStrings__trainingDb
@@ -79,3 +79,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+

@@ -11,9 +11,13 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Docker" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+
+
 
   </ItemGroup>
 
@@ -35,6 +39,7 @@
     <ProjectReference Include="..\Svc.HRM\Svc.HRM.Attendance\Svc.HRM.Attendance.csproj" />
     <ProjectReference Include="..\Svc.HRM\Svc.HRM.Training\Svc.HRM.Training.csproj" />
     <ProjectReference Include="..\Svc.HRM\Svc.HRM.Performance\Svc.HRM.Performance.csproj" />
+    <ProjectReference Include="..\Svc.ProjectManagement\Cor.ProjectManagement\Cor.ProjectManagement.csproj" />
 
 
     <!-- ? Add File Management Service -->

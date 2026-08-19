@@ -1,28 +1,37 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY *.soln .
-COPY src/Svc.HRM/Profile.API/*.csproj src/Svc.HRM/Profile.API/
+# Copy solution-level files
+COPY Directory.Packages.props .
+COPY Directory.Build.props .
+
+# Copy all project files
+COPY src/Svc.HRM/HRM.Profile/Profile.API/*.csproj src/Svc.HRM/HRM.Profile/Profile.API/
+COPY src/Svc.HRM/HRM.Profile/Profile.Domain/*.csproj src/Svc.HRM/HRM.Profile/Profile.Domain/
+COPY src/Svc.HRM/HRM.Profile/Profile.App/*.csproj src/Svc.HRM/HRM.Profile/Profile.App/
+COPY src/Svc.HRM/HRM.Profile/Profile.Utility/*.csproj src/Svc.HRM/HRM.Profile/Profile.Utility/
 COPY src/Shared/Helpers/*.csproj src/Shared/Helpers/
+COPY src/RST_ERP.ServiceDefaults/*.csproj src/RST_ERP.ServiceDefaults/
 COPY src/gRPC/Common/*.csproj src/gRPC/Common/
 COPY src/gRPC/Contracts/*.csproj src/gRPC/Contracts/
 
-RUN dotnet restore src/Svc.HRM/Profile.API/Profile.API.csproj
+# Restore with cache mount
+RUN  dotnet restore "src/Svc.HRM/HRM.Profile/Profile.API/Profile.API.csproj"
 
+# Copy everything else
 COPY . .
-WORKDIR /src/src/Svc.HRM/Profile.API
-RUN dotnet build "Profile.API.csproj" -c Release -o /app/build
 
-FROM build AS publish
-RUN dotnet publish "Profile.API.csproj" -c Release -o /app/publish
+# Publish
+RUN dotnet publish "src/Svc.HRM/HRM.Profile/Profile.API/Profile.API.csproj" -c Release -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+
+COPY --from=build /app/publish .
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:80

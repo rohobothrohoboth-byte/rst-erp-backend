@@ -14,16 +14,15 @@ using Shared.Helpers;
 using Cor.Module.Authentication;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Authorization; // ✅ ይህን ይጨምሩ
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -72,19 +71,12 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var coreModulePortString = builder.Configuration["ServiceUrls:CoreModuleApi"] ?? "https://localhost:7002";
-var coreModulePort = new Uri(coreModulePortString).Port;
-Console.WriteLine($"📡 Core Module Service Port: {coreModulePort}");
-
-// ✅ FORCE PORT ON ALL INTERFACES
+/*// ✅ Configure Kestrel - FORCE PORT 80 inside container
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, coreModulePort, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    options.Listen(IPAddress.Any, 80);  // ✅ Always port 80 inside container
+    Console.WriteLine("✅ Kestrel listening on HTTP port 80");
+});   // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -102,13 +94,13 @@ string GetConfig(string key, string? defaultValue = null)
     return string.Empty;
 }
 
-// ============= SERVICE URLS =============
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+// ============= SERVICE URLS - FIXED =============
+// ✅ USE HTTP AND DOCKER SERVICE NAMES
+var CorHrmmUrl = "http://core-hrmm";
+var authUrl = "http://auth";
+var hrmProUrl = "http://hrm-profile";
+var financeApiUrl = "http://finance";
+var gatewayApiUrl = "http://gateway";
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -137,7 +129,7 @@ var dbConnectionString = GetConfig("ConnectionStrings:CorModuleDbCon", null);
 
 if (string.IsNullOrEmpty(dbConnectionString))
 {
-    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "postgres";  // ✅ FIXED: Use "postgres" instead of "localhost"
     var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
     var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
     var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
@@ -151,7 +143,7 @@ var redisConnectionString = GetConfig("Redis:ConnectionString", null);
 
 if (string.IsNullOrEmpty(redisConnectionString))
 {
-    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost";
+    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis";  // ✅ FIXED: Use "redis" instead of "localhost"
     var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379";
     var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
     var redisSsl = Environment.GetEnvironmentVariable("REDIS_SSL")?.ToLower() == "true";
@@ -172,8 +164,8 @@ var workingConnectionString = redisConnectionString;
 var connectionAttempts = new List<string>
 {
     redisConnectionString,
-    "localhost:6379,abortConnect=false",
     "redis:6379,abortConnect=false",
+    "localhost:6379,abortConnect=false",
 };
 
 foreach (var attempt in connectionAttempts.Distinct())
@@ -261,17 +253,17 @@ else
     Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
 }
 
-// ============= SSL BYPASS HANDLER =============
-var sslHandler = new HttpClientHandler
+// ============= HTTP CLIENT HANDLER - FIXED =============
+// ✅ Use HTTP handler WITHOUT SSL bypass
+var httpHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
     MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
 // ============= REGISTER HTTP CLIENTS =============
 
-// ✅ Auth API Client
+// ✅ Auth API Client - FIXED
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
     client.BaseAddress = new Uri(authUrl);
@@ -280,14 +272,15 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "CoreModuleService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
-// ============= RABBITMQ REGISTRATION =============
-var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
-var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
-var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
-var rabbitMqPassword = GetConfig("RabbitMQ:Password", "guest");
+// ============= RABBITMQ REGISTRATION - FIXED =============
+// ✅ FIXED: Use double underscore for environment variables
+var rabbitMqHost = GetConfig("RabbitMQ__Host", "rabbitmq");  // ✅ Changed to double underscore
+var rabbitMqPort = int.Parse(GetConfig("RabbitMQ__Port", "5672"));  // ✅ Changed to double underscore
+var rabbitMqUsername = GetConfig("RabbitMQ__Username", "guest");  // ✅ Changed to double underscore
+var rabbitMqPassword = GetConfig("RabbitMQ__Password", "guest");  // ✅ Changed to double underscore
 
 builder.Services.AddSingleton<IConnectionFactory>(sp =>
 {
@@ -309,7 +302,7 @@ builder.Services.AddSingleton<IConnectionFactory>(sp =>
 // ============= REGISTER SERVICES =============
 builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
 
-// ============= HEALTH CHECKS =============
+// ============= HEALTH CHECKS - FIXED =============
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{CorHrmmUrl}/health"), "Core HRMM API")
     .AddUrlGroup(new Uri($"{authUrl}/health"), "Auth API")
@@ -377,7 +370,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============= API KEY AUTHENTICATION =============
 // ============= API KEY AUTHENTICATION & AUTHORIZATION =============
 
 // 1. Configuration
@@ -389,13 +381,10 @@ builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
 
 // 3. Authorization Components - ሁሉም Scoped
-builder.Services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>(); // ✅ Singleton ሳይሆን Scoped
+builder.Services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
-// 4. Authentication - support BOTH browser JWTs (Authorization: Bearer) AND
-// internal service-to-service API keys (X-API-Key). A policy scheme forwards each
-// request to the ApiKey handler when the X-API-Key header is present, otherwise to
-// JWT. Previously only "ApiKey" was registered, so browser requests always 401'd.
+// 4. Authentication - support BOTH browser JWTs AND internal API keys
 var jwtSecret = Common.JwtCons.SecretKey;
 if (!string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
     jwtSecret = builder.Configuration["Jwt:SecretKey"]!;
@@ -433,29 +422,24 @@ builder.Services.AddAuthentication(options =>
 // 5. Authorization
 builder.Services.AddAuthorization();
 
-
 // ============= BUILDER EXTENSIONS =============
 builder.AddApiServices()
     .AddErrorHandling()
     .AddSwaggerService();
 
-// ❌ AddAuthService ን አይጥሩ - ይህ የAuth Service ነው
-// .AddAuthService();
-
 var app = builder.Build();
 
-// ============= MIDDLEWARE ORDER (ጠቃሚ) =============
+// ============= MIDDLEWARE ORDER =============
 app.UseMiddleware<ApiKeyRateLimiterMiddleware>();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // ✅ DISABLED FOR DOCKER
 app.UseRateLimiter();
 app.UseCors("AllowAll");
 
-// ✅ የሚከተሉትን በትክክለኛው ቅደም ተከተል ያድርጉ
-app.UseAuthentication();  // ✅ መጀመሪያ
-app.UseAuthorization();   // ✅ ከዚያ
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGrpcService<CorModListService>();
 
@@ -489,7 +473,7 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
     }
 });
 
-Console.WriteLine($"\n✅ Core Module Service starting on https://0.0.0.0:{coreModulePort}");
+Console.WriteLine($"\n✅ Core Module Service starting on http://0.0.0.0:80");
 Console.WriteLine($"🔗 Core HRMM URL: {CorHrmmUrl}");
 Console.WriteLine($"🔗 Auth URL: {authUrl}");
 Console.WriteLine($"🔗 HRM Pro URL: {hrmProUrl}");
@@ -521,3 +505,5 @@ public class AuthApiService : IAuthApiService
         return await _httpClient.GetAsync(endpoint, ct);
     }
 }
+
+

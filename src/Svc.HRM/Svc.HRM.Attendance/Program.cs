@@ -26,7 +26,7 @@ using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -75,18 +75,16 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
+// ✅ Configure Kestrel - HTTP Only
 var attendancePortString = builder.Configuration["ServiceUrls:AttendanceApi"] ?? "https://localhost:7011";
 var attendancePort = new Uri(attendancePortString).Port;
 Console.WriteLine($"📡 Attendance Service Port: {attendancePort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, attendancePort, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    options.Listen(IPAddress.Any, attendancePort);  // ✅ No HTTPS!
+    // listenOptions.UseHttps("/https/aspnetapp.pfx", "YourPassword123!");
+});   // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -105,12 +103,12 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -426,8 +424,7 @@ builder.Services.AddHostedService<EmployeeEventConsumer>();
 // SSL Bypass Handler
 var sslHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
-    MaxConnectionsPerServer = 50,
+        MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
@@ -524,7 +521,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+//// app.UseHttpsRedirection(); // DISABLED FOR DOCKER
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -540,3 +537,5 @@ Console.WriteLine("📊 Debug logging is ENABLED");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+

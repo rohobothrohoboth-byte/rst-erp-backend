@@ -9,9 +9,48 @@ namespace Cor.Module.Queries;
 
 public class AllCompsQry : IRequest<List<CompListDto>> { }
 public class CompByIdQry : IRequest<CompListDto?> { public Guid Id { get; set; } }
+ public class GetPublicCompanyInfoQry : IRequest<PublicCompanyDto>
+    {
+    }
 
+public class GetPublicCompanyInfoHandler : IRequestHandler<GetPublicCompanyInfoQry, PublicCompanyDto>
+{
+    private readonly IDapperHelper _dapper;
 
+    public GetPublicCompanyInfoHandler(IDapperHelper dapper)
+    {
+        _dapper = dapper;
+    }
 
+    public async Task<PublicCompanyDto> Handle(GetPublicCompanyInfoQry request, CancellationToken ct)
+    {
+        // Get only the first/default company - no authentication needed
+        const string c = "c";
+        var qb = new QueryBuilder()
+            .Select<Company>(c,
+                x => x.Name,
+                x => x.NameAm,
+                x => x.Motto,
+                x => x.LogoUrl,
+                x => x.StampUrl)
+            .From<Company>(c)
+            .OrderBy<Company>(c, x => x.DateAdd) // ✅ Fixed: Use the correct overload
+            .Limit(1);
+
+        var (sql, parameters) = qb.Build();
+
+        var company = await _dapper.QueryFirstOrDefaultAsync<PublicCompanyDto>(sql, parameters, ct);
+
+        return company ?? new PublicCompanyDto
+        {
+            Name = "RST ERP",
+            NameAm = "",
+            Motto = "Enterprise Solution",
+            LogoUrl = "",
+            StampUrl = ""
+        };
+    }
+}
 public class GetCompsHandler : IRequestHandler<AllCompsQry, List<CompListDto>>
 {
     private readonly IDapperHelper _dapper;
