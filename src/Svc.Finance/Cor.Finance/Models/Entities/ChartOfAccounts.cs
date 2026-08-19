@@ -1,10 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Cor.Finance.Models.Entities.Local;
+
 namespace Cor.Finance.Models.Entities;
 
 public class ChartOfAccounts : BaseEntity
 {
+    private string? _normalBalance;
+
     [Required]
     [MaxLength(20)]
     public string Code { get; set; } = default!;
@@ -36,24 +39,24 @@ public class ChartOfAccounts : BaseEntity
     public decimal? OpeningBalance { get; set; }
 
     [Required]
-    [MaxLength(10)]  // ✅ ADD THIS - MaxLength for NormalBalance
-    public string NormalBalance { get; set; } = "Debit"; // "Debit" or "Credit"
+    [MaxLength(10)]
+    public string NormalBalance
+    {
+        get => GetDefaultNormalBalance(AccountType);
+        set => _normalBalance = NormalizeNormalBalance(value, AccountType);
+    }
 
     public DateTime? OpeningBalanceDate { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal CurrentBalance { get; set; }
 
-    // ============================================================
-    // ASSET SPECIFIC FIELDS (Only used for Asset type accounts)
-    // ============================================================
-
-    public int? UsefulLife { get; set; } // In years
+    public int? UsefulLife { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
-    public decimal? SalvageValue { get; set; } // Residual value
+    public decimal? SalvageValue { get; set; }
 
-    public DateTime? AcquisitionDate { get; set; } // Purchase date
+    public DateTime? AcquisitionDate { get; set; }
 
     [MaxLength(200)]
     public string? Location { get; set; }
@@ -72,15 +75,7 @@ public class ChartOfAccounts : BaseEntity
 
     public Guid? DepartmentId { get; set; }
 
-    // ============================================================
-    // FOREIGN KEYS
-    // ============================================================
-
     public Guid? CategoryId { get; set; }
-
-    // ============================================================
-    // NAVIGATION PROPERTIES
-    // ============================================================
 
     [ForeignKey(nameof(CategoryId))]
     public virtual AccountCategory? Category { get; set; }
@@ -92,10 +87,6 @@ public class ChartOfAccounts : BaseEntity
 
     [ForeignKey(nameof(DepartmentId))]
     public virtual LocalDepartment? Department { get; set; }
-
-    // ============================================================
-    // HELPER PROPERTIES (Not mapped to database)
-    // ============================================================
 
     [NotMapped]
     public bool IsAsset => AccountType == "Asset";
@@ -113,8 +104,27 @@ public class ChartOfAccounts : BaseEntity
     public bool IsExpense => AccountType == "Expense";
 
     [NotMapped]
-    public bool IsDebitNormal => NormalBalance == "Debit";
+    public bool IsDebitNormal => string.Equals(NormalBalance, "Debit", StringComparison.OrdinalIgnoreCase);
 
     [NotMapped]
-    public bool IsCreditNormal => NormalBalance == "Credit";
+    public bool IsCreditNormal => string.Equals(NormalBalance, "Credit", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetDefaultNormalBalance(string? accountType) =>
+        accountType?.Trim().ToLowerInvariant() switch
+        {
+            "liability" => "Credit",
+            "equity" => "Credit",
+            "revenue" => "Credit",
+            "asset" => "Debit",
+            "expense" => "Debit",
+            _ => "Debit"
+        };
+
+    private static string NormalizeNormalBalance(string? value, string? accountType)
+    {
+        // Normal balance is foundationally determined by AccountType.
+        // The persisted property remains for compatibility, but account type
+        // is the authoritative source for the normal-side classification.
+        return GetDefaultNormalBalance(accountType);
+    }
 }
