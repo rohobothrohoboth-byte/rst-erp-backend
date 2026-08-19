@@ -118,7 +118,7 @@ public class GetGeneralLedgerHandler : IRequestHandler<GetGeneralLedgerQry, Gene
                     .Sum(x => x.Amount);
 
                 var movement = group.Sum(x =>
-                    AccountingReportService.GetSignedMovement(account.AccountType, x.Direction, x.Amount));
+                    AccountingReportService.GetSignedMovement(account.NormalBalance, x.Direction, x.Amount));
 
                 var current = runningByAccount.GetValueOrDefault(group.Key) + movement;
                 runningByAccount[group.Key] = current;
