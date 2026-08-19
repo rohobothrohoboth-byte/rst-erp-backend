@@ -2,7 +2,6 @@ using Cor.Finance.Models.DTOs;
 using Cor.Finance.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Cor.Finance.Models.Entities;
 
 namespace Cor.Finance.Queries;
 
@@ -16,63 +15,74 @@ public class GetTrialBalanceHandler : IRequestHandler<GetTrialBalanceQry, TrialB
 {
     private readonly FinanceDbContext _context;
 
-    public GetTrialBalanceHandler(FinanceDbContext context)
-    {
-        _context = context;
-    }
+    public GetTrialBalanceHandler(FinanceDbContext context) => _context = context;
 
     public async Task<TrialBalanceDto> Handle(GetTrialBalanceQry request, CancellationToken ct)
     {
-        var asOfDateUtc = EnsureUtc(request.AsOfDate);
-        var endDateUtc = asOfDateUtc.Date.AddDays(1).AddTicks(-1);
+        var asOfDateUtc = EnsureUtc(request.AsOfDate).Date;
+        var endDateUtc = asOfDateUtc.AddDays(1).AddTicks(-1);
 
-        // Get all accounts
         var accounts = await _context.ChartOfAccounts
+            .AsNoTracking()
             .Where(x => !x.IsDeleted && x.IsActive)
+            .Select(x => new { x.Id, x.Code, x.Name, x.AccountType, x.OpeningBalance })
             .ToListAsync(ct);
 
-        // Get all journal entries up to the date
-        var entries = await _context.JournalEntries
-            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate <= endDateUtc)
-            .ToListAsync(ct);
+        var entriesQuery = _context.JournalEntries
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.IsPosted && x.EntryDate <= endDateUtc);
 
-        var entryIds = entries.Select(e => e.Id).ToList();
+        if (request.BranchId.HasValue)
+            entriesQuery = entriesQuery.Where(x => x.BranchId == request.BranchId.Value);
 
-        // Get all journal lines
-        var lines = await _context.JournalLines
-            .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted)
-            .Include(x => x.Account)
-            .ToListAsync(ct);
+        var entryIds = await entriesQuery.Select(x => x.Id).ToListAsync(ct);
+
+        var lines = entryIds.Count == 0
+            ? new List<TrialBalanceSourceLine>()
+            : await _context.JournalLines
+                .AsNoTracking()
+                .Where(x => entryIds.Contains(x.JournalEntryId) && !x.IsDeleted)
+                .Select(x => new TrialBalanceSourceLine
+                {
+                    AccountId = x.AccountId,
+                    Direction = x.Direction,
+                    Amount = x.Amount
+                })
+                .ToListAsync(ct);
 
         var trialBalanceLines = new List<TrialBalanceLineDto>();
-        decimal totalDebits = 0;
-        decimal totalCredits = 0;
 
         foreach (var account in accounts)
         {
             var accountLines = lines.Where(x => x.AccountId == account.Id).ToList();
-            var debit = accountLines.Sum(x => x.Direction == "Debit" ? x.Amount : 0);
-            var credit = accountLines.Sum(x => x.Direction == "Credit" ? x.Amount : 0);
-            var balance = debit - credit + (account.OpeningBalance ?? 0);
+            var debit = accountLines.Where(x => x.Direction == "Debit").Sum(x => x.Amount);
+            var credit = accountLines.Where(x => x.Direction == "Credit").Sum(x => x.Amount);
+            var opening = account.OpeningBalance ?? 0m;
+            var debitNormal = IsDebitNormal(account.AccountType);
 
-            // Skip zero balance accounts for cleaner report
-            if (balance != 0 || debit != 0 || credit != 0)
+            var reportedDebit = debit + (debitNormal ? opening : 0m);
+            var reportedCredit = credit + (!debitNormal ? opening : 0m);
+            var balance = debitNormal
+                ? reportedDebit - reportedCredit
+                : reportedCredit - reportedDebit;
+
+            if (reportedDebit == 0m && reportedCredit == 0m)
+                continue;
+
+            trialBalanceLines.Add(new TrialBalanceLineDto
             {
-                trialBalanceLines.Add(new TrialBalanceLineDto
-                {
-                    AccountId = account.Id.ToString(),
-                    AccountCode = account.Code,
-                    AccountName = account.Name,
-                    AccountType = account.AccountType,
-                    Debit = debit + (account.AccountType == "Asset" || account.AccountType == "Expense" ? account.OpeningBalance ?? 0 : 0),
-                    Credit = credit + (account.AccountType == "Liability" || account.AccountType == "Equity" || account.AccountType == "Revenue" ? account.OpeningBalance ?? 0 : 0),
-                    Balance = balance
-                });
-            }
+                AccountId = account.Id.ToString(),
+                AccountCode = account.Code,
+                AccountName = account.Name,
+                AccountType = account.AccountType,
+                Debit = reportedDebit,
+                Credit = reportedCredit,
+                Balance = balance
+            });
         }
 
-        totalDebits = trialBalanceLines.Sum(x => x.Debit);
-        totalCredits = trialBalanceLines.Sum(x => x.Credit);
+        var totalDebits = trialBalanceLines.Sum(x => x.Debit);
+        var totalCredits = trialBalanceLines.Sum(x => x.Credit);
         var difference = totalDebits - totalCredits;
 
         return new TrialBalanceDto
@@ -82,14 +92,23 @@ public class GetTrialBalanceHandler : IRequestHandler<GetTrialBalanceQry, TrialB
             TotalDebits = totalDebits,
             TotalCredits = totalCredits,
             Difference = difference,
-            IsBalanced = Math.Abs(difference) < 0.01m
+            IsBalanced = difference == 0m
         };
     }
 
-    private static DateTime EnsureUtc(DateTime dateTime)
+    private static bool IsDebitNormal(string? accountType) =>
+        string.Equals(accountType, "Asset", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(accountType, "Expense", StringComparison.OrdinalIgnoreCase);
+
+    private static DateTime EnsureUtc(DateTime value) =>
+        value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+
+    private sealed class TrialBalanceSourceLine
     {
-        if (dateTime.Kind == DateTimeKind.Unspecified)
-            return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-        return dateTime.ToUniversalTime();
+        public Guid AccountId { get; init; }
+        public string Direction { get; init; } = string.Empty;
+        public decimal Amount { get; init; }
     }
 }
