@@ -29,9 +29,12 @@ public sealed class AccountingReportService
         if (endUtc < startUtc)
             throw new ArgumentException("End date must be greater than or equal to start date.");
 
+        // Historical journal activity must remain reportable even when an account
+        // has subsequently been deactivated. IsDeleted is the accounting-history
+        // boundary; IsActive is an operational/UI state and must not hide balances.
         var accountsQuery = _context.ChartOfAccounts
             .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.IsActive);
+            .Where(x => !x.IsDeleted);
 
         if (accountId.HasValue)
             accountsQuery = accountsQuery.Where(x => x.Id == accountId.Value);
