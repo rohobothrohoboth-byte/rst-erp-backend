@@ -25,6 +25,7 @@ public class TrialBalanceLineDto
     public string AccountCode { get; set; } = string.Empty;
     public string AccountName { get; set; } = string.Empty;
     public string AccountType { get; set; } = string.Empty;
+    public string NormalBalance { get; set; } = "Debit";
     public decimal OpeningDebit { get; set; }
     public decimal OpeningCredit { get; set; }
     public decimal Debit { get; set; }
