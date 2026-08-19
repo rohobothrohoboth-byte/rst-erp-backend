@@ -56,19 +56,37 @@ public class GetTrialBalanceHandler : IRequestHandler<GetTrialBalanceQry, TrialB
 
         var lines = snapshots
             .Where(x => request.IncludeZeroBalances || x.OpeningBalance != 0m || x.PeriodDebits != 0m || x.PeriodCredits != 0m || x.ClosingBalance != 0m)
-            .Select(x => new TrialBalanceLineDto
+            .Select(x =>
             {
-                AccountId = x.AccountId.ToString(),
-                AccountCode = x.AccountCode,
-                AccountName = x.AccountName,
-                AccountType = x.AccountType,
-                OpeningDebit = x.OpeningBalance > 0m ? x.OpeningBalance : 0m,
-                OpeningCredit = x.OpeningBalance < 0m ? Math.Abs(x.OpeningBalance) : 0m,
-                Debit = x.PeriodDebits,
-                Credit = x.PeriodCredits,
-                ClosingDebit = x.ClosingBalance > 0m ? x.ClosingBalance : 0m,
-                ClosingCredit = x.ClosingBalance < 0m ? Math.Abs(x.ClosingBalance) : 0m,
-                Balance = x.ClosingBalance
+                var debitNormal = AccountingReportService.IsDebitNormal(x.NormalBalance);
+                var openingDebit = debitNormal
+                    ? Math.Max(x.OpeningBalance, 0m)
+                    : Math.Max(-x.OpeningBalance, 0m);
+                var openingCredit = debitNormal
+                    ? Math.Max(-x.OpeningBalance, 0m)
+                    : Math.Max(x.OpeningBalance, 0m);
+                var closingDebit = debitNormal
+                    ? Math.Max(x.ClosingBalance, 0m)
+                    : Math.Max(-x.ClosingBalance, 0m);
+                var closingCredit = debitNormal
+                    ? Math.Max(-x.ClosingBalance, 0m)
+                    : Math.Max(x.ClosingBalance, 0m);
+
+                return new TrialBalanceLineDto
+                {
+                    AccountId = x.AccountId.ToString(),
+                    AccountCode = x.AccountCode,
+                    AccountName = x.AccountName,
+                    AccountType = x.AccountType,
+                    NormalBalance = x.NormalBalance,
+                    OpeningDebit = openingDebit,
+                    OpeningCredit = openingCredit,
+                    Debit = x.PeriodDebits,
+                    Credit = x.PeriodCredits,
+                    ClosingDebit = closingDebit,
+                    ClosingCredit = closingCredit,
+                    Balance = x.ClosingBalance
+                };
             })
             .OrderBy(x => x.AccountCode)
             .ToList();
@@ -81,12 +99,13 @@ public class GetTrialBalanceHandler : IRequestHandler<GetTrialBalanceQry, TrialB
         var totalClosingCredit = lines.Sum(x => x.ClosingCredit);
         var difference = totalClosingDebit - totalClosingCredit;
 
+        var normalizedStartDate = AccountingReportService.NormalizeUtc(startDate).Date;
         var normalizedEndDate = AccountingReportService.NormalizeUtc(endDate).Date;
 
         return new TrialBalanceDto
         {
             AsOfDate = normalizedEndDate,
-            StartDate = AccountingReportService.NormalizeUtc(startDate).Date,
+            StartDate = normalizedStartDate,
             EndDate = normalizedEndDate,
             PeriodId = period?.Id,
             PeriodName = period?.Name,
