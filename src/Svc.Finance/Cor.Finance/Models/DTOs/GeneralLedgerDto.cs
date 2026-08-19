@@ -1,10 +1,13 @@
-// Models/DTOs/GeneralLedgerDto.cs
 namespace Cor.Finance.Models.DTOs;
 
 public class GeneralLedgerDto
 {
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
+    public Guid? PeriodId { get; set; }
+    public string? PeriodName { get; set; }
+    public Guid? BranchId { get; set; }
+    public Guid? AccountId { get; set; }
     public List<GeneralLedgerEntryDto> Entries { get; set; } = new();
     public decimal OpeningBalance { get; set; }
     public decimal ClosingBalance { get; set; }
