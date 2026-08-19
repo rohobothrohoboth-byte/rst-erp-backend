@@ -42,7 +42,7 @@ public class ChartOfAccounts : BaseEntity
     [MaxLength(10)]
     public string NormalBalance
     {
-        get => _normalBalance ?? GetDefaultNormalBalance(AccountType);
+        get => GetDefaultNormalBalance(AccountType);
         set => _normalBalance = NormalizeNormalBalance(value, AccountType);
     }
 
@@ -122,11 +122,9 @@ public class ChartOfAccounts : BaseEntity
 
     private static string NormalizeNormalBalance(string? value, string? accountType)
     {
-        if (string.Equals(value, "Debit", StringComparison.OrdinalIgnoreCase))
-            return "Debit";
-        if (string.Equals(value, "Credit", StringComparison.OrdinalIgnoreCase))
-            return "Credit";
-
+        // Normal balance is foundationally determined by AccountType.
+        // The persisted property remains for compatibility, but account type
+        // is the authoritative source for the normal-side classification.
         return GetDefaultNormalBalance(accountType);
     }
 }
