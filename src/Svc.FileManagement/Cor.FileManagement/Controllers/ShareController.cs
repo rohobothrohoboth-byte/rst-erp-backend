@@ -1,6 +1,7 @@
 // E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Controllers\ShareController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,7 @@ public class ShareController : ControllerBase
         return Guid.Parse(userIdClaim);
     }
 
+    [PerAuth(FlmPerm.Share)]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -60,6 +62,7 @@ public class ShareController : ControllerBase
         return Ok(ApiResponse<object>.Ok(result, "File shared successfully"));
     }
 
+    [PerAuth(FlmPerm.Share)]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -81,6 +84,7 @@ public class ShareController : ControllerBase
         return Ok(ApiResponse<object>.Ok(result, "Share updated successfully"));
     }
 
+    [PerAuth(FlmPerm.ShareRemove)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -98,6 +102,7 @@ public class ShareController : ControllerBase
         return Ok(ApiResponse<object>.Ok(result, "Share removed successfully"));
     }
 
+    [PerAuth(FlmPerm.ShareView)]
     [HttpGet("file/{documentId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFileShares(Guid documentId)
@@ -111,6 +116,7 @@ public class ShareController : ControllerBase
         return Ok(ApiResponse<object>.Ok(result));
     }
 
+    [PerAuth(FlmPerm.ShareView)]
     [HttpGet("user/{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserShares(Guid userId)
@@ -126,6 +132,7 @@ public class ShareController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/share/shared-with-me - Get files shared with current user
+    [PerAuth(FlmPerm.ShareView)]
     [HttpGet("shared-with-me")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSharedWithMe()
@@ -137,6 +144,7 @@ public class ShareController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/share/my-shares - Get files shared by current user
+    [PerAuth(FlmPerm.ShareView)]
     [HttpGet("my-shares")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyShares()
@@ -148,6 +156,7 @@ public class ShareController : ControllerBase
     }
 
     // ✅ GET /api/file/v1/share/folder/{folderId} - Get shares for a folder
+    [PerAuth(FlmPerm.ShareView)]
     [HttpGet("folder/{folderId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFolderShares(Guid folderId)

@@ -1,6 +1,7 @@
 ﻿using Contracts;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -28,40 +29,62 @@ public class HrmProfileClient : IHrmProfileClient
     private readonly string _servUrl;
     private readonly ILogger<HrmProfileClient>? _logger;
     private readonly GrpcChannel _channel;
+    private readonly IMemoryCache? _cache;
 
-   public HrmProfileClient(IConfiguration config, ILogger<HrmProfileClient>? logger = null)
+    private static readonly TimeSpan OkTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan FailTtl = TimeSpan.FromSeconds(8);
+
+   public HrmProfileClient(IConfiguration config, ILogger<HrmProfileClient>? logger = null, IMemoryCache? cache = null)
    {
+       _cache = cache;
        // ✅ Try multiple keys
        _servUrl = config["ServiceUrls:HrmProfileApi"]
            ?? config["ServiceUrls:HrmProApi"]
            ?? config["HrmProUrl"]
-           ?? throw new InvalidOperationException("HRM Profile Service Address not configured");
+           ?? "https://localhost:7004";
+       // Inter-service gRPC is same-host: connect over loopback, not the LAN IP.
+       _servUrl = GrpcTarget.Resolve(config, _servUrl);
 
        _logger = logger;
        _logger?.LogInformation($"🔗 Connecting to HRM Profile at: {_servUrl}");
 
        _channel = GrpcChannel.ForAddress(_servUrl, new GrpcChannelOptions
        {
-           HttpHandler = new HttpClientHandler
+           // Bound the connection attempt so an unreachable Profile service fails fast.
+           HttpHandler = new SocketsHttpHandler
            {
-               ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+               ConnectTimeout = TimeSpan.FromSeconds(1),
+               SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+               {
+                   RemoteCertificateValidationCallback = (_, _, _, _) => true
+               }
            }
        });
    }
       public async Task<HrmProResCodeList> GetEmpCodeList(CancellationToken ct = default)
         {
-            using var channel = GrpcChannel.ForAddress(_servUrl);
-            var client = new HrmProfileService.HrmProfileServiceClient(channel);
+            // Reuse the shared _channel, which is configured to accept the dev
+            // certificate. Creating a new GrpcChannel.ForAddress(_servUrl) here (as
+            // before) used default TLS validation and failed with
+            // RemoteCertificateNameMismatch against the self-signed dev cert.
+            var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            return await client.GetEmpCodeListAsync(req);
+            return await client.GetEmpCodeListAsync(req, cancellationToken: ct);
         }
 
  public async Task<EmpBasicInfoRes> GetEmpBasicInfo(string id, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_servUrl);
-        var client = new HrmProfileService.HrmProfileServiceClient(channel);
-        var req = new HrmProRqst { Id = id };
-        return await client.GetEmpBasicInfoAsync(req);
+        try
+        {
+            var client = new HrmProfileService.HrmProfileServiceClient(_channel);
+            var req = new HrmProRqst { Id = id };
+            return await client.GetEmpBasicInfoAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
+        }
+        catch (RpcException ex)
+        {
+            _logger?.LogError(ex, "gRPC error in GetEmpBasicInfo for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
+            return new EmpBasicInfoRes();
+        }
     }
     public async Task<HrmProResCode> GetEmpCode(string id, CancellationToken ct = default)
     {
@@ -74,7 +97,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpCode for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmProResCode();
         }
     }
  public async Task<HrmProListRes> GetEmpNameList(CancellationToken ct = default)
@@ -87,21 +110,27 @@ public class HrmProfileClient : IHrmProfileClient
      catch (RpcException ex)
      {
          _logger?.LogError(ex, "gRPC error in GetEmpNameList: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-         throw;
+         return new HrmProListRes();
      }
  }
+    private static bool IsEmptyId(string? id) =>
+        string.IsNullOrEmpty(id) || id == "00000000-0000-0000-0000-000000000000" || id == Guid.Empty.ToString();
+
     public async Task<HrmProRes> GetEmp(string id, CancellationToken ct = default)
     {
+        if (IsEmptyId(id)) { return new HrmProRes(); }
         try
         {
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProRqst { Id = id };
-            return await client.GetEmpAsync(req, cancellationToken: ct);
+            // Pass CancellationToken.None + a hard deadline so a slow call is bounded here and a
+            // client-cancellation can't trigger a retry/backoff storm from an outer policy.
+            return await client.GetEmpAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: CancellationToken.None);
         }
-        catch (RpcException ex)
+        catch (Exception ex)
         {
-            _logger?.LogError(ex, "gRPC error in GetEmp for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            _logger?.LogError(ex, "gRPC error in GetEmp for ID: {Id}", id);
+            return new HrmProRes();
         }
     }
 
@@ -109,14 +138,20 @@ public class HrmProfileClient : IHrmProfileClient
     {
         try
         {
+            const string key = "hrmpro:list:emp";
+            if (_cache != null && _cache.TryGetValue(key, out HrmProListRes? c) && c != null) return c;
             var client = new HrmProfileService.HrmProfileServiceClient(_channel);
             var req = new HrmProListRqst();
-            return await client.GetListEmpAsync(req, cancellationToken: ct);
+            var res = await client.GetListEmpAsync(req, deadline: DateTime.UtcNow.AddMilliseconds(1500), cancellationToken: ct);
+            _cache?.Set(key, res, OkTtl);
+            return res;
         }
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmp: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            var empty = new HrmProListRes();
+            _cache?.Set("hrmpro:list:emp", empty, FailTtl);
+            return empty;
         }
     }
 
@@ -131,7 +166,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetPosEmp for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new EmpPosRes();
         }
     }
 
@@ -146,7 +181,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmpPolicy: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmProListPlcy();
         }
     }
 
@@ -161,7 +196,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpPolicy for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmEmpPlcy();
         }
     }
 
@@ -176,7 +211,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetEmpId for ID: {Id}, Status: {Status}, Detail: {Detail}", id, ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmEmpId();
         }
     }
 
@@ -191,7 +226,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetListEmpId: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new HrmListEmpId();
         }
     }
 
@@ -206,7 +241,7 @@ public class HrmProfileClient : IHrmProfileClient
         catch (RpcException ex)
         {
             _logger?.LogError(ex, "gRPC error in GetAdminEmpList: {Status}, {Detail}", ex.StatusCode, ex.Status.Detail);
-            throw;
+            return new AdminEmpList();
         }
     }
 

@@ -1,4 +1,5 @@
 // Cor.Finance/Controllers/BankTransactionController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -33,6 +34,7 @@ public class BankTransactionController : BaseApiController
     /// Get all bank transactions with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(PaginatedResponse<BankTransactionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? bankAccountId = null,
@@ -84,6 +86,7 @@ public class BankTransactionController : BaseApiController
     /// Get bank transaction by ID
     /// </summary>
     [HttpGet("{id}")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(BankTransactionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -115,6 +118,7 @@ public class BankTransactionController : BaseApiController
     /// Get recent transactions (for dashboard)
     /// </summary>
     [HttpGet("Recent")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(List<BankTransactionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRecent(
         [FromQuery] Guid? bankAccountId = null,
@@ -147,6 +151,7 @@ public class BankTransactionController : BaseApiController
     /// Get transactions by period
     /// </summary>
     [HttpGet("ByPeriod/{periodId:guid}")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(List<BankTransactionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByPeriod(Guid periodId)
     {
@@ -174,6 +179,7 @@ public class BankTransactionController : BaseApiController
     /// Get transaction statistics
     /// </summary>
     [HttpGet("Stats")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(TransactionStatsDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? bankAccountId = null,
@@ -208,6 +214,7 @@ public class BankTransactionController : BaseApiController
     /// Get reconciliation summary
     /// </summary>
     [HttpGet("ReconciliationSummary")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(ReconciliationSummaryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetReconciliationSummary(
         [FromQuery] Guid? bankAccountId = null,
@@ -240,6 +247,7 @@ public class BankTransactionController : BaseApiController
     /// Get daily transaction summary
     /// </summary>
     [HttpGet("DailySummary")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(List<DailyTransactionSummaryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDailySummary(
         [FromQuery] Guid? bankAccountId = null,
@@ -274,6 +282,7 @@ public class BankTransactionController : BaseApiController
     /// Get transaction types
     /// </summary>
     [HttpGet("Types")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTransactionTypes()
     {
@@ -300,6 +309,7 @@ public class BankTransactionController : BaseApiController
     /// Export transactions
     /// </summary>
     [HttpGet("Export")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> Export(
         [FromQuery] Guid? bankAccountId = null,
@@ -357,6 +367,7 @@ public class BankTransactionController : BaseApiController
     /// Create a new bank transaction
     /// </summary>
     [HttpPost]
+    [PerAuth("fnm.cash.transaction.add")]
     [ProducesResponseType(typeof(BankTransactionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddBankTransactionDto dto)
@@ -408,6 +419,7 @@ public class BankTransactionController : BaseApiController
     /// Bulk reconcile transactions
     /// </summary>
     [HttpPost("BulkReconcile")]
+    [PerAuth("fnm.cash.transaction.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BulkReconcile([FromBody] BulkReconcileDto dto)
@@ -451,6 +463,7 @@ public class BankTransactionController : BaseApiController
     /// Update a bank transaction
     /// </summary>
     [HttpPut]
+    [PerAuth("fnm.cash.transaction.mod")]
     [ProducesResponseType(typeof(BankTransactionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -511,6 +524,7 @@ public class BankTransactionController : BaseApiController
     /// Reconcile a transaction
     /// </summary>
     [HttpPatch("{id}/reconcile")]
+    [PerAuth("fnm.cash.transaction.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -556,6 +570,7 @@ public class BankTransactionController : BaseApiController
     /// Void a transaction
     /// </summary>
     [HttpPatch("{id}/void")]
+    [PerAuth("fnm.cash.transaction.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -607,6 +622,7 @@ public class BankTransactionController : BaseApiController
     /// Delete a bank transaction
     /// </summary>
     [HttpDelete("{id}")]
+    [PerAuth("fnm.cash.transaction.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

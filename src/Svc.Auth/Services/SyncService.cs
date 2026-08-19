@@ -162,83 +162,69 @@ public class SyncService : ISyncService
     // SYNC DEPARTMENTS
     // ============================================================
 
-    public async Task SyncDepartmentAsync(DepartmentDto dept, CancellationToken ct = default)
-    {
-        try
-        {
-            using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync(ct);
+ public async Task SyncDepartmentAsync(DepartmentDto dept, CancellationToken ct = default)
+ {
+     try
+     {
+         using var connection = new NpgsqlConnection(_connectionString);
+         await connection.OpenAsync(ct);
 
-            // ✅ Validate BranchId
-            if (dept.BranchId == Guid.Empty)
-            {
-                // Try to find branch by name
-                if (!string.IsNullOrEmpty(dept.Branch))
-                {
-                    const string findBranchSql = @"
-                        SELECT ""Id"" FROM ""Branches""
-                        WHERE ""Name"" = @BranchName AND ""IsDeleted"" = false
-                        LIMIT 1";
+         // ✅ Branch መኖሩን ያረጋግጡ
+         var branchExists = await connection.ExecuteScalarAsync<int>(
+             "SELECT COUNT(1) FROM \"Branches\" WHERE \"Id\" = @BranchId AND \"IsDeleted\" = false",
+             new { BranchId = dept.BranchId });
 
-                    var foundBranchId = await connection.ExecuteScalarAsync<Guid?>(findBranchSql, new { BranchName = dept.Branch });
+         if (branchExists == 0)
+         {
+             // ❌ ስህተት አይጣሉ - በቀላሉ ይመለሱ
+             _logger.LogWarning("⚠️ Branch {BranchId} not found for Department {DepartmentId}. Skipping sync.",
+                 dept.BranchId, dept.Id);
+             return; // ✅ እዚህ በቀላሉ ይመለሱ
+         }
 
-                    if (foundBranchId != null)
-                    {
-                        dept.BranchId = foundBranchId.Value;
-                        _logger.LogInformation("🔍 Found branch by name: {BranchName} -> {BranchId}", dept.Branch, foundBranchId);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("⚠️ Branch '{BranchName}' not found, skipping Department {DepartmentId}", dept.Branch, dept.Id);
-                        return;
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("⚠️ Skipping Department {DepartmentId} - No BranchId and no Branch name", dept.Id);
-                    return;
-                }
-            }
+         // ✅ ዲፓርትመንቱን ሲንክ ያድርጉ
+         const string sql = @"
+             INSERT INTO ""Departments"" (""Id"", ""Name"", ""NameAm"", ""DeptStat"", ""BranchId"",
+                 ""DateAdd"", ""DateMod"", ""SyncedAt"", ""IsDeleted"")
+             VALUES (@Id, @Name, @NameAm, @DeptStat, @BranchId,
+                 @DateAdd, @DateMod, @SyncedAt, false)
+             ON CONFLICT (""Id"") DO UPDATE SET
+                 ""Name"" = EXCLUDED.""Name"",
+                 ""NameAm"" = EXCLUDED.""NameAm"",
+                 ""DeptStat"" = EXCLUDED.""DeptStat"",
+                 ""BranchId"" = EXCLUDED.""BranchId"",
+                 ""DateMod"" = EXCLUDED.""DateMod"",
+                 ""SyncedAt"" = EXCLUDED.""SyncedAt"",
+                 ""IsDeleted"" = false";
 
-            const string sql = @"
-                INSERT INTO ""Departments"" (""Id"", ""Name"", ""NameAm"", ""DeptStat"", ""BranchId"",
-                    ""DateAdd"", ""DateMod"", ""SyncedAt"", ""IsDeleted"")
-                VALUES (@Id, @Name, @NameAm, @DeptStat, @BranchId,
-                    @DateAdd, @DateMod, @SyncedAt, false)
-                ON CONFLICT (""Id"") DO UPDATE SET
-                    ""Name"" = EXCLUDED.""Name"",
-                    ""NameAm"" = EXCLUDED.""NameAm"",
-                    ""DeptStat"" = EXCLUDED.""DeptStat"",
-                    ""BranchId"" = EXCLUDED.""BranchId"",
-                    ""DateMod"" = EXCLUDED.""DateMod"",
-                    ""SyncedAt"" = EXCLUDED.""SyncedAt"",
-                    ""IsDeleted"" = false";
+         await connection.ExecuteAsync(sql, new
+         {
+             dept.Id,
+             dept.Name,
+             dept.NameAm,
+             dept.DeptStat,
+             dept.BranchId,
+             DateAdd = DateTime.UtcNow,
+             DateMod = DateTime.UtcNow,
+             SyncedAt = DateTime.UtcNow
+         });
 
-            await connection.ExecuteAsync(sql, new
-            {
-                dept.Id,
-                dept.Name,
-                dept.NameAm,
-                dept.DeptStat,
-                dept.BranchId,
-                DateAdd = DateTime.UtcNow,
-                DateMod = DateTime.UtcNow,
-                SyncedAt = DateTime.UtcNow
-            });
-
-            // ✅ Invalidate cache AFTER successful sync
-            await _cache.RemoveAsync($"department_{dept.Id}", ct);
-            await _cache.RemoveAsync("departments_all", ct);
-            await _cache.RemoveAsync($"departments_by_branch_{dept.BranchId}", ct);
-
-            _logger.LogInformation("✅ Synced Department: {DepartmentId} - {DepartmentName}", dept.Id, dept.Name);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to sync department: {DepartmentId}", dept.Id);
-            throw;
-        }
-    }
+         _logger.LogInformation("✅ Synced Department: {DepartmentId} - {DepartmentName}", dept.Id, dept.Name);
+     }
+     catch (Npgsql.PostgresException ex) when (ex.SqlState == "23503")
+     {
+         // Foreign key violation - Branch doesn't exist
+         // ✅ ስህተት አይጣሉ - በቀላሉ ይመዝግቡ
+         _logger.LogWarning(ex, "⚠️ Foreign key violation for department {DepartmentId}. Branch {BranchId} not found. Skipping.",
+             dept.Id, dept.BranchId);
+         // ✅ እዚህ ምንም አይጣሉ
+     }
+     catch (Exception ex)
+     {
+         _logger.LogError(ex, "❌ Failed to sync department: {DepartmentId}", dept.Id);
+         throw; // ✅ ሌሎች ስህተቶች ብቻ ይጣሉ
+     }
+ }
 
     // ============================================================
     // SYNC POSITIONS

@@ -36,7 +36,20 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
         try
         {
             var stat = BoolToStr.EnumToString(ReqStatus.Pending);
-            var dept = await _hrmProfile.GetEmpId(request.AddDto.RequistionById.ToString(), ct);
+
+            // Resolve the requisitioner's department via Profile gRPC, but do NOT let a
+            // transient cross-service failure block the plan insertion. Prefer the
+            // department sent from the client; fall back to the gRPC lookup; else Empty.
+            var deptId = request.AddDto.DepartmentId ?? Guid.Empty;
+            if (deptId == Guid.Empty && request.AddDto.RequistionById != Guid.Empty)
+            {
+                try
+                {
+                    var dept = await _hrmProfile.GetEmpId(request.AddDto.RequistionById.ToString(), ct);
+                    if (dept != null && Guid.TryParse(dept.DeptId, out var g)) deptId = g;
+                }
+                catch { /* Profile unavailable — proceed with Empty department */ }
+            }
 
             // ? Generate Plan Code
             var planCode = await GeneratePlanCode(ct);
@@ -51,13 +64,15 @@ public class WorkforcePlanAddHandler : IRequestHandler<WorkforcePlanAddCmd, Work
                 TotalPositions = request.AddDto.TotalPositions,
                 AppPositions = 0,
                 Status = stat,
-                DepartmentId = dept != null ? Guid.Parse(dept!.DeptId) : Guid.Empty,
+                DepartmentId = deptId,
                 PeriodId = request.AddDto.PeriodId,
                 RequistionById = request.AddDto.RequistionById,
                 Budget = request.AddDto.Budget,                                    // ? ADDED
                 BudgetCurrency = string.IsNullOrEmpty(request.AddDto.BudgetCurrency)
                     ? CurrencyConstants.ETB
-                    : request.AddDto.BudgetCurrency                               // ? ADDED
+                    : request.AddDto.BudgetCurrency,                              // ? ADDED
+                BudgetId = request.AddDto.BudgetId,
+                PlanDevBudgetId = request.AddDto.PlanDevBudgetId
             };
             await _uow.Add(data, ct);
             await _uow.Commit(ct);

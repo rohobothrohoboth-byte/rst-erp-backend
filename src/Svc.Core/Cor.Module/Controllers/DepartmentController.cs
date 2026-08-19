@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
@@ -18,6 +19,7 @@ namespace Cor.Module.Controllers;
 [ApiVersion("1.0")]
 public class DepartmentController(IMediator med) : ControllerBase
 {
+    [PerAuth("core.dept.view")]
     [HttpGet("AllDept")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllDept()
@@ -26,6 +28,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.dept.view")]
     [HttpGet("GetDept/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,6 +39,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.dept.add")]
     [HttpPost("AddDept")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -52,6 +56,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New DEPARTMENT successfully created."));
     }
     
+    [PerAuth("core.dept.mod")]
     [HttpPut("ModDept/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -70,6 +75,7 @@ public class DepartmentController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected DEPARTMENT successfully updated."));
     }
 
+    [PerAuth("core.dept.del")]
     [HttpDelete("DelDept/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

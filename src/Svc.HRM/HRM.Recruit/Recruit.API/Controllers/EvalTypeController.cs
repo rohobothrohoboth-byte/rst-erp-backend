@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class EvalTypeController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("AllEvalType")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEvalType()
@@ -26,6 +28,7 @@ public class EvalTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("GetEvalType/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,6 +39,7 @@ public class EvalTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("StatEvalType")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -52,6 +56,7 @@ public class EvalTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "EVALUATION TYPE status successfully changed."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("AddEvalType")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -68,6 +73,7 @@ public class EvalTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EVALUATION TYPE successfully created."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPut("ModEvalType/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -86,6 +92,7 @@ public class EvalTypeController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EVALUATION TYPE successfully updated."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpDelete("DelEvalType/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

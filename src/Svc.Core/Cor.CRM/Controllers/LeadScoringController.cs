@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/LeadScoringController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Interfaces;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -31,6 +32,7 @@ public class LeadScoringController : ControllerBase
     /// Get all score rules
     /// </summary>
     [HttpGet("Rules")]
+    [PerAuth("crm.settings.scoring.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRules()
     {
@@ -50,6 +52,7 @@ public class LeadScoringController : ControllerBase
     /// Get score rule by ID
     /// </summary>
     [HttpGet("Rule/{id:guid}")]
+    [PerAuth("crm.settings.scoring.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRule(Guid id)
@@ -72,6 +75,7 @@ public class LeadScoringController : ControllerBase
     /// Create a score rule
     /// </summary>
     [HttpPost("Rule")]
+    [PerAuth("crm.settings.scoring.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateRule([FromBody] CreateScoreRuleDto dto)
@@ -100,6 +104,7 @@ public class LeadScoringController : ControllerBase
     /// Update a score rule
     /// </summary>
     [HttpPut("Rule/{id:guid}")]
+    [PerAuth("crm.settings.scoring.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateRule(Guid id, [FromBody] UpdateScoreRuleDto dto)
@@ -128,6 +133,7 @@ public class LeadScoringController : ControllerBase
     /// Delete a score rule
     /// </summary>
     [HttpDelete("Rule/{id:guid}")]
+    [PerAuth("crm.settings.scoring.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteRule(Guid id)
@@ -149,6 +155,7 @@ public class LeadScoringController : ControllerBase
     /// Calculate score for a lead
     /// </summary>
     [HttpPost("Calculate/{leadId:guid}")]
+    [PerAuth("crm.settings.scoring.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CalculateScore(Guid leadId)
     {

@@ -16,7 +16,7 @@ public class RoleAllQryHandler : IRequestHandler<RoleAllQry, List<RoleListDto>>
     public Task<List<RoleListDto>> Handle(RoleAllQry request, CancellationToken cancellationToken)
     {
         var dbData = _roleManager.Roles.Where(r => r.Name != "admin").AsNoTracking().ToList();
-        var dataL = dbData.Select(data => new RoleListDto { Id = data.Id, Role = data.Desc }).ToList();
+        var dataL = dbData.Select(data => new RoleListDto { Id = data.Id, Role = string.IsNullOrWhiteSpace(data.Desc) ? data.Name! : data.Desc }).ToList();
         return Task.FromResult(dataL);
     }
 }
@@ -28,8 +28,7 @@ public class RoleByIdQryHandler : IRequestHandler<RoleByIdQry, RoleListDto?>
     public async Task<RoleListDto?> Handle(RoleByIdQry request, CancellationToken cancellationToken)
     {
         var data = await _roleManager.FindByIdAsync(request.Id);
-        if (data == null) { return null; }
-        var c = new RoleListDto { Id = data.Id, Role = data.Desc };
-        return c;
+        if (data == null) return null;
+        return new RoleListDto { Id = data.Id, Role = string.IsNullOrWhiteSpace(data.Desc) ? data.Name! : data.Desc };
     }
 }

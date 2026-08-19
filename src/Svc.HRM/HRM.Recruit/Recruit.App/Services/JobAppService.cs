@@ -7,6 +7,7 @@ using Recruit.Domain.Entities;
 
 namespace Recruit.App.Services;
 
+
 public interface IJobAppService
 {
     Task<JobAppIdDto?> GetJobAppId(Guid Id, CancellationToken ctx);

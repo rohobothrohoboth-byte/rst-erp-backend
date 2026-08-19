@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpModController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpModBasic/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -28,6 +30,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Basic Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpModBio/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,6 +40,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Biographical Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpModGuar/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -46,6 +50,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Guarantor Info NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpCertAll/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -55,6 +60,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return response == null ? Ok(ApiResponse<object>.Fail("EMPLOYEE'S Certificates NOT FOUND.", null, 404)) : Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpCertById/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -70,6 +76,7 @@ public class EmpModController(IMediator med) : ControllerBase
     }
 
     // Mods
+    [PerAuth("hr.emp.mod")]
     [HttpPut("EmpBasicMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -87,6 +94,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Basic Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("EmpBioMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -104,6 +112,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Biographical Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("EmpGuarMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -121,6 +130,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Guarantor Info successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("EmpStamp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -138,6 +148,7 @@ public class EmpModController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Stamp File successfully Stored."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("EmpSign/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

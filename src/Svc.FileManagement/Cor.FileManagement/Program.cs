@@ -1,4 +1,4 @@
-// E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Program.cs
+ // E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Program.cs
 
 using Cor.FileManagement.Persistence;
 using Cor.FileManagement.Services;
@@ -10,6 +10,7 @@ using Serilog;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Common;
@@ -89,11 +90,11 @@ var fileApiUrl = builder.Configuration["ServiceUrls:FileApi"] ?? "https://localh
 // Extract port from URL
 var filePort = new Uri(fileApiUrl).Port;
 Console.WriteLine($"📡 File Management Service Port: {filePort}");
-
+/*
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, filePort, listenOptions => listenOptions.UseHttps());
-});
+    options.Listen(IPAddress.Any, 80);  // Force port 80 (HTTP)
+});  // DISABLED*/
 
 // ✅ Add this for graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -339,6 +340,11 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser());
 });
 
+// Enable [PerAuth("permission")] enforcement (checks the JWT `ph` bitmask against
+// the shared Common.Permissions registry).
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
+
 // ✅ Register Services
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IFileValidationService, FileValidationService>();
@@ -392,7 +398,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// // // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker // Disabled for Docker
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -405,3 +411,5 @@ app.MapHealthChecks("/health");
 
 // ============ RUN THE APP ============
 app.Run();
+
+

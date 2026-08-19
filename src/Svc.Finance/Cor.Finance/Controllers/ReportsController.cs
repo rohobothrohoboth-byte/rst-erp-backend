@@ -1,3 +1,4 @@
+using Common;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
 using MediatR;
@@ -26,6 +27,7 @@ public class ReportsController : BaseApiController
     /// Get Income Statement
     /// </summary>
     [HttpGet("IncomeStatement")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(IncomeStatementDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetIncomeStatement(
         [FromQuery] DateTime startDate,
@@ -63,6 +65,7 @@ public class ReportsController : BaseApiController
     /// Get Balance Sheet
     /// </summary>
     [HttpGet("BalanceSheet")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(BalanceSheetDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBalanceSheet(
         [FromQuery] DateTime asOfDate,
@@ -91,6 +94,7 @@ public class ReportsController : BaseApiController
     /// Get Cash Flow Statement
     /// </summary>
     [HttpGet("CashFlow")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(CashFlowStatementDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCashFlow(
         [FromQuery] DateTime startDate,
@@ -128,6 +132,7 @@ public class ReportsController : BaseApiController
     /// Get Expense Report
     /// </summary>
     [HttpGet("ExpenseReport")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(ExpenseReportDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetExpenseReport(
         [FromQuery] DateTime startDate,
@@ -167,6 +172,7 @@ public class ReportsController : BaseApiController
     /// Get Budget vs Actual
     /// </summary>
     [HttpGet("BudgetVsActual")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(BudgetVsActualDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBudgetVsActual(
         [FromQuery] Guid budgetId,
@@ -195,6 +201,7 @@ public class ReportsController : BaseApiController
     /// Get Trial Balance
     /// </summary>
     [HttpGet("TrialBalance")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(TrialBalanceDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTrialBalance(
         [FromQuery] DateTime asOfDate,
@@ -223,6 +230,7 @@ public class ReportsController : BaseApiController
     /// Get General Ledger
     /// </summary>
     [HttpGet("GeneralLedger")]
+    [PerAuth("fnm.reports.view")]
     [ProducesResponseType(typeof(GeneralLedgerDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetGeneralLedger(
         [FromQuery] DateTime startDate,

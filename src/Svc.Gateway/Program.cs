@@ -9,7 +9,8 @@ using Shared.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Load shared configuration FIRST
+
+ // ✅ Load shared configuration FIRST
 var sharedConfigPath = Path.Combine(AppContext.BaseDirectory, "appsettings.shared.json");
 if (File.Exists(sharedConfigPath))
 {
@@ -55,18 +56,20 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Force HTTP on port 5000 and HTTPS on 5001
+/*// ✅ FIXED: Use HTTP only (no HTTPS certificate needed)
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, 5000, listenOptions =>
-    {
-        // HTTP
-    });
-    options.Listen(IPAddress.Any, 5001, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    // ✅ Only HTTP on port 80 (or 5000 in container)
+    options.Listen(IPAddress.Any, 80);  // ← This is the fix!
+
+    // ❌ REMOVE this HTTPS listener:
+    // options.Listen(IPAddress.Any, 5001, listenOptions =>
+    // {
+    //     // HTTPS disabled for Docker;
+    // });
+*//*
+ // DISABLED
+});*/
 
 builder.AddServiceDefaults();
 
@@ -75,7 +78,7 @@ builder.Services.AddSvcNotification(builder.Configuration);
 builder.Services.AddSvcTask(builder.Configuration);
 
 // ========== REGISTER NOTIFICATION HTTP CLIENT ==========
-var notificationServiceUrl = builder.Configuration["ServiceUrls:NotificationApi"] ?? "https://localhost:7007";
+var notificationServiceUrl = builder.Configuration["ServiceUrls:NotificationApi"] ?? "http://notification";
 builder.Services.AddHttpClient<Svc.Task.Services.INotificationService, Svc.Task.Services.NotificationServiceClient>(client =>
 {
     client.BaseAddress = new Uri(notificationServiceUrl);
@@ -83,11 +86,9 @@ builder.Services.AddHttpClient<Svc.Task.Services.INotificationService, Svc.Task.
 });
 
 // ========== REVERSE PROXY WITH SSL TRUST ==========
-// ✅ Add Reverse Proxy with custom HTTP client configuration
 var reverseProxyBuilder = builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-// ✅ Configure the HTTP client for the reverse proxy
 reverseProxyBuilder.Services.ConfigureHttpClientDefaults(http =>
 {
     http.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
@@ -134,7 +135,6 @@ var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<List<strin
         "http://localhost:5000"
     };
 
-// ✅ Also resolve Cors:AllowedOrigins if exists
 var corsAllowed = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<List<string>>();
 if (corsAllowed != null && corsAllowed.Any())
 {
@@ -169,3 +169,6 @@ app.MapReverseProxy();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+
+

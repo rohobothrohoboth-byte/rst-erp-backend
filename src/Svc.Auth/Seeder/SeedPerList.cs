@@ -29,18 +29,20 @@ public static class SeedPerList
 
     public static IEnumerable<PerModule> GetPerModule()
     {
+        // Keep Icon/Order in sync with GetPerModuleDtos so seeded modules
+        // have proper sidebar icons and ordering.
         return new List<PerModule>
         {
-            new() { Key = "mod.core", Desc = "Core System Management" },
-            new() { Key = "mod.hrm", Desc = "Human Resource Management" },
-            new() { Key = "mod.fnm", Desc = "Financial Management" },
-            new() { Key = "mod.inv", Desc = "Inventory Management" },
-            new() { Key = "mod.crm", Desc = "Customer Relationship Management" },
-            new() { Key = "mod.pro", Desc = "Procurement Management" },
-            new() { Key = "mod.pld", Desc = "Plan & Development" },
-            new() { Key = "mod.prm", Desc = "Project Management" },
-            new() { Key = "mod.flm", Desc = "File Management" },
-            new() { Key = "mod.rpt", Desc = "Reports & Analytics" }
+            new() { Key = "mod.core", Desc = "Core System Management", Icon = "Settings", Order = 1 },
+            new() { Key = "mod.hrm", Desc = "Human Resource Management", Icon = "Users", Order = 2 },
+            new() { Key = "mod.fnm", Desc = "Financial Management", Icon = "DollarSign", Order = 3 },
+            new() { Key = "mod.inv", Desc = "Inventory Management", Icon = "Package", Order = 4 },
+            new() { Key = "mod.crm", Desc = "Customer Relationship Management", Icon = "Heart", Order = 5 },
+            new() { Key = "mod.pro", Desc = "Procurement Management", Icon = "ShoppingCart", Order = 6 },
+            new() { Key = "mod.pld", Desc = "Plan & Development", Icon = "Target", Order = 7 },
+            new() { Key = "mod.prm", Desc = "Project Management", Icon = "Briefcase", Order = 8 },
+            new() { Key = "mod.flm", Desc = "File Management", Icon = "Folder", Order = 9 },
+            new() { Key = "mod.rpt", Desc = "Reports & Analytics", Icon = "BarChart", Order = 10 }
         };
     }
 

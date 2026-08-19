@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Queries;
 using MediatR;
@@ -17,6 +18,7 @@ namespace Leave.API.Controllers;
 public class LeaveReqDbController(IMediator med) : ControllerBase
 {
     [HttpGet("PendList")]
+    [PerAuth("leave.approve.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PendList()
     {
@@ -25,6 +27,7 @@ public class LeaveReqDbController(IMediator med) : ControllerBase
     }
 
      [HttpGet("OnLeaveList")]
+     [PerAuth("leave.approve.view")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> OnLeaveList()
         {

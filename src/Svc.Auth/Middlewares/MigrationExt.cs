@@ -1,3 +1,4 @@
+using Common;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -160,6 +161,25 @@ public static class MigrationExt
          var seedItems = SeedPerList.GetPerMenu().ToList();
          logger.LogInformation($"Found {seedItems.Count} menus in seed data");
 
+         // Prune stale menus: soft-delete active menus that are no longer defined
+         // in the seeder. This removes leftovers/duplicates from older seeder
+         // versions (e.g. renamed leave menus) that would otherwise keep showing
+         // in the sidebar because seeding only ever adds, never removes.
+         var seedKeys = seedItems.Select(x => x.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+         var activeMenus = await dbContext.PerMenu.Where(m => !m.IsDeleted).ToListAsync();
+         var staleMenus = activeMenus.Where(m => !seedKeys.Contains(m.Key)).ToList();
+         if (staleMenus.Count > 0)
+         {
+             foreach (var stale in staleMenus)
+             {
+                 stale.IsDeleted = true;
+                 stale.DateMod = DateTime.UtcNow;
+                 logger.LogWarning($"Pruned stale menu not in seed list: {stale.Key} ({stale.Label})");
+             }
+             await dbContext.SaveChangesAsync();
+             logger.LogInformation($"Pruned {staleMenus.Count} stale menu(s) not present in the seed list");
+         }
+
          var itemsToProcess = seedItems
              .Where(x => !existingKeys.Contains(x.Key))
              .ToList();
@@ -248,6 +268,56 @@ public static class MigrationExt
       }
   }
 
+
+    // Initialize the in-memory permission registry (PermissionMap.IndexMap) from
+    // the seeded permission keys so the JWT `ph` bitmask and [PerAuth] policies
+    // cover every real permission, not just the legacy static list. Keys are
+    // ordered deterministically so bit indices are stable across restarts.
+    public static async Task InitializePermissionRegistry(this IApplicationBuilder app)
+    {
+        using var scope = app.ApplicationServices.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            if (!await dbContext.Database.CanConnectAsync())
+            {
+                logger.LogWarning("Cannot connect to database for permission registry init");
+                return;
+            }
+
+            // The registry is now a static single source of truth in
+            // Common.Permissions.All (shared by every service). Do NOT re-init
+            // from the DB (that would re-order indices and diverge from other
+            // services). Instead, verify the DB/seeder hasn't drifted from it.
+            var dbKeys = await dbContext.PerApi
+                .Where(a => !a.IsDeleted)
+                .Select(a => a.Key)
+                .ToListAsync();
+
+            var staticSet = new HashSet<string>(PermissionMap.OrderedKeys, StringComparer.Ordinal);
+            var dbSet = new HashSet<string>(dbKeys, StringComparer.Ordinal);
+
+            var missingFromStatic = dbKeys.Where(k => !staticSet.Contains(k)).Distinct().ToList();
+            var missingFromDb = PermissionMap.OrderedKeys.Where(k => !dbSet.Contains(k)).ToList();
+
+            logger.LogInformation($"Permission registry (static) has {PermissionMap.IndexMap.Count} keys");
+
+            if (missingFromStatic.Count > 0)
+            {
+                logger.LogWarning($"⚠️ {missingFromStatic.Count} seeded permission key(s) are NOT in Common.Permissions.All — regenerate it so enforcement stays consistent. Examples: {string.Join(", ", missingFromStatic.Take(20))}");
+            }
+            if (missingFromDb.Count > 0)
+            {
+                logger.LogInformation($"{missingFromDb.Count} registry key(s) are not present in the DB (legacy or not-yet-seeded).");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error checking permission registry drift");
+        }
+    }
 
     // Helper method to seed everything in the correct order
     public static async Task SeedAllPermissions(this IApplicationBuilder app)

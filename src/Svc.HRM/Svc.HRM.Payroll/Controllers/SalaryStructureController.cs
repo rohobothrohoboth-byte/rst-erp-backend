@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 namespace Svc.HRM.Payroll.Controllers;
 
 [ApiController]
@@ -20,6 +21,7 @@ public class SalaryStructureController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth(PayPerm.StructureView)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var structures = await _payrollService.GetAllSalaryStructuresAsync(ct);
@@ -27,6 +29,7 @@ public class SalaryStructureController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [PerAuth(PayPerm.StructureView)]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var structure = await _payrollService.GetSalaryStructureAsync(id, ct);
@@ -34,6 +37,7 @@ public class SalaryStructureController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth(PayPerm.StructureManage)]
     public async Task<IActionResult> Create([FromBody] SalaryStructureCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.CreateSalaryStructureAsync(dto, ct);
@@ -41,6 +45,7 @@ public class SalaryStructureController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [PerAuth(PayPerm.StructureManage)]
     public async Task<IActionResult> Update(Guid id, [FromBody] SalaryStructureCreateDto dto, CancellationToken ct)
     {
         var result = await _payrollService.UpdateSalaryStructureAsync(id, dto, ct);
@@ -48,6 +53,7 @@ public class SalaryStructureController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [PerAuth(PayPerm.StructureManage)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _payrollService.DeleteSalaryStructureAsync(id, ct);

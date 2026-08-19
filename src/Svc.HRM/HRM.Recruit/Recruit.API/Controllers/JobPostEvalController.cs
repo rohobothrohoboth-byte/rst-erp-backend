@@ -1,8 +1,10 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Recruit.App.Commands;
+using Recruit.App.Queries;
 using Recruit.Domain.DTOs;
 using System.Security.Claims;
 
@@ -18,6 +20,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobPostEvalController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.evaluation.view")]
     [HttpGet("JpStartEval/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -28,6 +31,7 @@ public class JobPostEvalController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"Successfully STARTED EVALUATION for this JOB POSTING."));
     }
 
+    [PerAuth("hr.recruit.evaluation.manage")]
     [HttpPost("JpAppEvaluate")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -51,7 +55,15 @@ public class JobPostEvalController(IMediator med) : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, $"EVALUATION Successfully submitted for JOB APPLICATION."));
     }
 
-
-
-
+    [PerAuth("hr.recruit.evaluation.view")]
+    [HttpGet("GetProgress/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProgress(Guid id)
+    {
+        var res = await med.Send(new JobAppEvalProgressQry { JobAppId = id });
+        return res == null
+            ? Ok(ApiResponse<object>.Fail("JOB APPLICATION NOT FOUND.", null, 404))
+            : Ok(ApiResponse<object>.Ok(res));
+    }
 }

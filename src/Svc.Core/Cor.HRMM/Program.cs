@@ -15,7 +15,9 @@ using Cor.HRMM.Repos;
 using Shared.Helpers.Extensions;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
-using Cor.HRMM.Authentication;
+using Shared.Helpers.ExternalAccess;
+using Shared.Helpers.Audit;
+using Cor.HRMM.Persistence;
 using Cor.HRMM.Middleware;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -24,7 +26,7 @@ using Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -73,52 +75,12 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var coreHrmmPortString = builder.Configuration["ServiceUrls:CoreHRMMApi"] ?? "https://localhost:7001";
-var coreHrmmPort = new Uri(coreHrmmPortString).Port;
-Console.WriteLine($"📡 Core HRMM Service Port: {coreHrmmPort}");
-
-// ✅ KESTREL CONFIGURATION
+/*// ✅ Configure Kestrel - Force port 80 inside container
 builder.WebHost.ConfigureKestrel(options =>
 {
-    var isProduction = environment == "Production";
-
-    Console.WriteLine($"🔧 Configuring Kestrel for {environment} environment...");
-
-    if (isProduction)
-    {
-        var certPath = builder.Configuration["Certificate:Path"] ?? "Certificates/prod-certificate.pfx";
-        var certPassword = builder.Configuration["Certificate:Password"] ?? "YourSecurePassword123!";
-
-        if (File.Exists(certPath))
-        {
-            try
-            {
-                var certificate = new X509Certificate2(certPath, certPassword);
-                Console.WriteLine("✅ Production certificate loaded");
-                options.Listen(IPAddress.Any, coreHrmmPort, listenOptions =>
-                {
-                    listenOptions.UseHttps(certificate);
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error loading certificate: {ex.Message}");
-                options.Listen(IPAddress.Any, coreHrmmPort, listenOptions => listenOptions.UseHttps());
-            }
-        }
-        else
-        {
-            Console.WriteLine("⚠️ Production certificate not found, using development certificate");
-            options.Listen(IPAddress.Any, coreHrmmPort, listenOptions => listenOptions.UseHttps());
-        }
-    }
-    else
-    {
-        options.Listen(IPAddress.Any, coreHrmmPort, listenOptions => listenOptions.UseHttps());
-        Console.WriteLine("✅ Development certificate configured");
-    }
-});
+    options.Listen(IPAddress.Any, 80);  // ✅ Always port 80 inside container
+    Console.WriteLine($"✅ Kestrel listening on HTTP port 80");
+});   // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -136,12 +98,22 @@ string GetConfig(string key, string? defaultValue = null)
     return string.Empty;
 }
 
-// ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+// ============= SERVICE URLS - FIXED =============
+/*// ✅ USE HTTP AND DOCKER SERVICE NAMES*//*
+var CorModUrl = "http://core-module";
+var authUrl = "http://auth";
+var hrmProUrl = "http://hrm-profile";
+var financeApiUrl = "http://finance";
+var gatewayApiUrl = "http://gateway";*/
+
+// ✅ CORRECT - With ports
+// ✅ This works in Aspire
+// ✅ This works
+var CorModUrl = "http://192.168.1.2:7002";
+var authUrl = "http://192.168.1.2:7000";
+var hrmProUrl = "http://192.168.1.2:7004";
+var financeApiUrl = "http://192.168.1.2:7008";
+var gatewayApiUrl = "http://192.168.1.2:5000";
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -269,17 +241,17 @@ else
     Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
 }
 
-// ============= SSL BYPASS HANDLER =============
-var sslHandler = new HttpClientHandler
+// ============= HTTP CLIENT HANDLER - FIXED =============
+// ✅ Use HTTP handler WITHOUT SSL bypass
+var httpHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
     MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
 // ============= HTTP CLIENTS =============
 
-// Core Module API
+// Core Module API - FIXED
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(client =>
 {
     client.BaseAddress = new Uri(CorModUrl);
@@ -288,10 +260,10 @@ builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(clie
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "CoreHRMMService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
-// Auth API
+// Auth API - FIXED
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
     client.BaseAddress = new Uri(authUrl);
@@ -300,7 +272,7 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "CoreHRMMService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
 // ============= POLLY RETRY POLICIES =============
@@ -328,7 +300,7 @@ builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>()
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>()
     .AddPolicyHandler(retryPolicy);
 
-// ============= RABBITMQ =============
+// ============ RABBITMQ REGISTRATION =============
 var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
 var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
 var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
@@ -359,7 +331,7 @@ builder.Services.AddHostedService<InitialSyncService>();
 builder.Services.AddHostedService<CacheWarmupService>();
 builder.Services.AddScoped<IDbExceptionTranslator, DbExceptionTranslator>();
 
-// ============= HEALTH CHECKS =============
+// ============= HEALTH CHECKS - FIXED =============
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{CorModUrl}/health"), "Core Module API")
     .AddCheck<SyncHealthCheck>("Sync Status")
@@ -427,14 +399,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ============= API KEY AUTHENTICATION =============
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+// ============= API KEY AUTHENTICATION (shared) =============
+builder.Services.AddExternalSystemAccess<coreHRMMDbContext>(builder.Configuration);
+// ============= AUDIT (shared) =============
+builder.Services.AddSharedAudit<coreHRMMDbContext>();
 builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
 
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============= BUILDER EXTENSIONS =============
 builder.AddApiServices()
@@ -449,7 +421,7 @@ app.UseMiddleware<ApiKeyRateLimiterMiddleware>();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // ✅ DISABLED FOR DOCKER
 app.UseRateLimiter();
 app.UseCors("AllowAll");
 app.MapGrpcService<CorHrmmListService>();
@@ -463,6 +435,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSharedAudit();
 app.MapControllers();
 
 app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
@@ -486,7 +459,7 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
     }
 });
 
-Console.WriteLine($"\n✅ Core HRMM Service starting on https://0.0.0.0:{coreHrmmPort}");
+Console.WriteLine($"\n✅ Core HRMM Service starting on http://0.0.0.0:80");
 Console.WriteLine($"🔗 Auth URL: {authUrl}");
 Console.WriteLine($"🔗 Core Module URL: {CorModUrl}");
 Console.WriteLine($"🔑 API Key authentication enabled");
@@ -575,3 +548,5 @@ public class CertificateHealthCheck : IHealthCheck
         }
     }
 }
+
+

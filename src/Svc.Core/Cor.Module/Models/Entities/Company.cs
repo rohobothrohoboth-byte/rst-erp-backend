@@ -9,7 +9,17 @@ public class Company : BaseEntity
         public string? Phone { get; set; }
         public string? Email { get; set; }
         public string? Address { get; set; }
+        public string? Website { get; set; }
         public string? LogoUrl { get; set; }
+        // Official company stamp/seal image, used on printed reports and letters.
+        public string? StampUrl { get; set; }
+
+        // Organization identity / profile
+        public string? Motto { get; set; }
+        public string? Mission { get; set; }
+        public string? Vision { get; set; }
+        public string? Values { get; set; }
+        public string? Structure { get; set; }
 
        public ICollection<Branch> Branches { get; set; } = new List<Branch>();
 }

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
@@ -16,17 +17,23 @@ namespace Cor.Module.Controllers;
 [ApiController]
 [Route("api/core/module/v{version:apiVersion}/Branch")]
 [ApiVersion("1.0")]
-public class BranchController(IMediator med) : ControllerBase
+public class BranchController(IMediator med, ILogger<BranchController> logger) : ControllerBase
 {
+
+
+
+    [PerAuth("core.branch.view")]
     [HttpGet("AllBranch")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBranch()
     {
+        logger.LogInformation("🔍 AllBranch endpoint called");
         var response = await med.Send(new AllBranchesQry());
         //return Ok(response);
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.branch.view")]
     [HttpGet("GetBranch/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -40,6 +47,7 @@ public class BranchController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Branches by CompanyId
     /// </summary>
+    [PerAuth("core.branch.view")]
     [HttpGet("BranchComp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CompBranches(Guid id)
@@ -48,6 +56,7 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.branch.add")]
     [HttpPost("AddBranch")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -64,6 +73,7 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New BRANCH successfully created."));
     }
     
+    [PerAuth("core.branch.mod")]
     [HttpPut("ModBranch/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -82,6 +92,7 @@ public class BranchController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected BRANCH successfully updated."));
     }
 
+    [PerAuth("core.branch.del")]
     [HttpDelete("DelBranch/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

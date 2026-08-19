@@ -25,6 +25,7 @@ public class Step1Dto
     public Guid JgStepId { get; set; } = default!; //Cor.HRMM.JgStep
     public Guid PositionId { get; set; } = default!; //Cor.HRMM.Position
     public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department
+    public Guid? ReportsToId { get; set; } //HRM.Profile.Employee (direct manager / boss)
     public string EmploymentType { get; set; } = default!; //enum.EmpType (0/1)
     public string EmploymentNature { get; set; } = default!; //enum.EmpNature (0/1)
     public string WorkArrangement { get; set; } = default!; //enum.WorkArrangement (0/1)

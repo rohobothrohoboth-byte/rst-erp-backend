@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+ // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -63,18 +63,15 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
+// ✅ Configure Kestrel - HTTP Only
 var recruitPortString = builder.Configuration["ServiceUrls:HRMRecruitApi"] ?? "https://localhost:7005";
 var recruitPort = new Uri(recruitPortString).Port;
 Console.WriteLine($"📡 Recruit Service Port: {recruitPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, recruitPort, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    options.Listen(IPAddress.Any, recruitPort);  // ✅ No HTTPS!
+});  // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -93,12 +90,12 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -106,7 +103,7 @@ var hrmmApiKey = GetConfig("ApiKeys:CoreHRMM", "core_module_secret_key_2024");
 var profileApiKey = GetConfig("ApiKeys:ProfileModule", "profile_module_secret_key_2024");
 
 // ============= DATABASE =============
-var dbConnectionString = GetConfig("ConnectionStrings:RecruitDbCon", null);
+var dbConnectionString = GetConfig("ConnectionStrings:HRMRecruitDbCon", null);
 
 if (string.IsNullOrEmpty(dbConnectionString))
 {
@@ -172,6 +169,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Backing store for the gRPC master-data caches (departments/positions/employees/…),
+// so recruitment lists don't hit Core Module/HRMM/Profile on every request.
+builder.Services.AddMemoryCache();
+
 // ================================================================
 // ✅ CORS CONFIGURATION
 // ================================================================
@@ -205,11 +206,13 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            policy.WithOrigins(resolvedOrigins)
+            // Reflect the caller's origin so any LAN host/IP works (self-hosted setup),
+            // while still permitting credentials (AllowAnyOrigin cannot be combined with them).
+            policy.SetIsOriginAllowed(_ => true)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-            Console.WriteLine($"✅ CORS: Allowed origins: {string.Join(", ", resolvedOrigins)}");
+            Console.WriteLine($"✅ CORS: reflecting request origin (configured: {string.Join(", ", resolvedOrigins)})");
         }
     });
 });
@@ -263,7 +266,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // DISABLED FOR DOCKER
 
 if (app.Environment.IsDevelopment())
 {
@@ -286,3 +289,5 @@ Console.WriteLine("📊 Debug logging is ENABLED");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+

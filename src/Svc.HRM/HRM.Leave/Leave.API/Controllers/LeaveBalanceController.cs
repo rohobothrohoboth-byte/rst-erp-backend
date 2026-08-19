@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Queries;
 using MediatR;
@@ -24,6 +25,7 @@ public class LeaveBalanceController : ControllerBase
     }
 
     [HttpGet("MyBalance")]
+    [PerAuth("leave.balance.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyBalance()
     {
@@ -35,6 +37,7 @@ public class LeaveBalanceController : ControllerBase
     }
 
     [HttpGet("Employee/{employeeId:guid}")]
+    [PerAuth("leave.balance.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEmployeeBalance(Guid employeeId)
@@ -45,6 +48,7 @@ public class LeaveBalanceController : ControllerBase
 
     // Optional: Get all active policies for employee
     [HttpGet("MyPolicies")]
+    [PerAuth("leave.balance.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyPolicies()
     {

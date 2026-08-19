@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class AddEmpController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.add")]
     [HttpPost("Step1")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -35,6 +37,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE successfully created."));
     }
 
+    [PerAuth("hr.emp.add")]
     [HttpPost("Step2")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -51,6 +54,7 @@ public class AddEmpController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New EMPLOYEE successfully created."));
     }
 
+    [PerAuth("hr.emp.view")]
     [HttpGet("EmpAddPrint/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

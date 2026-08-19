@@ -1,4 +1,5 @@
 // Controllers/AssetsController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -35,6 +36,7 @@ namespace Cor.Finance.Controllers
         }
 
      [HttpGet]
+     [PerAuth("fnm.assets.register.view")]
      [ProducesResponseType(typeof(List<AssetDto>), StatusCodes.Status200OK)]
      [ProducesResponseType(StatusCodes.Status500InternalServerError)]
      public async Task<IActionResult> GetAssets(
@@ -127,6 +129,7 @@ namespace Cor.Finance.Controllers
 
         // ✅ Helper method to clear cache
         [HttpPost("ClearCache")]
+        [PerAuth("fnm.assets.register.view")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> ClearCache()
         {
@@ -151,6 +154,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpGet("{id}")]
+        [PerAuth("fnm.assets.register.view")]
         [ProducesResponseType(typeof(AssetDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAssetById(Guid id)
@@ -189,6 +193,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpGet("ByBranch/{branchId}")]
+        [PerAuth("fnm.assets.register.view")]
         [ProducesResponseType(typeof(List<AssetDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAssetsByBranch(Guid branchId)
         {
@@ -222,6 +227,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpGet("ByDepartment/{departmentId}")]
+        [PerAuth("fnm.assets.register.view")]
         [ProducesResponseType(typeof(List<AssetDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAssetsByDepartment(Guid departmentId)
         {
@@ -255,6 +261,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpGet("ByEmployee/{employeeId}")]
+        [PerAuth("fnm.assets.register.view")]
         [ProducesResponseType(typeof(List<AssetDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAssetsByEmployee(Guid employeeId)
         {
@@ -288,6 +295,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpPost]
+        [PerAuth("fnm.assets.register.add")]
         [ProducesResponseType(typeof(AssetDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateAsset([FromBody] CreateAssetDto dto)
@@ -320,6 +328,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpPut]
+        [PerAuth("fnm.assets.register.mod")]
         [ProducesResponseType(typeof(AssetDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -354,6 +363,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpPatch("{id}/toggle-status")]
+        [PerAuth("fnm.assets.register.mod")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ToggleAssetStatus(Guid id)
@@ -377,6 +387,7 @@ namespace Cor.Finance.Controllers
         }
 
         [HttpDelete("{id}")]
+        [PerAuth("fnm.assets.register.del")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteAsset(Guid id)

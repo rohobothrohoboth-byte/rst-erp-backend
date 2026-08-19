@@ -37,3 +37,29 @@ public class JpAppEvalDto
     public double Score { get; set; }
     public string Feedback { get; set; } = default!;
 }
+
+public class EvalScoreHistDto
+{
+    public Guid StepId { get; set; }
+    public string StepName { get; set; } = default!;
+    public int StepOrder { get; set; }
+    public double Score { get; set; }
+    public string? Feedback { get; set; }
+}
+
+public class JobAppEvalProgressDto
+{
+    public Guid JobAppId { get; set; }
+    public bool IsStarted { get; set; }
+    public bool IsCompleted { get; set; }
+    public string AppStatus { get; set; } = default!; // JobApplication.Status
+    public Guid CurrentStepId { get; set; }
+    public string CurrentStepName { get; set; } = default!;
+    public int CurrentStepOrder { get; set; }
+    public double MinScore { get; set; }
+    public double MaxScore { get; set; }
+    public bool IsFinal { get; set; }
+    public int TotalSteps { get; set; }
+    public int CompletedSteps { get; set; }
+    public List<EvalScoreHistDto> Scores { get; set; } = new();
+}

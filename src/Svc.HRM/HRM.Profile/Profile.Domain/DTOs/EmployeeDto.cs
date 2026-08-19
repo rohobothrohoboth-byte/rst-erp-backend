@@ -42,6 +42,7 @@ public class EmployeeJoinRow
     public Guid DepartmentId { get; set; }
     public Guid JobGradeId { get; set; }
     public Guid PositionId { get; set; }
+    public Guid? ReportsToId { get; set; }
     public Guid PersonId { get; set; }
     public DateTime DateAdd { get; set; }
     public DateTime? DateMod { get; set; }
@@ -124,6 +125,7 @@ public class EmployeeListDto : BaseDto
     public Guid JobGradeId { get; set; }
     public Guid PositionId { get; set; }
     public Guid? BranchId { get; set; }
+    public Guid? ReportsToId { get; set; }  // direct manager / boss (HRM.Profile.Employee)
     public Guid PersonId { get; set; }  // ? ADD THIS
 
     // ? ADD ALL PERSON FIELDS
@@ -152,6 +154,7 @@ public class EmployeeModDto
     public Guid JobGradeId { get; set; } = default!; //Cor.HRMM.JobGrade
     public Guid PositionId { get; set; } = default!; //Cor.HRMM.Position
     public Guid DepartmentId { get; set; } = default!; //Cor.Module.Department
+    public Guid? ReportsToId { get; set; } //HRM.Profile.Employee (direct manager / boss)
     public string EmploymentType { get; set; } = default!; //enum.EmpType (0/1)
     public string EmploymentNature { get; set; } = default!; //enum.EmpNature (0/1)
     public string RowVersion { get; set; } = default!;

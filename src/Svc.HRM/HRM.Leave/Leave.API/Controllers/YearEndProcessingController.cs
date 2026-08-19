@@ -1,6 +1,7 @@
 // Leave.API/Controllers/YearEndProcessingController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -38,6 +39,7 @@ public class YearEndProcessingController : ControllerBase
     /// Get available fiscal years for year-end processing
     /// </summary>
     [HttpGet("AvailableFiscalYears")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAvailableFiscalYears(CancellationToken ct)
     {
@@ -49,6 +51,7 @@ public class YearEndProcessingController : ControllerBase
     /// Check if year-end processing can be performed for a given fiscal year
     /// </summary>
     [HttpGet("CanProcess/{fiscalYearId}")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> CanProcessYearEnd(Guid fiscalYearId, CancellationToken ct)
     {
@@ -81,6 +84,7 @@ public class YearEndProcessingController : ControllerBase
     /// Get the next available fiscal year for processing
     /// </summary>
     [HttpGet("NextAvailableYear")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetNextAvailableYear(CancellationToken ct)
     {
@@ -128,6 +132,7 @@ public class YearEndProcessingController : ControllerBase
     /// Preview carryover calculations for a fiscal year
     /// </summary>
    [HttpGet("Preview/{fiscalYearId}")]
+   [PerAuth("hr.leave.view")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesResponseType(StatusCodes.Status400BadRequest)]
    public async Task<IActionResult> PreviewCarryover(Guid fiscalYearId, CancellationToken ct)
@@ -205,6 +210,7 @@ public class YearEndProcessingController : ControllerBase
     /// Process year-end carryover
     /// </summary>
     [HttpPost("Process")]
+    [PerAuth("hr.leave.manage")]
     public async Task<IActionResult> ProcessYearEnd([FromBody] YearEndProcessRequestDto request, CancellationToken ct)
     {
         try
@@ -272,6 +278,7 @@ public class YearEndProcessingController : ControllerBase
     /// Get max carryover days for all leave types
     /// </summary>
     [HttpGet("MaxCarryoverDays")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMaxCarryoverDays(CancellationToken ct)
     {
@@ -302,6 +309,7 @@ public class YearEndProcessingController : ControllerBase
     /// Get encashment configuration for leave types
     /// </summary>
     [HttpGet("Encashment/Config")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEncashmentConfigs(CancellationToken ct)
     {
@@ -321,6 +329,7 @@ public class YearEndProcessingController : ControllerBase
     /// Process encashment for an employee
     /// </summary>
     [HttpPost("Encashment/Process")]
+    [PerAuth("hr.leave.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ProcessEncashment([FromBody] EncashmentRequestDto request, CancellationToken ct)
@@ -351,6 +360,7 @@ public class YearEndProcessingController : ControllerBase
 
 
 [HttpGet("Encashment/History/All")]
+[PerAuth("hr.leave.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 public async Task<IActionResult> GetAllEncashmentHistory(
     [FromQuery] Guid? fiscalYearId = null,
@@ -371,6 +381,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
     /// Get encashment history for an employee
     /// </summary>
     [HttpGet("Encashment/History/{employeeId}")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEncashmentHistory(Guid employeeId, CancellationToken ct)
     {
@@ -389,6 +400,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
     // ========== HISTORY ENDPOINTS ==========
 
     [HttpGet("Debug/CheckPolicies")]
+    [PerAuth("hr.leave.view")]
     public async Task<IActionResult> CheckPolicies(CancellationToken ct)
     {
         var result = await _yearEndService.DebugCheckCarryoverPolicies(ct);
@@ -396,6 +408,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
     }
 
     [HttpGet("History/Audit/{year}")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuditHistory(int year, CancellationToken ct)
     {
@@ -404,6 +417,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
     }
 
     [HttpGet("History/Employee/{employeeId}")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEmployeeHistory(Guid employeeId, CancellationToken ct)
     {
@@ -412,6 +426,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
     }
 
     [HttpGet("History/{fiscalYearId}")]
+    [PerAuth("hr.leave.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProcessingHistory(Guid fiscalYearId, CancellationToken ct)
     {
@@ -465,6 +480,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
   /// Get pending encashment approvals for the current user
   /// </summary>
   [HttpGet("Encashment/PendingApprovals")]
+  [PerAuth("hr.leave.view")]
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<IActionResult> GetPendingEncashmentApprovals(
       [FromQuery] string? approverId = null,
@@ -506,6 +522,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
   /// Approve or reject an encashment request
   /// </summary>
   [HttpPost("Encashment/{requestId}/Approve")]
+  [PerAuth("hr.leave.manage")]
   [ProducesResponseType(StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> ApproveEncashment(
@@ -542,6 +559,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
   /// Get encashment approval details
   /// </summary>
   [HttpGet("Encashment/{requestId}/ApprovalDetails")]
+  [PerAuth("hr.leave.view")]
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<IActionResult> GetEncashmentApprovalDetails(Guid requestId, CancellationToken ct)
   {
@@ -559,6 +577,7 @@ public async Task<IActionResult> GetAllEncashmentHistory(
 
 // In YearEndProcessingController.cs
 [HttpGet("Encashment/Total/{employeeId}")]
+[PerAuth("hr.leave.view")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 public async Task<IActionResult> GetTotalEncashedDays(Guid employeeId, [FromQuery] int fiscalYear, CancellationToken ct)
 {
@@ -569,6 +588,7 @@ public async Task<IActionResult> GetTotalEncashedDays(Guid employeeId, [FromQuer
     /// Revert year-end processing (Admin only - use with caution)
     /// </summary>
     [HttpPost("Revert/{fiscalYear}")]
+    [PerAuth("hr.leave.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

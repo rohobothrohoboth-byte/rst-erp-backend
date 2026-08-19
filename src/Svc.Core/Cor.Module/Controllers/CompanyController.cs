@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.Module.Commands;
 using Cor.Module.Models.DTOs;
 using Cor.Module.Queries;
@@ -19,6 +20,7 @@ namespace Cor.Module.Controllers;
 [ApiVersion("1.0")]
 public class CompanyController(IMediator med) : ControllerBase
 {
+    [PerAuth("core.company.view")]
     [HttpGet("AllCompany")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllCompany()
@@ -27,6 +29,7 @@ public class CompanyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.company.view")]
     [HttpGet("GetCompany/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,6 +40,7 @@ public class CompanyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("core.company.add")]
     [HttpPost("AddCompany")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -53,6 +57,7 @@ public class CompanyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New COMPANY successfully created."));
     }
 
+    [PerAuth("core.company.mod")]
     [HttpPut("ModCompany/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -71,6 +76,7 @@ public class CompanyController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected COMPANY successfully updated."));
     }
 
+    [PerAuth("core.company.del")]
     [HttpDelete("DelCompany/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

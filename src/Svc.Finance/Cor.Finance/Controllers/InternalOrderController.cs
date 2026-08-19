@@ -1,4 +1,5 @@
 // Controllers/InternalOrderController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -24,6 +25,7 @@ public class InternalOrderController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.co.orders.view")]
     [ProducesResponseType(typeof(List<InternalOrderDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] string? status, [FromQuery] Guid? costCenterId)
     {
@@ -39,6 +41,7 @@ public class InternalOrderController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.co.orders.view")]
     [ProducesResponseType(typeof(InternalOrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -55,6 +58,7 @@ public class InternalOrderController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.co.orders.add")]
     [ProducesResponseType(typeof(InternalOrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddInternalOrderDto dto)
@@ -71,6 +75,7 @@ public class InternalOrderController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.co.orders.mod")]
     [ProducesResponseType(typeof(InternalOrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -88,6 +93,7 @@ public class InternalOrderController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.co.orders.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

@@ -1,4 +1,5 @@
 // Controllers/ConsolidationReportController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -24,6 +25,7 @@ public class ConsolidationReportController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(typeof(List<ConsolidationReportDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? groupId,
@@ -47,6 +49,7 @@ public class ConsolidationReportController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(typeof(ConsolidationReportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -63,6 +66,7 @@ public class ConsolidationReportController : BaseApiController
     }
 
     [HttpPost("Generate")]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(typeof(ConsolidationReportDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Generate([FromBody] GenerateConsolidationReportDto dto)
@@ -88,6 +92,7 @@ public class ConsolidationReportController : BaseApiController
 
  // ✅ FIXED: Download endpoint with proper handling
  [HttpGet("{id}/download")]
+ [PerAuth("fnm.cons.report.view")]
  [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
  [ProducesResponseType(StatusCodes.Status404NotFound)]
  [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -133,6 +138,7 @@ public class ConsolidationReportController : BaseApiController
 
     // ✅ ADD THIS: Download Compliance Report
     [HttpGet("{id}/download-compliance")]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -169,6 +175,7 @@ public class ConsolidationReportController : BaseApiController
 
     // ✅ ADD THIS: Bulk Export
     [HttpPost("export")]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Export([FromBody] ExportReportsRequestDto request)
@@ -220,6 +227,7 @@ public class ConsolidationReportController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.cons.report.view")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

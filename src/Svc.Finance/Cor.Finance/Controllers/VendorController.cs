@@ -1,4 +1,5 @@
 // Controllers/VendorController.cs
+using Common;
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("All")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(List<VendorDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
@@ -40,6 +42,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(VendorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid id)
@@ -58,6 +61,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("ByCode/{code}")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(VendorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByCode(string code)
@@ -76,6 +80,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("ByType/{vendorType}")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(List<VendorDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByType(string vendorType)
     {
@@ -91,6 +96,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("Active")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(List<VendorDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActive()
     {
@@ -106,6 +112,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpGet("Summary")]
+    [PerAuth("fnm.ap.vendor.view")]
     [ProducesResponseType(typeof(VendorSummaryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSummary([FromQuery] Guid? vendorId)
     {
@@ -121,6 +128,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpPost]
+    [PerAuth("fnm.ap.vendor.add")]
     [ProducesResponseType(typeof(VendorDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] VendorCreateDto dto)
@@ -142,6 +150,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpPut]
+    [PerAuth("fnm.ap.vendor.mod")]
     [ProducesResponseType(typeof(VendorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -164,6 +173,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpPatch("{id:guid}/toggle-status")]
+    [PerAuth("fnm.ap.vendor.mod")]
     [ProducesResponseType(typeof(VendorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleStatus(Guid id)
@@ -185,6 +195,7 @@ public class VendorController : BaseApiController // ✅ Inherit from BaseApiCon
     }
 
     [HttpDelete("{id:guid}")]
+    [PerAuth("fnm.ap.vendor.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

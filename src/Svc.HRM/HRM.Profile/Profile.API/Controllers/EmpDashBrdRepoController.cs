@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpDashBrdRepoController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.list.view")]
     [HttpGet("EmpDbRepo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> EmpDbRepo()
@@ -25,6 +27,7 @@ public class EmpDashBrdRepoController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.list.view")]
     [HttpGet("PendEmpList")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PendEmpList()
@@ -33,6 +36,7 @@ public class EmpDashBrdRepoController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.list.view")]
     [HttpGet("PendEmpEduExp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> PendEmpEduExp()
@@ -41,6 +45,7 @@ public class EmpDashBrdRepoController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.list.view")]
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetHrDashboard()
     {

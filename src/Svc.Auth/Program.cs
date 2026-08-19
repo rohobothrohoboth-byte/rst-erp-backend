@@ -1,3 +1,4 @@
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Polly;
@@ -17,10 +18,12 @@ using StackExchange.Redis;
 using Svc.Auth.Commands;
 using System.Net;
 using Shared.Helpers;
+using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+
+ // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -69,15 +72,12 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var authPortString = builder.Configuration["ServiceUrls:AuthApi"] ?? "https://localhost:7000";
-var authPort = new Uri(authPortString).Port;
-Console.WriteLine($"📡 Auth Service Port: {authPort}");
-
-builder.WebHost.ConfigureKestrel(options =>
+// ✅ FIX: Configure Kestrel to listen on port 80 inside container
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, authPort, listenOptions => listenOptions.UseHttps());
-});
+    options.Listen(IPAddress.Any, 80);  // Always port 80 inside container
+});*/
+ // DISABLED
 
 // --- Logging ---
 Log.Logger = new LoggerConfiguration()
@@ -109,32 +109,37 @@ string GetConfig(string key, string? defaultValue = null)
     return string.Empty;
 }
 
-// ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+// ============= SERVICE URLS - FIXED =============
+// ✅ USE HTTP AND DOCKER SERVICE NAMES
+
+
+var CoreModUrl = "http://192.168.1.2:7002";
+var CoreHrmmUrl= "http://192.168.1.2:7001";
+var authUrl = "http://192.168.1.2:7000";
+var HrmProUrl = "http://192.168.1.2:7004";
+var financeApiUrl = "http://192.168.1.2:7008";
+var gatewayApiUrl = "http://192.168.1.2:5000";
 
 // ============= API KEYS =============
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
 var hrmmApiKey = GetConfig("ApiKeys:CoreHRMM", "core_module_secret_key_2024");
 var profileApiKey = GetConfig("ApiKeys:ProfileModule", "profile_module_secret_key_2024");
 
-Console.WriteLine($"📡 Core Module URL: {CorModUrl}");
-Console.WriteLine($"📡 Core HRMM URL: {CorHrmmUrl}");
-Console.WriteLine($"📡 HRM Pro URL: {hrmProUrl}");
+Console.WriteLine($"📡 Core Module URL: {CoreModUrl}");
+Console.WriteLine($"📡 Core HRMM URL: {CoreHrmmUrl}");
+Console.WriteLine($"📡 HRM Pro URL: {HrmProUrl}");
 
 // Get connection strings
 var connectionString = builder.Configuration.GetConnectionString("authMgrCon")
     ?? throw new InvalidOperationException("authMgrCon connection string not found");
 
-// ============= REDIS CACHING =============
+// ============= REDIS CACHING - FIXED =============
 var redisConnectionString = GetConfig("Redis:ConnectionString", null);
 
 if (string.IsNullOrEmpty(redisConnectionString))
 {
-    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost";
+    // ✅ FIXED: Use "redis" as default host
+    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis";
     var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379";
     var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
     var redisSsl = Environment.GetEnvironmentVariable("REDIS_SSL")?.ToLower() == "true";
@@ -154,8 +159,8 @@ var workingConnectionString = redisConnectionString;
 var connectionAttempts = new List<string>
 {
     redisConnectionString,
-    "localhost:6379,abortConnect=false",
     "redis:6379,abortConnect=false",
+    "localhost:6379,abortConnect=false",
 };
 
 foreach (var attempt in connectionAttempts.Distinct())
@@ -220,56 +225,57 @@ else
     Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
 }
 
-// ============= SSL BYPASS HANDLER =============
-var sslHandler = new HttpClientHandler
+// ============= HTTP CLIENT HANDLER =============
+// ✅ Use HTTP handler WITHOUT SSL bypass (services use HTTP)
+var httpHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
     MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
 // ============= HTTP CLIENTS WITH API KEYS =============
 
-// Core Module API
+// Core Module API - FIXED
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(client =>
 {
-    client.BaseAddress = new Uri(CorModUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.BaseAddress = new Uri(CoreModUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
-// Core HRMM API
+// Core HRMM API - FIXED
 builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =>
 {
-    client.BaseAddress = new Uri(CorHrmmUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.BaseAddress = new Uri(CoreHrmmUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", hrmmApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
-// HRM Pro API
+// HRM Pro API - FIXED
 builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
 {
-    client.BaseAddress = new Uri(hrmProUrl);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.BaseAddress = new Uri(HrmProUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("X-API-Key", profileApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "AuthService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
 // ============= POLLY RETRY POLICIES =============
 var retryPolicy = Policy<HttpResponseMessage>
     .Handle<HttpRequestException>()
     .OrResult(r => !r.IsSuccessStatusCode)
+    .Or<TimeoutRejectedException>()
     .RetryAsync(3, onRetry: (outcome, retryCount, context) =>
     {
         Log.Warning("⚠️ Retry {RetryCount} for API call. Error: {Error}",
@@ -279,9 +285,10 @@ var retryPolicy = Policy<HttpResponseMessage>
 var circuitBreakerPolicy = Policy<HttpResponseMessage>
     .Handle<HttpRequestException>()
     .OrResult(r => r.StatusCode == HttpStatusCode.ServiceUnavailable)
+     .Or<TimeoutRejectedException>()
     .CircuitBreakerAsync(
         handledEventsAllowedBeforeBreaking: 3,
-        durationOfBreak: TimeSpan.FromSeconds(30));
+        durationOfBreak: TimeSpan.FromSeconds(60));
 
 // Apply policies to all HTTP clients
 builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>()
@@ -298,33 +305,34 @@ builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>()
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "Database")
-    .AddUrlGroup(new Uri($"{CorModUrl}/health"), "Core Module API")
-    .AddUrlGroup(new Uri($"{CorHrmmUrl}/health"), "Core HRMM API")
-    .AddUrlGroup(new Uri($"{hrmProUrl}/health"), "HRM Pro API")
+    .AddUrlGroup(new Uri($"{CoreModUrl}/health"), "Core Module API")
+    .AddUrlGroup(new Uri($"{CoreHrmmUrl}/health"), "Core HRMM API")
+    .AddUrlGroup(new Uri($"{HrmProUrl}/health"), "HRM Pro API")
     .AddCheck<SyncHealthCheck>("Sync Status");
 
-// ============= RABBITMQ =============
+// ============ RABBITMQ REGISTRATION =============
+var rabbitMqHost = GetConfig("RabbitMQ:Host", "192.168.1.2");
+var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
+var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
+var rabbitMqPassword = GetConfig("RabbitMQ:Password", "guest");
+
 builder.Services.AddSingleton<IConnectionFactory>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var host = GetConfig("RabbitMQ:Host", "localhost");
-    var port = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
-    var username = GetConfig("RabbitMQ:Username", "guest");
-    var password = GetConfig("RabbitMQ:Password", "guest");
-
-    Console.WriteLine($"🔄 Connecting to RabbitMQ at {host}:{port}");
+    Console.WriteLine($"🔄 Connecting to RabbitMQ at {rabbitMqHost}:{rabbitMqPort}");
 
     return new ConnectionFactory
     {
-        HostName = host,
-        Port = port,
-        UserName = username,
-        Password = password,
+        HostName = rabbitMqHost,
+        Port = rabbitMqPort,
+        UserName = rabbitMqUsername,
+        Password = rabbitMqPassword,
         AutomaticRecoveryEnabled = true,
         NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
-        RequestedHeartbeat = TimeSpan.FromSeconds(30)
+        RequestedHeartbeat = TimeSpan.FromSeconds(30),
+        ContinuationTimeout = TimeSpan.FromSeconds(20)
     };
 });
+
 
 // ✅ EventConsumer
 bool disableEventConsumer = Environment.GetEnvironmentVariable("DisableEventConsumer") == "true";
@@ -352,10 +360,9 @@ builder.AddApiServices()
     .AddAuthService();
 
 // ================================================================
-// ✅ CORS CONFIGURATION - Read from appsettings.json
+// ✅ CORS CONFIGURATION
 // ================================================================
 
-// ✅ Read allowed origins from appsettings.json and resolve ServiceHost
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
 if (allowedOrigins == null || allowedOrigins.Length == 0)
@@ -369,7 +376,6 @@ if (allowedOrigins == null || allowedOrigins.Length == 0)
     };
 }
 
-// ✅ Resolve {ServiceHost} in CORS origins
 var resolvedOrigins = allowedOrigins
     .Select(origin => origin.Replace("{ServiceHost}", serviceHost))
     .ToArray();
@@ -405,7 +411,7 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // ✅ DISABLED FOR DOCKER
 app.MapGrpcService<AuthValidatorService>();
 
 // ✅ CORS must be BEFORE Authentication and Authorization
@@ -432,6 +438,9 @@ if (app.Environment.IsDevelopment())
 
         await app.SeedPerAccess();
         Console.WriteLine("✅ APIs seeded");
+
+        await app.InitializePermissionRegistry();
+        Console.WriteLine("✅ Permission registry (static) verified");
 
         Console.WriteLine("🎉 All seeding completed successfully!");
     }
@@ -467,10 +476,13 @@ app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks
     }
 });
 
-Console.WriteLine($"\n✅ Auth Service starting on https://0.0.0.0:{authPort}");
+Console.WriteLine($"\n✅ Auth Service starting on http://0.0.0.0:80");
 Console.WriteLine("🔑 JWT Issuer: RST_ERP.Svc.Auth");
 Console.WriteLine("🔑 JWT Audience: RST_ERP");
 Console.WriteLine("📊 Debug logging is ENABLED");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+
+

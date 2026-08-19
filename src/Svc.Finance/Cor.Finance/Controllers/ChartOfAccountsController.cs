@@ -1,4 +1,5 @@
 ﻿// Controllers/ChartOfAccountsController.cs
+using Common;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
 using Cor.Finance.Commands;
@@ -39,6 +40,7 @@ public class ChartOfAccountsController : BaseApiController
    /// Get all chart of accounts with pagination and filtering
    /// </summary>
    [HttpGet]
+   [PerAuth("fnm.gl.coa.view")]
    [ProducesResponseType(typeof(PaginatedResponse<ChartOfAccountsDto>), StatusCodes.Status200OK)]
    // ✅ Remove or disable ResponseCache during development
    // [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any,
@@ -86,6 +88,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Get chart of accounts hierarchy (CACHED)
        /// </summary>
        [HttpGet("Hierarchy")]
+       [PerAuth("fnm.gl.coa.view")]
        [ProducesResponseType(typeof(List<ChartOfAccountsHierarchyDto>), StatusCodes.Status200OK)]
        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
        public async Task<IActionResult> GetHierarchy()
@@ -141,6 +144,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Get chart of accounts by code
     /// </summary>
     [HttpGet("ByCode/{code}")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(typeof(ChartOfAccountsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
@@ -173,6 +177,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Get chart of accounts by type
     /// </summary>
     [HttpGet("ByType/{accountType}")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(typeof(List<ChartOfAccountsDto>), StatusCodes.Status200OK)]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
     public async Task<IActionResult> GetByType(string accountType)
@@ -195,6 +200,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Get chart of accounts usage
     /// </summary>
     [HttpGet("{id}/usage")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(typeof(ChartOfAccountsUsageDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUsage(Guid id)
@@ -218,6 +224,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Check if chart of accounts can be deleted
     /// </summary>
     [HttpGet("{id}/can-delete")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CanDelete(Guid id)
@@ -246,6 +253,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Get chart of accounts by ID (MUST BE LAST)
     /// </summary>
     [HttpGet("{id}")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(typeof(ChartOfAccountsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -277,6 +285,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Export chart of accounts
     /// </summary>
     [HttpGet("Export")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     public async Task<IActionResult> Export(
         [FromQuery] string? type = null,
@@ -343,6 +352,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Create a new chart of accounts
     /// </summary>
     [HttpPost]
+    [PerAuth("fnm.gl.coa.add")]
     [ProducesResponseType(typeof(ChartOfAccountsDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddChartOfAccountsDto dto)
@@ -368,6 +378,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Bulk create chart of accounts
     /// </summary>
     [HttpPost("Bulk")]
+    [PerAuth("fnm.gl.coa.add")]
     [ProducesResponseType(typeof(List<ChartOfAccountsDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BulkCreate([FromBody] List<AddChartOfAccountsDto> dtos)
@@ -389,6 +400,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Bulk delete chart of accounts
     /// </summary>
     [HttpPost("BulkDelete")]
+    [PerAuth("fnm.gl.coa.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BulkDelete([FromBody] BulkDeleteDto dto)
@@ -424,6 +436,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Update a chart of accounts
     /// </summary>
     [HttpPut]
+    [PerAuth("fnm.gl.coa.mod")]
     [ProducesResponseType(typeof(ChartOfAccountsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -458,6 +471,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Toggle chart of accounts active status
     /// </summary>
     [HttpPatch("{id}/toggle-active")]
+    [PerAuth("fnm.gl.coa.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -493,6 +507,7 @@ public class ChartOfAccountsController : BaseApiController
     /// Delete a chart of accounts
     /// </summary>
     [HttpDelete("{id}")]
+    [PerAuth("fnm.gl.coa.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

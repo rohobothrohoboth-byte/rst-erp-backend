@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
@@ -34,6 +35,7 @@ public class PositionController : ControllerBase
         _logger = logger;
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPosition")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPosition()
@@ -53,6 +55,7 @@ public class PositionController : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPosition/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -79,6 +82,7 @@ public class PositionController : ControllerBase
     }
 
     [HttpPost("AddPosition")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionAddDto addDto)
@@ -99,6 +103,7 @@ public class PositionController : ControllerBase
     }
 
     [HttpPut("ModPosition/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -122,6 +127,7 @@ public class PositionController : ControllerBase
     }
 
     [HttpDelete("DelPosition/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

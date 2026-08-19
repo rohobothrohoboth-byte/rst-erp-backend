@@ -1,6 +1,7 @@
 // Recruit.API/Controllers/ApplicantController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -20,6 +21,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class ApplicantController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.applicant.manage")]
     [HttpPost("AllIntApp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -30,6 +32,7 @@ public class ApplicantController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.applicant.view")]
     [HttpGet("GetIntApp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -40,6 +43,7 @@ public class ApplicantController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.recruit.applicant.view")]
     [HttpGet("JobPostAllIntApp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -51,6 +55,7 @@ public class ApplicantController(IMediator med) : ControllerBase
     }
 
     // ? Add the UpdateStatus endpoint
+    [PerAuth("hr.recruit.applicant.manage")]
     [HttpPut("UpdateStatus/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

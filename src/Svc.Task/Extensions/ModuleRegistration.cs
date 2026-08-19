@@ -14,7 +14,7 @@ public static class ModuleRegistration
     {
         // Register DbContext
         services.AddDbContext<TaskDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
+            options.UseNpgsql(configuration.GetConnectionString("TaskDb"),
                 npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(TaskDbContext).Assembly.FullName)));
 
         // Register Dapper helper (keep for complex queries if needed)

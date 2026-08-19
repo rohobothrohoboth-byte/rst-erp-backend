@@ -1,0 +1,684 @@
+using Common;
+using MediatR;
+using Cor.Procurement.Persistence;
+using Cor.Procurement.Services;
+using Microsoft.EntityFrameworkCore;
+using Shared.Helpers.Services;
+using Serilog;
+using StackExchange.Redis;
+using Asp.Versioning;
+using Polly;
+using Polly.Extensions.Http;
+using RabbitMQ.Client;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
+using System.Threading.Channels;
+using Cor.Procurement.Middleware;
+using Cor.Procurement.Filters;
+using System.Diagnostics;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Cor.Procurement.HealthChecks;
+using FluentValidation;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ============================================================
+// ✅ CONFIGURATION LOADING ORDER (Priority: High to Low)
+// ============================================================
+
+// ✅ Load shared configuration from src/Shared/Helpers/appsettings.json
+var sharedConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "Shared", "Helpers", "appsettings.json");
+if (File.Exists(sharedConfigPath))
+{
+    builder.Configuration.AddJsonFile(sharedConfigPath, optional: false, reloadOnChange: true);
+    Console.WriteLine($"✅ Loaded shared configuration from: {sharedConfigPath}");
+}
+else
+{
+    Console.WriteLine($"⚠️ Shared configuration not found at: {sharedConfigPath}");
+}
+
+// ✅ Load service-specific configuration
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+// ✅ Load environment-specific configuration
+var environment = builder.Environment.EnvironmentName;
+builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+
+// ✅ Add environment variables (highest priority - overrides everything)
+builder.Configuration.AddEnvironmentVariables();
+
+// ✅ Get ServiceHost and resolve placeholders
+var serviceHost = builder.Configuration["ServiceHost"] ?? "localhost";
+Console.WriteLine($"🏠 Service Host: {serviceHost}");
+
+// ✅ Resolve all {ServiceHost} placeholders in configuration
+var configSections = builder.Configuration.AsEnumerable().ToList();
+var updates = new Dictionary<string, string>();
+
+foreach (var kvp in configSections)
+{
+    if (!string.IsNullOrEmpty(kvp.Value) && kvp.Value.Contains("{ServiceHost}"))
+    {
+        var newValue = kvp.Value.Replace("{ServiceHost}", serviceHost);
+        updates[kvp.Key] = newValue;
+        Console.WriteLine($"✅ Resolved {kvp.Key}: {newValue}");
+    }
+}
+
+if (updates.Any())
+{
+    builder.Configuration.AddInMemoryCollection(updates);
+}
+
+// ✅ Configure Kestrel - Get port from resolved configuration
+var procurementPortString = builder.Configuration["ServiceUrls:ProcurementApi"] ?? "https://localhost:7013";
+var procurementPort = new Uri(procurementPortString).Port;
+Console.WriteLine($"📡 Procurement Service Port: {procurementPort}");
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Any, port);
+});
+
+// ✅ Configure graceful shutdown
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(10);
+});
+
+// ============= LOGGING =============
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+Console.WriteLine("=== 🔍 PROCUREMENT SERVICE DEBUG CONFIGURATION ===");
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
+
+// ============= CONFIGURATION HELPER =============
+string GetConfig(string key, string? defaultValue = null)
+{
+    var value = builder.Configuration[key];
+    if (!string.IsNullOrEmpty(value))
+        return value;
+
+    if (defaultValue != null)
+        return defaultValue;
+
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException($"Missing required configuration: {key}");
+
+    return string.Empty;
+}
+
+// ============================================================
+// ✅ LOAD ALL CONFIGURATION
+// ============================================================
+
+// ============= SERVICE URLS =============
+var coreModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
+var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
+var inventoryApiUrl = GetConfig("ServiceUrls:InventoryApi", "https://localhost:7014");
+
+// ============= DATABASE =============
+var dbConnectionString = GetConfig("ConnectionStrings:DefaultConnection", null);
+
+if (string.IsNullOrEmpty(dbConnectionString))
+{
+    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
+    var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
+    var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
+    var dbName = Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "core.ProcurementDb";
+
+    dbConnectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};Include Error Detail=true";
+}
+
+// ============= REDIS =============
+var redisConnectionString = builder.Configuration.GetConnectionString("redis")
+    ?? GetConfig("Redis:ConnectionString", null)
+    ?? $"{(Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost")}:{(Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379")},abortConnect=false";
+
+Console.WriteLine($"🔗 Redis Connection: {redisConnectionString}");
+
+// ============= RABBITMQ =============
+var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
+var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
+var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
+var rabbitMqPassword = GetConfig("RabbitMQ:Password", "guest");
+var rabbitMqVirtualHost = GetConfig("RabbitMQ:VirtualHost", "/");
+
+// ============= API KEYS =============
+var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
+var hrmmApiKey = GetConfig("ApiKeys:CoreHRMM", "core_module_secret_key_2024");
+var profileApiKey = GetConfig("ApiKeys:ProfileModule", "profile_module_secret_key_2024");
+var financeApiKey = GetConfig("ApiKeys:Finance", "finance_module_secret_key_2024");
+var inventoryApiKey = GetConfig("ApiKeys:Inventory", "inventory_module_secret_key_2024");
+// ✅ Log API Key (masked for security)
+if (!string.IsNullOrEmpty(financeApiKey))
+{
+    var maskedKey = financeApiKey.Length > 8
+        ? financeApiKey.Substring(0, 4) + "..." + financeApiKey.Substring(financeApiKey.Length - 4)
+        : "****";
+    Console.WriteLine($"🔑 Finance API Key: {maskedKey}");
+}
+
+// ============= CORS =============
+var corsOrigins = GetConfig("Cors:AllowedOrigins", "http://localhost:5173,http://localhost:3000")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+    .Select(o => o.Trim())
+    .ToArray();
+
+// ============= LOG CONFIGURATION =============
+Console.WriteLine("\n=== 📋 CONFIGURATION LOADED ===");
+Console.WriteLine($"🌍 Environment: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"🔗 Core Module URL: {coreModUrl}");
+Console.WriteLine($"🔗 Core HRMM URL: {coreHrmmUrl}");
+Console.WriteLine($"🔗 HRM Pro URL: {hrmProUrl}");
+Console.WriteLine($"🔗 Auth URL: {authUrl}");
+Console.WriteLine($"🔗 Gateway URL: {gatewayUrl}");
+Console.WriteLine($"🔗 Finance API URL: {financeApiUrl}");
+Console.WriteLine($"🗄️  Database: {dbConnectionString.Split(';').FirstOrDefault()?.Replace("Host=", "") ?? "unknown"}");
+Console.WriteLine($"📦 Redis: {redisConnectionString.Split(',').FirstOrDefault() ?? "unknown"}");
+Console.WriteLine($"🐰 RabbitMQ: {rabbitMqHost}:{rabbitMqPort}");
+Console.WriteLine($"🌐 CORS Origins: {string.Join(", ", corsOrigins)}");
+Console.WriteLine("=====================================\n");
+
+// ============= BASIC SERVICES =============
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ExceptionFilter>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.WriteIndented = false;
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.MaxDepth = 64;
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.SerializerOptions.WriteIndented = false;
+});
+
+builder.Services.AddEndpointsApiExplorer();
+
+// ✅ FIX: Simple Swagger configuration
+builder.Services.AddSwaggerGen();
+
+// ✅ FIX: Remove duplicate registrations
+builder.Services.AddResponseCaching();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
+builder.Services.AddMemoryCache();
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+}).AddApiExplorer(options => options.GroupNameFormat = "'v'VVV");
+
+// ============= MEDIATR =============
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+});
+
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+// ============= DATABASE =============
+builder.Services.AddDbContext<ProcurementDbContext>(options =>
+{
+    options.UseNpgsql(dbConnectionString);
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+});
+
+// ============= REDIS =============
+if (!string.IsNullOrEmpty(redisConnectionString))
+{
+    try
+    {
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var config = ConfigurationOptions.Parse(redisConnectionString);
+            config.AbortOnConnectFail = false;
+            config.ConnectTimeout = 5000;
+            config.SyncTimeout = 5000;
+            return ConnectionMultiplexer.Connect(config);
+        });
+
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "Procurement_";
+        });
+
+        builder.Services.AddSingleton<RedisCacheService>();
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+        Console.WriteLine("✅ Redis Cache ENABLED");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Redis failed: {ex.Message}. Falling back to MemoryCache.");
+        builder.Services.AddDistributedMemoryCache();
+        builder.Services.AddSingleton<MemoryCacheService>();
+        builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+    }
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddSingleton<MemoryCacheService>();
+    builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+    Console.WriteLine("✅ MemoryCache ENABLED");
+}
+
+// ============= RABBITMQ =============
+builder.Services.AddSingleton<IConnectionFactory>(sp =>
+{
+    return new ConnectionFactory
+    {
+        HostName = rabbitMqHost,
+        Port = rabbitMqPort,
+        UserName = rabbitMqUsername,
+        Password = rabbitMqPassword,
+        VirtualHost = rabbitMqVirtualHost,
+        AutomaticRecoveryEnabled = true,
+        NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
+        DispatchConsumersAsync = true
+    };
+});
+
+builder.Services.AddSingleton<IAuditLogPublisher, RabbitMQAuditPublisher>();
+builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
+
+// ============= API CLIENTS =============
+bool isDev = builder.Environment.IsDevelopment();
+
+builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = isDev
+        ? (sender, cert, chain, sslPolicyErrors) => true
+        : null,
+    UseCookies = false,
+    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+    MaxConnectionsPerServer = 10
+});
+
+// Core Module API Client
+builder.Services.AddHttpClient<ICoreModuleApiService, CoreModuleApiService>(client =>
+{
+    client.BaseAddress = new Uri(coreModUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "ProcurementService");
+})
+.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<Func<HttpClientHandler>>()())
+.SetHandlerLifetime(TimeSpan.FromMinutes(5))
+.AddPolicyHandler((services, request) =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning($"⏳ Retry {retryAttempt} for Core Module API: {outcome.Exception?.Message}");
+            }));
+
+// Core HRMM API Client
+builder.Services.AddHttpClient<ICoreHrmmApiService, CoreHrmmApiService>(client =>
+{
+    client.BaseAddress = new Uri(coreHrmmUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("X-API-Key", hrmmApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "ProcurementService");
+})
+.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<Func<HttpClientHandler>>()())
+.SetHandlerLifetime(TimeSpan.FromMinutes(5))
+.AddPolicyHandler((services, request) =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning($"⏳ Retry {retryAttempt} for Core HRMM API: {outcome.Exception?.Message}");
+            }));
+
+// HRM Pro API Client
+builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
+{
+    client.BaseAddress = new Uri(hrmProUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("X-API-Key", profileApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "ProcurementService");
+})
+.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<Func<HttpClientHandler>>()())
+.SetHandlerLifetime(TimeSpan.FromMinutes(5))
+.AddPolicyHandler((services, request) =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning($"⏳ Retry {retryAttempt} for HRM Pro API: {outcome.Exception?.Message}");
+            }));
+
+
+builder.Services.AddHttpClient<IInventoryApiService, InventoryApiService>(client =>
+{
+    client.BaseAddress = new Uri(inventoryApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("X-API-Key", inventoryApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "ProcurementService");
+})
+.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<Func<HttpClientHandler>>()())
+.SetHandlerLifetime(TimeSpan.FromMinutes(5))
+.AddPolicyHandler((services, request) =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning($"⏳ Retry {retryAttempt} for Inventory API: {outcome.Exception?.Message}");
+            }));
+
+// ✅ FINANCE API CLIENT
+// ✅ FINANCE API CLIENT - CLEAN VERSION
+builder.Services.AddHttpClient<IFinanceApiService, FinanceApiService>(client =>
+{
+    client.BaseAddress = new Uri(financeApiUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+
+    // ✅ SINGLE header format - matches Finance API expectation
+    client.DefaultRequestHeaders.Add("X-API-Key", financeApiKey);
+    client.DefaultRequestHeaders.Add("X-Service-Name", "ProcurementService");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.ConfigurePrimaryHttpMessageHandler(sp => sp.GetRequiredService<Func<HttpClientHandler>>()())
+.SetHandlerLifetime(TimeSpan.FromMinutes(5))
+.AddPolicyHandler((services, request) =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+            onRetry: (outcome, timespan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning($"⏳ Retry {retryAttempt} for Finance API: {outcome.Exception?.Message}");
+            }));
+
+// ============= CORE SERVICES =============
+builder.Services.AddScoped<CachedLocalCopyService>();
+builder.Services.AddScoped<CachedReferenceDataService>();
+builder.Services.AddScoped<ISyncService, SyncService>();
+builder.Services.AddScoped<InitialSyncService>();
+
+// ============= HOSTED SERVICES (Background) =============
+builder.Services.AddHostedService<EventConsumer>();
+builder.Services.AddHostedService<InitialSyncService>();
+builder.Services.AddHostedService<CachePreWarmService>();
+
+// ============= HEALTH CHECKS =============
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ProcurementDbContext>()
+    .AddCheck<ProcurementHealthCheck>("Procurement")
+    .AddUrlGroup(new Uri($"{coreModUrl}/health"), "Core Module")
+    .AddUrlGroup(new Uri($"{coreHrmmUrl}/health"), "Core HRMM")
+    .AddUrlGroup(new Uri($"{hrmProUrl}/health"), "HRM Pro");
+
+// ============= CORS =============
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Default", policy =>
+    {
+        if (isDev || corsOrigins.Length == 0)
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+            Console.WriteLine("⚠️ CORS: AllowAnyOrigin (Development mode)");
+        }
+        else
+        {
+            policy.WithOrigins(corsOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+            Console.WriteLine($"✅ CORS: Allowed origins: {string.Join(", ", corsOrigins)}");
+        }
+    });
+});
+
+// ============= JWT AUTHENTICATION =============
+var jwtSecret = JwtCons.SecretKey;
+var jwtIssuer = JwtCons.Issuer;
+var jwtAudience = JwtCons.Audience;
+
+// ✅ Allow override from configuration (for different environments)
+if (!string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+{
+    jwtSecret = builder.Configuration["Jwt:SecretKey"];
+}
+
+if (string.IsNullOrWhiteSpace(jwtSecret) || Encoding.UTF8.GetByteCount(jwtSecret) < 32)
+    throw new InvalidOperationException("JWT secret must be at least 32 bytes.");
+
+Console.WriteLine($"🔑 JWT Issuer: {jwtIssuer}");
+Console.WriteLine($"🔑 JWT Audience: {jwtAudience}");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromSeconds(30),
+        NameClaimType = ClaimTypes.Name,
+        RoleClaimType = ClaimTypes.Role,
+        RequireSignedTokens = true,
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"❌ JWT Authentication Failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"✅ JWT Token validated successfully for: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"⚠️ JWT Challenge: {context.Error}, {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+// ✅ Middleware Pipeline
+app.UseResponseCompression();
+app.UseResponseCaching();
+app.UseCors("Default");
+
+// ✅ FIX: Correctly configure Swagger
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Procurement API v1");
+        c.RoutePrefix = "swagger";
+    });
+
+    // Scalar API Reference (optional - if you want to use Scalar instead of Swagger UI)
+    app.MapScalarApiReference();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseMiddleware<AuditLogMiddleware>();
+app.UseMiddleware<PerformanceMiddleware>();
+
+// ✅ Database Migration + Cache Pre-warm
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ProcurementDbContext>();
+        Console.WriteLine("🔄 Applying database migrations...");
+        await db.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Database migration failed: {ex.Message}");
+    }
+
+    try
+    {
+        var cachedService = scope.ServiceProvider.GetRequiredService<CachedLocalCopyService>();
+        await cachedService.GetCompaniesAsync();
+        await cachedService.GetBranchesAsync();
+        await cachedService.GetDepartmentsAsync();
+        await cachedService.GetPositionsAsync();
+        await cachedService.GetJobGradesAsync();
+        Console.WriteLine("✅ Local copy cache pre-warmed successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Cache pre-warm failed: {ex.Message}");
+    }
+
+    try
+    {
+        var refDataService = scope.ServiceProvider.GetRequiredService<CachedReferenceDataService>();
+        Console.WriteLine("✅ Reference data cache pre-warmed successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Reference data cache pre-warm failed: {ex.Message}");
+    }
+}
+
+// ✅ Map endpoints
+app.MapControllers();
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.ToString()
+            }),
+            total = TimeSpan.FromTicks(report.Entries.Sum(e => e.Value.Duration.Ticks)).ToString()
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
+// ✅ Performance tracking middleware
+app.Use(async (context, next) =>
+{
+    var stopwatch = Stopwatch.StartNew();
+    await next();
+    stopwatch.Stop();
+    context.Response.Headers.Append("X-Response-Time-ms", stopwatch.ElapsedMilliseconds.ToString());
+});
+
+Console.WriteLine($"\n✅ Procurement Service starting on https://0.0.0.0:{procurementPort}");
+Console.WriteLine($"🔗 Swagger: https://0.0.0.0:{procurementPort}/swagger");
+Console.WriteLine($"🔗 Scalar: https://0.0.0.0:{procurementPort}/scalar/v1");
+Console.WriteLine($"🔑 JWT Issuer: {jwtIssuer}");
+Console.WriteLine($"🔑 JWT Audience: {jwtAudience}");
+Console.WriteLine("📊 Debug logging is ENABLED - check console for details");
+Console.WriteLine("\nPress Ctrl+C to stop");
+
+// ✅ Graceful Shutdown
+try
+{
+    await app.RunAsync();
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Application shutdown requested");
+}
+finally
+{
+    Console.WriteLine("Cleaning up resources...");
+    await Log.CloseAndFlushAsync();
+}

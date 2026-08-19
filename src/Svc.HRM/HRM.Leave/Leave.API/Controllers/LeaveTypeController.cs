@@ -1,6 +1,7 @@
 // Leave.API/Controllers/LeaveTypeController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -32,6 +33,7 @@ public class LeaveTypeController : ControllerBase
     }
 
     [HttpGet("AllLeaveType")]
+    [PerAuth("leave.types.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllLeaveType()
     {
@@ -40,6 +42,7 @@ public class LeaveTypeController : ControllerBase
     }
 
     [HttpGet("GetLeaveType/{id:guid}")]
+    [PerAuth("leave.types.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetLeaveType(Guid id)
@@ -51,6 +54,7 @@ public class LeaveTypeController : ControllerBase
     }
 
     [HttpPost("AddLeaveType")]
+    [PerAuth("leave.types.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> AddLeaveType([FromBody] LeaveTypeAddDto addDto)
     {
@@ -63,6 +67,7 @@ public class LeaveTypeController : ControllerBase
     }
 
     [HttpPut("ModLeaveType/{id:guid}")]
+    [PerAuth("leave.types.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ModLeaveType(Guid id, [FromBody] LeaveTypeModDto modDto)
     {
@@ -75,6 +80,7 @@ public class LeaveTypeController : ControllerBase
     }
 
     [HttpDelete("DelLeaveType/{id:guid}")]
+    [PerAuth("leave.types.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DelLeaveType(Guid id)
     {
@@ -83,6 +89,7 @@ public class LeaveTypeController : ControllerBase
         return Ok(ApiResponse<string>.Ok(null!, "Leave type deleted successfully."));
     }
 
+    [PerAuth("leave.types.mod")]
     [HttpPatch("StatLeaveType")]  // Note: Your frontend calls "StatLeaveType"
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> StatLeaveType([FromBody] StatChangeDto statDto)

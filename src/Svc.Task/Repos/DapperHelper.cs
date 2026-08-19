@@ -14,8 +14,8 @@ public class DapperHelper : IDapperHelper
 
     public DapperHelper(IConfiguration configuration, ILogger<DapperHelper> logger)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        _connectionString = configuration.GetConnectionString("TaskDb")
+            ?? throw new InvalidOperationException("Connection string 'TaskDb' not found.");
         _logger = logger;
     }
 

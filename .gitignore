@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# File Management runtime-uploaded content (user uploads, not source)
+src/Svc.FileManagement/Cor.FileManagement/wwwroot/uploads/
+src/Svc.FileManagement/Cor.FileManagement/wwwroot/thumbnails/

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
@@ -20,6 +21,7 @@ namespace Cor.HRMM.Controllers;
 
 public class BenefitSetController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllBenefitSet")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBenefitSet()
@@ -28,6 +30,7 @@ public class BenefitSetController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetBenefitSet/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -39,6 +42,7 @@ public class BenefitSetController(IMediator med) : ControllerBase
     }
 
     [HttpPost("AddBenefitSet")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] BenefitSetAddDto addDto)
@@ -55,6 +59,7 @@ public class BenefitSetController(IMediator med) : ControllerBase
     }
 
     [HttpPut("ModBenefitSet/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,6 +78,7 @@ public class BenefitSetController(IMediator med) : ControllerBase
     }
 
     [HttpDelete("DelBenefitSet/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

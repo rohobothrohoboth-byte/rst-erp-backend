@@ -1,4 +1,4 @@
-// Program.cs - Complete with Shared Configuration
+ // Program.cs - Complete with Shared Configuration
 
 using Common;
 using Cor.Finance.Persistence;
@@ -37,7 +37,7 @@ using Cor.Finance.Models.Entities.Aggregates;
 using Shared.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
-using Cor.Finance.Authentication;
+using Shared.Helpers.ExternalAccess;
 using Microsoft.AspNetCore.Authorization;
 using Polly;
 using Polly.Extensions.Http;
@@ -97,16 +97,12 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var financePortString = builder.Configuration["ServiceUrls:FinanceApi"] ?? "https://localhost:7008";
-// Extract port from URL
+// ✅ Configure Kestrel - HTTP Only
+var financePortString = builder.Configuration["ServiceUrls:FinanceApi"] ?? "http://localhost:7008";
 var financePort = new Uri(financePortString).Port;
 Console.WriteLine($"📡 Finance Service Port: {financePort}");
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.Listen(IPAddress.Any, financePort, listenOptions => listenOptions.UseHttps());
-});
+// builder.WebHost.ConfigureKestrel(options => { options.Listen(IPAddress.Any, port); });  // DISABLED // DISABLED - Let ASPNETCORE_URLS handle it
 
 // ✅ Configure graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -149,11 +145,11 @@ string GetConfig(string key, string? defaultValue = null)
 // ============================================================
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // ============= DATABASE =============
 var dbConnectionString = GetConfig("ConnectionStrings:coreFinanceDbCon", null);
@@ -353,6 +349,7 @@ builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 
 // ============= AGGREGATE SERVICE =============
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<Cor.Finance.Services.IBudgetReservationService, Cor.Finance.Services.BudgetReservationService>();
 builder.Services.AddScoped<CachedReferenceDataService>();
 builder.Services.AddHostedService<AggregateService>();
 
@@ -390,14 +387,22 @@ builder.Services.AddHostedService<AuditBackgroundService>();
 // ============= API CLIENTS =============
 bool isDev = builder.Environment.IsDevelopment();
 
-builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClientHandler
+builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () =>
 {
-    ServerCertificateCustomValidationCallback = isDev
-        ? (sender, cert, chain, sslPolicyErrors) => true
-        : null,
-    UseCookies = false,
-    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-    MaxConnectionsPerServer = 10
+    var handler = new HttpClientHandler
+    {
+        UseCookies = false,
+        AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+        MaxConnectionsPerServer = 10
+    };
+
+    // Conditionally set the certificate validation callback
+    if (builder.Environment.IsDevelopment())
+    {
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+    }
+
+    return handler;
 });
 
 builder.Services.AddHttpClient<IHrmProApiService, HrmProApiService>(client =>
@@ -468,15 +473,13 @@ builder.Services.AddCors(options =>
 // ✅ API KEY AUTHENTICATION
 // ============================================================
 
-// Register API Key services
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+// Register API Key services (shared)
+builder.Services.AddExternalSystemAccess<FinanceDbContext>(builder.Configuration);
 builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
 
-// Add API Key authentication scheme
+// Add API Key authentication scheme (shared)
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============================================================
 // ✅ JWT AUTHENTICATION (ONLY ONCE)
@@ -578,7 +581,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 
 // ✅ Both authentication schemes will work
 app.UseAuthentication();
@@ -643,3 +646,5 @@ app.Use(async (context, next) =>
     context.Response.Headers.Add("X-Dashboard-Generation-ms",
         context.Items["DashboardGenerationMs"]?.ToString() ?? "N/A");
 });
+
+

@@ -22,12 +22,12 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Cor.Inventory.HealthChecks;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Cor.Inventory.Authentication; // ✅ Add this for API Key authentication
+using Shared.Helpers.ExternalAccess;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -77,14 +77,14 @@ if (updates.Any())
 }
 
 // Configure Kestrel
-var inventoryPortString = builder.Configuration["ServiceUrls:InventoryApi"] ?? "https://localhost:7014";
+var inventoryPortString = builder.Configuration["ServiceUrls:InventoryApi"] ?? "http://inventory";
 var inventoryPort = new Uri(inventoryPortString).Port;
 Console.WriteLine($"📡 Inventory Service Port: {inventoryPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, inventoryPort, listenOptions => listenOptions.UseHttps());
-});
+    options.Listen(IPAddress.Any, inventoryPort);  // ✅ Use 'inventoryPort'
+});  // DISABLED*/
 
 // Configure graceful shutdown
 builder.Services.Configure<HostOptions>(options =>
@@ -127,8 +127,8 @@ string GetConfig(string key, string? defaultValue = null)
 // ============================================================
 
 // Service URLs
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var gatewayUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // Database
 var dbConnectionString = GetConfig("ConnectionStrings:InventoryDbCon", null);
@@ -275,27 +275,43 @@ builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
 // ============= API CLIENTS =============
 bool isDev = builder.Environment.IsDevelopment();
 
-builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () => new HttpClientHandler
+builder.Services.AddSingleton<Func<HttpClientHandler>>(sp => () =>
 {
-    ServerCertificateCustomValidationCallback = isDev
-        ? (sender, cert, chain, sslPolicyErrors) => true
-        : null,
-    UseCookies = false,
-    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-    MaxConnectionsPerServer = 10
+    var handler = new HttpClientHandler
+    {
+        UseCookies = false,
+        AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+        MaxConnectionsPerServer = 10
+    };
+
+    // Conditionally set the certificate validation callback
+    if (builder.Environment.IsDevelopment())
+    {
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+    }
+
+    return handler;
 });
 
 // ============= SERVICES =============
 builder.Services.AddScoped<IWarehouseService, WarehouseService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUnitService, UnitService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IWarehouseZoneService, WarehouseZoneService>();
+builder.Services.AddScoped<IReorderService, ReorderService>();
+builder.Services.AddScoped<IValuationService, ValuationService>();
+builder.Services.AddScoped<IInvAnalyticsService, InvAnalyticsService>();
+builder.Services.AddScoped<IInvDashboardService, InvDashboardService>();
 
-// ✅ Register API Key Services
-builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
-builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
-builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
+// ✅ Register API Key Services (shared)
+builder.Services.AddExternalSystemAccess<InventoryDbContext>(builder.Configuration);
 
-// Add API Key authentication scheme
+// Add API Key authentication scheme (shared)
 builder.Services.AddAuthentication()
-    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+    .AddSharedApiKey();
 
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()
@@ -393,6 +409,11 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Enable [PerAuth("permission")] enforcement. This must be registered directly here
+// because AddApiServices() (which also registers it) is not called in this Program.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
+
 // ============================================================
 // ✅ BUILD APP
 // ============================================================
@@ -415,7 +436,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 
 // ✅ Both authentication schemes will work
 app.UseAuthentication();
@@ -454,3 +475,5 @@ finally
     Console.WriteLine("Cleaning up resources...");
     await Log.CloseAndFlushAsync();
 }
+
+

@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/OpportunityController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class OpportunityController : ControllerBase
     /// Get all opportunities with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.sales.opportunities.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? searchTerm,
@@ -79,6 +81,7 @@ public class OpportunityController : ControllerBase
     /// Get opportunity by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.sales.opportunities.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -102,6 +105,7 @@ public class OpportunityController : ControllerBase
     /// Create a new opportunity
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.sales.opportunities.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateOpportunityDto dto)
@@ -124,6 +128,7 @@ public class OpportunityController : ControllerBase
     /// Update an existing opportunity
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.sales.opportunities.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -146,6 +151,7 @@ public class OpportunityController : ControllerBase
     /// Delete an opportunity
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.sales.opportunities.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -166,6 +172,7 @@ public class OpportunityController : ControllerBase
     /// Update opportunity stage
     /// </summary>
     [HttpPatch("{id:guid}/stage")]
+    [PerAuth("crm.sales.opportunities.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateStage(Guid id, [FromBody] UpdateStageDto dto)
@@ -187,6 +194,7 @@ public class OpportunityController : ControllerBase
     /// Get opportunity statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.sales.opportunities.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats([FromQuery] Guid? customerId, [FromQuery] Guid? leadId)
     {
@@ -207,6 +215,7 @@ public class OpportunityController : ControllerBase
     /// Get opportunity pipeline
     /// </summary>
     [HttpGet("pipeline")]
+    [PerAuth("crm.sales.opportunities.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPipeline([FromQuery] Guid? customerId, [FromQuery] Guid? leadId)
     {

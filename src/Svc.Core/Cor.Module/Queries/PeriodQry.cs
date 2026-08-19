@@ -22,7 +22,7 @@ public class AllPeriodHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto
         const string v = "v";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.PeriodType!, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
             .Join<Period, FiscalYear>(v, b, x => x.FiscalYearId, x => x.Id)
             .From<Period>(v)
@@ -41,6 +41,7 @@ public class AllPeriodHandler : IRequestHandler<AllPeriodQry, List<PeriodListDto
                 Id = data.Id,
                 FiscalYearId = data.FiscalYearId,
                 Quarter = data.Quarter,
+                PeriodType = data.PeriodType,
                 Name = data.Name,
                 FiscYear = data.FiscYear,
                 QuarterStr = MyEnumHelper.FormatEnum<Quarter>(data.Quarter),
@@ -68,7 +69,7 @@ public class PeriodByIdHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
         const string v = "v";
         const string b = "b";
         var qb = new QueryBuilder()
-            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
+            .Select<Period>(v, x => x.Id, x => x.Name, x => x.DateStart, x => x.DateEnd, x => x.IsActive, x => x.Quarter, x => x.PeriodType!, x => x.FiscalYearId, x => x.DateAdd, x => x.DateMod!, x => x.xmin)
             .SelectAs<FiscalYear, PeriodListDto>(b, x => x.Name, d => d.FiscYear)
             .From<Period>(v)
             .Join<Period, FiscalYear>(v, b, x => x.FiscalYearId, x => x.Id)
@@ -84,6 +85,7 @@ public class PeriodByIdHandler : IRequestHandler<PeriodByIdQry, PeriodListDto?>
             Id = data.Id,
             FiscalYearId = data.FiscalYearId,
             Quarter = data.Quarter,
+            PeriodType = data.PeriodType,
             Name = data.Name,
             FiscYear = data.FiscYear,
             QuarterStr = MyEnumHelper.FormatEnum<Quarter>(data.Quarter),

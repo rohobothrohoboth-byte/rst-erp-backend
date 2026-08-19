@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Models.DTOs;
 using Cor.HRMM.Queries;
@@ -22,6 +23,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Position Education by PositionId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPositionEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionEdu(Guid id)
@@ -30,6 +32,7 @@ public class PositionEduController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPositionEdu/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -41,6 +44,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     }
 
     [HttpPost("AddPositionEdu")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] PositionEduAddDto addDto)
@@ -57,6 +61,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     }
 
     [HttpPut("ModPositionEdu/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -75,6 +80,7 @@ public class PositionEduController(IMediator med) : ControllerBase
     }
 
     [HttpDelete("DelPositionEdu/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

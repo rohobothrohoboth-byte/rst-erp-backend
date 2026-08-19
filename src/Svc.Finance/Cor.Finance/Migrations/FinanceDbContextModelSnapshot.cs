@@ -98,6 +98,149 @@ namespace Cor.Finance.Migrations
                     b.ToTable("AccountCategories");
                 });
 
+            modelBuilder.Entity("Cor.Finance.Models.Entities.AccountSubtype", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByUserName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NameAm")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("PeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RowVersion")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByUserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountTypeId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("AccountSubtypes");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.AccountType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByUserName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NameAm")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NormalBalance")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<Guid?>("PeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RowVersion")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByUserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("AccountTypes");
+                });
+
             modelBuilder.Entity("Cor.Finance.Models.Entities.Aggregates.InvoiceAggregate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1250,6 +1393,71 @@ namespace Cor.Finance.Migrations
                         .HasDatabaseName("IX_BudgetLines_BudgetId_AccountId");
 
                     b.ToTable("BudgetLines");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.BudgetReservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("BudgetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByUserName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("PeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReferenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferenceType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RowVersion")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByUserName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetId");
+
+                    b.HasIndex("PeriodId");
+
+                    b.ToTable("BudgetReservations");
                 });
 
             modelBuilder.Entity("Cor.Finance.Models.Entities.ChartOfAccounts", b =>
@@ -3068,55 +3276,6 @@ namespace Cor.Finance.Migrations
                     b.HasIndex("PeriodId");
 
                     b.ToTable("ExpenseCategories");
-                });
-
-            modelBuilder.Entity("Cor.Finance.Models.Entities.ExternalSystem", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AllowedEndpointsJson")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("ApiKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("BaseUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastUsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("RateLimitPerMinute")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("RequestCount")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExternalSystems");
                 });
 
             modelBuilder.Entity("Cor.Finance.Models.Entities.FinancialPeriod", b =>
@@ -6521,6 +6680,55 @@ namespace Cor.Finance.Migrations
                     b.ToTable("VoucherLines");
                 });
 
+            modelBuilder.Entity("Shared.Helpers.ExternalAccess.ExternalSystem", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AllowedEndpointsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ApiKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("RateLimitPerMinute")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RequestCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExternalSystems");
+                });
+
             modelBuilder.Entity("Cor.Finance.Models.Entities.AccountCategory", b =>
                 {
                     b.HasOne("Cor.Finance.Models.Entities.AccountCategory", "Parent")
@@ -6533,6 +6741,32 @@ namespace Cor.Finance.Migrations
                         .HasForeignKey("PeriodId");
 
                     b.Navigation("Parent");
+
+                    b.Navigation("Period");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.AccountSubtype", b =>
+                {
+                    b.HasOne("Cor.Finance.Models.Entities.AccountType", "AccountType")
+                        .WithMany("Subtypes")
+                        .HasForeignKey("AccountTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cor.Finance.Models.Entities.FinancialPeriod", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId");
+
+                    b.Navigation("AccountType");
+
+                    b.Navigation("Period");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.AccountType", b =>
+                {
+                    b.HasOne("Cor.Finance.Models.Entities.FinancialPeriod", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId");
 
                     b.Navigation("Period");
                 });
@@ -6717,6 +6951,23 @@ namespace Cor.Finance.Migrations
                         .HasForeignKey("PeriodId");
 
                     b.Navigation("Account");
+
+                    b.Navigation("Budget");
+
+                    b.Navigation("Period");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.BudgetReservation", b =>
+                {
+                    b.HasOne("Cor.Finance.Models.Entities.Budget", "Budget")
+                        .WithMany()
+                        .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cor.Finance.Models.Entities.FinancialPeriod", "Period")
+                        .WithMany()
+                        .HasForeignKey("PeriodId");
 
                     b.Navigation("Budget");
 
@@ -7674,6 +7925,11 @@ namespace Cor.Finance.Migrations
                     b.Navigation("Accounts");
 
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("Cor.Finance.Models.Entities.AccountType", b =>
+                {
+                    b.Navigation("Subtypes");
                 });
 
             modelBuilder.Entity("Cor.Finance.Models.Entities.BankAccount", b =>

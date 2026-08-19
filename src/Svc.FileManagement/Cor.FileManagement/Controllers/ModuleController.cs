@@ -1,6 +1,7 @@
 // E:\untitled46\RST_ERP\src\Svc.FileManagement\Cor.FileManagement\Controllers\ModuleController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +37,7 @@ public class ModuleController : ControllerBase
 
     // ✅ GET /api/file/v1/module/{module}/reference/{referenceId}
     // Get documents by module and reference (e.g., for invoice attachments)
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{module}/reference/{referenceId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDocumentsByModuleAndReference(string module, Guid referenceId, [FromQuery] string? category = null)
@@ -53,6 +55,7 @@ public class ModuleController : ControllerBase
 
     // ✅ GET /api/file/v1/module/{module}
     // Get documents by module only
+    [PerAuth(FlmPerm.View)]
     [HttpGet("{module}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDocumentsByModule(string module, [FromQuery] string? category = null)

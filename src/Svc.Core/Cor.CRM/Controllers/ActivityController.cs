@@ -1,5 +1,6 @@
 // Cor.CRM/Controllers/ActivityController.cs
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class ActivityController : ControllerBase
     /// Create a new activity
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.activities.list.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateActivityDto dto)
@@ -52,6 +54,7 @@ public class ActivityController : ControllerBase
     /// Update an existing activity
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.activities.list.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -74,6 +77,7 @@ public class ActivityController : ControllerBase
     /// Get activity by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.activities.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -97,6 +101,7 @@ public class ActivityController : ControllerBase
     /// Get all activities with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.activities.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? type,
@@ -140,6 +145,7 @@ public class ActivityController : ControllerBase
     /// Update activity status
     /// </summary>
     [HttpPatch("{id:guid}/status")]
+    [PerAuth("crm.activities.list.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -162,6 +168,7 @@ public class ActivityController : ControllerBase
     /// Complete an activity
     /// </summary>
     [HttpPost("{id:guid}/complete")]
+    [PerAuth("crm.activities.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(Guid id)
@@ -182,6 +189,7 @@ public class ActivityController : ControllerBase
     /// Delete an activity (soft delete)
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.activities.list.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -202,6 +210,7 @@ public class ActivityController : ControllerBase
     /// Get activity statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.activities.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

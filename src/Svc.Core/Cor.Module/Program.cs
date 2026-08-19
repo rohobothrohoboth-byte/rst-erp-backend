@@ -1,5 +1,6 @@
 using Cor.Module.gRPCService;
 using Cor.Module.Middlewares;
+using Cor.Module.HealthChecks;
 using Scalar.AspNetCore;
 using Serilog;
 using Cor.Module.Services;
@@ -10,10 +11,18 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Shared.Helpers.Extensions;
 using System.Net;
 using Shared.Helpers;
+using Cor.Module.Authentication;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -62,19 +71,12 @@ if (updates.Any())
     builder.Configuration.AddInMemoryCollection(updates);
 }
 
-// ✅ Configure Kestrel - Get port from resolved configuration
-var coreModulePortString = builder.Configuration["ServiceUrls:CoreModuleApi"] ?? "https://localhost:7002";
-var coreModulePort = new Uri(coreModulePortString).Port;
-Console.WriteLine($"📡 Core Module Service Port: {coreModulePort}");
-
-// ✅ FORCE PORT ON ALL INTERFACES
+/*// ✅ Configure Kestrel - FORCE PORT 80 inside container
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Any, coreModulePort, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
+    options.Listen(IPAddress.Any, 80);  // ✅ Always port 80 inside container
+    Console.WriteLine("✅ Kestrel listening on HTTP port 80");
+});   // DISABLED*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -92,13 +94,13 @@ string GetConfig(string key, string? defaultValue = null)
     return string.Empty;
 }
 
-// ============= SERVICE URLS =============
-var CorHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+// ============= SERVICE URLS - FIXED =============
+// ✅ USE HTTP AND DOCKER SERVICE NAMES
+var CorHrmmUrl = "http://core-hrmm";
+var authUrl = "http://auth";
+var hrmProUrl = "http://hrm-profile";
+var financeApiUrl = "http://finance";
+var gatewayApiUrl = "http://gateway";
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -127,7 +129,7 @@ var dbConnectionString = GetConfig("ConnectionStrings:CorModuleDbCon", null);
 
 if (string.IsNullOrEmpty(dbConnectionString))
 {
-    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "localhost";
+    var dbHost = Environment.GetEnvironmentVariable("POSTGRES_HOST") ?? "postgres";  // ✅ FIXED: Use "postgres" instead of "localhost"
     var dbPort = Environment.GetEnvironmentVariable("POSTGRES_PORT") ?? "5432";
     var dbUser = Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres";
     var dbPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "root";
@@ -141,7 +143,7 @@ var redisConnectionString = GetConfig("Redis:ConnectionString", null);
 
 if (string.IsNullOrEmpty(redisConnectionString))
 {
-    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost";
+    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis";  // ✅ FIXED: Use "redis" instead of "localhost"
     var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379";
     var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? "";
     var redisSsl = Environment.GetEnvironmentVariable("REDIS_SSL")?.ToLower() == "true";
@@ -162,8 +164,8 @@ var workingConnectionString = redisConnectionString;
 var connectionAttempts = new List<string>
 {
     redisConnectionString,
-    "localhost:6379,abortConnect=false",
     "redis:6379,abortConnect=false",
+    "localhost:6379,abortConnect=false",
 };
 
 foreach (var attempt in connectionAttempts.Distinct())
@@ -251,20 +253,17 @@ else
     Console.WriteLine("✅ MemoryCache ENABLED (Redis fallback)");
 }
 
-// ============= SSL BYPASS HANDLER =============
-var sslHandler = new HttpClientHandler
+// ============= HTTP CLIENT HANDLER - FIXED =============
+// ✅ Use HTTP handler WITHOUT SSL bypass
+var httpHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
     MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
 // ============= REGISTER HTTP CLIENTS =============
 
-// ✅ Core HRMM API Client
-
-
-// ✅ Auth API Client
+// ✅ Auth API Client - FIXED
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 {
     client.BaseAddress = new Uri(authUrl);
@@ -273,17 +272,15 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
     client.DefaultRequestHeaders.Add("X-API-Key", coreApiKey);
     client.DefaultRequestHeaders.Add("X-Service-Name", "CoreModuleService");
 })
-.ConfigurePrimaryHttpMessageHandler(() => sslHandler)
+.ConfigurePrimaryHttpMessageHandler(() => httpHandler)
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
 
-// ✅ HRM Pro API Client
-
-
-// ============= RABBITMQ REGISTRATION =============
-var rabbitMqHost = GetConfig("RabbitMQ:Host", "localhost");
-var rabbitMqPort = int.Parse(GetConfig("RabbitMQ:Port", "5672"));
-var rabbitMqUsername = GetConfig("RabbitMQ:Username", "guest");
-var rabbitMqPassword = GetConfig("RabbitMQ:Password", "guest");
+// ============= RABBITMQ REGISTRATION - FIXED =============
+// ✅ FIXED: Use double underscore for environment variables
+var rabbitMqHost = GetConfig("RabbitMQ__Host", "rabbitmq");  // ✅ Changed to double underscore
+var rabbitMqPort = int.Parse(GetConfig("RabbitMQ__Port", "5672"));  // ✅ Changed to double underscore
+var rabbitMqUsername = GetConfig("RabbitMQ__Username", "guest");  // ✅ Changed to double underscore
+var rabbitMqPassword = GetConfig("RabbitMQ__Password", "guest");  // ✅ Changed to double underscore
 
 builder.Services.AddSingleton<IConnectionFactory>(sp =>
 {
@@ -305,11 +302,31 @@ builder.Services.AddSingleton<IConnectionFactory>(sp =>
 // ============= REGISTER SERVICES =============
 builder.Services.AddSingleton<IEventPublisher, RabbitMQEventPublisher>();
 
-// ============= HEALTH CHECKS =============
+// ============= HEALTH CHECKS - FIXED =============
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{CorHrmmUrl}/health"), "Core HRMM API")
     .AddUrlGroup(new Uri($"{authUrl}/health"), "Auth API")
     .AddUrlGroup(new Uri($"{hrmProUrl}/health"), "HRM Pro API");
+
+// ============= RATE LIMITING =============
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("Fixed", opt =>
+    {
+        opt.Window = TimeSpan.FromSeconds(10);
+        opt.PermitLimit = 100;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+
+    options.AddFixedWindowLimiter("Write", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 30;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
+});
 
 // ================================================================
 // ✅ CORS CONFIGURATION
@@ -353,18 +370,77 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ============= API KEY AUTHENTICATION & AUTHORIZATION =============
+
+// 1. Configuration
+builder.Services.Configure<ApiKeySettings>(builder.Configuration.GetSection("ApiKey"));
+builder.Services.Configure<ApiKeyRateLimitOptions>(builder.Configuration.GetSection("ApiKeyRateLimit"));
+
+// 2. Services - ሁሉም Scoped
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IExternalSystemService, ExternalSystemService>();
+
+// 3. Authorization Components - ሁሉም Scoped
+builder.Services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+// 4. Authentication - support BOTH browser JWTs AND internal API keys
+var jwtSecret = Common.JwtCons.SecretKey;
+if (!string.IsNullOrEmpty(builder.Configuration["Jwt:SecretKey"]))
+    jwtSecret = builder.Configuration["Jwt:SecretKey"]!;
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "JWT_OR_APIKEY";
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddPolicyScheme("JWT_OR_APIKEY", "JWT or ApiKey", options =>
+{
+    options.ForwardDefaultSelector = context =>
+        context.Request.Headers.ContainsKey("X-API-Key")
+            ? "ApiKey"
+            : JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = Common.JwtCons.Issuer,
+        ValidateAudience = true,
+        ValidAudience = Common.JwtCons.Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
+})
+.AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>("ApiKey", null);
+
+// 5. Authorization
+builder.Services.AddAuthorization();
+
 // ============= BUILDER EXTENSIONS =============
 builder.AddApiServices()
     .AddErrorHandling()
-    .AddSwaggerService()
-    .AddAuthService();
+    .AddSwaggerService();
 
 var app = builder.Build();
 
+// ============= MIDDLEWARE ORDER =============
+app.UseMiddleware<ApiKeyRateLimiterMiddleware>();
 app.MapDefaultEndpoints();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // ✅ DISABLED FOR DOCKER
+app.UseRateLimiter();
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGrpcService<CorModListService>();
 
 if (app.Environment.IsDevelopment())
@@ -374,12 +450,30 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigration();
 }
 
-app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapControllers();
 
-Console.WriteLine($"\n✅ Core Module Service starting on https://0.0.0.0:{coreModulePort}");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration.ToString()
+            }),
+            totalDuration = report.TotalDuration.ToString()
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
+Console.WriteLine($"\n✅ Core Module Service starting on http://0.0.0.0:80");
 Console.WriteLine($"🔗 Core HRMM URL: {CorHrmmUrl}");
 Console.WriteLine($"🔗 Auth URL: {authUrl}");
 Console.WriteLine($"🔗 HRM Pro URL: {hrmProUrl}");
@@ -411,3 +505,5 @@ public class AuthApiService : IAuthApiService
         return await _httpClient.GetAsync(endpoint, ct);
     }
 }
+
+

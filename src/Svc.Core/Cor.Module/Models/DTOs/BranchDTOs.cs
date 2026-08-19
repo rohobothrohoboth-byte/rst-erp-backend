@@ -13,6 +13,11 @@ public class BranchDto
     public string BranchType { get; set; } = default!;
     public string BranchStat { get; set; } = default!;
     public Guid CompId { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
     public DateTime OpenDate { get; set; }
     public bool IsActive { get; set; }
     public bool IsDeleted { get; set; }
@@ -31,6 +36,11 @@ public class BranchListDto : BaseDTO
     public string BranchStat { get; set; } = default!;
     public string Comp { get; set; } = default!;
     public string CompAm { get; set; } = default!;
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
     public DateTime OpenDate { get; set; }
     public string BranchTypeStr { get; set; } = default!;
     public string BranchStatStr { get; set; } = default!;
@@ -55,6 +65,11 @@ public class AddBranchDto
     public string BranchType { get; set; } = default!;
     public string BranchStat { get; set; } = default!;
     public Guid CompId { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
 }
 
 public class EditBranchDto
@@ -68,5 +83,10 @@ public class EditBranchDto
     public string BranchType { get; set; } = default!;
     public string BranchStat { get; set; } = default!;
     public Guid CompId { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
     public string RowVersion { get; set; } = default!;
 }

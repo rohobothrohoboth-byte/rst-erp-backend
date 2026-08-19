@@ -1,0 +1,70 @@
+// Protos/project.proto
+syntax = "proto3";
+
+option csharp_namespace = "Cor.ProjectManagement.gRPCService";
+
+package projectmanagement;
+
+service ProjectManagementService {
+  rpc GetProject (ProjectRequest) returns (ProjectResponse);
+  rpc GetProjects (ProjectsRequest) returns (ProjectsResponse);
+  rpc CreateProject (CreateProjectRequest) returns (ProjectResponse);
+  rpc UpdateProject (UpdateProjectRequest) returns (ProjectResponse);
+  rpc DeleteProject (DeleteProjectRequest) returns (DeleteProjectResponse);
+}
+
+message ProjectRequest {
+  string id = 1;
+}
+
+message ProjectResponse {
+  string id = 1;
+  string name = 2;
+  string code = 3;
+  string status = 4;
+  string startDate = 5;
+  double budget = 6;
+  double completionPercentage = 7;
+  string description = 8;
+  string projectManagerName = 9;
+}
+
+message ProjectsRequest {
+  int32 page = 1;
+  int32 pageSize = 2;
+  string search = 3;
+  string status = 4;
+}
+
+message ProjectsResponse {
+  repeated ProjectResponse projects = 1;
+  int32 totalCount = 2;
+  int32 page = 3;
+  int32 pageSize = 4;
+  int32 totalPages = 5;
+}
+
+message CreateProjectRequest {
+  string name = 1;
+  string description = 2;
+  string type = 3;
+  string startDate = 4;
+  double budget = 5;
+  string projectManagerId = 6;
+}
+
+message UpdateProjectRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string status = 4;
+  double budget = 5;
+}
+
+message DeleteProjectRequest {
+  string id = 1;
+}
+
+message DeleteProjectResponse {
+  bool success = 1;
+}

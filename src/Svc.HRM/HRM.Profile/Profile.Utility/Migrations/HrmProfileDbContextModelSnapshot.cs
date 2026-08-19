@@ -1222,6 +1222,9 @@ namespace Profile.Utility.Migrations
                     b.Property<Guid>("PositionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ReportsToId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("WorkArrangement")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1250,6 +1253,143 @@ namespace Profile.Utility.Migrations
                     b.HasIndex("PositionId");
 
                     b.ToTable("Employee");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeeContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("Salary")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeContract");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeePromotion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromPosition")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToPosition")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeePromotion");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeeTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DateAdd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateMod")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FromBranch")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FromDepartment")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToBranch")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToDepartment")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeTransfer");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.FileMetaData", b =>
@@ -1952,6 +2092,39 @@ namespace Profile.Utility.Migrations
                         .IsRequired();
 
                     b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeeContract", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeePromotion", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.EmployeeTransfer", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Employee", b =>

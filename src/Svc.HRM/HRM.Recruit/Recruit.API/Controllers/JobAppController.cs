@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,7 @@ namespace Recruit.API.Controllers;
 [ApiVersion("1.0")]
 public class JobAppController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.recruit.applicant.manage")]
     [HttpPost("InternalApp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -40,6 +42,7 @@ public class JobAppController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "New JOB APPLICATION successfully created."));
     }
 
+    [PerAuth("hr.recruit.applicant.manage")]
     [HttpPut("InternalMod/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -63,6 +66,7 @@ public class JobAppController(IMediator med) : ControllerBase
 
 
 
+    [PerAuth("hr.recruit.applicant.manage")]
     [HttpDelete("InternalDel/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,62 +1,36 @@
-version: '3.8'
-
 services:
-  # ============ DATABASES ============
-  auth_db:
-    image: postgres:15
-    container_name: auth_db_prod
+
+  # ============================================================
+  # POSTGRESQL
+  # ============================================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_prod
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_DB: Auth.Mgr
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
-      - auth_db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d postgres"
+        ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  core_db:
-    image: postgres:15
-    container_name: core_db_prod
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_DB: core.Module
-    ports:
-      - "5433:5432"
-    volumes:
-      - core_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # ============================================================
+  # RABBITMQ
+  # ============================================================
 
-  hrm_db:
-    image: postgres:15
-    container_name: hrm_db_prod
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_DB: HRM.Pro
-    ports:
-      - "5434:5432"
-    volumes:
-      - hrm_db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ============ MESSAGE BROKER ============
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq_prod
@@ -67,122 +41,952 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 30s        # Increased from 10s
+      timeout: 30s         # Increased from 5s
+      retries: 5           # Reduced from 10
+      start_period: 60s    # Add this - give RabbitMQ 60 seconds to initialize
 
-  # ============ CACHE ============
+  # ============================================================
+  # REDIS
+  # ============================================================
+
   redis:
-    image: redis:alpine
+    image: redis:8.6
     container_name: redis_prod
     restart: always
+    command:
+      [
+        "redis-server",
+        "--requirepass",
+        "${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way}"
+      ]
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way}",
+          "ping"
+        ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  # ============ SERVICES ============
-  core_api:
-    build:
-      context: .
-      dockerfile: src/Svc.Core/Cor.Module/Dockerfile.prod
-    container_name: core_api_prod
-    restart: unless-stopped
-    ports:
-      - "1102:80"
-    depends_on:
-      core_db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__CorModuleDbCon=Host=core_db;Port=5432;Database=core.Module;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
-      - RabbitMQ__Host=rabbitmq
+  # ============================================================
+  # AUTH SERVICE
+  # ============================================================
 
-  core_hrmm_api:
-    build:
-      context: .
-      dockerfile: src/Svc.Core/Cor.HRMM/Dockerfile.prod
-    container_name: core_hrmm_api_prod
-    restart: unless-stopped
-    ports:
-      - "1101:80"
-    depends_on:
-      hrm_db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__coreHRMMDbCon=Host=hrm_db;Port=5432;Database=core.HRMM;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
-      - RabbitMQ__Host=rabbitmq
-
-  hrm_pro_api:
-    build:
-      context: .
-      dockerfile: src/Svc.HRM/Profile.API/Dockerfile.prod
-    container_name: hrm_pro_api_prod
-    restart: unless-stopped
-    ports:
-      - "1215:80"
-    depends_on:
-      hrm_db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__HRMProDbCon=Host=hrm_db;Port=5432;Database=HRM.Pro;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
-      - RabbitMQ__Host=rabbitmq
-
-  auth_api:
+  auth:
     build:
       context: .
       dockerfile: src/Svc.Auth/Dockerfile.prod
-    container_name: auth_api_prod
+    container_name: auth_prod
     restart: unless-stopped
     ports:
-      - "1213:80"
+      - "7000:80"
     depends_on:
-      auth_db:
+      postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__authMgrCon=Host=auth_db;Port=5432;Database=Auth.Mgr;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-root}
-      - ConnectionStrings__Redis=redis:6379
-      - RabbitMQ__Host=rabbitmq
-      - ServiceUrls__CoreModuleApi=http://core_api
-      - ServiceUrls__CoreHRMMApi=http://core_hrmm_api
-      - ServiceUrls__HRMProApi=http://hrm_pro_api
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
 
-  # ============ API GATEWAY ============
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__authMgrCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Auth.Mgr;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+      ServiceUrls__CoreModuleApi: http://core-module
+      ServiceUrls__CoreHRMMApi: http://core-hrmm
+      ServiceUrls__HRMProApi: http://hrm-profile
+
+  # ============================================================
+  # CORE MODULE
+  # ============================================================
+
+  core-module:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.Module/Dockerfile
+    container_name: core_module_prod
+    restart: unless-stopped
+    ports:
+      - "7002:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+      - core_backup_data:/app/backups
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__CorModuleDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=core.Module;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+      Backup__RootPath: /app/backups
+
+  # ============================================================
+  # CORE HRMM
+  # ============================================================
+
+  core-hrmm:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.HRMM/Dockerfile
+    container_name: core_hrmm_prod
+    restart: unless-stopped
+    ports:
+      - "7001:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__coreHRMMDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=core.HRMM;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # HRM PROFILE
+  # ============================================================
+
+  hrm-profile:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/HRM.Profile/Profile.API/Dockerfile
+    container_name: hrm_profile_prod
+    restart: unless-stopped
+    ports:
+      - "7004:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__HRMProDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=HRM.Pro;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # LEAVE SERVICE
+  # ============================================================
+
+  leave:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/HRM.Leave/Leave.API/Dockerfile
+    container_name: leave_prod
+    restart: unless-stopped
+    ports:
+      - "7003:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__HrmLeaveDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=HRM.Leave;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # RECRUIT SERVICE
+  # ============================================================
+
+  recruit:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/HRM.Recruit/Recruit.API/Dockerfile
+    container_name: recruit_prod
+    restart: unless-stopped
+    ports:
+      - "7005:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__HrmRecruitDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=HRM.Recruit;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # TASK SERVICE - FIXED
+  # ============================================================
+
+  task:
+    build:
+      context: .
+      dockerfile: src/Svc.Task.Host/Dockerfile
+    container_name: task_prod
+    restart: unless-stopped
+    ports:
+      - "7006:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__TaskDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Task;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # NOTIFICATION SERVICE - FIXED
+  # ============================================================
+
+  notification:
+    build:
+      context: .
+      dockerfile: src/Svc.Notification.Host/Dockerfile
+    container_name: notification_prod
+    restart: unless-stopped
+    ports:
+      - "7007:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__NotificationDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Notification;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # FINANCE SERVICE
+  # ============================================================
+
+  finance:
+    build:
+      context: .
+      dockerfile: src/Svc.Finance/Cor.Finance/Dockerfile
+    container_name: finance_prod
+    restart: unless-stopped
+    ports:
+      - "7008:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__coreFinanceDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=core.Finance;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root};
+        Include Error Detail=true
+
+      ConnectionStrings__WarehouseDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=core.FinanceWarehouse;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # FILE MANAGEMENT SERVICE
+  # ============================================================
+
+  filemanagement:
+    build:
+      context: .
+      dockerfile: src/Svc.FileManagement/Cor.FileManagement/Dockerfile
+    container_name: filemanagement_prod
+    restart: unless-stopped
+    ports:
+      - "7009:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__FileManagementDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=FileManagement;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # PAYROLL SERVICE - FIXED
+  # ============================================================
+
+  payroll:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/Svc.HRM.Payroll/Dockerfile
+    container_name: payroll_prod
+    restart: unless-stopped
+    ports:
+      - "7010:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__PayrollDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Payroll;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # ATTENDANCE SERVICE - FIXED
+  # ============================================================
+
+  attendance:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/Svc.HRM.Attendance/Dockerfile
+    container_name: attendance_prod
+    restart: unless-stopped
+    ports:
+      - "7011:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__AttendanceDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Attendance;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # TRAINING SERVICE
+  # ============================================================
+
+  training:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/Svc.HRM.Training/Dockerfile
+    container_name: training_prod
+    restart: unless-stopped
+    ports:
+      - "5007:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__HrmTrainingDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=HRM.Training;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # PERFORMANCE SERVICE
+  # ============================================================
+
+  performance:
+    build:
+      context: .
+      dockerfile: src/Svc.HRM/Svc.HRM.Performance/Dockerfile
+    container_name: performance_prod
+    restart: unless-stopped
+    ports:
+      - "5005:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__HrmPerformanceDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=HRM.Performance;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # CRM SERVICE
+  # ============================================================
+
+  crm:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.CRM/Dockerfile
+    container_name: crm_prod
+    restart: unless-stopped
+    ports:
+      - "7012:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ConnectionStrings__CrmDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=CRM;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # PROCUREMENT SERVICE
+  # ============================================================
+
+  procurement:
+    build:
+      context: .
+      dockerfile: src/Svc.Procurement/Cor.Procurement/Dockerfile
+    container_name: procurement_prod
+    restart: unless-stopped
+    ports:
+      - "7013:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      AuthUrl: http://auth
+
+      ConnectionStrings__ProcurementDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Procurement;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # INVENTORY SERVICE
+  # ============================================================
+
+  inventory:
+    build:
+      context: .
+      dockerfile: src/Svc.Inventory/Cor.Inventory/Dockerfile
+    container_name: inventory_prod
+    restart: unless-stopped
+    ports:
+      - "7014:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      AuthUrl: http://auth
+
+      ConnectionStrings__InventoryDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=Inventory;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # PLAN & DEVELOPMENT SERVICE
+  # ============================================================
+
+  plandev:
+    build:
+      context: .
+      dockerfile: src/Svc.Core/Cor.PlanDev/Dockerfile
+    container_name: plandev_prod
+    restart: unless-stopped
+    ports:
+      - "7015:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      AuthUrl: http://auth
+
+      ConnectionStrings__PlanDevDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=PlanDev;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # PROJECT MANAGEMENT SERVICE
+  # ============================================================
+
+  projectmanagement:
+    build:
+      context: .
+      dockerfile: src/Svc.ProjectManagement/Cor.ProjectManagement/Dockerfile
+    container_name: projectmanagement_prod
+    restart: unless-stopped
+    ports:
+      - "7016:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      AuthUrl: http://auth
+      FinanceApiUrl: http://finance
+      CoreApiUrl: http://core-module
+      HrmApiUrl: http://core-hrmm
+      CrmApiUrl: http://crm
+      InventoryApiUrl: http://inventory
+      ProcurementApiUrl: http://procurement
+
+      ConnectionStrings__ProjectManagementDbCon: >-
+        Host=postgres;
+        Port=5432;
+        Database=ProjectManagement;
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:-root}
+
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+      RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+
+  # ============================================================
+  # API GATEWAY
+  # ============================================================
+
   gateway:
     build:
       context: .
-      dockerfile: src/Svc.Gateway/Dockerfile.prod
+      dockerfile: src/Svc.Gateway/Dockerfile
     container_name: gateway_prod
     restart: unless-stopped
     ports:
-      - "1212:80"
+      - "5000:80"
     depends_on:
-      - auth_api
-      - core_api
-      - core_hrmm_api
-      - hrm_pro_api
+      auth:
+        condition: service_started
+      core-module:
+        condition: service_started
+      core-hrmm:
+        condition: service_started
+      finance:
+        condition: service_started
+      crm:
+        condition: service_started
+      inventory:
+        condition: service_started
+      procurement:
+        condition: service_started
+      projectmanagement:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    volumes:
+      - ~/.nuget/packages:/root/.nuget/packages
+      - C:\nuget-packages:/root/.nuget/packages
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Production
+
+      Redis__ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+      Redis:ConnectionString: >-
+        redis:6379,password=${REDIS_PASSWORD:-kRrwYqqHWnnZpMhnn30way},abortConnect=false
+
+      ServiceUrls__AuthApi: http://auth
+      ServiceUrls__CoreModuleApi: http://core-module
+      ServiceUrls__CoreHRMMApi: http://core-hrmm
+      ServiceUrls__FinanceApi: http://finance
+      ServiceUrls__CrmApi: http://crm
+      ServiceUrls__InventoryApi: http://inventory
+      ServiceUrls__ProcurementApi: http://procurement
+      ServiceUrls__ProjectManagementApi: http://projectmanagement
+
+# ==============================================================
+# VOLUMES
+# ==============================================================
 
 volumes:
-  auth_db_data:
-  core_db_data:
-  hrm_db_data:
+  postgres_data:
+    name: rst_erp_postgres_data
+  rabbitmq_data:
+    name: rst_erp_rabbitmq_data
+  redis_data:
+    name: rst_erp_redis_data
+  core_backup_data:
+    name: rst_erp_core_backup_data
+
+

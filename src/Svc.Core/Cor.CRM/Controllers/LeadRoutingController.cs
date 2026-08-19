@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/LeadRoutingController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Interfaces;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -31,6 +32,7 @@ public class LeadRoutingController : ControllerBase
     /// Get all routing rules
     /// </summary>
     [HttpGet("Rules")]
+    [PerAuth("crm.leads.routing.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRules()
     {
@@ -50,6 +52,7 @@ public class LeadRoutingController : ControllerBase
     /// Get routing rule by ID
     /// </summary>
     [HttpGet("Rule/{id:guid}")]
+    [PerAuth("crm.leads.routing.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRule(Guid id)
@@ -72,6 +75,7 @@ public class LeadRoutingController : ControllerBase
     /// Create a routing rule
     /// </summary>
     [HttpPost("Rule")]
+    [PerAuth("crm.leads.routing.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateRule([FromBody] CreateRoutingRuleDto dto)
@@ -100,6 +104,7 @@ public class LeadRoutingController : ControllerBase
     /// Update a routing rule
     /// </summary>
     [HttpPut("Rule/{id:guid}")]
+    [PerAuth("crm.leads.routing.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateRule(Guid id, [FromBody] UpdateRoutingRuleDto dto)
@@ -128,6 +133,7 @@ public class LeadRoutingController : ControllerBase
     /// Delete a routing rule
     /// </summary>
     [HttpDelete("Rule/{id:guid}")]
+    [PerAuth("crm.leads.routing.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteRule(Guid id)
@@ -149,6 +155,7 @@ public class LeadRoutingController : ControllerBase
     /// Get routing statistics
     /// </summary>
     [HttpGet("Stats")]
+    [PerAuth("crm.leads.routing.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

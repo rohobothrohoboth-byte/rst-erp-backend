@@ -32,29 +32,39 @@ public class RefreshTokenCmdHandler : IRequestHandler<RefreshTokenCmd, LoginResD
 
     public async Task<LoginResDto> Handle(RefreshTokenCmd request, CancellationToken ct)
     {
-        await _uow.Begin(ct);
-        try
+        // The endpoint is [Authorize], so the caller already presented a valid
+        // access token (identity in request.UserId). The client refreshes with an
+        // empty body + Bearer header, so a stored refresh token is optional.
+        var user = await _userManager.FindByIdAsync(request.UserId);
+        if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
+
+        // When a refresh token is supplied, validate it; a revoked token is rejected.
+        if (!string.IsNullOrWhiteSpace(request.Input?.Token))
         {
-            var rToken = await _uow.Set<RefreshToken>().FirstOrDefaultAsync(p => p.UserId == request.UserId && p.Token == request.Input.Token, ct);
-            if (rToken == null || rToken.IsRevoked) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
-
-            var user = await _userManager.FindByIdAsync(request.UserId);
-            if (user == null) { throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!"); }
-
-            var newRefresh = await _tokenService.RefreshToken(user);
-            await _uow.Commit(ct);
-
-            return new LoginResDto
-            {
-                AccessToken = newRefresh.AccessToken,
-                RefreshToken = newRefresh.RefreshToken,
-                ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
-            };
+            var rToken = await _uow.Set<RefreshToken>()
+                .FirstOrDefaultAsync(p => p.UserId == request.UserId && p.Token == request.Input.Token, ct);
+            if (rToken != null && rToken.IsRevoked)
+                throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
         }
-        catch
+
+        // Use ExecuteInTransactionAsync (which wraps the Npgsql retrying execution
+        // strategy around BeginTransaction + SaveChanges + Commit). A raw manual
+        // transaction is rejected by the retry strategy, and a bare SaveChangesAsync
+        // trips the ProcessID logging once EF closes the auto-opened connection.
+        TokenDto? newRefresh = null;
+        await _uow.ExecuteInTransactionAsync(async () =>
         {
-            await _uow.Rollback(ct);
-            throw;
-        }
+            newRefresh = await _tokenService.RefreshToken(user, ct);
+        }, ct);
+
+        if (newRefresh is null)
+            throw new UnauthorizedException("UNABLE to REFRESH current user TOKEN.!");
+
+        return new LoginResDto
+        {
+            AccessToken = newRefresh.AccessToken,
+            RefreshToken = newRefresh.RefreshToken,
+            ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
+        };
     }
 }

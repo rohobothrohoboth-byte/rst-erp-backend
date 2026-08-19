@@ -69,6 +69,7 @@ public class EmpAddStep1CmdHandler : IRequestHandler<EmpAddStep1Cmd, EmpAddRes>
                 JobGradeId = request.AddDto.JobGradeId,
                 PositionId = request.AddDto.PositionId,
                 DepartmentId = request.AddDto.DepartmentId,
+                ReportsToId = request.AddDto.ReportsToId,
                 EmploymentType = request.AddDto.EmploymentType,
                 EmploymentNature = request.AddDto.EmploymentNature,
                 WorkArrangement = request.AddDto.WorkArrangement,

@@ -1,4 +1,5 @@
 // Controllers/CustomerController.cs
+using Common;
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +25,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(List<CustomerDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
@@ -39,6 +41,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -57,6 +60,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet("code/{code}")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetByCode(string code)
@@ -75,6 +79,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet("type/{type}")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(List<CustomerDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByType(string type)
     {
@@ -90,6 +95,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet("active")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(List<CustomerDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActive()
     {
@@ -105,6 +111,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpGet("search")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(List<CustomerDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Search(
         [FromQuery] string? term,
@@ -128,6 +135,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.ar.customer.add")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CustomerCreateDto customer)
@@ -152,6 +160,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.ar.customer.mod")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -177,6 +186,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.ar.customer.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -195,6 +205,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpPost("{id}/toggle-status")]
+    [PerAuth("fnm.ar.customer.view")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleStatus(Guid id)
@@ -216,6 +227,7 @@ public class CustomerController : BaseApiController
     }
 
     [HttpPost("bulk")]
+    [PerAuth("fnm.ar.customer.add")]
     [ProducesResponseType(typeof(BulkOperationResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> BulkCreate([FromBody] List<CustomerCreateDto> customers)
     {

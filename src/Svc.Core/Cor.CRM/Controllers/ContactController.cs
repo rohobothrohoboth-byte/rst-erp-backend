@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/ContactController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class ContactController : ControllerBase
     /// Get all contacts with optional filters
     /// </summary>
     [HttpGet("AllContacts")]
+    [PerAuth("crm.contacts.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllContacts([FromQuery] string? customerId, [FromQuery] string? search)
     {
@@ -49,6 +51,7 @@ public class ContactController : ControllerBase
     /// Get a single contact by ID
     /// </summary>
     [HttpGet("GetContact/{id:guid}")]
+    [PerAuth("crm.contacts.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetContact(Guid id)
@@ -73,6 +76,7 @@ public class ContactController : ControllerBase
     /// Create a new contact
     /// </summary>
     [HttpPost("AddContact")]
+    [PerAuth("crm.contacts.list.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateContact([FromBody] CreateContactDto addDto)
@@ -101,6 +105,7 @@ public class ContactController : ControllerBase
     /// Update an existing contact
     /// </summary>
     [HttpPut("ModContact/{id:guid}")]
+    [PerAuth("crm.contacts.list.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateContact(Guid id, [FromBody] UpdateContactDto modDto)
@@ -129,6 +134,7 @@ public class ContactController : ControllerBase
     /// Delete a contact
     /// </summary>
     [HttpDelete("DelContact/{id:guid}")]
+    [PerAuth("crm.contacts.list.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteContact(Guid id)

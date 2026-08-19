@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/TransactionController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
 using Cor.CRM.Commands;
@@ -27,6 +28,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth("crm.realestate.transactions.view")]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? propertyId,
         [FromQuery] Guid? buyerId,
@@ -61,6 +63,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.realestate.transactions.view")]
     public async Task<IActionResult> GetById(Guid id)
     {
         try
@@ -78,6 +81,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth("crm.realestate.transactions.add")]
     public async Task<IActionResult> Create([FromBody] CreateTransactionDto dto)
     {
         try
@@ -95,6 +99,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.realestate.transactions.mod")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionDto dto)
     {
         try
@@ -111,6 +116,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpPost("{id:guid}/accept")]
+    [PerAuth("crm.realestate.transactions.view")]
     public async Task<IActionResult> Accept(Guid id)
     {
         try
@@ -126,6 +132,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpPost("{id:guid}/close")]
+    [PerAuth("crm.realestate.transactions.view")]
     public async Task<IActionResult> Close(Guid id)
     {
         try
@@ -141,6 +148,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.realestate.transactions.del")]
     public async Task<IActionResult> Delete(Guid id)
     {
         try
@@ -156,6 +164,7 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet("stats")]
+        [PerAuth("crm.realestate.transactions.view")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetStats(
             [FromQuery] Guid? propertyId,

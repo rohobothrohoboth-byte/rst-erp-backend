@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/QuoteController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class QuoteController : ControllerBase
     /// Get all quotes with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? status,
@@ -73,6 +75,7 @@ public class QuoteController : ControllerBase
     /// Get quote by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -96,6 +99,7 @@ public class QuoteController : ControllerBase
     /// Create a new quote
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.sales.quotes.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateQuoteDto dto)
@@ -118,6 +122,7 @@ public class QuoteController : ControllerBase
     /// Update an existing quote
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.sales.quotes.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -140,6 +145,7 @@ public class QuoteController : ControllerBase
     /// Send a quote
     /// </summary>
     [HttpPost("{id:guid}/send")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -161,6 +167,7 @@ public class QuoteController : ControllerBase
     /// Accept a quote
     /// </summary>
     [HttpPost("{id:guid}/accept")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -182,6 +189,7 @@ public class QuoteController : ControllerBase
     /// Reject a quote
     /// </summary>
     [HttpPost("{id:guid}/reject")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -203,6 +211,7 @@ public class QuoteController : ControllerBase
     /// Convert quote to invoice
     /// </summary>
     [HttpPost("{id:guid}/convert")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -224,6 +233,7 @@ public class QuoteController : ControllerBase
     /// Delete a quote
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.sales.quotes.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -244,6 +254,7 @@ public class QuoteController : ControllerBase
     /// Get quote statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.sales.quotes.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

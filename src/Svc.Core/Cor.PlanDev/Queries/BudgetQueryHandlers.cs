@@ -67,6 +67,55 @@ public class GetBudgetsByProjectQueryHandler
     }
 }
 
+public class GetAllBudgetsQueryHandler
+    : IRequestHandler<GetAllBudgetsQuery, List<BudgetDto>>
+{
+    private readonly PlanDevDbContext _context;
+    private readonly ILogger<GetAllBudgetsQueryHandler> _logger;
+
+    public GetAllBudgetsQueryHandler(PlanDevDbContext context, ILogger<GetAllBudgetsQueryHandler> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task<List<BudgetDto>> Handle(GetAllBudgetsQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var q = _context.Budgets.Where(b => !b.IsDeleted);
+            if (!string.IsNullOrWhiteSpace(request.BudgetType))
+                q = q.Where(b => b.BudgetType == request.BudgetType);
+
+            return await q
+                .OrderByDescending(b => b.DateAdd)
+                .Select(b => new BudgetDto
+                {
+                    Id = b.Id,
+                    ProjectId = b.ProjectId,
+                    Category = b.Category,
+                    Description = b.Description,
+                    PlannedAmount = b.PlannedAmount,
+                    ActualAmount = b.ActualAmount,
+                    Variance = b.Variance,
+                    PlannedQuantity = b.PlannedQuantity,
+                    ActualQuantity = b.ActualQuantity,
+                    Unit = b.Unit,
+                    Status = b.Status,
+                    BudgetType = b.BudgetType,
+                    DateAdd = b.DateAdd,
+                    DateMod = b.DateMod
+                })
+                .ToListAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting all budgets");
+            throw;
+        }
+    }
+}
+
 // FIXED: This handler was using properties that don't exist in Budget or BudgetDto
 public class GetBudgetByProjectQueryHandler : IRequestHandler<GetBudgetByProjectQuery, BudgetDto>
 {

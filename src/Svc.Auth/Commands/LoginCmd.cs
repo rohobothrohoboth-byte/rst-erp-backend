@@ -82,7 +82,8 @@ public class LoginHandler : IRequestHandler<LoginCmd, LoginResponseDto>
             PositionId = user.PositionId?.ToString(),
             BranchName = orgInfo?.BranchName,
             DepartmentName = orgInfo?.DepartmentName,
-            PositionName = orgInfo?.PositionName
+            PositionName = orgInfo?.PositionName,
+            ExpiresDate = DateTime.UtcNow.AddMinutes(JwtCons.ExpiryInMinutes)
         };
     }
 

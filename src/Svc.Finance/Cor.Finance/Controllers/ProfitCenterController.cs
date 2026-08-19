@@ -1,4 +1,5 @@
 // Controllers/ProfitCenterController.cs
+using Common;
 using Cor.Finance.Commands;
 using Cor.Finance.Models.DTOs;
 using Cor.Finance.Queries;
@@ -24,6 +25,7 @@ public class ProfitCenterController : BaseApiController
     }
 
     [HttpGet]
+    [PerAuth("fnm.co.profitcenters.view")]
     [ProducesResponseType(typeof(List<ProfitCenterDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] bool? isActive)
     {
@@ -39,6 +41,7 @@ public class ProfitCenterController : BaseApiController
     }
 
     [HttpGet("{id}")]
+    [PerAuth("fnm.co.profitcenters.view")]
     [ProducesResponseType(typeof(ProfitCenterDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -55,6 +58,7 @@ public class ProfitCenterController : BaseApiController
     }
 
     [HttpPost]
+    [PerAuth("fnm.co.profitcenters.add")]
     [ProducesResponseType(typeof(ProfitCenterDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] AddProfitCenterDto dto)
@@ -71,6 +75,7 @@ public class ProfitCenterController : BaseApiController
     }
 
     [HttpPut]
+    [PerAuth("fnm.co.profitcenters.mod")]
     [ProducesResponseType(typeof(ProfitCenterDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -88,6 +93,7 @@ public class ProfitCenterController : BaseApiController
     }
 
     [HttpDelete("{id}")]
+    [PerAuth("fnm.co.profitcenters.del")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

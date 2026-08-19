@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -33,6 +34,7 @@ public class LeadController : ControllerBase
     /// Get all leads with optional filters
     /// </summary>
     [HttpGet("AllLeads")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "page", "pageSize", "status", "searchTerm" })]
     public async Task<IActionResult> GetAllLeads([FromQuery] LeadFilterDto? filter)
@@ -53,6 +55,7 @@ public class LeadController : ControllerBase
     /// Get a single lead by ID
     /// </summary>
     [HttpGet("GetLead/{id:guid}")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(Duration = 120)]
@@ -78,6 +81,7 @@ public class LeadController : ControllerBase
     /// Create a new lead
     /// </summary>
     [HttpPost("AddLead")]
+    [PerAuth("crm.leads.list.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ResponseCache(NoStore = true)]
@@ -108,6 +112,7 @@ public class LeadController : ControllerBase
     /// Update an existing lead
     /// </summary>
     [HttpPut("ModLead/{id:guid}")]
+    [PerAuth("crm.leads.list.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -140,6 +145,7 @@ public class LeadController : ControllerBase
     /// Delete a lead (soft delete)
     /// </summary>
     [HttpDelete("DelLead/{id:guid}")]
+    [PerAuth("crm.leads.list.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(NoStore = true)]
@@ -162,6 +168,7 @@ public class LeadController : ControllerBase
     /// Convert a lead to customer
     /// </summary>
     [HttpPost("ConvertLead/{id:guid}")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -185,6 +192,7 @@ public class LeadController : ControllerBase
     /// Assign a lead to a user
     /// </summary>
     [HttpPost("AssignLead/{id:guid}")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ResponseCache(NoStore = true)]
@@ -207,6 +215,7 @@ public class LeadController : ControllerBase
     /// Bulk action on leads (assign, change status, add tags, delete)
     /// </summary>
     [HttpPost("BulkAction")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ResponseCache(NoStore = true)]
@@ -237,6 +246,7 @@ public class LeadController : ControllerBase
     /// Bulk assign leads to a user
     /// </summary>
     [HttpPost("BulkAssign")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ResponseCache(NoStore = true)]
@@ -271,6 +281,7 @@ public class LeadController : ControllerBase
     /// Get lead statistics
     /// </summary>
     [HttpGet("Stats")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30)]
     public async Task<IActionResult> GetStats()
@@ -291,6 +302,7 @@ public class LeadController : ControllerBase
     /// Get leads by status
     /// </summary>
     [HttpGet("ByStatus/{status}")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60)]
     public async Task<IActionResult> GetLeadsByStatus(string status)
@@ -311,6 +323,7 @@ public class LeadController : ControllerBase
     /// Get leads assigned to a specific user
     /// </summary>
     [HttpGet("ByAssignedUser/{userId:guid}")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 60)]
     public async Task<IActionResult> GetLeadsByAssignedUser(Guid userId)
@@ -331,6 +344,7 @@ public class LeadController : ControllerBase
     /// Get leads for routing (unassigned high priority leads)
     /// </summary>
     [HttpGet("ForRouting")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30)]
     public async Task<IActionResult> GetLeadsForRouting()
@@ -351,6 +365,7 @@ public class LeadController : ControllerBase
     /// Get total lead count
     /// </summary>
     [HttpGet("Count")]
+    [PerAuth("crm.leads.list.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(Duration = 30)]
     public async Task<IActionResult> GetLeadCount([FromQuery] string? status)

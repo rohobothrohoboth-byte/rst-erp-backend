@@ -43,7 +43,14 @@ public class AddCompHandler : IRequestHandler<AddCompCmd, CompDto>
                 Phone = request.AddDto.Phone,
                 Email = request.AddDto.Email,
                 Address = request.AddDto.Address,
+                Website = request.AddDto.Website,
                 LogoUrl = request.AddDto.LogoUrl,
+                StampUrl = request.AddDto.StampUrl,
+                Motto = request.AddDto.Motto,
+                Mission = request.AddDto.Mission,
+                Vision = request.AddDto.Vision,
+                Values = request.AddDto.Values,
+                Structure = request.AddDto.Structure,
                 IsDeleted = false,
                 DateAdd = DateTime.UtcNow
             };
@@ -76,7 +83,14 @@ public class AddCompHandler : IRequestHandler<AddCompCmd, CompDto>
                 Phone = company.Phone,
                 Email = company.Email,
                 Address = company.Address,
+                Website = company.Website,
                 LogoUrl = company.LogoUrl,
+                StampUrl = company.StampUrl,
+                Motto = company.Motto,
+                Mission = company.Mission,
+                Vision = company.Vision,
+                Values = company.Values,
+                Structure = company.Structure,
                 IsDeleted = company.IsDeleted,
                 DateAdd = company.DateAdd,
                 DateMod = company.DateMod
@@ -127,7 +141,14 @@ public class ModCompHandler : IRequestHandler<ModCompCmd, CompDto>
             company.Phone = request.ModDto.Phone ?? company.Phone;
             company.Email = request.ModDto.Email ?? company.Email;
             company.Address = request.ModDto.Address ?? company.Address;
+            company.Website = request.ModDto.Website ?? company.Website;
             company.LogoUrl = request.ModDto.LogoUrl ?? company.LogoUrl;
+            company.StampUrl = request.ModDto.StampUrl ?? company.StampUrl;
+            company.Motto = request.ModDto.Motto ?? company.Motto;
+            company.Mission = request.ModDto.Mission ?? company.Mission;
+            company.Vision = request.ModDto.Vision ?? company.Vision;
+            company.Values = request.ModDto.Values ?? company.Values;
+            company.Structure = request.ModDto.Structure ?? company.Structure;
             company.DateMod = DateTime.UtcNow;
 
             await _uow.Update(company);
@@ -158,7 +179,14 @@ public class ModCompHandler : IRequestHandler<ModCompCmd, CompDto>
                 Phone = company.Phone,
                 Email = company.Email,
                 Address = company.Address,
+                Website = company.Website,
                 LogoUrl = company.LogoUrl,
+                StampUrl = company.StampUrl,
+                Motto = company.Motto,
+                Mission = company.Mission,
+                Vision = company.Vision,
+                Values = company.Values,
+                Structure = company.Structure,
                 IsDeleted = company.IsDeleted,
                 DateAdd = company.DateAdd,
                 DateMod = company.DateMod

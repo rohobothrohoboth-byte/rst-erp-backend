@@ -1,4 +1,5 @@
 using Cor.Finance.Models.Entities;
+using Shared.Helpers.ExternalAccess;
 using Cor.Finance.Models.Entities.Local;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -23,6 +24,10 @@ public class FinanceDbContext : DbContext
     public DbSet<JournalEntry> JournalEntries { get; set; }
     public DbSet<JournalLine> JournalLines { get; set; }
     public DbSet<AccountCategory> AccountCategories { get; set; }
+
+    public DbSet<AccountSubtype> AccountSubtypes { get; set; }
+    public DbSet<AccountType> AccountTypes { get; set; }
+
 
     // ============================================================
     // INVOICES (AP & AR)
@@ -54,6 +59,7 @@ public class FinanceDbContext : DbContext
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BudgetCode> BudgetCodes { get; set; }
     public DbSet<BudgetControl> BudgetControls { get; set; }
+    public DbSet<BudgetReservation> BudgetReservations { get; set; }
 
     // ============================================================
     // BANK & CASH

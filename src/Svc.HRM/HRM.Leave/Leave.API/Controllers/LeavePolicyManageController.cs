@@ -1,6 +1,7 @@
 // Leave.API/Controllers/LeavePolicyManageController.cs
 
 using Asp.Versioning;
+using Common;
 using Helpers;
 using Leave.App.Commands;
 using Leave.App.Queries;
@@ -38,6 +39,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Get all leave policies
     /// </summary>
     [HttpGet("AllLeavePolicy")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllLeavePolicy()
     {
@@ -49,6 +51,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Get active leave policies
     /// </summary>
     [HttpGet("ActiveLeavePolicy")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ActiveLeavePolicy()
     {
@@ -60,6 +63,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Get leave policy by ID
     /// </summary>
     [HttpGet("GetLeavePolicy/{id:guid}")]
+    [PerAuth("leave.policies.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetLeavePolicy(Guid id)
@@ -74,6 +78,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Create a new leave policy
     /// </summary>
     [HttpPost("AddLeavePolicy")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> AddLeavePolicy([FromBody] LeavePolicyAddDto addDto)
     {
@@ -89,6 +94,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Update a leave policy
     /// </summary>
     [HttpPut("ModLeavePolicy/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ModLeavePolicy(Guid id, [FromBody] LeavePolicyModDto modDto)
     {
@@ -104,6 +110,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Delete a leave policy
     /// </summary>
     [HttpDelete("DelLeavePolicy/{id:guid}")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> DelLeavePolicy(Guid id)
     {
@@ -116,6 +123,7 @@ public class LeavePolicyManageController : ControllerBase
     /// Assign policies to employees
     /// </summary>
     [HttpPost("AssignLeavePolicy")]
+    [PerAuth("leave.policies.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AssignLeavePolicy()
     {

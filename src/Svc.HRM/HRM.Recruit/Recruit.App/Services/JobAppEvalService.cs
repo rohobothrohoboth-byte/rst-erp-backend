@@ -74,9 +74,10 @@ public class JobAppEvalService : IJobAppEvalService
 
         if (currentStep.IsFinal || nextStep == null)
         {
+             // Passed the final evaluation step -> the applicant has passed evaluation.
              if (app != null)
                     {
-                       app.Status = BoolToStr.EnumToString(ApplicationStatus.UnderReview);
+                       app.Status = BoolToStr.EnumToString(ApplicationStatus.PassEval);
                        await _uow.Update(app);
                     }
 

@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Asp.Versioning;
 using Helpers;
+using Common;
 
 namespace Svc.HRM.Attendance.Controllers;
 
@@ -22,6 +23,7 @@ public class ShiftController : ControllerBase
         _logger = logger;
     }
 
+    [PerAuth("hr.attend.shift.view")]
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
@@ -29,6 +31,7 @@ public class ShiftController : ControllerBase
         return Ok(shifts);
     }
 
+    [PerAuth("hr.attend.shift.view")]
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
@@ -36,6 +39,7 @@ public class ShiftController : ControllerBase
         return Ok(shift);
     }
 
+    [PerAuth("hr.attend.shift.add")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ShiftCreateDto dto, CancellationToken ct)
     {
@@ -43,6 +47,7 @@ public class ShiftController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
     }
 
+    [PerAuth("hr.attend.shift.mod")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] ShiftCreateDto dto, CancellationToken ct)
     {
@@ -50,6 +55,7 @@ public class ShiftController : ControllerBase
         return Ok(result);
     }
 
+    [PerAuth("hr.attend.shift.del")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
@@ -58,6 +64,7 @@ public class ShiftController : ControllerBase
     }
 
     // Shift Assignments
+    [PerAuth("hr.attend.shift.assign")]
     [HttpGet("assignments")]
     public async Task<IActionResult> GetAssignments(CancellationToken ct)
     {
@@ -65,6 +72,7 @@ public class ShiftController : ControllerBase
         return Ok(assignments);
     }
 
+    [PerAuth("hr.attend.shift.assign")]
     [HttpGet("assignments/employee/{employeeId}")]
     public async Task<IActionResult> GetEmployeeAssignments(Guid employeeId, CancellationToken ct)
     {
@@ -72,6 +80,7 @@ public class ShiftController : ControllerBase
         return Ok(assignments);
     }
 
+    [PerAuth("hr.attend.shift.assign")]
     [HttpPost("assignments")]
     public async Task<IActionResult> AssignShift([FromBody] ShiftAssignmentCreateDto dto, CancellationToken ct)
     {
@@ -79,6 +88,7 @@ public class ShiftController : ControllerBase
         return Ok(result);
     }
 
+    [PerAuth("hr.attend.shift.assign")]
     [HttpPut("assignments/{id}")]
     public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] ShiftAssignmentCreateDto dto, CancellationToken ct)
     {
@@ -86,6 +96,7 @@ public class ShiftController : ControllerBase
         return Ok(result);
     }
 
+    [PerAuth("hr.attend.shift.assign")]
     [HttpDelete("assignments/{id}")]
     public async Task<IActionResult> UnassignShift(Guid id, CancellationToken ct)
     {
@@ -93,6 +104,7 @@ public class ShiftController : ControllerBase
         return NoContent();
     }
 
+    [PerAuth("hr.attend.shift.view")]
     [HttpGet("employee/{employeeId}/current")]
     public async Task<IActionResult> GetCurrentShift(Guid employeeId, CancellationToken ct)
     {

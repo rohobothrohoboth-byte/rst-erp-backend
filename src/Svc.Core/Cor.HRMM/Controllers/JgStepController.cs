@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Cor.HRMM.Commands;
 using Cor.HRMM.Constants;
 using Cor.HRMM.Models.DTOs;
@@ -38,6 +39,7 @@ public class JgStepController : ControllerBase
     /// <summary>
     /// End point to get list of ALL Job Grade Steps
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJgSteps")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgSteps()
@@ -58,6 +60,7 @@ public class JgStepController : ControllerBase
     /// <summary>
     /// End point to get list of Job Grade Steps by JobGradeId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJgStepsByJobGrade/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgStepsByJobGrade(Guid id)
@@ -77,6 +80,7 @@ public class JgStepController : ControllerBase
         return Ok(ApiResponse<object>.Ok(response));
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetJgStep/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -101,6 +105,7 @@ public class JgStepController : ControllerBase
     }
 
     [HttpPost("AddJgStep")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] JgStepAddDto addDto)
@@ -126,6 +131,7 @@ public class JgStepController : ControllerBase
     }
 
     [HttpPut("ModJgStep/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -166,6 +172,7 @@ public class JgStepController : ControllerBase
     }
 
     [HttpDelete("DelJgStep/{id:guid}")]
+    [PerAuth("position.manage")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)

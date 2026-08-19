@@ -174,11 +174,12 @@ public class HrmProfileDbContext : DbContext
     public DbSet<EmpFamily> EmpFamily { get; set; }
     public DbSet<EmpFinance> EmpFinance { get; set; }
     public DbSet<EmpGuarantor> EmpGuarantor { get; set; }
+    public DbSet<Employee> Employee { get; set; }
     public DbSet<EmpEducation> EmpEducation { get; set; }
     public DbSet<EmpExperience> EmpExperience { get; set; }
     public DbSet<EmpGuarantorFile> EmpGuarantorFile { get; set; }
     public DbSet<EmpGuarantorFileBlob> EmpGuarantorFileBlob { get; set; }
-    public DbSet<Employee> Employee { get; set; }
+
     public DbSet<EmpPensionCard> EmpPensionCard { get; set; }
     public DbSet<EmpPhoto> EmpPhoto { get; set; }
     public DbSet<EmpPhotoBlob> EmpPhotoBlob { get; set; }
@@ -190,6 +191,11 @@ public class HrmProfileDbContext : DbContext
     public DbSet<EmpStampBlob> EmpStampBlob { get; set; }
     public DbSet<FileMetaData> FileMetaData { get; set; }
     public DbSet<Person> Person { get; set; }
+
+    // ? Employee Lifecycle Entities
+    public DbSet<EmployeeContract> EmployeeContract { get; set; }
+    public DbSet<EmployeePromotion> EmployeePromotion { get; set; }
+    public DbSet<EmployeeTransfer> EmployeeTransfer { get; set; }
 
     // ? NEW Local Copy Entities
     public DbSet<LocalCompany> LocalCompanies { get; set; }

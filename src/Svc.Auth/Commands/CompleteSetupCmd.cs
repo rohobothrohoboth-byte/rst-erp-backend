@@ -29,6 +29,14 @@ public class SetupCompanyDto
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? Address { get; set; }
+    public string? Website { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? StampUrl { get; set; }
+    public string? Motto { get; set; }
+    public string? Mission { get; set; }
+    public string? Vision { get; set; }
+    public string? Values { get; set; }
+    public string? Structure { get; set; }
 }
 
 public class SetupBranchDto
@@ -37,6 +45,11 @@ public class SetupBranchDto
     public string NameAm { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string BranchType { get; set; } = "Main";
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? ManagerName { get; set; }
 }
 
 public class SetupDepartmentDto
@@ -90,17 +103,20 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     private readonly RoleManager<AppRole> _roleManager;
     private readonly IUnitOfWork _uow;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<CompleteSetupHandler> _logger;
 
     public CompleteSetupHandler(
         UserManager<AppUser> userManager,
         RoleManager<AppRole> roleManager,
         IUnitOfWork uow,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<CompleteSetupHandler> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _uow = uow;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<SetupResultDto> Handle(CompleteSetupCmd request, CancellationToken ct)
@@ -108,19 +124,35 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         var result = new SetupResultDto();
         var details = new List<string>();
 
+        // ✅ Create separate connections for each database
+        await using var coreConn = new NpgsqlConnection(_configuration.GetConnectionString("CorModuleDbCon"));
+        await using var hrmmConn = new NpgsqlConnection(_configuration.GetConnectionString("coreHRMMDbCon"));
+        await using var profConn = new NpgsqlConnection(_configuration.GetConnectionString("HRMProDbCon"));
+
         try
         {
             // ✅ Validate connection strings
             ValidateConnectionStrings();
             details.Add("✅ Connection strings validated");
 
-            // ✅ Start transaction
+            // ✅ Open connections
+            await coreConn.OpenAsync(ct);
+            await hrmmConn.OpenAsync(ct);
+            await profConn.OpenAsync(ct);
+            details.Add("✅ Connections opened");
+
+            // ✅ Start transactions for each database
+            await using var coreTx = await coreConn.BeginTransactionAsync(ct);
+            await using var hrmmTx = await hrmmConn.BeginTransactionAsync(ct);
+            await using var profTx = await profConn.BeginTransactionAsync(ct);
+
+            // ✅ Start Auth transaction
             await _uow.Begin(ct);
-            details.Add("✅ Transaction started");
+            details.Add("✅ Transactions started");
 
             // ============ CLEAN EXISTING DATA ============
             details.Add("🗑️ Cleaning existing data...");
-            await CleanExistingData(ct);
+            await CleanExistingData(coreConn, coreTx, hrmmConn, hrmmTx, profConn, profTx, ct);
             details.Add("✅ Existing data cleaned");
 
             // ============ 1. SEED ROLES ============
@@ -130,37 +162,37 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
 
             // ============ 2. CREATE COMPANY ============
             details.Add("🏢 Creating company...");
-            var companyId = await CreateCompany(request.Company, ct);
+            var companyId = await CreateCompany(request.Company, coreConn, coreTx, ct);
             result.CompanyId = companyId;
             details.Add($"✅ Company created: {companyId}");
 
             // ============ 3. CREATE BRANCH ============
             details.Add("🏪 Creating branch...");
-            var branchId = await CreateBranch(request.Branch, companyId, ct);
+            var branchId = await CreateBranch(request.Branch, companyId, coreConn, coreTx, ct);
             result.BranchId = branchId;
             details.Add($"✅ Branch created: {branchId}");
 
             // ============ 4. CREATE DEPARTMENT ============
             details.Add("📁 Creating department...");
-            var departmentId = await CreateDepartment(request.Department, branchId, ct);
+            var departmentId = await CreateDepartment(request.Department, branchId, coreConn, coreTx, ct);
             result.DepartmentId = departmentId;
             details.Add($"✅ Department created: {departmentId}");
 
             // ============ 5. CREATE POSITION ============
             details.Add("💼 Creating position...");
-            var positionId = await CreatePosition(request.Position, departmentId, ct);
+            var positionId = await CreatePosition(request.Position, departmentId, hrmmConn, hrmmTx, ct);
             result.PositionId = positionId;
             details.Add($"✅ Position created: {positionId}");
 
             // ============ 6. CREATE JOB GRADE ============
             details.Add("📊 Creating job grade...");
-            var jobGradeId = await CreateJobGrade(request.Position.JobGradeName, ct);
+            var jobGradeId = await CreateJobGrade(request.Position.JobGradeName, hrmmConn, hrmmTx, ct);
             result.JobGradeId = jobGradeId;
             details.Add($"✅ Job grade created: {jobGradeId}");
 
             // ============ 7. CREATE PERSON ============
             details.Add("👤 Creating person...");
-            var personId = await CreatePerson(request.AdminUser, ct);
+            var personId = await CreatePerson(request.AdminUser, profConn, profTx, ct);
             details.Add($"✅ Person created: {personId}");
 
             // ============ 8. CREATE EMPLOYEE ============
@@ -171,6 +203,8 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
                 positionId,
                 departmentId,
                 jobGradeId,
+                profConn,
+                profTx,
                 ct);
             result.EmployeeId = employeeId;
             details.Add($"✅ Employee created: {employeeId}");
@@ -197,32 +231,46 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             await AssignAllPermissionsToAdmin(userId, ct);
             details.Add("✅ Permissions assigned to admin");
 
-            // ✅ Commit all changes
+            // ✅ Commit all transactions
+            await coreTx.CommitAsync(ct);
+            await hrmmTx.CommitAsync(ct);
+            await profTx.CommitAsync(ct);
             await _uow.Commit(ct);
-            details.Add("✅ Transaction committed");
+            details.Add("✅ All transactions committed successfully");
 
             result.Success = true;
             result.Message = "System setup completed successfully!";
             result.Details = details;
+
+            _logger.LogInformation("System setup completed successfully. CompanyId: {CompanyId}, AdminUserId: {AdminUserId}",
+                companyId, userId);
+
             return result;
         }
         catch (Exception ex)
         {
-            // ✅ Rollback on any error
-            try { await _uow.Rollback(ct); } catch { }
-
+            // ✅ Rollback everything on error
             details.Add($"❌ ERROR: {ex.Message}");
             if (ex.InnerException != null)
             {
                 details.Add($"Inner Error: {ex.InnerException.Message}");
             }
 
+            _logger.LogError(ex, "Setup failed");
+
+            try { await _uow.Rollback(ct); } catch { }
+
+            // Rollbacks will happen automatically when transactions are disposed
+
             result.Success = false;
             result.Message = $"Setup failed: {ex.Message}";
             result.Details = details;
 
+           // throw new DomainException($"Setup failed: {ex.Message}", ex.ToString());
+           // throw new DomainException($"Setup failed: {ex.Message}", ex);
             throw new DomainException($"Setup failed: {ex.Message}");
         }
+        // Connections and transactions are automatically disposed via await using
     }
 
     // ============ VALIDATE CONNECTION STRINGS ============
@@ -249,7 +297,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
                 using var connection = new NpgsqlConnection(connString);
                 connection.Open();
                 connection.Close();
-                Console.WriteLine($"✅ Connection '{key}' validated successfully.");
+                _logger.LogInformation("✅ Connection '{Key}' validated successfully.", key);
             }
             catch (Exception ex)
             {
@@ -259,61 +307,52 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     }
 
     // ============ CLEAN DATA ============
-    private async Task CleanExistingData(CancellationToken ct)
+    private async Task CleanExistingData(
+        NpgsqlConnection coreConn, NpgsqlTransaction coreTx,
+        NpgsqlConnection hrmmConn, NpgsqlTransaction hrmmTx,
+        NpgsqlConnection profConn, NpgsqlTransaction profTx,
+        CancellationToken ct)
     {
-        var connectionString = _configuration.GetConnectionString("authMgrCon");
-        if (string.IsNullOrEmpty(connectionString))
+        // Auth DB: wiped on its own connection
+        var authConnectionString = _configuration.GetConnectionString("authMgrCon");
+        if (string.IsNullOrEmpty(authConnectionString))
             throw new DomainException("authMgrCon connection string is not configured");
 
-        using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(ct);
-
-        await connection.ExecuteAsync(@"
-            DELETE FROM ""UserPerApi"";
-            DELETE FROM ""UserPerMenu"";
-            DELETE FROM ""UserPerModule"";
-            DELETE FROM ""UserRole"";
-            DELETE FROM ""AppUser"";
-            DELETE FROM ""AppRole"";
-            DELETE FROM ""RefreshToken"";
-        ");
-
-        var profileConnectionString = _configuration.GetConnectionString("HRMProDbCon");
-        if (!string.IsNullOrEmpty(profileConnectionString))
+        await using (var authConnection = new NpgsqlConnection(authConnectionString))
         {
-            using var profileConnection = new NpgsqlConnection(profileConnectionString);
-            await profileConnection.OpenAsync(ct);
-            await profileConnection.ExecuteAsync(@"
-                DELETE FROM ""Employee"";
-                DELETE FROM ""Person"";
+            await authConnection.OpenAsync(ct);
+            await authConnection.ExecuteAsync(@"
+                DELETE FROM ""UserPerApi"";
+                DELETE FROM ""UserPerMenu"";
+                DELETE FROM ""UserPerModule"";
+                DELETE FROM ""UserRole"";
+                DELETE FROM ""AppUser"";
+                DELETE FROM ""AppRole"";
+                DELETE FROM ""RefreshToken"";
             ");
         }
 
-        var hrmmConnectionString = _configuration.GetConnectionString("coreHRMMDbCon");
-        if (!string.IsNullOrEmpty(hrmmConnectionString))
-        {
-            using var hrmmConnection = new NpgsqlConnection(hrmmConnectionString);
-            await hrmmConnection.OpenAsync(ct);
-            await hrmmConnection.ExecuteAsync(@"DELETE FROM ""JgStep"";");
-            await hrmmConnection.ExecuteAsync(@"DELETE FROM ""Position"";");
-            await hrmmConnection.ExecuteAsync(@"
-                DELETE FROM ""PositionBenefit"";
-                DELETE FROM ""PositionEducation"";
-                DELETE FROM ""PositionExp"";
-                DELETE FROM ""PositionReq"";
-            ");
-            await hrmmConnection.ExecuteAsync(@"DELETE FROM ""JobGrade"";");
-        }
+        // Profile DB
+        await profConn.ExecuteAsync(@"
+            DELETE FROM ""Employee"";
+            DELETE FROM ""Person"";
+        ", transaction: profTx);
 
-        var coreConnectionString = _configuration.GetConnectionString("CorModuleDbCon");
-        if (!string.IsNullOrEmpty(coreConnectionString))
-        {
-            using var coreConnection = new NpgsqlConnection(coreConnectionString);
-            await coreConnection.OpenAsync(ct);
-            await coreConnection.ExecuteAsync(@"DELETE FROM ""Department"";");
-            await coreConnection.ExecuteAsync(@"DELETE FROM ""Branch"";");
-            await coreConnection.ExecuteAsync(@"DELETE FROM ""Company"";");
-        }
+        // HRMM DB
+        await hrmmConn.ExecuteAsync(@"DELETE FROM ""JgStep"";", transaction: hrmmTx);
+        await hrmmConn.ExecuteAsync(@"DELETE FROM ""Position"";", transaction: hrmmTx);
+        await hrmmConn.ExecuteAsync(@"
+            DELETE FROM ""PositionBenefit"";
+            DELETE FROM ""PositionEducation"";
+            DELETE FROM ""PositionExp"";
+            DELETE FROM ""PositionReq"";
+        ", transaction: hrmmTx);
+        await hrmmConn.ExecuteAsync(@"DELETE FROM ""JobGrade"";", transaction: hrmmTx);
+
+        // Core Module DB
+        await coreConn.ExecuteAsync(@"DELETE FROM ""Department"";", transaction: coreTx);
+        await coreConn.ExecuteAsync(@"DELETE FROM ""Branch"";", transaction: coreTx);
+        await coreConn.ExecuteAsync(@"DELETE FROM ""Company"";", transaction: coreTx);
     }
 
     // ============ SEED ROLES ============
@@ -348,16 +387,11 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
     }
 
     // ============ CREATE COMPANY ============
-    private async Task<Guid> CreateCompany(SetupCompanyDto dto, CancellationToken ct)
+    private async Task<Guid> CreateCompany(SetupCompanyDto dto, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var coreConnectionString = _configuration.GetConnectionString("CorModuleDbCon");
-        using var connection = new NpgsqlConnection(coreConnectionString);
-        await connection.OpenAsync(ct);
-
         const string sql = @"
-            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, NOW(), false)
-            RETURNING ""Id""";
+            INSERT INTO ""Company"" (""Id"", ""Name"", ""NameAm"", ""TaxId"", ""Phone"", ""Email"", ""Address"", ""Website"", ""LogoUrl"", ""StampUrl"", ""Motto"", ""Mission"", ""Vision"", ""Values"", ""Structure"", ""DateAdd"", ""IsDeleted"")
+            VALUES (@Id, @Name, @NameAm, @TaxId, @Phone, @Email, @Address, @Website, @LogoUrl, @StampUrl, @Motto, @Mission, @Vision, @Values, @Structure, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         await connection.ExecuteAsync(sql, new
@@ -368,23 +402,26 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             dto.TaxId,
             dto.Phone,
             dto.Email,
-            dto.Address
-        });
+            dto.Address,
+            dto.Website,
+            dto.LogoUrl,
+            dto.StampUrl,
+            dto.Motto,
+            dto.Mission,
+            dto.Vision,
+            dto.Values,
+            dto.Structure
+        }, transaction: tx);
 
         return id;
     }
 
     // ============ CREATE BRANCH ============
-    private async Task<Guid> CreateBranch(SetupBranchDto dto, Guid companyId, CancellationToken ct)
+    private async Task<Guid> CreateBranch(SetupBranchDto dto, Guid companyId, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var coreConnectionString = _configuration.GetConnectionString("CorModuleDbCon");
-        using var connection = new NpgsqlConnection(coreConnectionString);
-        await connection.OpenAsync(ct);
-
         const string sql = @"
-            INSERT INTO ""Branch"" (""Id"", ""Name"", ""NameAm"", ""Code"", ""Location"", ""OpenDate"", ""BranchType"", ""BranchStat"", ""CompId"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @Code, @Location, NOW(), @BranchType, 'Active', @CompId, NOW(), false)
-            RETURNING ""Id""";
+            INSERT INTO ""Branch"" (""Id"", ""Name"", ""NameAm"", ""Code"", ""Location"", ""OpenDate"", ""BranchType"", ""BranchStat"", ""CompId"", ""Phone"", ""Email"", ""Address"", ""City"", ""ManagerName"", ""DateAdd"", ""IsDeleted"")
+            VALUES (@Id, @Name, @NameAm, @Code, @Location, NOW(), @BranchType, 'Active', @CompId, @Phone, @Email, @Address, @City, @ManagerName, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         var code = $"BR-{new Random().Next(1, 9999):D4}";
@@ -397,23 +434,23 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             Code = code,
             dto.Location,
             dto.BranchType,
-            CompId = companyId
-        });
+            CompId = companyId,
+            dto.Phone,
+            dto.Email,
+            dto.Address,
+            dto.City,
+            dto.ManagerName
+        }, transaction: tx);
 
         return id;
     }
 
     // ============ CREATE DEPARTMENT ============
-    private async Task<Guid> CreateDepartment(SetupDepartmentDto dto, Guid branchId, CancellationToken ct)
+    private async Task<Guid> CreateDepartment(SetupDepartmentDto dto, Guid branchId, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var coreConnectionString = _configuration.GetConnectionString("CorModuleDbCon");
-        using var connection = new NpgsqlConnection(coreConnectionString);
-        await connection.OpenAsync(ct);
-
         const string sql = @"
             INSERT INTO ""Department"" (""Id"", ""Name"", ""NameAm"", ""DeptStat"", ""BranchId"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, 'Active', @BranchId, NOW(), false)
-            RETURNING ""Id""";
+            VALUES (@Id, @Name, @NameAm, 'Active', @BranchId, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         await connection.ExecuteAsync(sql, new
@@ -422,22 +459,17 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             dto.Name,
             dto.NameAm,
             BranchId = branchId
-        });
+        }, transaction: tx);
 
         return id;
     }
 
     // ============ CREATE POSITION ============
-    private async Task<Guid> CreatePosition(SetupPositionDto dto, Guid departmentId, CancellationToken ct)
+    private async Task<Guid> CreatePosition(SetupPositionDto dto, Guid departmentId, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var hrmmConnectionString = _configuration.GetConnectionString("coreHRMMDbCon");
-        using var connection = new NpgsqlConnection(hrmmConnectionString);
-        await connection.OpenAsync(ct);
-
         const string sql = @"
             INSERT INTO ""Position"" (""Id"", ""Name"", ""NameAm"", ""NoOfPosition"", ""IsVacant"", ""DepartmentId"", ""DateAdd"", ""IsDeleted"")
-            VALUES (@Id, @Name, @NameAm, @NoOfPosition, 'No', @DepartmentId, NOW(), false)
-            RETURNING ""Id""";
+            VALUES (@Id, @Name, @NameAm, @NoOfPosition, 'No', @DepartmentId, NOW(), false)";
 
         var id = Guid.CreateVersion7();
         await connection.ExecuteAsync(sql, new
@@ -447,20 +479,16 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             dto.NameAm,
             dto.NoOfPosition,
             DepartmentId = departmentId
-        });
+        }, transaction: tx);
 
         return id;
     }
 
     // ============ CREATE JOB GRADE ============
-    private async Task<Guid> CreateJobGrade(string jobGradeName, CancellationToken ct)
+    private async Task<Guid> CreateJobGrade(string jobGradeName, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var hrmmConnectionString = _configuration.GetConnectionString("coreHRMMDbCon");
-        using var connection = new NpgsqlConnection(hrmmConnectionString);
-        await connection.OpenAsync(ct);
-
         const string checkSql = @"SELECT ""Id"" FROM ""JobGrade"" WHERE ""Name"" = @Name AND ""IsDeleted"" = false";
-        var existingId = await connection.QueryFirstOrDefaultAsync<Guid?>(checkSql, new { Name = jobGradeName });
+        var existingId = await connection.QueryFirstOrDefaultAsync<Guid?>(checkSql, new { Name = jobGradeName }, transaction: tx);
 
         if (existingId.HasValue)
             return existingId.Value;
@@ -475,18 +503,14 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         {
             Id = id,
             Name = jobGradeName
-        });
+        }, transaction: tx);
 
         return result;
     }
 
     // ============ CREATE PERSON ============
-    private async Task<Guid> CreatePerson(SetupUserDto dto, CancellationToken ct)
+    private async Task<Guid> CreatePerson(SetupUserDto dto, NpgsqlConnection connection, NpgsqlTransaction tx, CancellationToken ct)
     {
-        var profileConnectionString = _configuration.GetConnectionString("HRMProDbCon");
-        using var connection = new NpgsqlConnection(profileConnectionString);
-        await connection.OpenAsync(ct);
-
         const string sql = @"
             INSERT INTO ""Person"" (""Id"", ""FirstName"", ""FirstNameAm"", ""MiddleName"", ""MiddleNameAm"", ""LastName"", ""LastNameAm"", ""Gender"", ""Nationality"", ""DateAdd"", ""IsDeleted"")
             VALUES (@Id, @FirstName, @FirstNameAm, @MiddleName, @MiddleNameAm, @LastName, @LastNameAm, @Gender, @Nationality, NOW(), false)
@@ -514,7 +538,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             LastNameAm = lastNameAm,
             Gender = gender,
             Nationality = nationality
-        });
+        }, transaction: tx);
 
         return result;
     }
@@ -526,12 +550,10 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         Guid positionId,
         Guid departmentId,
         Guid jobGradeId,
+        NpgsqlConnection connection,
+        NpgsqlTransaction tx,
         CancellationToken ct)
     {
-        var profileConnectionString = _configuration.GetConnectionString("HRMProDbCon");
-        using var connection = new NpgsqlConnection(profileConnectionString);
-        await connection.OpenAsync(ct);
-
         var random = new Random();
         var code = $"EMP-{random.Next(1, 999):D3}";
 
@@ -557,7 +579,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             JobGradeId = jobGradeId,
             PositionId = positionId,
             DepartmentId = departmentId
-        });
+        }, transaction: tx);
 
         return result;
     }
@@ -595,7 +617,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         return Guid.Parse(user.Id);
     }
 
-    // ============ SEED PERMISSIONS (FIXED) ============
+    // ============ SEED PERMISSIONS ============
     private async Task SeedPermissions(CancellationToken ct)
     {
         try
@@ -623,7 +645,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!moduleDict.TryGetValue(menuDto.ModKey, out var moduleId))
                 {
-                    Console.WriteLine($"⚠️ Module '{menuDto.ModKey}' not found for parent menu '{menuDto.Key}'. Skipping...");
+                    _logger.LogWarning("Module '{ModKey}' not found for parent menu '{Key}'. Skipping...", menuDto.ModKey, menuDto.Key);
                     continue;
                 }
 
@@ -654,7 +676,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!moduleDict.TryGetValue(menuDto.ModKey, out var moduleId))
                 {
-                    Console.WriteLine($"⚠️ Module '{menuDto.ModKey}' not found for child menu '{menuDto.Key}'. Skipping...");
+                    _logger.LogWarning("Module '{ModKey}' not found for child menu '{Key}'. Skipping...", menuDto.ModKey, menuDto.Key);
                     continue;
                 }
 
@@ -672,7 +694,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
                     }
                     else
                     {
-                        Console.WriteLine($"⚠️ Parent menu '{menuDto.ParKey}' not found for child menu '{menuDto.Key}'. Skipping...");
+                        _logger.LogWarning("Parent menu '{ParKey}' not found for child menu '{Key}'. Skipping...", menuDto.ParKey, menuDto.Key);
                         continue;
                     }
                 }
@@ -703,7 +725,7 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             {
                 if (!menuDict.TryGetValue(permDto.MenuKey, out var menuId))
                 {
-                    Console.WriteLine($"⚠️ Menu '{permDto.MenuKey}' not found for permission '{permDto.Key}'. Skipping...");
+                    _logger.LogWarning("Menu '{MenuKey}' not found for permission '{Key}'. Skipping...", permDto.MenuKey, permDto.Key);
                     continue;
                 }
 
@@ -720,15 +742,12 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
             }
             await _uow.SaveChangesAsync(ct);
 
-            Console.WriteLine($"✅ Seeded {modules.Count()} modules, {menuDtos.Count} menus, and {permissionCount} permissions");
+            _logger.LogInformation("Seeded {ModuleCount} modules, {MenuCount} menus, and {PermissionCount} permissions",
+                modules.Count(), menuDtos.Count, permissionCount);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error in SeedPermissions: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-            }
+            _logger.LogError(ex, "Error in SeedPermissions");
             throw;
         }
     }
@@ -778,6 +797,6 @@ public class CompleteSetupHandler : IRequestHandler<CompleteSetupCmd, SetupResul
         }
 
         await _uow.SaveChangesAsync(ct);
-        Console.WriteLine($"✅ All permissions assigned to admin user: {userId}");
+        _logger.LogInformation("All permissions assigned to admin user: {UserId}", userId);
     }
 }

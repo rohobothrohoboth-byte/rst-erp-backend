@@ -283,10 +283,10 @@ public static class FinancePermissionsSeeder
             new() { MenuKey = "fnm.compliance.requirements", Key = "fnm.compliance.requirements.report", Desc = "Compliance Reports" },
 
             // Audit Logs
-            new() { MenuKey = "fnm.compliance.audit", Key = "fnm.compliance.audit.view", Desc = "View Audit Logs" },
-            new() { MenuKey = "fnm.compliance.audit", Key = "fnm.compliance.audit.export", Desc = "Export Audit Logs" },
-            new() { MenuKey = "fnm.compliance.audit", Key = "fnm.compliance.audit.filter", Desc = "Filter Audit Logs" },
-            new() { MenuKey = "fnm.compliance.audit", Key = "fnm.compliance.audit.analysis", Desc = "Audit Analysis" },
+            new() { MenuKey = "fnm.compliance", Key = "fnm.compliance.audit.view", Desc = "View Audit Logs" },
+            new() { MenuKey = "fnm.compliance", Key = "fnm.compliance.audit.export", Desc = "Export Audit Logs" },
+            new() { MenuKey = "fnm.compliance", Key = "fnm.compliance.audit.filter", Desc = "Filter Audit Logs" },
+            new() { MenuKey = "fnm.compliance", Key = "fnm.compliance.audit.analysis", Desc = "Audit Analysis" },
 
             // Compliance Reports
             new() { MenuKey = "fnm.compliance.report", Key = "fnm.compliance.report.view", Desc = "View Compliance Reports" },
@@ -525,6 +525,10 @@ public static class FinancePermissionsSeeder
 
             new() { MenuKey = "fnm.reports.ledger", Key = "fnm.reports.ledger.view", Desc = "View General Ledger" },
             new() { MenuKey = "fnm.reports.ledger", Key = "fnm.reports.ledger.export", Desc = "Export General Ledger" },
+
+            // Baseline permissions (menu that previously had no actions)
+            new() { MenuKey = "fnm.audit.logs", Key = "fnm.audit.logs.view", Desc = "View Audit Logs" },
+            new() { MenuKey = "fnm.audit.logs", Key = "fnm.audit.logs.export", Desc = "Export Audit Logs" },
         };
     }
 }

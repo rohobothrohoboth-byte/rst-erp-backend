@@ -17,43 +17,44 @@ public class EventConsumer : BackgroundService
     private readonly IModel _channel;
     private readonly IConfiguration _configuration;
 
-    public EventConsumer(
-        IServiceScopeFactory serviceScopeFactory, // ✅ CHANGE THIS
-        ILogger<EventConsumer> logger,
-        IConfiguration configuration)
-    {
-        _serviceScopeFactory = serviceScopeFactory; // ✅ CHANGE THIS
-        _logger = logger;
-        _configuration = configuration;
+ public EventConsumer(
+     IServiceScopeFactory serviceScopeFactory,
+     ILogger<EventConsumer> logger,
+     IConfiguration configuration)
+ {
+     _serviceScopeFactory = serviceScopeFactory;
+     _logger = logger;
+     _configuration = configuration;
 
-        var factory = new ConnectionFactory
-        {
-            HostName = configuration["RabbitMQ:Host"] ?? "localhost",
-            Port = int.Parse(configuration["RabbitMQ:Port"] ?? "5672"),
-            UserName = configuration["RabbitMQ:Username"] ?? "guest",
-            Password = configuration["RabbitMQ:Password"] ?? "guest"
-        };
+     // ✅ FIXED: Use double underscore (__) to match environment variables
+ var factory = new ConnectionFactory
+ {
+     HostName = configuration["RabbitMQ__Host"] ?? "192.168.1.2",  // ✅ FIXED
+     Port = int.Parse(configuration["RabbitMQ__Port"] ?? "5672"),
+     UserName = configuration["RabbitMQ__Username"] ?? "guest",
+     Password = configuration["RabbitMQ__Password"] ?? "guest"
+ };
 
-        try
-        {
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
+     try
+     {
+         _connection = factory.CreateConnection();
+         _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare("core.events", ExchangeType.Topic, durable: true);
-            _channel.ExchangeDeclare("hrm.events", ExchangeType.Topic, durable: true);
+         _channel.ExchangeDeclare("core.events", ExchangeType.Topic, durable: true);
+         _channel.ExchangeDeclare("hrm.events", ExchangeType.Topic, durable: true);
 
-            _channel.QueueDeclare("auth.sync.queue", durable: true, exclusive: false, autoDelete: false);
-            _channel.QueueBind("auth.sync.queue", "core.events", "core.#");
-            _channel.QueueBind("auth.sync.queue", "hrm.events", "hrm.#");
+         _channel.QueueDeclare("auth.sync.queue", durable: true, exclusive: false, autoDelete: false);
+         _channel.QueueBind("auth.sync.queue", "core.events", "core.#");
+         _channel.QueueBind("auth.sync.queue", "hrm.events", "hrm.#");
 
-            _logger.LogInformation("✅ EventConsumer connected to RabbitMQ successfully!");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to connect to RabbitMQ");
-            throw;
-        }
-    }
+         _logger.LogInformation("✅ EventConsumer connected to RabbitMQ successfully!");
+     }
+     catch (Exception ex)
+     {
+         _logger.LogError(ex, "❌ Failed to connect to RabbitMQ");
+         throw;
+     }
+ }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Common;
 using Helpers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +19,7 @@ namespace Profile.API.Controllers;
 [ApiVersion("1.0")]
 public class EmpStatusController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.mod")]
     [HttpPut("TermEmp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -29,6 +31,7 @@ public class EmpStatusController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("StByEmp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -40,6 +43,7 @@ public class EmpStatusController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("SuspEmp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -51,6 +55,7 @@ public class EmpStatusController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("RetiEmp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -62,6 +67,7 @@ public class EmpStatusController(IMediator med) : ControllerBase
         return Ok(ApiResponse<object>.Ok(response, "Selected EMPLOYEE'S Status successfully updated."));
     }
 
+    [PerAuth("hr.emp.mod")]
     [HttpPut("ReviewEmp/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

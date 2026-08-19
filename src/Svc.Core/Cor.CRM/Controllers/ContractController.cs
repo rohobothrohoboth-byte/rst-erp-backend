@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/ContractController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -30,6 +31,7 @@ public class ContractController : ControllerBase
     /// Create a new contract
     /// </summary>
     [HttpPost]
+    [PerAuth("crm.sales.contracts.add")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateContractDto dto)
@@ -52,6 +54,7 @@ public class ContractController : ControllerBase
     /// Get contract by ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -75,6 +78,7 @@ public class ContractController : ControllerBase
     /// Get all contracts with filters
     /// </summary>
     [HttpGet]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? customerId,
@@ -118,6 +122,7 @@ public class ContractController : ControllerBase
     /// Update an existing contract
     /// </summary>
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.sales.contracts.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -140,6 +145,7 @@ public class ContractController : ControllerBase
     /// Sign a contract
     /// </summary>
     [HttpPost("{id:guid}/sign")]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -161,6 +167,7 @@ public class ContractController : ControllerBase
     /// Activate a contract
     /// </summary>
     [HttpPost("{id:guid}/activate")]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -182,6 +189,7 @@ public class ContractController : ControllerBase
     /// Terminate a contract
     /// </summary>
     [HttpPost("{id:guid}/terminate")]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -203,6 +211,7 @@ public class ContractController : ControllerBase
     /// Delete a contract (soft delete)
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.sales.contracts.del")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -223,6 +232,7 @@ public class ContractController : ControllerBase
     /// Get contract statistics
     /// </summary>
     [HttpGet("stats")]
+    [PerAuth("crm.sales.contracts.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {

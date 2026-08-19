@@ -1,3 +1,4 @@
+using Common;
 using Asp.Versioning;
 using Cor.HRMM.Queries;
 using Helpers;
@@ -16,6 +17,7 @@ namespace Cor.HRMM.Controllers;
 [ApiVersion("1.0")]
 public class NameListController(IMediator med) : ControllerBase
 {
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllBenefitSetName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllBenefitSetName()
@@ -24,6 +26,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetBenefitSetName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -34,6 +37,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllEducationQualName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllEducationQualName()
@@ -42,6 +46,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetEducationQualName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -55,6 +60,7 @@ public class NameListController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get the list of JOB GRADE STEP names and Ids. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJgStepName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJgStepName()
@@ -66,6 +72,7 @@ public class NameListController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get JOB GRADE STEP name and Id. Response will be in the form of (JOB GRADE STEP NAME => JOB GRADE)
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetJgStepName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,6 +83,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllJobGradeName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllJobGradeName()
@@ -84,6 +92,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetJobGradeName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,6 +106,7 @@ public class NameListController(IMediator med) : ControllerBase
     /// <summary>
     /// End point to get list of Positions by DepartmentId
     /// </summary>
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("DeptPosition/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> DeptPosition(Guid id)
@@ -105,6 +115,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("AllPositionName")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> AllPositionName()
@@ -113,6 +124,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
 
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetPositionName/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -123,6 +135,7 @@ public class NameListController(IMediator med) : ControllerBase
         return Ok(res);
     }
         
+    [PerAuth("hr.emp.view|hr.db.view|hr.recruit.requisition.view")]
     [HttpGet("GetUser/{token}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

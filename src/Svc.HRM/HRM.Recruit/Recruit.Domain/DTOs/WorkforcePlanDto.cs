@@ -31,6 +31,8 @@ public class WorkforcePlanListDto : BaseDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; }
+    public Guid? PlanDevBudgetId { get; set; }
 
     // ? Computed properties for formatted display
     public string BudgetFormatted => Budget.HasValue
@@ -43,6 +45,7 @@ public class WorkforcePlanListDto : BaseDto
 
 public class WorkforcePlanAddDto
 {
+    public Guid? DepartmentId { get; set; } // optional: if sent, skips the Profile gRPC lookup
     [JsonIgnore]
     public Guid RequistionById { get; set; } // HRM.Profile.Employee
 
@@ -56,6 +59,8 @@ public class WorkforcePlanAddDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; } // Cor.Finance.Budget to encumber against
+    public Guid? PlanDevBudgetId { get; set; } // Cor.PlanDev.Budget planned source
 }
 
 public class WorkforcePlanModDto
@@ -71,4 +76,6 @@ public class WorkforcePlanModDto
     // ? ADD BUDGET FIELDS
     public decimal? Budget { get; set; }
     public string? BudgetCurrency { get; set; }
+    public Guid? BudgetId { get; set; }
+    public Guid? PlanDevBudgetId { get; set; }
 }

@@ -20,11 +20,12 @@ using StackExchange.Redis;
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -78,13 +79,13 @@ var payrollPortString = builder.Configuration["ServiceUrls:PayrollApi"] ?? "http
 var payrollPort = new Uri(payrollPortString).Port;
 Console.WriteLine($"📡 Payroll Service Port: {payrollPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(IPAddress.Any, payrollPort, listenOptions =>
     {
         listenOptions.UseHttps();
-    });
-});
+    });  // DISABLED
+});*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -103,12 +104,12 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -214,6 +215,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+// Enable [PerAuth("permission")] enforcement against the shared Common.Permissions registry.
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PerAuthHandler>();
 
 // ================================================================
 // ✅ CORS CONFIGURATION
@@ -393,8 +398,7 @@ builder.Services.AddHostedService<EmployeeEventConsumer>();
 // SSL Bypass Handler
 var sslHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
-    MaxConnectionsPerServer = 50,
+        MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
@@ -468,7 +472,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(options => { options.WithTitle("HRM Payroll API"); });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // DISABLED FOR DOCKER
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -487,3 +491,5 @@ Console.WriteLine("📊 Debug logging is ENABLED");
 Console.WriteLine("\nPress Ctrl+C to stop");
 
 await app.RunAsync();
+
+

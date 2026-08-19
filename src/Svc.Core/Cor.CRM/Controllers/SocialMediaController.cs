@@ -1,6 +1,7 @@
 // Cor.CRM/Controllers/SocialMediaController.cs
 
 using Asp.Versioning;
+using Common;
 using Cor.CRM.Commands;
 using Cor.CRM.Models.DTOs;
 using Cor.CRM.Queries;
@@ -28,6 +29,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpGet]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? platform,
@@ -66,6 +68,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
@@ -86,6 +89,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpPost]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateSocialMediaPostDto dto)
@@ -105,6 +109,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [PerAuth("crm.marketing.social.mod")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -124,6 +129,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
@@ -141,6 +147,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpPost("{id:guid}/publish")]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -159,6 +166,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpPost("{id:guid}/duplicate")]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -177,6 +185,7 @@ public class SocialMediaController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [PerAuth("crm.marketing.social.view")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats(
         [FromQuery] Guid? campaignId,

@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Contracts;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
@@ -16,22 +17,37 @@ public class AuthClient : IAuthClient
 
     public AuthClient(IConfiguration config)
     {
-        _authUrl = config["AuthUrl"] ?? throw new InvalidOperationException("AUTH Service Address not configured");
+        // Accept whichever key the host service configured (AuthUrl is the legacy
+        // gRPC-common key; ServiceUrls:AuthApi is the modern one). Fall back to the
+        // standard local port so a missing key degrades gracefully.
+        _authUrl = config["AuthUrl"]
+            ?? config["ServiceUrls:AuthApi"]
+            ?? "https://localhost:7000";
     }
+
+    // The gRPC targets run over HTTPS with a self-signed dev certificate whose name
+    // does not match the configured host, so validate leniently (dev/self-hosted).
+    private GrpcChannel CreateChannel() => GrpcChannel.ForAddress(_authUrl, new GrpcChannelOptions
+    {
+        HttpHandler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        }
+    });
 
     public async Task<GetUserResponse> GetUser(string token, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_authUrl);
+        using var channel = CreateChannel();
         var client = new AuthValidator.AuthValidatorClient(channel);
-        return await client.GetUserAsync(new GetUserRequest { Token = token });
+        return await client.GetUserAsync(new GetUserRequest { Token = token }, cancellationToken: ct);
     }
 
     public async Task<bool> ValidateToken(string token, CancellationToken ct = default)
     {
-        using var channel = GrpcChannel.ForAddress(_authUrl);
+        using var channel = CreateChannel();
         var client = new AuthValidator.AuthValidatorClient(channel);
         var request = new ValidateTokenRequest { Token = token };
-        var res = await client.ValidateTokenAsync(request);
+        var res = await client.ValidateTokenAsync(request, cancellationToken: ct);
         return res.IsValid;
     }
 

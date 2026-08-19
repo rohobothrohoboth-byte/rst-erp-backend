@@ -123,7 +123,13 @@ public sealed class UnitOfWork : IUnitOfWork
         _context.ChangeTracker.DetectChanges();
         var result = await _context.SaveChangesAsync(ct);
         _hasChanges = false;
-        _logger.LogInformation("SaveChanges SUCCESS. Rows={Rows}, ConnectionId={ConnectionId}", result, _connection.ProcessID);
+        // EF auto-closes the connection it opened for SaveChanges when there is no
+        // surrounding transaction, so reading ProcessID here would throw. Guard it
+        // so a successful save is never turned into a failure by a log line.
+        var connId = _connection.State == ConnectionState.Open
+            ? _connection.ProcessID.ToString()
+            : "closed";
+        _logger.LogInformation("SaveChanges SUCCESS. Rows={Rows}, ConnectionId={ConnectionId}", result, connId);
         return result;
     }
 

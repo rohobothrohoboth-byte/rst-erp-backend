@@ -18,7 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
+  // ============================================================
 // ✅ CONFIGURATION LOADING ORDER
 // ============================================================
 
@@ -68,17 +68,17 @@ if (updates.Any())
 }
 
 // ✅ Configure Kestrel - Get port from resolved configuration
-var taskPortString = builder.Configuration["ServiceUrls:TaskApi"] ?? "https://localhost:7006";
+var taskPortString = builder.Configuration["ServiceUrls:TaskApi"] ?? "http://task";
 var taskPort = new Uri(taskPortString).Port;
 Console.WriteLine($"📡 Task Service Port: {taskPort}");
 
-builder.WebHost.ConfigureKestrel(options =>
+/*builder.WebHost.ConfigureKestrel(options =>
 {
     options.Listen(IPAddress.Any, taskPort, listenOptions =>
     {
-        listenOptions.UseHttps();
-    });
-});
+        // HTTPS disabled for Docker;
+    }); *//* // DISABLED
+});*/
 
 // ============= CONFIGURATION HELPER =============
 string GetConfig(string key, string? defaultValue = null)
@@ -97,13 +97,13 @@ string GetConfig(string key, string? defaultValue = null)
 }
 
 // ============= SERVICE URLS =============
-var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "https://localhost:7002");
-var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "https://localhost:7001");
-var authUrl = GetConfig("ServiceUrls:AuthApi", "https://localhost:7000");
-var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "https://localhost:7004");
-var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "https://localhost:7008");
-var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "https://localhost:5000");
-var notificationApiUrl = GetConfig("ServiceUrls:NotificationApi", "https://localhost:7007");
+var CorModUrl = GetConfig("ServiceUrls:CoreModuleApi", "http://core-module");
+var coreHrmmUrl = GetConfig("ServiceUrls:CoreHRMMApi", "http://core-hrmm");
+var authUrl = GetConfig("ServiceUrls:AuthApi", "http://auth");
+var hrmProUrl = GetConfig("ServiceUrls:HrmProApi", "http://hrm-profile");
+var financeApiUrl = GetConfig("ServiceUrls:FinanceApi", "http://finance");
+var gatewayApiUrl = GetConfig("ServiceUrls:GatewayApi", "http://gateway");
+var notificationApiUrl = GetConfig("ServiceUrls:NotificationApi", "http://notification");
 
 // API Keys
 var coreApiKey = GetConfig("ApiKeys:CoreModule", "core_module_secret_key_2024");
@@ -366,8 +366,7 @@ builder.Services.AddHttpClient<Svc.Task.Services.INotificationService, Svc.Task.
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
-    MaxConnectionsPerServer = 50,
+        MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 })
 .SetHandlerLifetime(TimeSpan.FromMinutes(2));
@@ -399,8 +398,7 @@ builder.Services.AddHealthChecks()
 // SSL Bypass Handler
 var sslHandler = new HttpClientHandler
 {
-    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true,
-    MaxConnectionsPerServer = 50,
+        MaxConnectionsPerServer = 50,
     AutomaticDecompression = DecompressionMethods.GZip
 };
 
@@ -419,7 +417,7 @@ builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+// // app.UseHttpsRedirection(); // DISABLED FOR DOCKER // Disabled for Docker
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -476,3 +474,5 @@ public class AuthApiService : IAuthApiService
         return await _httpClient.GetAsync(endpoint, ct);
     }
 }
+
+
