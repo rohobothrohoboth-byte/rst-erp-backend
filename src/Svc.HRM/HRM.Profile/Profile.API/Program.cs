@@ -26,7 +26,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Shared.Helpers;
-
+using Profile.App.Services.AI;
 var builder = WebApplication.CreateBuilder(args);
 
   // ============================================================
@@ -339,7 +339,7 @@ builder.Services.AddScoped<ICorHrmmClient>(sp =>
 builder.Services.AddScoped<IUserScopeService, UserScopeService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddHostedService<InitialSyncService>();
-
+builder.Services.AddScoped<EmployeeAIService>();
 // ============= HEALTH CHECKS =============
 builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri($"{corModUrl}/health"), "Core Module API")
